@@ -1,25 +1,30 @@
 # Humanizer
 
+[![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-humanizer--ru-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+
 Skill для AI-агентов. Убирает следы машинной генерации из русскоязычного текста.
 
 ## Установка
 
 ### Через skills CLI
 
-```
+```sh
 npx skills add Vladimir-Human/humanizer-ru
 ```
 
 ### Вручную (клонирование)
 
-```
+```sh
 mkdir -p ~/.claude/skills
 git clone https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ### Только файл skill
 
-```
+```sh
 mkdir -p ~/.claude/skills/humanizer-ru
 cp SKILL.md ~/.claude/skills/humanizer-ru/
 ```
@@ -28,13 +33,13 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 В Claude Code или другом агенте:
 
-```
+```text
 /humanizer-ru [вставьте текст]
 ```
 
 Или напрямую:
 
-```
+```text
 Очеловечь этот текст: [ваш текст]
 ```
 
