@@ -265,6 +265,6 @@ description: Удаляет следы AI-генерации из текста. 
 
 # СПРАВКА
 
-Данный skill основан на обновлённом чек-листе [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (версия ~30 признаков), поддерживаемом WikiProject AI Cleanup.
+Этот skill основан на обновлённом чек-листе [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) (версия ~30 признаков), поддерживаемом WikiProject AI Cleanup.
 
 Ключевой принцип: **«LLM использует статистические алгоритмы для предсказания следующего слова. Результат стремится к статистически наиболее вероятному варианту, применимому к максимально широкому кругу случаев. Проявляйте асимметрию и неидеальность человеческого мышления.»**
