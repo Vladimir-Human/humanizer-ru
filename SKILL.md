@@ -2,7 +2,7 @@
 name: humanizer-ru
 description: "Use when: нужно очеловечить (humanize) сгенерированный ИИ текст на русском. Убирает 25 машинных паттернов, делает язык живым и естественным."
 license: MIT
-compatibility: Designed for Claude Code, Gemini CLI, and other agents supporting the agentskills.io specification. No code execution required.
+compatibility: Claude Code, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
 metadata:
   author: Vladimir-Human
   version: "2.1"
