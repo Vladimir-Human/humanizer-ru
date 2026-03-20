@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-humanizer--ru-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 Skill для AI-агентов. Убирает следы машинной генерации из русскоязычного текста.
@@ -118,6 +118,7 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 ## Версии
 
+- **2.2.0** 
 - **2.1.0** — В поле `description` добавлен триггер `Use when:` по спецификации agentskills.io. Добавлены `license`, `compatibility`, `metadata` в frontmatter.
 - **2.0.0** — Добавлены паттерны #1 (Усреднение), #9 (Текст о тексте), #19 (Таблицы), #20 (Markdown), #21 (Иерархия). Шкала критичности 🔴/🟡/🟢. Расширены словари маркеров. 25 паттернов.
 - **1.0.0** — Первый релиз. 22 паттерна, адаптация под русский язык.
