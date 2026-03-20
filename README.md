@@ -7,26 +7,35 @@
 
 Skill для AI-агентов. Убирает следы машинной генерации из русскоязычного текста.
 
-## Установка
+## Установка и интеграция
 
-### Через skills CLI
+Скилл humanizer-ru устанавливается в Claude.ai, разворачивается на уровне организации и работает в Claude Code через CLI.
 
-```sh
-npx skills add Vladimir-Human/humanizer-ru
-```
+### 1. Claude.ai (Веб-интерфейс)
 
-### Вручную (клонирование)
+1. Скачайте репозиторий как ZIP-архив:
+   `https://github.com/vladimir-human/humanizer-ru/archive/refs/heads/main.zip`
+2. Зайдите в ваш аккаунт Claude.ai и перейдите в **Settings** > **Skills**.
+3. Нажмите **Upload skill** и выберите скачанный ZIP-архив.
 
-```sh
-mkdir -p ~/.claude/skills
-git clone https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
-```
+> ⚠️ **Примечание:** Если Claude.ai не принимает архив скачанный напрямую с GitHub из-за вложенной папки `humanizer-ru-main`, склонируйте репозиторий и заархивируйте папку вручную:
+> ```bash
+> git clone https://github.com/vladimir-human/humanizer-ru.git
+> zip -r humanizer-ru.zip humanizer-ru/
+> ```
 
-### Только файл skill
+### 2. Организации (Enterprise & Team)
 
-```sh
-mkdir -p ~/.claude/skills/humanizer-ru
-cp SKILL.md ~/.claude/skills/humanizer-ru/
+Администраторы могут развернуть этот скилл централизованно (workspace-wide) для всей команды, загрузив его в библиотеку скиллов рабочего пространства.
+
+### 3. API и Локальные агенты (Claude Code)
+
+При использовании API (эндпоинт `/v1/messages` или аналоги) передайте скилл через параметр container.skills — детали в документации вашего клиента.
+
+Для локального использования в Claude Code выполните команду:
+
+```bash
+skills add vladimir-human/humanizer-ru
 ```
 
 ## Использование
@@ -118,8 +127,8 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 ## Версии
 
-- **2.2.0** 
-- **2.1.0** — В поле `description` добавлен триггер `Use when:` по спецификации agentskills.io. Добавлены `license`, `compatibility`, `metadata` в frontmatter.
+- **2.2.0** — Обновлён compatibility (добавлен Claude.ai), добавлены metadata.tags, обработка граничных случаев (нерусский текст, код), исправлены инструкции установки.
+- **2.1.0** — В поле description добавлен триггер Use when: по спецификации agentskills.io. Добавлены license, compatibility, metadata во frontmatter.
 - **2.0.0** — Добавлены паттерны #1 (Усреднение), #9 (Текст о тексте), #19 (Таблицы), #20 (Markdown), #21 (Иерархия). Шкала критичности 🔴/🟡/🟢. Расширены словари маркеров. 25 паттернов.
 - **1.0.0** — Первый релиз. 22 паттерна, адаптация под русский язык.
 
