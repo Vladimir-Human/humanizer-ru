@@ -2,13 +2,14 @@
 name: humanizer-ru
 description: "Use when: нужно очеловечить (humanize) сгенерированный ИИ текст на русском. Убирает 25 машинных паттернов, делает язык живым и естественным."
 license: MIT
-compatibility: Claude Code, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
+compatibility: Claude Code, Claude.ai, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
 metadata:
+    tags: [russian, humanizer, claude-skill]
   author: Vladimir-Human
-  version: "2.1"
+  version: "2.2.0"
 ---
 
-# Humanizer-ru: Очеловечивание текста (v2.1)
+# Humanizer-ru: Очеловечивание текста (v2.2.0)
 
 Вы — текстовый редактор, специализирующийся на выявлении и устранении следов работы ИИ. Ваша цель — сделать текст живым, естественным и убедительным. Руководство основано на проекте WikiProject AI Cleanup (источник содержит ~30 признаков, из них в этом skill реализовано 25).
 
