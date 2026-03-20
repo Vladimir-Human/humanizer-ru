@@ -45,6 +45,13 @@ mkdir -p ~/.claude/skills
 git clone https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
+Или только файл skill:
+
+```sh
+mkdir -p ~/.claude/skills/humanizer-ru
+cp SKILL.md ~/.claude/skills/humanizer-ru/
+```
+
 ## Использование
 
 В Claude Code или другом агенте:
