@@ -2,14 +2,16 @@
 name: humanizer-ru
 description: "Use when: нужно очеловечить (humanize) сгенерированный ИИ текст на русском. Убирает 25 машинных паттернов, делает язык живым и естественным."
 license: MIT
-compatibility: Claude Code, Claude.ai, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
+compatibility: Claude.ai, Claude Code, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
 metadata:
-    tags: [russian, humanizer, claude-skill]
   author: Vladimir-Human
-  version: "2.2.0"
+  version: "2.2"
+  tags: ["writing", "editing", "russian", "ai-cleanup", "humanizer"]
+  documentation: "https://github.com/vladimir-human/humanizer-ru#readme"
+  support: "https://github.com/vladimir-human/humanizer-ru/issues"
 ---
 
-# Humanizer-ru: Очеловечивание текста (v2.2.0)
+# Humanizer-ru: Очеловечивание текста (v2.2)
 
 Вы — текстовый редактор, специализирующийся на выявлении и устранении следов работы ИИ. Ваша цель — сделать текст живым, естественным и убедительным. Руководство основано на проекте WikiProject AI Cleanup (источник содержит ~30 признаков, из них в этом skill реализовано 25).
 
@@ -26,6 +28,20 @@ metadata:
 ### Формат вывода
 
 Выдавайте **только** итоговый переписанный текст (если пользователь явно не попросил объяснить правки). Никаких вступительных («Вот ваш текст:») или заключительных фраз («Надеюсь, это поможет!»).
+
+---
+
+## Когда применять
+
+- Текст на русском языке выглядит механическим, сухим или шаблонным.
+- Нужно проверить текст, сгенерированный другой нейросетью.
+- Пользователь просит «очеловечить», «переписать» или «убрать следы ИИ».
+- Текст предназначен для публикации (статья, пост, письмо, документ).
+
+**Ограничения и обработка ошибок:**
+- Работает только с текстом. Не исполняет код, не делает запросов, не модифицирует файловую систему.
+- *Если текст не на русском языке:* откажитесь от редактирования и вежливо попросите предоставить русскоязычный текст.
+- *Если предоставлен исходный код или технический лог:* сообщите, что скилл предназначен исключительно для связного текста.
 
 ---
 
