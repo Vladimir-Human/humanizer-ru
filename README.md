@@ -32,10 +32,17 @@ Skill для AI-агентов. Убирает следы машинной ге�
 
 При использовании API (эндпоинт `/v1/messages` или аналоги) передайте скилл через параметр container.skills — детали в документации вашего клиента.
 
-Для локального использования в Claude Code выполните команду:
+Для локального использования через [skills.sh](https://skills.sh):
 
-```bash
-skills add vladimir-human/humanizer-ru
+```sh
+npx skills add Vladimir-Human/humanizer-ru
+```
+
+Или вручную:
+
+```sh
+mkdir -p ~/.claude/skills
+git clone https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Использование
