@@ -1,4 +1,4 @@
-# Humanizer
+# Humanizer-ru
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
@@ -185,11 +185,12 @@ humanizer-ru/
 - Добавлен паттерн «канцелярит» («осуществлять деятельность», «в соответствии с»)
 - Список машинной лексики адаптирован под русский язык
 - Убран Title Case (не применим к русскому)
-- Кавычки: «ёлочки» вместо „лапок"
+- Кавычки: «ёлочки» вместо „нижних лапок"
 
 ## Источники
 
 - [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)
+- [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/Википедия:Признаки_сгенерированности_текста)
 - [WikiProject AI Cleanup](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup)
 
 ## Версии
