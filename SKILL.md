@@ -1,8 +1,8 @@
 ---
 name: humanizer-ru
-description: "Use when: нужно очеловечить (humanize) сгенерированный ИИ текст на русском. Убирает 29 машинных паттернов через regex и проверку источников."
+description: "Use when: нужно очеловечить (humanize) сгенерированный ИИ текст на русском. Убирает 29 машинных паттернов, делает язык живым и естественным. Включает однозначные маркеры (regex) для копирования из ChatGPT, Gemini, Grok и проверку галлюцинированных источников."
 license: MIT
-compatibility: Claude.ai, Claude Code, opencode, and other agents supporting the agentskills.io specification. Text-only, no code execution.
+compatibility: Claude.ai, Claude Code, opencode, и другие агенты, поддерживающие спецификацию agentskills.io. Только текст, без выполнения кода.
 metadata:
   author: Vladimir-Human
   version: "2.3.0"
@@ -13,7 +13,7 @@ metadata:
   support: "https://github.com/vladimir-human/humanizer-ru/issues"
   sources:
     - "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing"
-    - "https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F:%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0"
+    - "https://ru.wikipedia.org/wiki/Википедия:Признаки_сгенерированности_текста"
 ---
 
 # Humanizer-ru — очеловечивание текста (v2.3.0)
