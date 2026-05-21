@@ -6,9 +6,14 @@ compatibility: Claude.ai, Claude Code, opencode, и другие агенты, �
 metadata:
   author: Vladimir-Human
   version: "2.3.0"
+  last_reviewed: "2026-05-20"
+  next_review_due: "2026-08-20"
   tags: ["writing", "editing", "russian", "ai-cleanup", "humanizer"]
   documentation: "https://github.com/vladimir-human/humanizer-ru#readme"
   support: "https://github.com/vladimir-human/humanizer-ru/issues"
+  sources:
+    - "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing"
+    - "https://ru.wikipedia.org/wiki/Википедия:Признаки_сгенерированности_текста"
 ---
 
 # Humanizer-ru — очеловечивание текста (v2.3.0)
