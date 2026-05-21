@@ -14,6 +14,7 @@ metadata:
   sources:
     - "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing"
     - "https://ru.wikipedia.org/wiki/Википедия:Признаки_сгенерированности_текста"
+    - "https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup"
 ---
 
 # Humanizer-ru — очеловечивание текста (v2.3.0)
