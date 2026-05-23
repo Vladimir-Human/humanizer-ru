@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
-[![Версия](https://img.shields.io/badge/версия-2.3.0-blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![Версия](https://img.shields.io/badge/версия-2.4.0-blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-humanizer--ru-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 Скилл для ИИ-агентов. Убирает следы машинной генерации из русскоязычного текста.
@@ -195,6 +195,7 @@ humanizer-ru/
 
 ## Версии
 
+- **2.4.0** (23 мая 2026) — переписан `description` по best practices от agentskills.io. Список триггеров расширен с 4 до 30+: явные синонимы («очеловечь», «сделай живым», «AI-детектор», «проверить на ИИ», «убрать гпт-шность», «звучит как нейросеть»), 7 LLM по именам (ChatGPT, Claude, Gemini, Grok, DeepSeek, GPT-5, Qwen). Добавлен Do NOT блок с явными границами: текст не на русском, код и скрипты, юридические документы, художественная проза, поэзия и резюме. Содержание скилла без изменений — правка только во frontmatter.
 - **2.3.0** (20 мая 2026) — постепенное раскрытие через `references/`. Добавлены однозначные маркеры с регулярными выражениями (`chatbot-artifacts.md`), проверка подлога источников (`source-fabrication.md`), границы ложного срабатывания (`false-positives.md`), отпечатки моделей на 20 мая 2026 (`llm-fingerprints.md`), эталонные образцы (`test-fixtures.md`). Расширения для русского: нелогичные деепричастные обороты, каскад смягчений, связки-переходы. Эмпирическая проверка регулярных выражений: 12 из 12 пройдено. Без регрессий относительно v2.2.
 - **2.2.0** — Обновлена совместимость (добавлен Claude.ai), добавлены метаданные tags, обработка граничных случаев (нерусский текст, код), исправлены инструкции установки. Усилены паттерны #1 и #13 подвидами («гороскопные» утверждения, симметричные секции).
 - **2.1.0** — В поле description добавлен триггер «Use when:» по спецификации agentskills.io. Добавлены поля license, compatibility, metadata в начале файла.
