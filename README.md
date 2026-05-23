@@ -1,4 +1,4 @@
-# Humanizer-ru
+﻿# Humanizer-ru
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
@@ -206,3 +206,6 @@ humanizer-ru/
 ## Лицензия
 
 MIT
+
+
+<!-- Use when: this should fail -->
