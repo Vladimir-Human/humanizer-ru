@@ -1,0 +1,97 @@
+name: Самопроверка скилла на англицизмы
+
+# Скилл против AI-калькирования с английского должен сам соответствовать
+# своему правилу. Этот workflow ловит явные кальки в SKILL.md и README.md
+# до того как их увидят пользователи.
+#
+# Падает PR если в файлах появляется хотя бы одна фраза из чёрного списка.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SKILL.md'
+      - 'README.md'
+      - 'references/**'
+  pull_request:
+    paths:
+      - 'SKILL.md'
+      - 'README.md'
+      - 'references/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-anglicisms:
+    name: Поиск англицизмов в собственном тексте
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Сканировать SKILL.md и README.md на чёрный список калек
+        run: |
+          set -euo pipefail
+
+          # Чёрный список — фразы, которые сам скилл считает признаком ИИ-кальки.
+          # Имена собственные (ChatGPT, Claude и т.п.), URL, технические идентификаторы
+          # (regex, JSON, frontmatter в коде ссылок) и термины спецификации agentskills.io
+          # сюда не входят — они ловятся отдельно через grep -F и контекст.
+          BLACKLIST=(
+            'Use when:'
+            'Do NOT use:'
+            'Do NOT блок'
+            'best practices'
+            'постепенное раскрытие'
+            'Эмпирическая проверка'
+            'без регрессий'
+            'эталонные образцы'
+            'Эталонные образцы'
+            'триггеров расширен'
+            '7 LLM'
+            '30+:'
+          )
+
+          FAIL=0
+          # Проверяем только описание скилла, не references (там примеры паттернов
+          # буквально содержат кальки в качестве «было/стало»).
+          FILES=(SKILL.md README.md)
+
+          for phrase in "${BLACKLIST[@]}"; do
+            for file in "${FILES[@]}"; do
+              if [[ ! -f "$file" ]]; then continue; fi
+              # grep -F — фиксированная строка, без regex
+              # grep -n — номер строки
+              # || true — чтобы pipeline не падал, когда совпадений нет
+              hits=$(grep -nF -- "$phrase" "$file" || true)
+              if [[ -n "$hits" ]]; then
+                # Исключение: фраза в backticks внутри changelog v2.4.1
+                # (там она цитируется как «было → стало», это документация фикса).
+                # Считаем строку проблемной только если фраза НЕ окружена backticks.
+                while IFS= read -r line; do
+                  # извлечь номер и содержимое
+                  lineno="${line%%:*}"
+                  content="${line#*:}"
+                  # если в строке встречается `<phrase>` — пропускаем
+                  if echo "$content" | grep -qF "\`$phrase\`"; then
+                    continue
+                  fi
+                  echo "::error file=$file,line=$lineno::Англицизм '$phrase' в $file:$lineno"
+                  echo "  $line"
+                  FAIL=1
+                done <<< "$hits"
+              fi
+            done
+          done
+
+          if [[ "$FAIL" -ne 0 ]]; then
+            echo ""
+            echo "Скилл против AI-калек содержит кальки в собственном тексте."
+            echo "Замените фразы на русские эквиваленты или закавычьте в backticks,"
+            echo "если это цитата (например в записи changelog 'было → стало')."
+            exit 1
+          fi
+
+          echo "Чёрный список пройден — англицизмов в SKILL.md и README.md нет."
