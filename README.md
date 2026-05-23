@@ -87,7 +87,7 @@ humanizer-ru/
     ├── source-fabrication.md             # Проверка ссылок на источники
     ├── false-positives.md                # Что НЕ считается признаком ИИ
     ├── llm-fingerprints.md               # Отпечатки моделей (май 2026)
-    └── test-fixtures.md                  # Эталонные образцы для regex
+    └── test-fixtures.md                  # Проверочные образцы для regex
 ```
 
 ### Содержательные паттерны
