@@ -1,0 +1,35 @@
+name: Прогон регулярных выражений
+
+# Регрессионная защита однозначных маркеров: каждое выражение из
+# references/chatbot-artifacts.md прогоняется по проверочным образцам
+# (прямой / отрицательный / граничный) из scripts/check_markers.py.
+# До v2.6 прогон выполнялся вручную (PowerShell в test-fixtures.md) —
+# теперь он автоматический и обязателен для каждого PR.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'references/chatbot-artifacts.md'
+      - 'references/test-fixtures.md'
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'references/chatbot-artifacts.md'
+      - 'references/test-fixtures.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-markers:
+    name: Проверка маркеров по образцам
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Прогнать все выражения по трём уровням образцов
+        run: python3 scripts/check_markers.py
