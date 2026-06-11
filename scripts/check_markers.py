@@ -55,6 +55,13 @@ CASES = {
         ["turn fetch the file"],
         None,
     ),
+    "turn_file": (
+        r"turn\d+file\d+",
+        ["Вывод обрывается метками fileciteturn0file2turn0file6 в конце.",
+         "одиночная метка turn0file11 после цитаты"],
+        ["turn the file over", "return file 5 to the archive"],
+        ("fileciteturn0file2turn0file6", 2),
+    ),
     # --- A.3. Метки UTM от чат-ботов ---
     "utm_chatgpt": (
         r"[?&]utm_source=chatgpt\.com",
@@ -161,6 +168,43 @@ CASES = {
 }
 
 
+def _inside_backticks(line: str, start: int, end: int) -> bool:
+    """Совпадение внутри `обратных кавычек` — это документация, не артефакт."""
+    return line[:start].count("`") % 2 == 1 and line[end:].count("`") >= 1
+
+
+def scan(paths: list) -> int:
+    """Прогон всех выражений по произвольным файлам.
+
+    Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
+    Печатает каждое совпадение в формате «файл:строка [имя] фрагмент».
+    Совпадения внутри обратных кавычек пропускаются (документация выражений).
+    Код возврата 0 — чисто, 1 — найдены маркеры.
+    """
+    compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
+    found = 0
+    for path in paths:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                lines = fh.read().splitlines()
+        except OSError as exc:
+            print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
+            return 2
+        for lineno, line in enumerate(lines, 1):
+            for name, rx in compiled.items():
+                for m in rx.finditer(line):
+                    if _inside_backticks(line, m.start(), m.end()):
+                        continue
+                    found += 1
+                    fragment = line.strip()[:90]
+                    print(f"{path}:{lineno} [{name}] {fragment}")
+    if found:
+        print(f"\nНайдено маркеров: {found}.")
+        return 1
+    print("Маркеров не найдено.")
+    return 0
+
+
 def main() -> int:
     fails = 0
     for name, (pattern, positives, negatives, multi) in CASES.items():
@@ -192,4 +236,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--scan":
+        sys.exit(scan(sys.argv[2:]))
     sys.exit(main())
