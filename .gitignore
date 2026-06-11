@@ -3,3 +3,10 @@
 *.bak.*
 
 skills-lock.json
+
+# Служебный мусор Python и операционных систем (добавлено в v2.7)
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+Thumbs.db
