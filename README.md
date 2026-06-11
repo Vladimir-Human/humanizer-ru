@@ -3,7 +3,6 @@
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=версия&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-humanizer--ru-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 Скилл для ИИ-агентов. Убирает следы машинной генерации из русскоязычного текста.
 
