@@ -1,0 +1,37 @@
+name: Самопроверка скилла на собственные маркеры
+
+# Скилл проверяет сам себя: все .md, .py и .yml файлы проекта
+# прогоняются через check_markers.py --scan. Совпадения внутри
+# обратных кавычек (документация выражений) пропускаются автоматически.
+# Добавлено в v2.8.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - '**.py'
+      - '**.yml'
+  pull_request:
+    paths:
+      - '**.md'
+      - '**.py'
+      - '**.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  self-scan:
+    name: Проверка на маркеры в собственном тексте
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Прогнать --scan по всем файлам проекта
+        run: |
+          find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.yml' \) \
+            ! -path './.git/*' ! -path './node_modules/*' \
+            -exec python3 scripts/check_markers.py --scan {} +
