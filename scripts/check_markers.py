@@ -193,6 +193,17 @@ CASES = {
          "Узкий неразрывный пробел\u202fне входит в выражение (ручная проверка)."],
         ("а\u200bб\u200cв\u200dг", 3),
     ),
+    # --- A.11. Блоки «writing» ChatGPT (v3.0) ---
+    "writing_block": (
+        r":::\w+\{variant",
+        [':::writing{variant="document" id="68427"}',
+         'Черновик письма ниже. :::writing{variant="email" id="51724"}',
+         ':::écriture{variante="document" id="28471"}'],
+        [":::note — директива Docusaurus без атрибута variant",
+         ':::tip{title="Совет"} — атрибут другой',
+         "обычное троеточие в конце фразы..."],
+        (':::writing{variant="email" id="11111"} текст ::: :::writing{variant="chat_message" id="22222"}', 2),
+    ),
 }
 
 
