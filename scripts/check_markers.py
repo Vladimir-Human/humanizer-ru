@@ -78,6 +78,22 @@ CASES = {
         ["OpenAI utm_source без знака ? или &"],
         None,
     ),
+    "utm_copilot": (
+        r"[?&]utm_source=copilot\.com",
+        ["https://example.com/?utm_source=copilot.com",
+         "https://example.com/?id=7&utm_source=copilot.com"],
+        ["utm_source=copilot.com упомянут в статье об отслеживании",
+         "https://example.com/?utm_source=chatgpt.com"],
+        None,
+    ),
+    "grok_referrer": (
+        r"[?&]referrer=grok\.com",
+        ["https://x.com/post?referrer=grok.com",
+         "https://example.com/?id=1&referrer=grok.com"],
+        ["referrer=grok.com упомянут без URL-параметра",
+         "https://example.com/?referrer=other.com"],
+        None,
+    ),
     # --- A.4. Метки прикрепления и карточек ---
     "attached_file": (
         r"attached_file:\/\/",
@@ -90,6 +106,12 @@ CASES = {
         ["grok_card://1234567890"],
         ["карточка Grok без специфичной разметки"],
         None,
+    ),
+    "grok_render_json": (
+        r"grok_render_citation_card_json",
+        ['[](grok_render_citation_card_json={"cardIds":["3bb883"]})'],
+        ["grok render citation card json обсуждают в документации"],
+        ('[](grok_render_citation_card_json={"cardIds":["1"]}) [](grok_render_citation_card_json={"cardIds":["2"]})', 2),
     ),
     "vertexaisearch": (
         r"vertexaisearch\.cloud\.google\.com/grounding-api-redirect",
@@ -203,6 +225,65 @@ CASES = {
          ':::tip{title="Совет"} — атрибут другой',
          "обычное троеточие в конце фразы..."],
         (':::writing{variant="email" id="11111"} текст ::: :::writing{variant="chat_message" id="22222"}', 2),
+    ),
+    # --- A.12. DeepSeek/derivative line references (v3.1) ---
+    "deepseek_line_ref": (
+        r"【\d+†L\d+(?:-L?\d+)?】",
+        ["В 2024 году кампания выросла【85†L261-269】.",
+         "Альбом вышел【854†L119-123】 в 2024 году.",
+         "【854†L119-L123】 — форма с L после дефиса."],
+        ["OpenAI Assistants метка 【1†source】 ловится другим выражением.",
+         "Декоративные уголки 【примечание】 без строк.",
+         "Обычная сноска [1] не должна срабатывать."],
+        ("【29†L582-589】【32†L142-149】", 2),
+    ),
+    # --- A.4 доп. Grok XML-тег (v3.1) ---
+    "grok_card_tag": (
+        r"<grok-card\b[^>]*\bcitation_card\b",
+        ['<grok-card data-id="e8ff4f" data-type="citation_card">',
+         '\u0422\u0435\u043a\u0441\u0442...<grok-card data-id="abc" data-type="citation_card">'],
+        ["<grok-card> \u0431\u0435\u0437 \u0430\u0442\u0440\u0438\u0431\u0443\u0442\u0430 citation_card",
+         "\u043e\u0431\u044b\u0447\u043d\u044b\u0439 XML-\u0442\u0435\u0433 <div>"],
+        None,
+    ),
+    # --- A.2 доп. turn image/news/video/ref (v3.1) ---
+    "turn_other": (
+        r"turn\d+(?:image|news|video|ref)\d+",
+        ["\u0424\u043e\u0442\u043e turn0image0 \u0432 \u0442\u0435\u043a\u0441\u0442\u0435.", "turn0news0 \u0432 \u0441\u0435\u0440\u0435\u0434\u0438\u043d\u0435", "turn0video0", "turn0ref0"],
+        ["turn left and image again", "turnaround news"],
+        ("turn0image0 turn0news0 turn0video0", 3),
+    ),
+    # --- A.5 доп. скобочная форма ссылок инструментов (v3.1) ---
+    "attached_web_bracket": (
+        r"\[(?:attached_file|web):\d+\]",
+        ["\u0421\u043c. [attached_file:1] \u0432 \u043e\u0442\u0432\u0435\u0442\u0435.", "\u0426\u0438\u0442\u0430\u0442\u0430 [web:3] \u0438\u0437 \u043f\u043e\u0438\u0441\u043a\u0430."],
+        ["[attach:1] \u0434\u0440\u0443\u0433\u043e\u0439 \u0444\u043e\u0440\u043c\u0430\u0442", "\u043e\u0431\u044b\u0447\u043d\u0430\u044f \u0441\u043d\u043e\u0441\u043a\u0430 [1]"],
+        ("[attached_file:1][web:2][web:3]", 3),
+    ),
+    # --- A.6 доп. generated-reference-identifier (v3.1) ---
+    "generated_ref_id": (
+        r"citegenerated-reference-identifier",
+        ["\u0422\u0435\u043a\u0441\u0442 citegenerated-reference-identifier \u0432 \u0432\u044b\u0432\u043e\u0434\u0435."],
+        ["generated reference identifier \u0447\u0435\u0440\u0435\u0437 \u043f\u0440\u043e\u0431\u0435\u043b"],
+        None,
+    ),
+    # --- A.5 доп. placeholder URLs (v3.1) ---
+    "placeholder_url": (
+        r"\b(?:INSERT_SOURCE_URL(?:_\d+)?|URL_HERE|PASTE_\w+_URL_HERE)\b",
+        ["\u0412\u0441\u0442\u0430\u0432\u044c\u0442\u0435 INSERT_SOURCE_URL_30 \u0441\u044e\u0434\u0430.", "\u0421\u043c. URL_HERE \u0432 \u0448\u0430\u0431\u043b\u043e\u043d\u0435.", "PASTE_SPOTIFY_TRACK_URL_HERE"],
+        ["insert source url \u0432 \u043e\u0431\u044b\u0447\u043d\u043e\u0439 \u0444\u0440\u0430\u0437\u0435", "\u0432\u0441\u0442\u0430\u0432\u044c\u0442\u0435 URL \u0441\u044e\u0434\u0430"],
+        ("INSERT_SOURCE_URL URL_HERE PASTE_TRACK_URL_HERE", 3),
+    ),
+    # --- A.5 доп. placeholder-даты (v3.1) ---
+    "placeholder_date": (
+        r"\b\d{4}-(?:\d{2}|[Xx]{2})-[Xx]{2}\b",
+        ["дата обращения: 2025-XX-XX.",
+         "|date=2022-11-XX |publisher=…",
+         "access-date=2025-xx-xx"],
+        ["обычная дата 2025-11-30 не срабатывает",
+         "артикул 2025-XX-XXL не срабатывает",
+         "диапазон 2024-2025 без дня"],
+        ("2025-XX-XX и 2022-11-XX в одном списке литературы", 2),
     ),
 }
 
