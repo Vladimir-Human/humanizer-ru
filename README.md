@@ -16,7 +16,7 @@
 Скилл — это только текстовые файлы разметки плюс проверочный скрипт для CI; установка не запускает никакого кода. Тем не менее правило одно для любых скиллов: **сначала прочитать, потом ставить**.
 
 1. Откройте `SKILL.md` и `references/` прямо на GitHub и убедитесь, что содержимое вас устраивает.
-2. Ставьте только выпуски со страницы **Releases** (подписанные теги вида `v3.0.0`), а не произвольное состояние ветки.
+2. Ставьте только выпуски со страницы **Releases** (подписанные теги вида `vX.Y.Z`), а не произвольное состояние ветки.
 3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `SECURITY.md`, `LICENSE`, `references/`, `scripts/check_markers.py` и `.github/` — ничего исполняемого при установке.
 
 ### 1. Claude.ai (Веб-интерфейс)
@@ -39,7 +39,7 @@
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.0.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.1.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
