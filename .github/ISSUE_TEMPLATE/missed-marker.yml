@@ -1,0 +1,43 @@
+name: Пропущенный маркер
+description: Скилл не поймал след машинной генерации в тексте
+title: "[Маркер] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за образец. Перед отправкой удалите личные данные и проверьте, что похожего маркера ещё нет в `references/chatbot-artifacts.md`.
+  - type: textarea
+    id: sample
+    attributes:
+      label: Образец текста
+      description: Фрагмент, в котором остался след. Если маркер невидимый (символы Юникода) — приложите файл.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия humanizer-ru
+      placeholder: v3.2.0
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Модель и режим
+      placeholder: ChatGPT (GPT-5.5), веб-поиск
+    validations:
+      required: true
+  - type: textarea
+    id: regex
+    attributes:
+      label: Черновик регулярного выражения
+      description: Необязательно. Если есть идея, как ловить маркер — напишите.
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Проверка перед публикацией
+      options:
+        - label: Я удалил(а) из образца личные и чувствительные данные
+          required: true
