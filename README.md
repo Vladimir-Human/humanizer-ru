@@ -1,13 +1,32 @@
-# Humanizer-ru
+# Humanizer-ru — очеловечивание русского ИИ-текста
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-humanizer--ru-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-266%2B_установок-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
-Скилл для ИИ-агентов. Убирает следы машинной генерации из русскоязычного текста.
+**[English version → README.en.md](README.en.md)**
 
-## Установка и интеграция
+Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 38 паттернов, 35 однозначных маркеров с регулярными выражениями, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub, Socket и Snyk.
+
+**До:**
+
+> 🚀 **Инновации:** Данное программное обеспечение безусловно является свидетельством нашего стремления к качеству. Кроме того, оно обеспечивает бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
+
+**После:**
+
+> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Тестировщики отмечают, что задачи выполняются быстрее.
+
+## Установка за 30 секунд
+
+```sh
+npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-ru
+```
+
+Установщик предложит выбрать агентов: Claude Code, Codex, Cursor, Gemini CLI, OpenCode и другие среды с поддержкой формата Agent Skills. Сам скилл состоит из текстовых инструкций и не исполняет код при работе. Команда `npx` запускает сторонний Skills CLI; если хотите проверить каждый файл до установки, используйте раздел [«Установка вручную»](#установка-вручную).
+
+## Установка вручную
 
 Скилл humanizer-ru ставится в Claude.ai и в локальный CLI Claude Code. Для команд есть отдельный путь установки на уровне организации.
 
@@ -49,7 +68,7 @@ mkdir -p ~/.claude/skills/humanizer-ru
 cp SKILL.md ~/.claude/skills/humanizer-ru/
 ```
 
-Скилл также размещён в каталоге [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru). Сторонние установщики каталогов скачивают и подключают код без вашего просмотра, поэтому здесь они сознательно не рекомендуются — используйте способы выше.
+Способы этого раздела дают полный контроль над каждым шагом. Если такой контроль не нужен, быстрее поставить одной командой из каталога [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
 
 ## Использование
 
@@ -206,16 +225,6 @@ humanizer-ru/
 Стилистические приметы по производителям, актуальные на 2 июля 2026: OpenAI GPT-5.5 (флагман с 23 апреля 2026), Anthropic Claude Fable 5 (глобально с 1 июля 2026) / Sonnet 5 (30 июня 2026) / Opus 4.8, Google Gemini 3.5 Flash (стандартный после Google I/O 2026) и режим Deep Research, xAI Grok 4.3, DeepSeek V4, Qwen 3.7, Meta Muse Spark, Mistral Large 3 / Magistral, Perplexity Sonar, Amazon Nova 2, Cohere Command A+. Срок актуальности: до 30 сентября 2026; внеплановая проверка 2 августа 2026 (вступление в силу статьи 50 Регламента ЕС об ИИ). См. `references/llm-fingerprints.md`.
 
 **Шкала критичности:** 🔴 мгновенно выдаёт ИИ · 🟡 сильный сигнал · 🟢 слабый сигнал
-
-## Пример
-
-**До:**
-
-> 🚀 **Инновации:** Данное программное обеспечение безусловно является свидетельством нашего стремления к качеству. Кроме того, оно обеспечивает бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
-
-**После:**
-
-> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Тестировщики отмечают, что задачи выполняются быстрее.
 
 ## Отличия от английской версии
 
