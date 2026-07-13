@@ -35,5 +35,8 @@ jobs:
           find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.yml' \) \
             ! -path './.git/*' ! -path './node_modules/*' \
             ! -path './scripts/check_markers.py' \
+            ! -path './scripts/check_fixture_sources.py' \
             ! -path './references/test-fixtures.md' \
+            ! -path './research/fixtures/*' \
+            ! -path './tests/fixtures/*' \
             -exec python3 scripts/check_markers.py --scan {} +
