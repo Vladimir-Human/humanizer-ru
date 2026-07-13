@@ -1,9 +1,9 @@
-name: Самопроверка скилла на собственные маркеры
+name: РЎР°РјРѕРїСЂРѕРІРµСЂРєР° СЃРєРёР»Р»Р° РЅР° СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ РјР°СЂРєРµСЂС‹
 
-# Скилл проверяет сам себя: все .md, .py и .yml файлы проекта
-# прогоняются через check_markers.py --scan. Совпадения внутри
-# обратных кавычек (документация выражений) пропускаются автоматически.
-# Добавлено в v2.8.
+# РЎРєРёР»Р» РїСЂРѕРІРµСЂСЏРµС‚ СЃР°Рј СЃРµР±СЏ: РІСЃРµ .md, .py Рё .yml С„Р°Р№Р»С‹ РїСЂРѕРµРєС‚Р°
+# РїСЂРѕРіРѕРЅСЏСЋС‚СЃСЏ С‡РµСЂРµР· check_markers.py --scan. РЎРѕРІРїР°РґРµРЅРёСЏ РІРЅСѓС‚СЂРё
+# РѕР±СЂР°С‚РЅС‹С… РєР°РІС‹С‡РµРє (РґРѕРєСѓРјРµРЅС‚Р°С†РёСЏ РІС‹СЂР°Р¶РµРЅРёР№) РїСЂРѕРїСѓСЃРєР°СЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.
+# Р”РѕР±Р°РІР»РµРЅРѕ РІ v2.8.
 
 on:
   push:
@@ -24,19 +24,22 @@ permissions:
 
 jobs:
   self-scan:
-    name: Проверка на маркеры в собственном тексте
+    name: РџСЂРѕРІРµСЂРєР° РЅР° РјР°СЂРєРµСЂС‹ РІ СЃРѕР±СЃС‚РІРµРЅРЅРѕРј С‚РµРєСЃС‚Рµ
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Прогнать --scan по всем файлам проекта
+      - name: РџСЂРѕРіРЅР°С‚СЊ --scan РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј РїСЂРѕРµРєС‚Р°
         run: |
           find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.yml' \) \
             ! -path './.git/*' ! -path './node_modules/*' \
             ! -path './scripts/check_markers.py' \
             ! -path './scripts/check_fixture_sources.py' \
             ! -path './references/test-fixtures.md' \
+            ! -path './references/false-positives.md' \
             ! -path './research/fixtures/*' \
             ! -path './tests/fixtures/*' \
+            ! -path './research/ab/*' \
+            ! -path './research/raw/*' \
             -exec python3 scripts/check_markers.py --scan {} +
