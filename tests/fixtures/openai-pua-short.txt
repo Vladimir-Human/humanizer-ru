@@ -1,0 +1,2 @@
+# SYNTHETIC FIXTURE (not a real sample yet - see v3.1-v3.2-sources.json, case openai_pua_short)
+Актриса, известная по ролям в сериале.2
