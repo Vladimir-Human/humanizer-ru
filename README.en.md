@@ -18,6 +18,16 @@ An agent skill that finds and removes traces of machine generation from Russian-
 
 > Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Тестировщики отмечают, что задачи выполняются быстрее.
 
+## Scope: editing, not live dialogue
+
+This skill is a text editor: give it a fragment and it finds AI-generated
+patterns and, on request, rewrites them. You do not need to keep the full
+SKILL.md in the system prompt of a chat client — responses would slow down
+without becoming more natural, because editorial rules are not designed for
+generating replies. For live dialogue there is a separate compact ruleset —
+[PERSONA.md](PERSONA.md): copy its core into the system instructions of your
+chat client.
+
 ## Install in 30 seconds
 
 ```sh
