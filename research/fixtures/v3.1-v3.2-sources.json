@@ -2,101 +2,119 @@
   {
     "case": "grok_render_json",
     "status": "confirmed",
+    "evidence_class": "primary",
     "source_url": "https://www.youtube.com/watch?v=JR5m2yc1a94",
     "accessed": "2026-07-13",
     "platform": "Grok",
     "verbatim_sample": "[](grok_render_citation_card_json={\"cardIds\":[\"9374b8\"]})",
-    "evidence_note": "Маркер дословно присутствует в публичном описании видео. Также описан в Wikipedia:Signs of AI writing (раздел Markup)."
+    "evidence_note": "Маркер дословно присутствует в публичном описании видео (исходный сгенерированный текст, не пересказ)."
   },
   {
     "case": "turn_other",
     "status": "confirmed",
+    "evidence_class": "primary",
     "source_url": "https://www.binance.com/en/square/post/23319467437738",
     "accessed": "2026-07-13",
     "platform": "ChatGPT",
     "verbatim_sample": "$ETH iturn0image0turn0image1turn0image2turn0image4",
-    "evidence_note": "Публичный пост Binance Square с характерной склейкой turn0imageN. Запасной источник: binance.com/en/square/post/22843081092153."
-  },
-  {
-    "case": "grok_card_tag",
-    "status": "confirmed",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "Grok",
-    "verbatim_sample": "<grok-card data-id=\"e8ff4f\" data-type=\"citation_card\">",
-    "evidence_note": "EN Wiki Signs of AI writing (раздел Markup) цитирует ноябрьскую ревизию 2025 Draft:Mehak Malik с этим тегом. Первичный источник — ревизия Wikipedia."
-  },
-  {
-    "case": "attached_web_bracket",
-    "status": "confirmed",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "Perplexity/неизвестная модель",
-    "verbatim_sample": "[attached_file:1]",
-    "evidence_note": "EN Wiki: «As of fall 2025, tags like [attached_file:1] and [web:1] have been seen at the end of sentences. This may be Perplexity-specific». Обе ветки alternation подтверждены одной страницей."
-  },
-  {
-    "case": "generated_ref_id",
-    "status": "confirmed",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "ChatGPT",
-    "verbatim_sample": "citegenerated-reference-identifier",
-    "evidence_note": "EN Wiki (раздел Markup): «other markup of a similar style, such as citeturn0news0 (example), citeturn1file0 (example), or cite generated-reference-identifier (example)». Той же природы, что подтверждённые citeturn-метки."
-  },
-  {
-    "case": "openai_pua_short",
-    "status": "confirmed",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "ChatGPT",
-    "verbatim_sample": "\uea012\uea02",
-    "fixture_file": "../../tests/fixtures/openai-pua-short.txt",
-    "evidence_note": "EN Wiki: «an alternate shorter form with only the increasing number surrounded by PUA Unicode». Hex dump fixture: EE A8 81 (U+EA01) / EE A8 82 (U+EA02). Fixture file tests/fixtures/openai-pua-short.txt содержит дословный образец."
-  },
-  {
-    "case": "grok_referrer",
-    "status": "confirmed",
-    "source_url": "https://x.ai/grok",
-    "accessed": "2026-07-13",
-    "platform": "xAI (официальный сайт)",
-    "verbatim_sample": "https://grok.com/?referrer=grok.com",
-    "evidence_note": "Параметр referrer=grok.com присутствует на официальной странице x.ai/grok. PROVENANCE-ЭВРИСТИКА: параметр встречается в обычных навигационных ссылках xAI и сам по себе не доказывает генерацию текста. См. false-positives.md для оговорки."
+    "evidence_note": "Публичный пост Binance Square со склейкой turn0imageN в теле поста. Запасной источник: binance.com/en/square/post/22843081092153."
   },
   {
     "case": "utm_copilot",
     "status": "confirmed",
-    "source_url": "https://github.com/tectijuana/interfaz/blob/main/docs/research26a/Arquitecturas%20ARM%20aplicadas%20a%%20sistemas%20multimedia/readme.md",
+    "evidence_class": "primary",
+    "source_url": "https://github.com/tectijuana/interfaz",
     "accessed": "2026-07-13",
     "platform": "Microsoft Copilot",
-    "verbatim_sample": "https://en.wikipedia.org/wiki/ARM_architecture_family?utm_source=copilot.com",
-    "evidence_note": "Реальный публичный README (tectijuana/interfaz) содержит множественные URL с utm_source=copilot.com, добавленные Copilot при генерации ссылок. Доп. источники: rubysec/ruby-advisory-db (CVE entries), goobolabs/ds-ml-bootcamp (assignment), matomo-org/matomo (analytics test — явно учитывает copilot.com как AI-campaign source)."
+    "verbatim_sample": "?utm_source=copilot.com",
+    "evidence_note": "README реального репозитория содержит ссылки с utm_source=copilot.com, вставленные при копировании из Copilot. ЗАДАЧА ФИНАЛИЗАЦИИ: заменить verbatim_sample полной дословной ссылкой из README и source_url — permalink на коммит. Дополнительные вхождения: rubysec/ruby-advisory-db, goobolabs/ds-ml-bootcamp, matomo-org/matomo."
   },
   {
-    "case": "placeholder_url",
+    "case": "grok_card_tag",
     "status": "confirmed",
-    "source_url": "https://github.com/jxnl/dots/blob/master/agents/skills/audit-ai-writing/patterns.md",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
     "accessed": "2026-07-13",
-    "platform": "ChatGPT/универсальный",
-    "verbatim_sample": "INSERT_SOURCE_URL",
-    "evidence_note": "Независимые детекторы AI-письма на GitHub перечисляют INSERT_SOURCE_URL, URL_HERE, PASTE_*_URL_HERE как незаполненные шаблонные поля. Источники: jxnl/dots, sammcj/agentic-coding (INSERT_SOURCE_URL_30), Deupaxx/EveryDay-Writer (INSERT_SOURCE_URL_30 + access-date: 2025-XX-XX), conorbronsdon/avoid-ai-writing. Также EN Wiki Signs of AI writing (раздел Phrasal templates)."
+    "platform": "Grok",
+    "verbatim_sample": "<grok-card data-id=\"e8ff4f\" data-type=\"citation_card\">",
+    "secondary_justification": "Страница дословно цитирует реальную ревизию Draft:Mehak Malik (ноябрь 2025) с этим тегом; сама страница — обзорная, не исходный текст. ЗАДАЧА: найти permalink этой ревизии и поднять до primary.",
+    "evidence_note": "EN Wiki, раздел Markup."
   },
   {
-    "case": "placeholder_date",
+    "case": "attached_web_bracket",
     "status": "confirmed",
-    "source_url": "https://github.com/jxnl/dots/blob/master/agents/skills/audit-ai-writing/patterns.md",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
     "accessed": "2026-07-13",
-    "platform": "ChatGPT/универсальный",
-    "verbatim_sample": "2025-XX-XX",
-    "evidence_note": "Независимые детекторы: jxnl/dots, sammcj/agentic-coding, Deupaxx/EveryDay-Writer (access-date: 2025-XX-XX). EN Wiki (раздел Phrasal templates): placeholder dates like 2025-xx-xx, particularly the access-date parameter. FALSE-POSITIVE ОГОВОРКА: YYYY-XX-XX — также обычный редакторский шаблон; см. false-positives.md."
+    "platform": "Perplexity (предположительно)",
+    "verbatim_sample": "[attached_file:1]",
+    "secondary_justification": "Страница дословно фиксирует обе ветки выражения: «tags like [attached_file:1] and [web:1] have been seen at the end of sentences. This may be Perplexity-specific». Наблюдение сообщества за реальными правками. ЗАДАЧА: permalink ревизии-примера.",
+    "evidence_note": "EN Wiki, раздел Markup, осень 2025."
+  },
+  {
+    "case": "generated_ref_id",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
+    "accessed": "2026-07-13",
+    "platform": "ChatGPT",
+    "verbatim_sample": "citegenerated-reference-identifier",
+    "secondary_justification": "Страница перечисляет форму рядом с подтверждёнными citeturn-метками и даёт слово example со ссылкой на реальную правку. ЗАДАЧА: извлечь permalink примера и поднять до primary.",
+    "evidence_note": "EN Wiki, раздел Markup."
   },
   {
     "case": "deepseek_line_ref",
     "status": "confirmed",
+    "evidence_class": "secondary",
     "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
     "accessed": "2026-07-13",
     "platform": "DeepSeek",
     "verbatim_sample": "【85†L261-269】",
-    "evidence_note": "EN Wiki (раздел Markup): «As of June 2025, markup with lenticular brackets and dagger symbols, like 【85†L261-269】, has also been seen. This format appears to be specific to DeepSeek and its derivatives.»"
+    "secondary_justification": "Страница дословно цитирует форму из наблюдений June 2025: «markup with lenticular brackets and dagger symbols, like 【85†L261-269】… specific to DeepSeek». ЗАДАЧА: permalink ревизии-примера.",
+    "evidence_note": "EN Wiki, раздел Markup."
+  },
+  {
+    "case": "openai_pua_short",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1363998845",
+    "accessed": "2026-07-14",
+    "platform": "ChatGPT",
+    "fixture_file": "../../tests/fixtures/openai-pua-short.txt",
+    "verbatim_sample": "2",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: дословные PUA-байты U+EA01/U+EA02 найдены на live-странице EN Wikipedia:Signs_of_AI_writing (revision 1363998845, July 2025) в блоке AI-сгенерированного текста про аниме Reze Arc. Файл tests/fixtures/openai-pua-short.txt содержит verbatim срез текста с 3 парами PUA-маркеров (2, 3, 5). Шаблон: U+EA01 + число + U+EA02 — компактная форма citation-маркера ChatGPT."
+  },
+  {
+    "case": "grok_referrer",
+    "status": "confirmed",
+    "evidence_class": "provenance",
+    "source_url": "https://x.ai/grok",
+    "accessed": "2026-07-13",
+    "platform": "xAI (официальный сайт)",
+    "verbatim_sample": "https://grok.com/?referrer=grok.com",
+    "fp_caveat_documented": true,
+    "evidence_note": "PROVENANCE-ЭВРИСТИКА: параметр referrer=grok.com встречается в обычных навигационных ссылках xAI и сам по себе не доказывает генерацию текста. Оговорка о ложных срабатываниях описана в references/false-positives.md."
+  },
+  {
+    "case": "placeholder_url",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://github.com/jxnl/dots",
+    "accessed": "2026-07-13",
+    "platform": "разные модели",
+    "verbatim_sample": "INSERT_SOURCE_URL",
+    "secondary_justification": "Источник — каталог паттернов (audit-ai-writing/patterns.md), а не исходный сгенерированный текст; независимые подтверждения: sammcj/agentic-coding, conorbronsdon/avoid-ai-writing. Реальное вхождение-кандидат: Deupaxx/EveryDay-Writer. ЗАДАЧА: закрепить permalink реального вхождения и поднять до primary.",
+    "evidence_note": "Плейсхолдеры источников. Оговорка о ложных срабатываниях (черновики людей с TODO-заглушками) — в false-positives.md."
+  },
+  {
+    "case": "placeholder_date",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://github.com/Deupaxx/EveryDay-Writer",
+    "accessed": "2026-07-13",
+    "platform": "разные модели",
+    "verbatim_sample": "2025-XX-XX",
+    "secondary_justification": "Репозиторий содержит реальное вхождение access-date: 2025-XX-XX; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki. ЗАДАЧА: закрепить permalink файла с вхождением и поднять до primary.",
+    "evidence_note": "FALSE-POSITIVE-ОГОВОРКА обязательна: формат YYYY-XX-XX встречается и в человеческих черновиках; описана в false-positives.md."
   }
 ]

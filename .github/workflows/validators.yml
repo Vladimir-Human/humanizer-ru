@@ -1,0 +1,46 @@
+name: Валидаторы спецификации и реестра
+
+# Закрывает пробел v3.3.0: check_spec.py и check_fixture_sources.py
+# запускались только вручную. Теперь оба валидатора — в CI.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SKILL.md'
+      - 'scripts/**'
+      - 'research/fixtures/**'
+      - 'tests/fixtures/**'
+      - '.github/workflows/validators.yml'
+  pull_request:
+    paths:
+      - 'SKILL.md'
+      - 'scripts/**'
+      - 'research/fixtures/**'
+      - 'tests/fixtures/**'
+      - '.github/workflows/validators.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spec:
+    name: SKILL.md соответствует спецификации Agent Skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка валидатора
+        run: python3 scripts/check_spec.py --selftest
+      - name: Строгая проверка SKILL.md
+        run: python3 scripts/check_spec.py SKILL.md --strict --expect-dir humanizer-ru
+
+  fixture-sources:
+    name: Реестр источников маркеров v3.1-v3.2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка валидатора
+        run: python3 scripts/check_fixture_sources.py --selftest
+      - name: Гейт issue #18 (реальный PUA-образец найден, гейт 11/11)
+        run: python3 scripts/check_fixture_sources.py research/fixtures/v3.1-v3.2-sources.json
