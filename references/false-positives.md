@@ -250,6 +250,18 @@
 | BOM U+FEFF в начале файла | Редакторы Windows (Блокнот и др.) | Артефакт кодировки файла, не генерации |
 | Сноски [1], ¹, (Иванов, 2020) | Научная и издательская традиция цитирования | Маркер ИИ — только служебные формы из chatbot-artifacts.md (【N†source】, [cite: N] и т. п.), а не обычные сноски |
 
+### Первичные источники
+
+- Кодовые таблицы Unicode: U+00A0, U+00AD —
+  https://www.unicode.org/charts/PDF/U0080.pdf; U+2014, U+2026, U+202F, U+2060 —
+  https://www.unicode.org/charts/PDF/U2000.pdf; лигатуры U+FB01/U+FB02 —
+  https://www.unicode.org/charts/PDF/UFB00.pdf
+- Автозамена Microsoft Word (кавычки, тире, многоточие):
+  https://support.microsoft.com/en-us/word/turn-autocorrect-on-or-off-in-word
+- Специальные символы Adobe InDesign (переносы, неразрывные пробелы):
+  https://helpx.adobe.com/indesign/using/glyphs-special-characters.html
+- Типографика TeX/LaTeX (
+
 Правило: перед вердиктом выясни, откуда текст пришёл. Если он прошёл через Word, InDesign,
 LaTeX или PDF — типографские символы объясняются инструментом. Однозначными остаются
 только служебные строки чат-ботов, которые издательские инструменты не производят.
