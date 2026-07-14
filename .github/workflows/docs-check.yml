@@ -1,0 +1,33 @@
+name: Согласованность документации
+
+# Закрывает пробел v3.3.3: README устаревал молча (версии, дерево проекта,
+# дубль истории), сырые файлы смешивались с аналитикой, вердикты журналов
+# не были связаны с фактическим числом прогонов. Теперь это ловит CI.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - 'scripts/check_docs.py'
+      - '.github/workflows/docs-check.yml'
+  pull_request:
+    paths:
+      - '**.md'
+      - 'scripts/check_docs.py'
+      - '.github/workflows/docs-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Проверка документации
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка валидатора
+        run: python3 scripts/check_docs.py --selftest
+      - name: Проверка репозитория
+        run: python3 scripts/check_docs.py
