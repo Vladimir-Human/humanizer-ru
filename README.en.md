@@ -44,7 +44,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.2.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.3.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -67,7 +67,7 @@ Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Ru
 |---|---|
 | Content | vague praise instead of specifics, "experts believe" without a source, bureaucratic officialese |
 | Language | machine lexicon, forced rule-of-three, "not only... but also" parallelisms, hedging cascades |
-| Structure & style | em-dash and bold overuse, emoji lists, Markdown remnants in plain text, broken heading hierarchy |
+| Structure & style | дефис and bold overuse, emoji lists, Markdown remnants in plain text, broken heading hierarchy |
 | Communication | chat remnants ("Hope this helps!"), sycophancy, generic upbeat closings |
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
@@ -107,9 +107,11 @@ humanizer-ru/
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
 
-## Versions
+## Changelog
 
-Latest release: **v3.2.0** (July 7, 2026). The full changelog is kept in the [Russian README](README.md#версии).
+The current version is shown on the badge at the top. Full history:
+[CHANGELOG.md](CHANGELOG.md) and
+[GitHub Releases](https://github.com/Vladimir-Human/humanizer-ru/releases).
 
 ## License
 
