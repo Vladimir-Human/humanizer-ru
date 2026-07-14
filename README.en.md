@@ -8,7 +8,7 @@
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns, 35 unambiguous regex markers, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns, 35 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -44,7 +44,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.3.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.3.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -67,14 +67,17 @@ Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Ru
 |---|---|
 | Content | vague praise instead of specifics, "experts believe" without a source, bureaucratic officialese |
 | Language | machine lexicon, forced rule-of-three, "not only... but also" parallelisms, hedging cascades |
-| Structure & style | дефис and bold overuse, emoji lists, Markdown remnants in plain text, broken heading hierarchy |
+| Structure & style | dash and bold overuse, emoji lists, Markdown remnants in plain text, broken heading hierarchy |
 | Communication | chat remnants ("Hope this helps!"), sycophancy, generic upbeat closings |
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
-## Unambiguous markers
+## Regex markers: classes A and B
 
-35 regular expressions catch copy-paste artifacts that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, zero-width watermark characters, placeholder URLs and dates.
+35 regular expressions catch traces of machine generation. They fall into two classes:
+
+- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, zero-width watermark characters.
+- **Class B — contextual indicators** that are strong signals but need human judgement: placeholder URLs and dates from template answers.
 
 Run all markers against test fixtures:
 
@@ -92,18 +95,27 @@ python3 scripts/check_markers.py --scan file.md
 
 ```
 humanizer-ru/
-├── SKILL.md                 # Map, decision tree, checklist
-├── README.md                # Russian README
-├── README.en.md             # This file
-├── SECURITY.md              # Security policy and threat model
-├── scripts/check_markers.py # Regex test runner and text scanner
-├── .github/workflows/       # CI: self-scan, regex tests, style checks
-└── references/              # Full pattern descriptions, fixtures, model fingerprints
+├── SKILL.md                      # Map, decision tree, checklist
+├── PERSONA.md                    # Compact ruleset for live dialogue
+├── README.md                     # Russian README
+├── README.en.md                  # This file
+├── CHANGELOG.md                  # Full version history
+├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
+├── scripts/
+│   ├── check_markers.py          # Regex test runner and text scanner
+│   ├── check_spec.py             # Agent Skills spec compliance
+│   ├── check_fixture_sources.py  # Fixture source verification
+│   ├── check_docs.py             # Documentation consistency checks
+│   └── count_style_markers.py    # Style marker counter for A/B runs
+├── references/                   # Full pattern descriptions, fixtures, model fingerprints
+├── research/                     # Protocols, raw model outputs, pilot results
+├── tests/fixtures/               # Marker test fixtures
+└── .github/workflows/            # CI: self-scan, regex tests, style and docs checks
 ```
 
 ## Security
 
-- Text-only skill: no code execution, no network or filesystem access, no data collection. `scripts/check_markers.py` runs only in CI and manually by the developer.
+- Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in CI and manually by the developer.
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
 
