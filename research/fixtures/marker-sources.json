@@ -1,5 +1,17 @@
 [
   {
+    "case": "ref_name_search",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1364503207",
+    "accessed": "2026-07-17",
+    "platform": "неустановленная модель / агент с веб-поиском",
+    "fixture_file": "../../tests/fixtures/ref-name-search.txt",
+    "verbatim_sample": "<ref name=\"0search12\">",
+    "secondary_justification": "Неизменяемая ревизия EN Wikipedia дословно показывает имя ссылки с порядковым номером и именем внутреннего поискового инструмента. Это документированный пример разметки, но не первичный экспорт ответа модели; маркер остаётся контекстным и требует ручной проверки.",
+    "evidence_note": "Новая форма из ревизии 1364503207 после контрольной даты 2026-07-14. Не использовать как самостоятельное доказательство генерации."
+  },
+  {
     "case": "grok_render_json",
     "status": "confirmed",
     "evidence_class": "primary",

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Проверка реестра источников для образцов маркеров v3.1-v3.2 (issue #18). Версия 2.
+"""Проверка реестра источников для образцов маркеров (issue #18). Версия 3.
 
 Отличие от версии 1: статуса confirmed недостаточно, чтобы закрыть гейт.
 Каждая подтверждённая запись обязана указывать класс доказательства:
@@ -29,7 +29,7 @@ import os
 import re
 import sys
 
-# Точная область issue #18 (байт-в-байт совпадает с CASES в scripts/check_markers.py).
+# Реестр охватывает маркеры, которым нужна доказательная цепочка.
 SCOPE = {
     "utm_copilot": r"[?&]utm_source=copilot\.com",
     "grok_referrer": r"[?&]referrer=grok\.com",
@@ -42,6 +42,7 @@ SCOPE = {
     "placeholder_date": r"\b\d{4}-(?:\d{2}|[Xx]{2})-[Xx]{2}\b",
     "deepseek_line_ref": "\u3010\\d+\u2020L\\d+(?:-L?\\d+)?\u3011",
     "openai_pua_short": "[\uea01\uea02]",
+    "ref_name_search": r"<ref\b[^>]*\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
 }
 
 STATUSES = {"confirmed", "lead", "none"}
@@ -68,7 +69,7 @@ def validate(entries, base_dir=".", allow_pending=False):
                 errors.append(tag + ": пустое обязательное поле " + f)
         case = e.get("case")
         if case not in SCOPE:
-            errors.append(tag + ": case вне области v3.1-v3.2")
+            errors.append(tag + ": case вне области реестра")
             continue
         status = e.get("status")
         if status not in STATUSES:
@@ -178,6 +179,7 @@ def selftest():
         "placeholder_date": "2025-XX-XX",
         "deepseek_line_ref": "\u301085\u2020L261-269\u3011",
         "openai_pua_short": "текст.\uea012\uea02",
+        "ref_name_search": '<ref name="0search12">',
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
@@ -192,7 +194,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base)
-    checks.append(("полный primary-реестр закрывает 11/11", not err and len(cov) == 11))
+    checks.append(("полный тестовый реестр закрывает 12/12", not err and len(cov) == 12))
     err, _, _ = validate(ok[:-1], base_dir=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, allow_pending=True)
@@ -205,20 +207,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 11))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 12))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 11))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 12))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                   and any("synthetic" in x for x in warn) and len(cov) == 10))
+                    and any("synthetic" in x for x in warn) and len(cov) == 11))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -245,4 +247,4 @@ if __name__ == "__main__":
         sys.exit(selftest())
     allow = "--allow-pending" in args
     paths = [a for a in args if not a.startswith("--")]
-    sys.exit(run(paths[0] if paths else "research/fixtures/v3.1-v3.2-sources.json", allow))
+    sys.exit(run(paths[0] if paths else "research/fixtures/marker-sources.json", allow))
