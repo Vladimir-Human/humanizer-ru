@@ -90,6 +90,8 @@ def validate(entries, base_dir=".", allow_pending=False):
         if url:
             if url in confirmed_urls and case != "attached_web_bracket":
                 warnings.append(tag + ": повторный source_url - проверьте, что это осознанно")
+                if not str(e.get("warning_disposition", "")).strip():
+                    errors.append(tag + ": повторный source_url без warning_disposition")
             confirmed_urls.add(url)
         accessed = str(e.get("accessed", ""))
         if accessed and not DATE_RX.match(accessed):
@@ -233,6 +235,14 @@ def selftest():
     bad = json.loads(json.dumps(ok)); bad[3]["accessed"] = "13.07.2026"
     err, _, _ = validate(bad, base_dir=base)
     checks.append(("дата не ISO -> FAIL", any("YYYY-MM-DD" in x for x in err)))
+    bad = json.loads(json.dumps(ok)); bad[1]["source_url"] = bad[0]["source_url"]
+    err, _, _ = validate(bad, base_dir=base)
+    checks.append(("повтор URL без disposition -> FAIL",
+                   any("warning_disposition" in x for x in err)))
+    bad[1]["warning_disposition"] = "проверено: общий источник осознан"
+    err, warn, cov = validate(bad, base_dir=base)
+    checks.append(("повтор URL с disposition закрывает",
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 12))
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
     for n, p in checks:

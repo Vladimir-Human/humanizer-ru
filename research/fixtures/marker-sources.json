@@ -71,8 +71,9 @@
     "accessed": "2026-07-13",
     "platform": "ChatGPT",
     "verbatim_sample": "citegenerated-reference-identifier",
-    "secondary_justification": "Страница перечисляет форму рядом с подтверждёнными citeturn-метками и даёт слово example со ссылкой на реальную правку. ЗАДАЧА: извлечь permalink примера и поднять до primary.",
-    "evidence_note": "EN Wiki, раздел Markup."
+    "secondary_justification": "Страница перечисляет форму рядом с citeturn-метками и ссылается на пример реальной правки. Финальный поиск 2026-07-17 не дал независимого immutable первичного примера; повторный source_url осознан и остаётся видимым предупреждением валидатора.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не использовать атрибуцию версии или интерфейса, пока не найден permalink исходной правки.",
+    "evidence_note": "EN Wiki, раздел Markup. Ограничение повторного secondary URL зафиксировано в AUDIT-2026-07-17.md."
   },
   {
     "case": "deepseek_line_ref",
@@ -82,8 +83,9 @@
     "accessed": "2026-07-13",
     "platform": "DeepSeek",
     "verbatim_sample": "【85†L261-269】",
-    "secondary_justification": "Страница дословно цитирует форму из наблюдений June 2025: «markup with lenticular brackets and dagger symbols, like 【85†L261-269】… specific to DeepSeek». ЗАДАЧА: permalink ревизии-примера.",
-    "evidence_note": "EN Wiki, раздел Markup."
+    "secondary_justification": "Страница дословно цитирует форму из наблюдений June 2025. Финальный поиск 2026-07-17 нашёл только обзорные и implementation-упоминания, не независимый immutable первичный образец; повторный source_url осознан и остаётся видимым предупреждением валидатора.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не усиливать атрибуцию конкретной версии или производных без permalink исходного текста.",
+    "evidence_note": "EN Wiki, раздел Markup. Ограничение повторного secondary URL зафиксировано в AUDIT-2026-07-17.md."
   },
   {
     "case": "openai_pua_short",

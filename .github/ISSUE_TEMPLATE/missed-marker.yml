@@ -24,7 +24,7 @@ body:
     id: model
     attributes:
       label: Модель и режим
-      placeholder: ChatGPT (GPT-5.5), веб-поиск
+      placeholder: название сервиса или модели, режим веб-поиска
     validations:
       required: true
   - type: textarea
