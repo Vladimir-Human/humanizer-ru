@@ -62,6 +62,21 @@ CASES = {
         ["turn the file over", "return file 5 to the archive"],
         ("fileciteturn0file2turn0file6", 2),
     ),
+    "ref_name_search": (
+        r"<ref\b[^>]*\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
+        [
+            '<ref name="0search12">',
+            '<ref name="2file0">',
+            '<ref name="1news4" />',
+        ],
+        [
+            '<ref name="search12">',
+            '<ref name="source12">',
+            '<ref name="turn0search0">',
+            'ref name="0search12" без тега ref',
+        ],
+        ('<ref name="0search0"> <ref name="0search1"> <ref name="2file3">', 3),
+    ),
     # --- A.3. Метки UTM от чат-ботов ---
     "utm_chatgpt": (
         r"[?&]utm_source=chatgpt\.com",
@@ -304,6 +319,12 @@ def _inside_backticks(line: str, start: int, end: int) -> bool:
     return line[:start].count("`") % 2 == 1 and line[end:].count("`") >= 1
 
 
+def _console_text(text: str, encoding=None) -> str:
+    """Сохраняет диагностику читаемой и на консолях без поддержки PUA/BOM."""
+    encoding = encoding or sys.stdout.encoding or "utf-8"
+    return text.encode(encoding, errors="backslashreplace").decode(encoding)
+
+
 def scan(paths: list) -> int:
     """Прогон всех выражений по произвольным файлам.
 
@@ -327,7 +348,7 @@ def scan(paths: list) -> int:
                     if _inside_backticks(line, m.start(), m.end()):
                         continue
                     found += 1
-                    fragment = line.strip()[:90]
+                    fragment = _console_text(line.strip()[:90])
                     print(f"{path}:{lineno} [{name}] {fragment}")
     if found:
         print(f"\nНайдено маркеров: {found}.")
@@ -357,6 +378,10 @@ def main() -> int:
             if got != expected:
                 print(f"ПРОВАЛ {name}: многократный образец — ожидалось {expected}, найдено {got}")
                 fails += 1
+
+    if _console_text("\ufeff", "ascii") != r"\ufeff":
+        print("ПРОВАЛ scan: невидимый символ не экранируется для ASCII-консоли")
+        fails += 1
 
     total = len(CASES)
     if fails:

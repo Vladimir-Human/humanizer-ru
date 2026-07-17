@@ -12,8 +12,8 @@
  7. Внутренние относительные ссылки указывают на существующие файлы.
  8. Файлы research/raw/** не содержат аналитики (ОТПЕЧАТК/ВЕРДИКТ).
  9. Журнал Le Chat: MARKER_FOUND допустим только при >= 15 строках прогонов.
-10. Нет завышенных формулировок «35 однозначных маркеров» /
-    «35 unambiguous regex markers» — выражения делятся на классы A и B.
+ 10. Нет завышенных формулировок «N однозначных маркеров» /
+     «N unambiguous regex markers» — выражения делятся на классы A и B.
 11. README.en.md упоминает актуальную структуру проекта:
     check_docs.py, PERSONA.md, research/, tests/fixtures/.
 12. Пилот PERSONA (research/ab/persona-pilot-results.md): вводный блок
@@ -35,8 +35,8 @@ DOC_FILES = ["README.md", "README.en.md", "SKILL.md", "CHANGELOG.md", "PERSONA.m
 RAW_TOKENS = ("ОТПЕЧАТК", "ВЕРДИКТ")
 LECHAT_LOG = "research/protocols/le-chat-test-log.md"
 MIN_RUNS_FOR_MARKER = 15
-OVERCLAIM_RU = "35 однозначных маркеров"
-OVERCLAIM_EN = "35 unambiguous regex markers"
+OVERCLAIM_RU = re.compile(r"\b\d+\s+однозначных\s+маркеров\b", re.I)
+OVERCLAIM_EN = re.compile(r"\b\d+\s+unambiguous\s+regex\s+markers\b", re.I)
 EN_REQUIRED = ("check_docs.py", "PERSONA.md", "research/", "tests/fixtures/")
 PILOT_FILE = "research/ab/persona-pilot-results.md"
 PILOT_INTRO = "Выборка: A=5, B=1, C=2"
@@ -151,13 +151,15 @@ def check_repo(root):
                  "(протокол требует >= %d)"
                  % (LECHAT_LOG, runs, MIN_RUNS_FOR_MARKER))
 
- # 10. Нет завышенных формулировок про «однозначность» всех 35 выражений
- if OVERCLAIM_RU in text("README.md"):
-  errors.append("README.md: завышенная формулировка «%s» — "
-                "описывайте классы A и B" % OVERCLAIM_RU)
- if OVERCLAIM_EN in text("README.en.md"):
-  errors.append("README.en.md: overclaim '%s' — "
-                "describe marker classes A and B" % OVERCLAIM_EN)
+  # 10. Нет завышенных формулировок про «однозначность» всех выражений
+  ru_overclaim = OVERCLAIM_RU.search(text("README.md"))
+  if ru_overclaim:
+   errors.append("README.md: завышенная формулировка «%s» — "
+                 "описывайте классы A и B" % ru_overclaim.group(0))
+  en_overclaim = OVERCLAIM_EN.search(text("README.en.md"))
+  if en_overclaim:
+   errors.append("README.en.md: overclaim '%s' — "
+                 "describe marker classes A and B" % en_overclaim.group(0))
 
  # 11. README.en.md упоминает актуальную структуру проекта
  en = text("README.en.md")
@@ -300,6 +302,11 @@ def selftest():
                    "check_docs.py PERSONA.md research/ tests/fixtures/\n"
                    "35 unambiguous regex markers\n"),
       "unambiguous")
+ case("overclaim «36 однозначных маркеров» в README -> FAIL",
+      lambda r: _w(r, "README.md",
+                   "# R\n[CHANGELOG.md](CHANGELOG.md)\n"
+                   "Скилл содержит 36 однозначных маркеров.\n"),
+      "однозначных")
  case("README.en без упоминания PERSONA.md -> FAIL",
       lambda r: _w(r, "README.en.md",
                    "# R\n[CHANGELOG.md](CHANGELOG.md)\n"
