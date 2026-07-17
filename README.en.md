@@ -8,7 +8,7 @@
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns, 35 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns, 36 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -44,7 +44,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.3.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.4.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -74,10 +74,10 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 ## Regex markers: classes A and B
 
-35 regular expressions catch traces of machine generation. They fall into two classes:
+36 regular expressions catch traces of machine generation. They fall into two classes:
 
 - **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, zero-width watermark characters.
-- **Class B — contextual indicators** that are strong signals but need human judgement: placeholder URLs and dates from template answers.
+- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
 
 Run all markers against test fixtures:
 
@@ -112,6 +112,8 @@ humanizer-ru/
 ├── tests/fixtures/               # Marker test fixtures
 └── .github/workflows/            # CI: self-scan, regex tests, style and docs checks
 ```
+
+The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
 ## Security
 

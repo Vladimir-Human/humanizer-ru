@@ -36,11 +36,11 @@ jobs:
         run: python3 scripts/check_spec.py SKILL.md --strict --expect-dir humanizer-ru
 
   fixture-sources:
-    name: Реестр источников маркеров v3.1-v3.2
+    name: Реестр источников маркеров
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Самопроверка валидатора
         run: python3 scripts/check_fixture_sources.py --selftest
-      - name: Гейт issue #18 (реальный PUA-образец найден, гейт 11/11)
-        run: python3 scripts/check_fixture_sources.py research/fixtures/v3.1-v3.2-sources.json
+      - name: Гейт доказательств для зарегистрированных маркеров (12/12)
+        run: python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
