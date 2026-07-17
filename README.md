@@ -206,8 +206,8 @@ humanizer-ru/
 | Сцепка `ISO+3ISO+3` | OpenAI ChatGPT (ошибка отрисовки сносок) | `[A-Za-zА-Яа-яЁё)]\+\d+[A-ZА-ЯЁ]` |
 | `[cite_start]` | Google Gemini (анализ PDF) | `\[cite_start\]` |
 | `[cite: 8]`, `[Cite: 12]`, `[cite: 19, 20, 21]` | Google Gemini (ссылка на фрагменты источника; расширено в v3.2) | `\[[Cc]ite:\s?\d+(?:,\s?\d+)*\]` |
-| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | OpenAI o3/o4-mini и наследники; маркировка по статье 50 Регламента ЕС об ИИ | `[\u200b-\u200d\u2060\ufeff]` |
-| `:::writing{variant="document" id="68427"}` | OpenAI ChatGPT / GPT-5.5 (ограждение writing-блока, замечено с июня 2026) | `:::\w+\{variant` |
+| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b-\u200d\u2060\ufeff]` |
+| `:::writing{variant="document" id="68427"}` | Writing-разметка интерфейса; атрибуция версии не подтверждена evidence registry | `:::\w+\{variant` |
 | `turn0image0`, `turn0news0`, `turn0video0`, `turn0ref0` | OpenAI ChatGPT (мультимедиа-инструменты) | `turn\d+(?:image\|news\|video\|ref)\d+` |
 | `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com` |
 | `?referrer=grok.com` | xAI Grok | `[?&]referrer=grok\.com` |
@@ -231,7 +231,7 @@ humanizer-ru/
 
 ### Отпечатки моделей (новое в v2.3)
 
-Стилистические приметы по производителям, актуальные на 2 июля 2026: OpenAI GPT-5.5 (флагман с 23 апреля 2026), Anthropic Claude Fable 5 (глобально с 1 июля 2026) / Sonnet 5 (30 июня 2026) / Opus 4.8, Google Gemini 3.5 Flash (стандартный после Google I/O 2026) и режим Deep Research, xAI Grok 4.3, DeepSeek V4, Qwen 3.7, Meta Muse Spark, Mistral Large 3 / Magistral, Perplexity Sonar, Amazon Nova 2, Cohere Command A+. Срок актуальности: до 30 сентября 2026; внеплановая проверка 2 августа 2026 (вступление в силу статьи 50 Регламента ЕС об ИИ). См. `references/llm-fingerprints.md`.
+`references/llm-fingerprints.md` не ведёт каталог актуальных версий моделей. Он описывает уровни доказательств, воспроизводимые артефакты и локальные наблюдения с явными ограничениями атрибуции. Версию или доступность модели нельзя выводить из стилистического признака без первичного датированного источника.
 
 **Шкала критичности:** 🔴 мгновенно выдаёт ИИ · 🟡 сильный сигнал · 🟢 слабый сигнал
 
