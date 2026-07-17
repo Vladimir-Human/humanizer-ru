@@ -5,9 +5,9 @@ license: MIT
 compatibility: Claude.ai, Claude Code, opencode, и другие агенты, поддерживающие спецификацию agentskills.io. Только текст, без выполнения кода, без доступа к сети и файловой системе.
 metadata:
   author: Vladimir-Human
-  version: "3.3.5"
-  last_reviewed: "2026-07-14"
-  next_review_due: "2026-08-31"
+  version: "3.4.0"
+  last_reviewed: "2026-07-17"
+  next_review_due: "2026-09-30"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
   support: "https://github.com/Vladimir-Human/humanizer-ru/issues"
@@ -15,7 +15,7 @@ metadata:
   sources: "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing; https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0; https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup"
 ---
 
-# Humanizer-ru — очеловечивание текста (v3.3.5)
+# Humanizer-ru — очеловечивание текста (v3.4.0)
 
 Скилл для редактирования русскоязычного текста со следами работы ИИ. Цель — сделать текст естественным, не искажая смысла. Опирается на проект Wikipedia AI Cleanup и его русский аналог.
 
@@ -63,7 +63,9 @@ metadata:
   ↓
 Прогнать regex по chatbot-artifacts.md
   ↓
-Найден хоть один однозначный маркер? — да → удалить, проверить остальной текст; почти точно ИИ
+Найден маркер класса A? — да → удалить артефакт, восстановить и проверить источник; прямое копирование из ИИ очень вероятно
+  ↓ нет
+Найден только маркер класса B? — да → проверить контекст и добавить независимое свидетельство; авторство по одному B не определять
   ↓ нет
 Сосчитать мягкие признаки по категориям (контентные, языковые, структурные, коммуникативные)
   ↓
@@ -93,9 +95,10 @@ metadata:
 | `references/structural-style-patterns.md` | Структурные и стилевые паттерны #16–21 + расширение #21a: длинное тире, жирный, эмодзи в списках, кавычки, таблицы, разметка Markdown, иерархия заголовков, Каждое Слово Заголовка С Прописной | При работе с текстом, имеющим разметку, или для прямой публикации |
 | `references/communication-patterns.md` | Коммуникативные паттерны #22–25 + расширения #24a и #25a: остатки реплик, оговорки о пределах знаний, льстивый тон, псевдо-терапевтический регистр, общие позитивные выводы, обрыв на полуслове | При анализе текстов, скопированных из чата |
 | `references/chatbot-artifacts.md` | Однозначные маркеры с регулярными выражениями: `:contentReference[oaicite:N]`, `oai_citation:N‡`, `turn0search0`/`turn0image0`/`turn0news0`/`turn0video0`/`turn0ref0`, `?utm_source=chatgpt.com`/`copilot.com`, `?referrer=grok.com`, `grok_card://`, `<grok-card … citation_card>`, `grok_render_citation_card_json`, `vertexaisearch…/grounding-api-redirect`, `[^N^]`, `【N†source】`, `【85†L261-269】` (DeepSeek line refs), `citeturn0file0`, `](sandbox:/mnt/data/`, `[attached_file:N]`/`[web:N]`, `citegenerated-reference-identifier`, `INSERT_SOURCE_URL`/`URL_HERE`/`PASTE_*_URL_HERE`, placeholder-даты `2025-XX-XX`, невидимые символы `U+E200–E204`, остатки `❨think❩`, сцепки «Источник+цифра», метки file_search `turn0file2`, метки цитирования Gemini `[cite_start]` / `[cite: N]` / `[cite: N, M, K]`, символы нулевой ширины, короткая форма сноски `U+EA01`/`U+EA02`, блоки writing `:::writing{variant=…}`, а также старое поколение | При подозрении на копирование из чата |
+| `research/fixtures/marker-sources.json` | Реестр доказательств для маркеров: immutable URL, дата доступа, дословный образец, класс доказательства и fixture | При добавлении или пересмотре regex-маркера |
 | `references/source-fabrication.md` | Проверка ссылок: 404, DOI ведёт на чужую статью, несуществующий ISBN, автор умер до публикации, книжная ссылка без страниц, устаревшая дата обращения | Всегда при наличии ссылок на источники |
 | `references/false-positives.md` | Что не считается признаком ИИ: длинное тире в художке, изогнутые кавычки от автозамены macOS, правило трёх в риторике и публицистике, канцелярит в юридическом тексте, академический и научный регистр, неэффективные индикаторы, живой синтаксис, разные типы ошибок у людей и моделей | Перед вынесением вердикта о машинном происхождении |
-| `references/llm-fingerprints.md` | Отпечатки моделей по производителям: OpenAI GPT-5.5, Anthropic Claude 4.6/4.7, Google Gemini 3.5 (+ Deep Research), xAI Grok 4.3, DeepSeek V4, Qwen 3.7, Meta Muse Spark, Mistral Large 3 / Magistral, Perplexity, Amazon Nova, Cohere Command A+ | При работе со свежими текстами 2025–2026 |
+| `references/llm-fingerprints.md` | Реестр уровней доказательств P/S/O/H, воспроизводимые артефакты и локальные наблюдения без атрибуции неподтверждённых версий моделей | При работе со свежими текстами 2025–2026 |
 | `references/test-fixtures.md` | Эталонные пары «образец / результат» для всех регулярных выражений + полные примеры правки | При обновлении скилла, для регрессионной защиты |
 | `scripts/check_markers.py` | Автоматический прогон всех регулярных выражений по трём уровням образцов; запускается в CI и перед релизом. Режим `--scan` проверяет произвольный текст на маркеры | При обновлении маркеров: `python3 scripts/check_markers.py`; для проверки текста: `python3 scripts/check_markers.py --scan файл.md` |
 
@@ -105,12 +108,24 @@ metadata:
 
 - Один жёсткий артефакт копирования (класс A) из `references/chatbot-artifacts.md`.
 - Контекстные индикаторы (класс B: placeholder-URL и placeholder-даты,
-  `referrer=grok.com`, символы нулевой ширины, одиночные PUA-символы) сами
+  `referrer=grok.com`, символы нулевой ширины, одиночные PUA-символы,
+  `<ref name="0search12">`) сами
   по себе НЕ достаточны - только в сочетании с другими признаками.
 - Подтверждённый подлог источника из `references/source-fabrication.md`.
 - Сочетание трёх и более мягких признаков из разных категорий.
 
 Лучше пропустить машинный текст, чем испортить живой текст человека.
+
+## Политика обновлений
+
+- **Устойчивое ядро.** Правила жанра, границы ложных срабатываний, дерево
+  решений и мягкие языковые паттерны меняются консервативно. Их изменение,
+  которое меняет поведение агента для существующих задач, требует minor или
+  major-оценки совместимости.
+- **Быстрый слой.** Маркеры разметки конкретных моделей могут обновляться
+  чаще, но только вместе с тремя образцами regex, записью в
+  `research/fixtures/marker-sources.json` и сохранением класса A/B. Новый
+  маркер B не становится основанием для самостоятельного вердикта.
 
 ## Пять ключевых принципов правки
 

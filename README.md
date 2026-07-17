@@ -8,7 +8,7 @@
 
 **[English version → README.en.md](README.en.md)**
 
-Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 38 паттернов, 35 проверяемых regex-маркеров (классы A и B), автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub, Socket и Snyk.
+Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 38 паттернов, 36 проверяемых regex-маркеров классов A и B, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub, Socket и Snyk.
 
 **До:**
 
@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.3.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.4.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -95,7 +95,7 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 ## Что делает
 
-Выявляет и исправляет 38 паттернов машинного текста на русском языке (25 базовых + 13 расширений для русского) и 35 проверяемых regex-маркеров (классы A и B). Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+Выявляет и исправляет 38 паттернов машинного текста на русском языке (25 базовых + 13 расширений для русского) и 36 проверяемых regex-маркеров классов A и B. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
 С версии 2.3 SKILL.md — это карта с деревом решений. Полное описание паттернов и проверок лежит в подключаемых файлах `references/`.
 
@@ -117,7 +117,7 @@ humanizer-ru/
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check
 ├── references/               # 9 справочников паттернов и маркеров
-├── research/                 # Протоколы, реестр, сырые ответы, пилоты
+├── research/                 # Протоколы, реестр, сырые ответы, пилоты и аудит
 └── tests/fixtures/           # Проверочные образцы
 ```
 
@@ -180,15 +180,16 @@ humanizer-ru/
 
 ### Regex-маркеры: классы A и B
 
-> 35 регулярных выражений делятся на два класса. Класс A — жёсткие copy-paste-артефакты, почти однозначно означающие ИИ: служебные ссылки ChatGPT, невидимые разделители цитат, `[cite: N]` Gemini, карточки цитат Grok, остатки тегов рассуждений DeepSeek, символы нулевой ширины. Класс B — контекстные индикаторы (placeholder-URL и даты из шаблонных ответов): сильный сигнал, но требуют взгляда человека.
+> 36 регулярных выражений делятся на два класса. Класс A — жёсткие copy-paste-артефакты: служебные ссылки ChatGPT, невидимые разделители цитат, `[cite: N]` Gemini, карточки цитат Grok и остатки тегов рассуждений DeepSeek. Класс B — контекстные индикаторы: placeholder-URL и даты, `referrer=grok.com`, символы нулевой ширины и имена сносок с внутренними идентификаторами. B требует ручной проверки и не даёт самостоятельного вердикта.
 
-Выражения делятся на два класса. Класс A — жёсткие артефакты копирования (oaicite, turn-метки, sandbox:/mnt/data, карточки Grok и подобные): один такой маркер в обычном тексте почти точно означает ИИ. Класс B — контекстные индикаторы (placeholder-даты и placeholder-URL, referrer=grok.com, символы нулевой ширины, одиночные PUA-символы): они встречаются и вне генерации, сами по себе вердикт не дают и работают только в сочетании с другими признаками.
+Каждый маркер проходит прямой, отрицательный и граничный fixture; маркеры с доказательной цепочкой дополнительно проверяются по `research/fixtures/marker-sources.json`. Политика обновлений разделяет устойчивое ядро (правила и границы ложных срабатываний) и быстрый слой (модельные артефакты): быстрый слой меняется только с образцами, источником и сохранением класса A/B.
 
 | Маркер | Источник | Регулярное выражение |
 |---|---|---|
 | `:contentReference[oaicite:N]{index=N}` | OpenAI ChatGPT | `:contentReference\[oaicite:\d+\]\{index=\d+\}` |
 | `oai_citation:N‡` | OpenAI ChatGPT | `oai_citation:\d+‡` |
 | `turn0search0`, `turn0fetch0` | OpenAI веб-поиск | `turn\d+(search\|fetch)\d+` |
+| `<ref name="0search12">` | Контекстный след внутреннего инструмента в имени вики-сноски | `<ref\b[^>]*\bname=["']\d+(?:search\|fetch\|file\|image\|news\|video\|ref)\d+["']` |
 | `?utm_source=chatgpt.com` | OpenAI ChatGPT | `[?&]utm_source=chatgpt\.com` |
 | `?utm_source=openai` | OpenAI API | `[?&]utm_source=openai` |
 | `attached_file://` | OpenAI ChatGPT | `attached_file:\/\/` |
@@ -205,8 +206,8 @@ humanizer-ru/
 | Сцепка `ISO+3ISO+3` | OpenAI ChatGPT (ошибка отрисовки сносок) | `[A-Za-zА-Яа-яЁё)]\+\d+[A-ZА-ЯЁ]` |
 | `[cite_start]` | Google Gemini (анализ PDF) | `\[cite_start\]` |
 | `[cite: 8]`, `[Cite: 12]`, `[cite: 19, 20, 21]` | Google Gemini (ссылка на фрагменты источника; расширено в v3.2) | `\[[Cc]ite:\s?\d+(?:,\s?\d+)*\]` |
-| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | OpenAI o3/o4-mini и наследники; маркировка по статье 50 Регламента ЕС об ИИ | `[\u200b-\u200d\u2060\ufeff]` |
-| `:::writing{variant="document" id="68427"}` | OpenAI ChatGPT / GPT-5.5 (ограждение writing-блока, замечено с июня 2026) | `:::\w+\{variant` |
+| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b-\u200d\u2060\ufeff]` |
+| `:::writing{variant="document" id="68427"}` | Writing-разметка интерфейса; атрибуция версии не подтверждена evidence registry | `:::\w+\{variant` |
 | `turn0image0`, `turn0news0`, `turn0video0`, `turn0ref0` | OpenAI ChatGPT (мультимедиа-инструменты) | `turn\d+(?:image\|news\|video\|ref)\d+` |
 | `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com` |
 | `?referrer=grok.com` | xAI Grok | `[?&]referrer=grok\.com` |
@@ -230,7 +231,7 @@ humanizer-ru/
 
 ### Отпечатки моделей (новое в v2.3)
 
-Стилистические приметы по производителям, актуальные на 2 июля 2026: OpenAI GPT-5.5 (флагман с 23 апреля 2026), Anthropic Claude Fable 5 (глобально с 1 июля 2026) / Sonnet 5 (30 июня 2026) / Opus 4.8, Google Gemini 3.5 Flash (стандартный после Google I/O 2026) и режим Deep Research, xAI Grok 4.3, DeepSeek V4, Qwen 3.7, Meta Muse Spark, Mistral Large 3 / Magistral, Perplexity Sonar, Amazon Nova 2, Cohere Command A+. Срок актуальности: до 30 сентября 2026; внеплановая проверка 2 августа 2026 (вступление в силу статьи 50 Регламента ЕС об ИИ). См. `references/llm-fingerprints.md`.
+`references/llm-fingerprints.md` не ведёт каталог актуальных версий моделей. Он описывает уровни доказательств, воспроизводимые артефакты и локальные наблюдения с явными ограничениями атрибуции. Версию или доступность модели нельзя выводить из стилистического признака без первичного датированного источника.
 
 **Шкала критичности:** 🔴 мгновенно выдаёт ИИ · 🟡 сильный сигнал · 🟢 слабый сигнал
 
