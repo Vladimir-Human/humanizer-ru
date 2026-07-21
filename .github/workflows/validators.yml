@@ -72,3 +72,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Human 0, raw только BOM, boundary совпал
         run: python3 scripts/check_corpus.py
+
+  release-preflight:
+    name: Самопроверка сборки архива
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: check_release.py --selftest
+        run: python3 scripts/check_release.py --selftest
+      - name: Сборка + верификация архива (allowlist, без research/tests/.github)
+        run: |
+          python3 scripts/check_release.py --root . --build dist/humanizer-ru.zip
+          python3 scripts/check_release.py --verify dist/humanizer-ru.zip
