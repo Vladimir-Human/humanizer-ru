@@ -8,7 +8,7 @@
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns, 36 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions), 38 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -44,7 +44,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.4.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.5.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -61,7 +61,7 @@ Or directly:
 
 ## What it does
 
-Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Russian-specific), grouped into four families:
+Detects and fixes 37 patterns of machine-generated Russian text (25 base + 12 Russian-specific extensions), grouped into four families:
 
 | Family | Examples |
 |---|---|
@@ -74,9 +74,9 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 ## Regex markers: classes A and B
 
-36 regular expressions catch traces of machine generation. They fall into two classes:
+38 regular expressions catch traces of machine generation. They fall into two classes:
 
-- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, zero-width watermark characters.
+- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
 - **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
 
 Run all markers against test fixtures:

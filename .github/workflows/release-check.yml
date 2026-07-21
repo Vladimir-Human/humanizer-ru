@@ -1,0 +1,57 @@
+name: Проверка релиза
+
+# Срабатывает при создании тегов vX.Y.Z. Кодифицирует ручной чек-лист
+# FINAL-PREMERGE-REPORT: тег должен быть annotated, версия тега должна
+# совпадать с metadata SKILL.md, а CHANGELOG должен содержать запись.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release-check:
+    name: Тег соответствует релизному контракту
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Тег annotated (не lightweight)
+        run: |
+          TYPE=$(git cat-file -t "$GITHUB_REF_NAME" 2>/dev/null || echo "")
+          if [ "$TYPE" != "tag" ]; then
+            echo "FAIL: тег $GITHUB_REF_NAME не annotated ($TYPE)"
+            exit 1
+          fi
+          echo "OK: annotated tag"
+
+      - name: Версия тега == version в SKILL.md metadata
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          META=$(grep -oP 'version:\s*"?\K\d+\.\d+\.\d+' SKILL.md | head -1)
+          echo "tag=$TAG meta=$META"
+          [ "$TAG" = "$META" ] || { echo "FAIL: тег $TAG != metadata $META"; exit 1; }
+
+      - name: CHANGELOG содержит запись для версии
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          grep -qE "^##\s+${TAG}\b" CHANGELOG.md || {
+            echo "FAIL: в CHANGELOG.md нет записи ## ${TAG}"
+            exit 1
+          }
+
+      - name: Финальный прогон всех валидаторов
+        run: |
+          python3 scripts/check_markers.py
+          python3 scripts/check_markers.py --parity
+          python3 scripts/check_spec.py SKILL.md --strict --expect-dir humanizer-ru
+          python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
+          python3 scripts/count_style_markers.py --selftest
+          python3 scripts/check_docs.py
+          python3 scripts/check_corpus.py

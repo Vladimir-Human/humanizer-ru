@@ -13,11 +13,17 @@ on:
       - 'scripts/**'
       - 'references/chatbot-artifacts.md'
       - 'references/test-fixtures.md'
+      - 'research/validation/**'
+      - 'research/raw/**'
+      - 'tests/fixtures/**'
   pull_request:
     paths:
       - 'scripts/**'
       - 'references/chatbot-artifacts.md'
       - 'references/test-fixtures.md'
+      - 'research/validation/**'
+      - 'research/raw/**'
+      - 'tests/fixtures/**'
   workflow_dispatch:
 
 permissions:
@@ -33,3 +39,9 @@ jobs:
 
       - name: Прогнать все выражения по трём уровням образцов
         run: python3 scripts/check_markers.py
+
+      - name: Паритет md↔py (каждый regex задокументирован)
+        run: python3 scripts/check_markers.py --parity
+
+      - name: Регрессия корпусов (human 0, raw только BOM, boundary)
+        run: python3 scripts/check_corpus.py
