@@ -8,7 +8,7 @@
 
 **[English version → README.en.md](README.en.md)**
 
-Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 38 паттернов, 36 проверяемых regex-маркеров классов A и B, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub, Socket и Snyk.
+Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 37 паттернов (25 базовых + 12 расширений), 38 проверяемых regex-маркеров классов A и B, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub, Socket и Snyk.
 
 **До:**
 
@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.4.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.5.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -95,7 +95,7 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 ## Что делает
 
-Выявляет и исправляет 38 паттернов машинного текста на русском языке (25 базовых + 13 расширений для русского) и 36 проверяемых regex-маркеров классов A и B. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+Выявляет и исправляет 37 паттернов машинного текста на русском языке (25 базовых + 12 расширений для русского) и 38 проверяемых regex-маркеров классов A и B. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
 С версии 2.3 SKILL.md — это карта с деревом решений. Полное описание паттернов и проверок лежит в подключаемых файлах `references/`.
 
@@ -180,7 +180,7 @@ humanizer-ru/
 
 ### Regex-маркеры: классы A и B
 
-> 36 регулярных выражений делятся на два класса. Класс A — жёсткие copy-paste-артефакты: служебные ссылки ChatGPT, невидимые разделители цитат, `[cite: N]` Gemini, карточки цитат Grok и остатки тегов рассуждений DeepSeek. Класс B — контекстные индикаторы: placeholder-URL и даты, `referrer=grok.com`, символы нулевой ширины и имена сносок с внутренними идентификаторами. B требует ручной проверки и не даёт самостоятельного вердикта.
+> 38 регулярных выражений делятся на два класса. Класс A — жёсткие copy-paste-артефакты: служебные ссылки ChatGPT, невидимые разделители цитат, `[cite: N]` и span-метки Gemini, карточки цитат Grok, S3-ссылки Perplexity и остатки тегов рассуждений DeepSeek. Класс B — контекстные индикаторы: placeholder-URL и даты, `referrer=grok.com`, символы нулевой ширины и имена сносок с внутренними идентификаторами. B требует ручной проверки и не даёт самостоятельного вердикта.
 
 Каждый маркер проходит прямой, отрицательный и граничный fixture; маркеры с доказательной цепочкой дополнительно проверяются по `research/fixtures/marker-sources.json`. Политика обновлений разделяет устойчивое ядро (правила и границы ложных срабатываний) и быстрый слой (модельные артефакты): быстрый слой меняется только с образцами, источником и сохранением класса A/B.
 
@@ -206,6 +206,7 @@ humanizer-ru/
 | Сцепка `ISO+3ISO+3` | OpenAI ChatGPT (ошибка отрисовки сносок) | `[A-Za-zА-Яа-яЁё)]\+\d+[A-ZА-ЯЁ]` |
 | `[cite_start]` | Google Gemini (анализ PDF) | `\[cite_start\]` |
 | `[cite: 8]`, `[Cite: 12]`, `[cite: 19, 20, 21]` | Google Gemini (ссылка на фрагменты источника; расширено в v3.2) | `\[[Cc]ite:\s?\d+(?:,\s?\d+)*\]` |
+| `[span_N]` start_span / end_span (новое в v3.5) | Google Gemini (внутренние границы фрагментов) | `\[span_\d+\][\[(](?:start_span\|end_span)[\])]` |
 | Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b-\u200d\u2060\ufeff]` |
 | `:::writing{variant="document" id="68427"}` | Writing-разметка интерфейса; атрибуция версии не подтверждена evidence registry | `:::\w+\{variant` |
 | `turn0image0`, `turn0news0`, `turn0video0`, `turn0ref0` | OpenAI ChatGPT (мультимедиа-инструменты) | `turn\d+(?:image\|news\|video\|ref)\d+` |
@@ -218,6 +219,7 @@ humanizer-ru/
 | `citegenerated-reference-identifier` | ChatGPT (сгенерированный идентификатор) | `citegenerated-reference-identifier` |
 | `INSERT_SOURCE_URL`, `URL_HERE`, `PASTE_*_URL_HERE` | Placeholder-URL из шаблонных ответов | `\b(?:INSERT_SOURCE_URL(?:_\d+)?\|URL_HERE\|PASTE_\w+_URL_HERE)\b` |
 | `2025-XX-XX`, `2022-11-XX` | Placeholder-даты из шаблонных ответов (чаще всего «дата обращения») | `\b\d{4}-(?:\d{2}\|[Xx]{2})-[Xx]{2}\b` |
+| `ppl-ai-file-upload` в URL (новое в v3.5) | Perplexity (ссылки на Amazon S3-bucket) | `ppl-ai-file-upload` |
 
 Полный список с эталонными образцами — в `references/test-fixtures.md`.
 

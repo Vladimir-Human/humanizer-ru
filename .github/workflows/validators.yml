@@ -9,14 +9,18 @@ on:
     paths:
       - 'SKILL.md'
       - 'scripts/**'
+      - 'references/**'
       - 'research/fixtures/**'
+      - 'research/validation/**'
       - 'tests/fixtures/**'
       - '.github/workflows/validators.yml'
   pull_request:
     paths:
       - 'SKILL.md'
       - 'scripts/**'
+      - 'references/**'
       - 'research/fixtures/**'
+      - 'research/validation/**'
       - 'tests/fixtures/**'
       - '.github/workflows/validators.yml'
   workflow_dispatch:
@@ -42,5 +46,29 @@ jobs:
       - uses: actions/checkout@v4
       - name: Самопроверка валидатора
         run: python3 scripts/check_fixture_sources.py --selftest
-      - name: Гейт доказательств для зарегистрированных маркеров (12/12)
+      - name: Гейт доказательств для зарегистрированных маркеров (14/14)
         run: python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
+
+  parity:
+    name: md↔py паритет regex
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Каждое выражение CASES задокументировано в chatbot-artifacts.md
+        run: python3 scripts/check_markers.py --parity
+
+  style-selftest:
+    name: Самопроверка стилевых маркеров
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: count_style_markers --selftest
+        run: python3 scripts/count_style_markers.py --selftest
+
+  corpus:
+    name: Регрессия корпусов валидации
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Human 0, raw только BOM, boundary совпал
+        run: python3 scripts/check_corpus.py

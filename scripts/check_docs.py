@@ -86,6 +86,12 @@ def check_repo(root):
   errors.append("SKILL.md: version %s != заголовок v%s"
                 % (m_meta.group(1), m_head.group(1)))
 
+ # 2a. CHANGELOG содержит запись для текущей версии metadata
+ if version:
+  changelog = text("CHANGELOG.md")
+  if changelog and not re.search(r"^##\s+%s\b" % re.escape(version), changelog, re.M):
+   errors.append("CHANGELOG.md: нет записи ## %s для текущей версии" % version)
+
  for rel in ("README.md", "README.en.md"):
   t = text(rel)
   if not t:
@@ -114,14 +120,22 @@ def check_repo(root):
   if not t:
    continue
   base = os.path.dirname(p(rel))
-  for target in re.findall(r"\]\(([^)\s]+)\)", t):
-   if target.startswith(("http://", "https://", "mailto:", "#")):
-    continue
-   target_path = target.split("#")[0]
-   if not target_path:
-    continue
-   if not os.path.exists(os.path.join(base, target_path)):
-    errors.append("%s: битая внутренняя ссылка -> %s" % (rel, target))
+  for lineno, line in enumerate(t.splitlines(), 1):
+   for target in re.findall(r"\]\(([^)\s]+)\)", line):
+    if target.startswith(("http://", "https://", "mailto:", "#")):
+     continue
+    target_path = target.split("#")[0]
+    if not target_path:
+     continue
+    # Пропускаем совпадения внутри inline-кода (обратные кавычки):
+    # regex-документация часто содержит `](`, что не является ссылкой.
+    start = line.find("](" + target + ")")
+    if start >= 0:
+     before = line[:start]
+     if before.count("`") % 2 == 1 and line[start:].count("`") >= 1:
+      continue
+    if not os.path.exists(os.path.join(base, target_path)):
+     errors.append("%s:%d: битая внутренняя ссылка -> %s" % (rel, lineno, target))
 
  # 8. Сырые файлы без аналитики
  raw_dir = p("research/raw")

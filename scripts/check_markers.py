@@ -231,6 +231,17 @@ CASES = {
          "команда \\cite{ivanov2024} в LaTeX"],
         ("[cite: 1][cite: 2][Cite: 3]", 3),
     ),
+    # --- A.9 доп. span-метки Gemini (v3.5) ---
+    "gemini_span": (
+        r"\[span_\d+\][\[(](?:start_span|end_span)[\])]",
+        ["Альбом вышел[span_2](start_span) в августе 1986[span_2](end_span).",
+         "Форма заголовка раздела: [span_1][start_span]",
+         "Текст [span_12](start_span)фрагмент[span_12](end_span) целиком."],
+        ["[span_2] без start_span/end_span",
+         "[start_span] без номера span",
+         "[span_A](start_span) — буква вместо номера"],
+        ("[span_3](start_span)Альбом[span_3](end_span) и [span_4](start_span)сингл[span_4](end_span)", 4),
+    ),
     # --- A.10. Символы нулевой ширины (v2.9) ---
     "zero_width": (
         "[\u200b-\u200d\u2060\ufeff]",
@@ -285,6 +296,15 @@ CASES = {
         ["\u0421\u043c. [attached_file:1] \u0432 \u043e\u0442\u0432\u0435\u0442\u0435.", "\u0426\u0438\u0442\u0430\u0442\u0430 [web:3] \u0438\u0437 \u043f\u043e\u0438\u0441\u043a\u0430."],
         ["[attach:1] \u0434\u0440\u0443\u0433\u043e\u0439 \u0444\u043e\u0440\u043c\u0430\u0442", "\u043e\u0431\u044b\u0447\u043d\u0430\u044f \u0441\u043d\u043e\u0441\u043a\u0430 [1]"],
         ("[attached_file:1][web:2][web:3]", 3),
+    ),
+    # --- A.5 доп. S3-ссылки Perplexity (v3.5) ---
+    "perplexity_s3": (
+        r"ppl-ai-file-upload",
+        ["Источник: https://ppl-ai-file-upload.s3.amazonaws.com/abc123/file.pdf",
+         "Ссылка https://s3.amazonaws.com/ppl-ai-file-upload/x в списке литературы."],
+        ["упоминание ppl ai file upload с пробелами",
+         "обычная ссылка https://s3.amazonaws.com/other-bucket/x"],
+        None,
     ),
     # --- A.6 доп. generated-reference-identifier (v3.1) ---
     "generated_ref_id": (
@@ -391,7 +411,39 @@ def main() -> int:
     return 0
 
 
+def _canon_pattern(text: str) -> str:
+    """Каноническая форма для сравнения regex в коде и в markdown-таблицах."""
+    text = text.replace("\\|", "|").replace('\\"', '"').replace("\\'", "'")
+    return "".join(c if ord(c) < 128 else "\\u%04x" % ord(c) for c in text)
+
+
+def parity(md_path: str = "references/chatbot-artifacts.md") -> int:
+    """Проверка md↔py паритета: каждое выражение CASES задокументировано в справочнике.
+
+    В markdown-таблицах вертикальная черта экранируется как `\\|`, а невидимые
+    символы записаны escape-последовательностями, поэтому обе стороны
+    нормализуются через _canon_pattern. Код возврата 0 — все выражения
+    задокументированы, 1 — есть недокументированные (regex без описания).
+    """
+    try:
+        with open(md_path, encoding="utf-8") as fh:
+            doc = _canon_pattern(fh.read())
+    except OSError as exc:
+        print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)
+        return 2
+    missing = [name for name, case in CASES.items() if _canon_pattern(case[0]) not in doc]
+    for name in missing:
+        print(f"ПРОВАЛ parity: {name} отсутствует в {md_path}")
+    if missing:
+        print(f"Паритет: {len(CASES) - len(missing)}/{len(CASES)} задокументировано.")
+        return 1
+    print(f"Паритет: все {len(CASES)} выражений задокументированы в {md_path}.")
+    return 0
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--scan":
         sys.exit(scan(sys.argv[2:]))
+    if len(sys.argv) > 1 and sys.argv[1] == "--parity":
+        sys.exit(parity(*sys.argv[2:]))
     sys.exit(main())
