@@ -14,8 +14,18 @@
 ## Предложить правку
 
 1. Создайте свою копию репозитория (fork) и ветку от `main`.
-2. Для нового regex-маркера: выражение — в `references/chatbot-artifacts.md`, три уровня проверочных образцов — в `references/test-fixtures.md`.
-3. Прогоните `python3 scripts/check_markers.py` — все выражения должны проходить.
+2. Для нового regex-маркера обязательны все четыре артефакта:
+   - выражение и описание — в `references/chatbot-artifacts.md` (с классом A/B);
+   - три уровня проверочных образцов (прямой/отрицательный/граничный) — в `references/test-fixtures.md`;
+   - запись `CASES` в `scripts/check_markers.py`;
+   - запись в `research/fixtures/marker-sources.json` (immutable URL, дата доступа, дословный образец, класс доказательства).
+3. Прогоните валидаторы — все должны проходить:
+   ```sh
+   python3 scripts/check_markers.py
+   python3 scripts/check_markers.py --parity
+   python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
+   python3 scripts/check_corpus.py
+   ```
 4. Прогоните `python3 scripts/check_markers.py --scan` по изменённым файлам: в тексте документации не должно остаться живых маркеров, только экранированные.
 5. Откройте PR: встроенный шаблон напомнит указать связанное issue, источник образцов и результаты проверок.
 

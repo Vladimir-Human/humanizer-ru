@@ -29,21 +29,38 @@ import os
 import re
 import sys
 
+import json
+import os
+import re
+import sys
+
+# Импортируем CASES из check_markers.py, чтобы гейт автоматически ловил
+# новые маркеры, не добавленные в реестр (новый case обязан попасть в SCOPE).
+try:
+    from check_markers import CASES as _MARKER_CASES
+except Exception:  # noqa: BLE001 — fallback, если запуск из другого каталога
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from check_markers import CASES as _MARKER_CASES
+    except Exception as exc:  # noqa: BLE001
+        print("Не удалось импортировать CASES из check_markers.py: %s" % exc, file=sys.stderr)
+        _MARKER_CASES = {}
+
 # Реестр охватывает маркеры, которым нужна доказательная цепочка.
-SCOPE = {
-    "utm_copilot": r"[?&]utm_source=copilot\.com",
-    "grok_referrer": r"[?&]referrer=grok\.com",
-    "grok_render_json": r"grok_render_citation_card_json",
-    "grok_card_tag": r"<grok-card\b[^>]*\bcitation_card\b",
-    "turn_other": r"turn\d+(?:image|news|video|ref)\d+",
-    "attached_web_bracket": r"\[(?:attached_file|web):\d+\]",
-    "generated_ref_id": r"citegenerated-reference-identifier",
-    "placeholder_url": r"\b(?:INSERT_SOURCE_URL(?:_\d+)?|URL_HERE|PASTE_\w+_URL_HERE)\b",
-    "placeholder_date": r"\b\d{4}-(?:\d{2}|[Xx]{2})-[Xx]{2}\b",
-    "deepseek_line_ref": "\u3010\\d+\u2020L\\d+(?:-L?\\d+)?\u3011",
-    "openai_pua_short": "[\uea01\uea02]",
-    "ref_name_search": r"<ref\b[^>]*\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
+# Всякий case из check_markers.CASES обязан быть либо в REGISTERED_CASES
+# (требует записи в реестре), либо автоматически попадает в LEGACY_EXEMPT
+# (проверяется только fixtures). Иначе гейт падает — это защищает от
+# добавления regex без evidence chain.
+REGISTERED_CASES = {
+    "utm_copilot", "grok_referrer", "grok_render_json", "grok_card_tag",
+    "turn_other", "attached_web_bracket", "generated_ref_id",
+    "placeholder_url", "placeholder_date", "deepseek_line_ref",
+    "openai_pua_short", "ref_name_search", "gemini_span", "perplexity_s3",
 }
+SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
+
+# CASES без записи в реестре: проверяются только fixtures в check_markers.py.
+LEGACY_EXEMPT = set(_MARKER_CASES) - set(SCOPE)
 
 STATUSES = {"confirmed", "lead", "none"}
 EVIDENCE = {"primary", "secondary", "provenance", "synthetic"}
@@ -51,6 +68,15 @@ DATE_RX = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 URL_RX = re.compile(r"^https?://\S+$")
 REQUIRED = ["case", "status", "evidence_note"]
 REQUIRED_CONFIRMED = ["source_url", "accessed", "verbatim_sample", "evidence_class"]
+
+# Признаки immutable-источника: permalink на конкретную ревизию/коммит/diff.
+IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/", "/releases/tag/",
+                    "Special:Permalink", "Special:Diff", "youtube.com/watch",
+                    "binance.com/en/square/post")
+
+
+def _is_immutable(url: str) -> bool:
+    return any(m in url for m in IMMUTABLE_MARKERS)
 
 
 def validate(entries, base_dir=".", allow_pending=False):
@@ -67,6 +93,11 @@ def validate(entries, base_dir=".", allow_pending=False):
         for f in REQUIRED:
             if not str(e.get(f, "")).strip():
                 errors.append(tag + ": пустое обязательное поле " + f)
+        # Запрет открытых финализационных задач внутри подтверждённой записи.
+        note_blob = " ".join(str(e.get(k, "")) for k in
+                             ("evidence_note", "secondary_justification", "warning_disposition"))
+        if "ЗАДАЧА" in note_blob:
+            errors.append(tag + ": подтверждённая запись содержит «ЗАДАЧА» — завершите или переведите в warning_disposition")
         case = e.get("case")
         if case not in SCOPE:
             errors.append(tag + ": case вне области реестра")
@@ -96,6 +127,15 @@ def validate(entries, base_dir=".", allow_pending=False):
         accessed = str(e.get("accessed", ""))
         if accessed and not DATE_RX.match(accessed):
             errors.append(tag + ": accessed не в формате YYYY-MM-DD")
+        # Предупреждение о свежести для живых (не immutable) URL.
+        if url and accessed and not _is_immutable(url):
+            try:
+                import datetime as _dt
+                days = (_dt.date.today() - _dt.date.fromisoformat(accessed)).days
+                if days > 180:
+                    warnings.append(tag + ": живой source_url не перепроверян %d дней (accessed=%s)" % (days, accessed))
+            except ValueError:
+                pass
         sample = e.get("verbatim_sample", "")
         if sample and not re.search(SCOPE[case], sample):
             errors.append(tag + ": verbatim_sample НЕ ловится выражением своего case")
@@ -134,6 +174,14 @@ def validate(entries, base_dir=".", allow_pending=False):
     if missing:
         msg = "гейт не закрыт для: " + ", ".join(missing)
         (warnings if allow_pending else errors).append(msg)
+    # LEGACY-coverage: каждый case из check_markers.CASES обязан быть либо в
+    # SCOPE, либо в автоматически выведенном LEGACY_EXEMPT. Не должно быть
+    # case, отсутствующего и там, и там (это значит — не проверяется ничем).
+    orphan = sorted(set(_MARKER_CASES) - set(SCOPE) - LEGACY_EXEMPT)
+    # LEGACY_EXEMPT = CASES - SCOPE по построению, поэтому orphan всегда пуст;
+    # проверка остаётся как страховка от ручного редактирования SCOPE.
+    if orphan:
+        errors.append("CASES без SCOPE и без LEGACY: " + ", ".join(orphan))
     return errors, warnings, covered
 
 
@@ -182,6 +230,8 @@ def selftest():
         "deepseek_line_ref": "\u301085\u2020L261-269\u3011",
         "openai_pua_short": "текст.\uea012\uea02",
         "ref_name_search": '<ref name="0search12">',
+        "gemini_span": "[span_2](start_span)",
+        "perplexity_s3": "https://ppl-ai-file-upload.s3.amazonaws.com/x",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
@@ -196,7 +246,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base)
-    checks.append(("полный тестовый реестр закрывает 12/12", not err and len(cov) == 12))
+    checks.append(("полный тестовый реестр закрывает 14/14", not err and len(cov) == 14))
     err, _, _ = validate(ok[:-1], base_dir=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, allow_pending=True)
@@ -209,20 +259,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 12))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 14))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 12))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 14))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                    and any("synthetic" in x for x in warn) and len(cov) == 11))
+                    and any("synthetic" in x for x in warn) and len(cov) == 13))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -242,7 +292,16 @@ def selftest():
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
     err, warn, cov = validate(bad, base_dir=base)
     checks.append(("повтор URL с disposition закрывает",
-                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 12))
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 14))
+    bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
+    err, _, _ = validate(bad, base_dir=base)
+    checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
+                   any("«ЗАДАЧА»" in x for x in err)))
+    bad = json.loads(json.dumps(ok)); bad[0]["source_url"] = "https://example.org/live"
+    bad[0]["accessed"] = "2024-01-01"
+    _, warn, _ = validate(bad, base_dir=base)
+    checks.append(("живой URL старше 180 дней -> WARN",
+                   any("не перепроверян" in x for x in warn)))
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
     for n, p in checks:

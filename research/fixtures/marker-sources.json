@@ -12,6 +12,31 @@
     "evidence_note": "Новая форма из ревизии 1364503207 после контрольной даты 2026-07-14. Не использовать как самостоятельное доказательство генерации."
   },
   {
+    "case": "gemini_span",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/wiki/Special:Diff/1363979466",
+    "accessed": "2026-07-21",
+    "platform": "Google Gemini",
+    "fixture_file": "../../tests/fixtures/gemini-span.txt",
+    "verbatim_sample": "[span_2](start_span)",
+    "secondary_justification": "Неизменяемая diff-ссылка на июльскую правку 2026 года к статье Huey Lewis and the News дословно содержит span-метки. EN Wikipedia (ревизия 1365155084) документирует форму как Gemini-артефакт. Человек такую разметку не пишет.",
+    "evidence_note": "Класс A: копирование из Gemini с высокой вероятностью. Атрибуция конкретной версии модели не подтверждена."
+  },
+  {
+    "case": "perplexity_s3",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1365155084",
+    "accessed": "2026-07-21",
+    "platform": "Perplexity",
+    "fixture_file": "../../tests/fixtures/perplexity-s3.txt",
+    "verbatim_sample": "ppl-ai-file-upload",
+    "secondary_justification": "Неизменяемая ревизия EN Wikipedia дословно фиксирует форму: «Perplexity may also cite text to an Amazon S3 bucket, with ppl-ai-file-upload in the URL». Человек такой URL не создаёт; независимого immutable первичного образца с дословной ссылкой в проекте не зафиксировано.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию, пока не найден permalink с дословной S3-ссылкой.",
+    "evidence_note": "Класс A по семантике (URL-артефакт), но запись реестра вторичная; ограничение зафиксировано в AUDIT-2026-07-21.md."
+  },
+  {
     "case": "grok_render_json",
     "status": "confirmed",
     "evidence_class": "primary",
@@ -39,7 +64,8 @@
     "accessed": "2026-07-13",
     "platform": "Microsoft Copilot",
     "verbatim_sample": "?utm_source=copilot.com",
-    "evidence_note": "README реального репозитория содержит ссылки с utm_source=copilot.com, вставленные при копировании из Copilot. ЗАДАЧА ФИНАЛИЗАЦИИ: заменить verbatim_sample полной дословной ссылкой из README и source_url — permalink на коммит. Дополнительные вхождения: rubysec/ruby-advisory-db, goobolabs/ds-ml-bootcamp, matomo-org/matomo."
+    "warning_disposition": "accepted-primary-without-permalink: README реального репозитория содержит ссылки с utm_source=copilot.com, вставленные при копировании из Copilot; permalink на конкретный коммит не закреплён. Не повышать атрибуцию версии, пока не зафиксирован permalink.",
+    "evidence_note": "Дополнительные вхождения: rubysec/ruby-advisory-db, goobolabs/ds-ml-bootcamp, matomo-org/matomo. Оговорка о ложных срабатываниях — в false-positives.md."
   },
   {
     "case": "grok_card_tag",
@@ -49,7 +75,8 @@
     "accessed": "2026-07-13",
     "platform": "Grok",
     "verbatim_sample": "<grok-card data-id=\"e8ff4f\" data-type=\"citation_card\">",
-    "secondary_justification": "Страница дословно цитирует реальную ревизию Draft:Mehak Malik (ноябрь 2025) с этим тегом; сама страница — обзорная, не исходный текст. ЗАДАЧА: найти permalink этой ревизии и поднять до primary.",
+    "secondary_justification": "Страница дословно цитирует реальную ревизию Draft:Mehak Malik (ноябрь 2025) с этим тегом; сама страница — обзорная, не исходный текст.",
+    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не найден permalink ревизии Draft:Mehak Malik.",
     "evidence_note": "EN Wiki, раздел Markup."
   },
   {
@@ -60,7 +87,8 @@
     "accessed": "2026-07-13",
     "platform": "Perplexity (предположительно)",
     "verbatim_sample": "[attached_file:1]",
-    "secondary_justification": "Страница дословно фиксирует обе ветки выражения: «tags like [attached_file:1] and [web:1] have been seen at the end of sentences. This may be Perplexity-specific». Наблюдение сообщества за реальными правками. ЗАДАЧА: permalink ревизии-примера.",
+    "secondary_justification": "Страница дословно фиксирует обе ветки выражения: «tags like [attached_file:1] and [web:1] have been seen at the end of sentences. This may be Perplexity-specific». Наблюдение сообщества за реальными правками.",
+    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не найден permalink ревизии-примера.",
     "evidence_note": "EN Wiki, раздел Markup, осень 2025."
   },
   {
@@ -95,7 +123,7 @@
     "accessed": "2026-07-14",
     "platform": "ChatGPT",
     "fixture_file": "../../tests/fixtures/openai-pua-short.txt",
-    "verbatim_sample": "2",
+    "verbatim_sample": "\uea012\uea02",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: дословные PUA-байты U+EA01/U+EA02 найдены на live-странице EN Wikipedia:Signs_of_AI_writing (revision 1363998845, July 2025) в блоке AI-сгенерированного текста про аниме Reze Arc. Файл tests/fixtures/openai-pua-short.txt содержит verbatim срез текста с 3 парами PUA-маркеров (2, 3, 5). Шаблон: U+EA01 + число + U+EA02 — компактная форма citation-маркера ChatGPT."
   },
   {
@@ -117,7 +145,8 @@
     "accessed": "2026-07-13",
     "platform": "разные модели",
     "verbatim_sample": "INSERT_SOURCE_URL",
-    "secondary_justification": "Источник — каталог паттернов (audit-ai-writing/patterns.md), а не исходный сгенерированный текст; независимые подтверждения: sammcj/agentic-coding, conorbronsdon/avoid-ai-writing. Реальное вхождение-кандидат: Deupaxx/EveryDay-Writer. ЗАДАЧА: закрепить permalink реального вхождения и поднять до primary.",
+    "secondary_justification": "Источник — каталог паттернов (audit-ai-writing/patterns.md), а не исходный сгенерированный текст; независимые подтверждения: sammcj/agentic-coding, conorbronsdon/avoid-ai-writing. Реальное вхождение-кандидат: Deupaxx/EveryDay-Writer.",
+    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не закреплён permalink реального вхождения в публикуемом тексте.",
     "evidence_note": "Плейсхолдеры источников. Оговорка о ложных срабатываниях (черновики людей с TODO-заглушками) — в false-positives.md."
   },
   {
@@ -128,7 +157,8 @@
     "accessed": "2026-07-13",
     "platform": "разные модели",
     "verbatim_sample": "2025-XX-XX",
-    "secondary_justification": "Репозиторий содержит реальное вхождение access-date: 2025-XX-XX; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki. ЗАДАЧА: закрепить permalink файла с вхождением и поднять до primary.",
+    "secondary_justification": "Репозиторий содержит реальное вхождение access-date: 2025-XX-XX; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki.",
+    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не закреплён permalink файла с вхождением.",
     "evidence_note": "FALSE-POSITIVE-ОГОВОРКА обязательна: формат YYYY-XX-XX встречается и в человеческих черновиках; описана в false-positives.md."
   }
 ]

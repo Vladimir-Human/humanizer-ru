@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "created": "2026-07-21",
+  "description": "Нейтральный корпус humanizer-ru-eval: AI-выводы + человеческие образцы + boundary-контроли. Любой скилл-кандидат может прогнать корпус одной командой.",
+  "corpus": [
+    {"path": "research/validation/human/01-turgenev-mumu.txt", "kind": "human", "genre": "classic-prose", "sha256": "cbf5fbe39c5cf928f04805dbe8d93779049b1530d461edc5072e656e754fcd22"},
+    {"path": "research/validation/human/02-gogol-shinel.txt", "kind": "human", "genre": "classic-prose", "sha256": "81f22902577e03fa536e31cf467713d9dbb3855cef334f3abd0ec093c69e97df"},
+    {"path": "research/validation/human/03-dostoevsky-white-nights.txt", "kind": "human", "genre": "classic-prose", "sha256": "9349b676b6deda8a3475a67f0640a26049e77aa0d1e406170b61f49b46da1a38"},
+    {"path": "research/validation/human/04-tolstoy-anna-karenina.txt", "kind": "human", "genre": "classic-prose", "sha256": "6e83a0ac0c4705f756617549d51653625dfa28df0a8b9f3a9c0800b6617936a7"},
+    {"path": "research/validation/human/05-pushkin-monument.txt", "kind": "human", "genre": "poetry", "sha256": "2a79d87a3453fcb140f87800689c90952f5ce460c6136979ef0803ae96f1fbb7"},
+    {"path": "research/validation/human/06-lermontov-hero.txt", "kind": "human", "genre": "classic-prose", "sha256": "07934e5040d68c73b77bc09e9c4d0fb3f390644a0a80fa5571eaff1cad66f73e"},
+    {"path": "research/validation/human/07-chekhov-letter.txt", "kind": "human", "genre": "satire-letter", "sha256": "6eea4817b09336253556aa965899e556326a32c0d06a5e2758d186823e32c876"},
+    {"path": "research/validation/human/08-constitution.txt", "kind": "human", "genre": "legal-act", "sha256": "5f41b22dd47deece35eb4914fe5f071df0078a76ad883e8351aabc5fdafe0ee5"},
+    {"path": "research/validation/human/09-wikipedia-modern.txt", "kind": "human", "genre": "encyclopedic-modern", "sha256": "e42979bf60201630a0dc32dca1fcdb2db1226abdfec0b9e937a6edf0109b577d"},
+    {"path": "research/validation/human/10-wikinews.txt", "kind": "human", "genre": "news-modern", "sha256": "e5a85fc8747f513fceae9413b570b23dacdcfcf45e86c682e1c4f6713ef07319"},
+    {"path": "research/validation/boundary/benign-wiki-ref.txt", "kind": "boundary", "genre": "wiki-markup-benign", "expected_hits": 0, "sha256": "b3f35d6d06825a16e91405f0140e6fe857a291877b9b5ce7c802b068f0a72380"},
+    {"path": "research/validation/boundary/emoji-zwj.txt", "kind": "boundary", "genre": "emoji-zwj", "expected_hits": 4, "expected_case": "zero_width", "sha256": "cdc3de7797ca2edf81994b2636ae1cc4933928c4f7acf0ef5f9f688f44d3df3f"},
+    {"path": "research/raw/alisa/01-слепая-печать.txt", "kind": "ai", "model": "alisa", "sha256": "5264d04d01e56e033839f0b6f597e28a4db3410f72aa35303ddff33ce567ea7f"},
+    {"path": "research/raw/alisa/02-почему-небо-голубое.txt", "kind": "ai", "model": "alisa", "sha256": "f732eeb0ea136677ad89d0613b92b55f161a64399439a1140cab53a572126622"},
+    {"path": "research/raw/alisa/03-столица-австралии.txt", "kind": "ai", "model": "alisa", "sha256": "82da1ec3065908fa273f08037787819646f58a87aa38ba5729cf49a955104054"},
+    {"path": "research/raw/gigachat/01-слепая-печать.txt", "kind": "ai", "model": "gigachat", "sha256": "c030ac5b3d02e2d1821c826cb5463a3860bb80a6231322a4b28184faa04188e3"},
+    {"path": "research/raw/gigachat/02-почему-небо-голубое.txt", "kind": "ai", "model": "gigachat", "sha256": "990745c616b590384eb801227c830cd8cbefcac4b9c97b17c212abea7297b7a4"},
+    {"path": "research/raw/gigachat/03-столица-австралии.txt", "kind": "ai", "model": "gigachat", "sha256": "ba7c537dcca5be7c5932c4f6f77caa0124545a1c516cb348f2f691c9b562d893"},
+    {"path": "research/raw/gigachat/04-гречка.txt", "kind": "ai", "model": "gigachat", "sha256": "c8ec2175b3b1529c853bcffdd21c1f5744a2f81fbf7269661477eaaeedb206e7"},
+    {"path": "research/raw/gigachat/05-подарок-коллеге.txt", "kind": "ai", "model": "gigachat", "sha256": "4d8a6b32c012860758104ed04cf55e7c93a2b04df58db54aa35cb489fe4dba6e"},
+    {"path": "research/raw/le-chat/01-fast-канберра.txt", "kind": "ai", "model": "le-chat", "expected_hits": 1, "expected_case": "zero_width", "sha256": "89e3ba6d53b5125343365367fefaee5d4c9b29969a33ad68bb6d5f89e5033621"},
+    {"path": "research/raw/le-chat/02-think-канберра.txt", "kind": "ai", "model": "le-chat", "sha256": "5d8c5a4225b14b6aa29a964d39559b545b7e784f22e6b33e5658f0463bfc1832"},
+    {"path": "research/raw/le-chat/03-fast-небо-голубое.txt", "kind": "ai", "model": "le-chat", "sha256": "0910a715b68c6b823a92a386a889cabae986e65b4bede8a756e460f507f57872"},
+    {"path": "research/raw/le-chat/04-deep-research-канберра.txt", "kind": "ai", "model": "le-chat", "sha256": "1393d80ee4e55fca8402b8b31ff444877344353553c414f33cdff1d6a5beb648"}
+  ]
+}

@@ -36,9 +36,14 @@ jobs:
             ! -path './.git/*' ! -path './node_modules/*' \
             ! -path './scripts/check_markers.py' \
             ! -path './scripts/check_fixture_sources.py' \
+            ! -path './scripts/check_corpus.py' \
             ! -path './references/test-fixtures.md' \
             ! -path './references/false-positives.md' \
+            ! -path './references/chatbot-artifacts.md' \
             ! -path './research/fixtures/*' \
+            ! -path './research/AUDIT-*' \
+            ! -path './research/CONSILIUM-REPORT.md' \
+            ! -path './research/RELEASE-DRAFT-*' \
             ! -path './tests/fixtures/*' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
