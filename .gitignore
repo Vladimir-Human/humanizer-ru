@@ -10,3 +10,6 @@ __pycache__/
 .venv/
 .DS_Store
 Thumbs.db
+
+# release archive build output
+dist/
