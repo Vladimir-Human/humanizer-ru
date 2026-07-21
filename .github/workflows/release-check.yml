@@ -55,3 +55,10 @@ jobs:
           python3 scripts/count_style_markers.py --selftest
           python3 scripts/check_docs.py
           python3 scripts/check_corpus.py
+          python3 scripts/check_release.py --selftest
+
+      - name: Сборка и верификация детерминированного архива скилла
+        run: |
+          python3 scripts/check_release.py --root . --build dist/humanizer-ru.zip
+          python3 scripts/check_release.py --verify dist/humanizer-ru.zip
+          sha256sum dist/humanizer-ru.zip
