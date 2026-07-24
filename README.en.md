@@ -12,21 +12,20 @@ An agent skill that finds and removes traces of machine generation from Russian-
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
-> 🚀 **Инновации:** Данное программное обеспечение безусловно является свидетельством нашего стремления к качеству. Кроме того, оно обеспечивает бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
+> 🚀 **Инновации:** Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Это безусловно является свидетельством нашего стремления к качеству. Кроме того, эти функции обеспечивают бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
 
-**After** — specific facts, human rhythm:
+**After** — only the facts that were in the source, noise removed:
 
-> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Тестировщики отмечают, что задачи выполняются быстрее.
+> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим.
 
-## Scope: editing, not live dialogue
+The skill removes stock phrasing but never adds facts for the author. Everything in the “After” version above was already present in the source.
 
-This skill is a text editor: give it a fragment and it finds AI-generated
-patterns and, on request, rewrites them. You do not need to keep the full
-SKILL.md in the system prompt of a chat client — responses would slow down
-without becoming more natural, because editorial rules are not designed for
-generating replies. For live dialogue there is a separate compact ruleset —
-[PERSONA.md](PERSONA.md): copy its core into the system instructions of your
-chat client.
+## What to give it
+
+Give the skill a finished passage. It will find traces of generated prose and,
+on request, rewrite the text. Do not put the full SKILL.md in a chat client's
+system prompt: it will slow replies without making the conversation more
+natural. For live dialogue, use the short rules in [PERSONA.md](PERSONA.md).
 
 ## Install in 30 seconds
 
