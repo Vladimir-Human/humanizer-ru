@@ -115,16 +115,18 @@ humanizer-ru/
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
+│   ├── check_readme_parity.py    # Паритет и правдивость витрины RU/EN
 │   └── check_budget.py           # Бюджет контекста по спецификации
 ├── eval/
 │   ├── run_eval.py               # Нейтральный корпус для любого скилла
 │   ├── blind_eval.py             # Слепая парная оценка эффекта
-│   └── HOW-TO-RUN.md             # Протокол прогона и границы метрик
+│   ├── HOW-TO-RUN.md             # Протокол прогона и границы метрик
+│   └── runs/README.md            # Реальных парных прогонов пока нет
 ├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check
 ├── references/               # 9 справочников паттернов и маркеров
-├── research/                 # Протоколы, реестр, сырые ответы, пилоты и аудит
+├── research/                 # Протоколы, реестр, аудит и BACKLOG.md
 └── tests/fixtures/           # Проверочные образцы
 ```
 
