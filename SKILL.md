@@ -109,6 +109,8 @@ metadata:
 | `scripts/check_markers.py` | Автоматический прогон всех регулярных выражений по трём уровням образцов; запускается в CI и перед релизом. Режим `--scan` проверяет произвольный текст на маркеры | При обновлении маркеров: `python3 scripts/check_markers.py`; для проверки текста: `python3 scripts/check_markers.py --scan файл.md` |
 | `scripts/check_examples.py` | Гейт честности примеров: в парах «До/После» не должно появляться чисел, дат и имён, которых нет в исходнике | При правке примеров в документации: `python3 scripts/check_examples.py` |
 | `scripts/check_budget.py` | Бюджет контекста по официальной спецификации: длина SKILL.md, размер description и compatibility, размер файлов references | Перед релизом: `python3 scripts/check_budget.py` |
+| `eval/blind_eval.py` | Слепая парная оценка: сравнивает результат со скиллом и без него по снятию маркеров, дописанным фактам и ложным правкам | Перед изменением ядра: `python3 eval/blind_eval.py --run DIR` |
+| `docs/REVIEW.md` | Регламент review: три класса изменений и требования к каждому | Перед открытием pull request |
 
 ## Главное правило
 

@@ -108,6 +108,11 @@ humanizer-ru/
 │   ├── check_examples.py          # Before/After example honesty gate
 │   ├── check_budget.py            # Context budget vs the official spec
 │   └── count_style_markers.py    # Style marker counter for A/B runs
+├── eval/
+│   ├── run_eval.py                # Neutral corpus any candidate skill can run
+│   ├── blind_eval.py              # Blind paired evaluation of the skill effect
+│   └── HOW-TO-RUN.md              # Evaluation protocol and metric boundaries
+├── docs/REVIEW.md                 # Review policy: three classes of change
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures
