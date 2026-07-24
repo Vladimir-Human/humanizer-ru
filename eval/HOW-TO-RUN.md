@@ -72,9 +72,8 @@ python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline --make-packet /tm
 ```
 
 В `/tmp/packet/pairs/` лягут файлы вида `P001.md`: исходный текст и два варианта
-без пометок. Порядок вариантов выбирается криптографически стойким генератором,
-иначе судья сможет восстановить ветку по публичному seed. Без случайного порядка судья быстро выучит, что
-второй вариант всегда со скиллом.
+без пометок. Порядок вариантов каждый раз выбирает криптографически стойкий
+генератор: иначе судья выучит закономерность или восстановит её по публичному seed.
 
 Ключ создаётся рядом с пакетом: для `/tmp/packet` это `/tmp/packet.key.json`.
 Он намеренно лежит **вне** каталога пакета, чтобы его нельзя было случайно отдать
@@ -84,8 +83,8 @@ python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline --make-packet /tm
 Заполненные вердикты возвращаются обратно:
 
 ```bash
-python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline \\
-  --judgements /tmp/packet/verdicts.json \\
+python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline \
+  --judgements /tmp/packet/verdicts.json \
   --key /tmp/packet.key.json
 ```
 
