@@ -116,6 +116,11 @@ humanizer-ru/
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
 │   └── check_budget.py           # Бюджет контекста по спецификации
+├── eval/
+│   ├── run_eval.py               # Нейтральный корпус для любого скилла
+│   ├── blind_eval.py             # Слепая парная оценка эффекта
+│   └── HOW-TO-RUN.md             # Протокол прогона и границы метрик
+├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check
 ├── references/               # 9 справочников паттернов и маркеров
