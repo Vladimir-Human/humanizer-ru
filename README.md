@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.5.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.6.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -113,7 +113,14 @@ humanizer-ru/
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
-│   └── check_docs.py             # Согласованность документации
+│   ├── check_docs.py             # Согласованность документации
+│   ├── check_examples.py         # Гейт честности примеров До/После
+│   └── check_budget.py           # Бюджет контекста по спецификации
+├── eval/
+│   ├── run_eval.py               # Нейтральный корпус для любого скилла
+│   ├── blind_eval.py             # Слепая парная оценка эффекта
+│   └── HOW-TO-RUN.md             # Протокол прогона и границы метрик
+├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check
 ├── references/               # 9 справочников паттернов и маркеров
