@@ -1,0 +1,13 @@
+# Единые переносы строк и защита кириллицы от повреждения при клонировании
+# и слиянии. Добавлено в v3.6.0 после случаев порчи UTF-8 при редактировании.
+* text=auto eol=lf
+
+*.md   text eol=lf diff=markdown
+*.py   text eol=lf diff=python
+*.yml  text eol=lf
+*.json text eol=lf
+*.txt  text eol=lf
+
+*.png binary
+*.jpg binary
+*.zip binary

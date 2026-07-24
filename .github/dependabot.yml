@@ -1,0 +1,12 @@
+# Обновление версий GitHub Actions. Скилл не имеет зависимостей Python:
+# все валидаторы используют только стандартную библиотеку.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci"
