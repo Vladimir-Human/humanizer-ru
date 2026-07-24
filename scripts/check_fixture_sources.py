@@ -60,7 +60,17 @@ REGISTERED_CASES = {
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
 # CASES без записи в реестре: проверяются только fixtures в check_markers.py.
-LEGACY_EXEMPT = set(_MARKER_CASES) - set(SCOPE)
+# Список зафиксирован явно и только сокращается: новый маркер физически не
+# может попасть в legacy без ручного редактирования этого списка в отдельном
+# коммите. До v3.6.0 список выводился как CASES - SCOPE, из-за чего проверка
+# orphan была тавтологией и не могла упасть ни при каких условиях.
+LEGACY_EXEMPT = {
+    "assistants_source", "attached_file", "attributableIndex", "citation_n", "cite_turn",
+    "contentReference", "copilot_caret", "gemini_cite_n", "gemini_cite_start", "grok_card",
+    "oai_citation", "oaicite_short", "openai_pua", "sandbox_link", "source_plus_chain",
+    "think_tag", "turn_fetch", "turn_file", "turn_search", "utm_chatgpt", "utm_openai",
+    "vertexaisearch", "writing_block", "zero_width",
+}
 
 STATUSES = {"confirmed", "lead", "none"}
 EVIDENCE = {"primary", "secondary", "provenance", "synthetic"}
@@ -178,10 +188,19 @@ def validate(entries, base_dir=".", allow_pending=False):
     # SCOPE, либо в автоматически выведенном LEGACY_EXEMPT. Не должно быть
     # case, отсутствующего и там, и там (это значит — не проверяется ничем).
     orphan = sorted(set(_MARKER_CASES) - set(SCOPE) - LEGACY_EXEMPT)
-    # LEGACY_EXEMPT = CASES - SCOPE по построению, поэтому orphan всегда пуст;
-    # проверка остаётся как страховка от ручного редактирования SCOPE.
     if orphan:
-        errors.append("CASES без SCOPE и без LEGACY: " + ", ".join(orphan))
+        errors.append(
+            "новый маркер без записи в реестре и без явного legacy: " + ", ".join(orphan)
+        )
+    # Обратная сторона: legacy-запись без соответствующего regex — мёртвый балласт.
+    stale = sorted(LEGACY_EXEMPT - set(_MARKER_CASES))
+    if stale and _MARKER_CASES:
+        errors.append("legacy без regex в CASES: " + ", ".join(stale))
+    if _MARKER_CASES:
+        print(
+            "Покрытие реестром: %d/%d маркеров, legacy: %d"
+            % (len(SCOPE), len(_MARKER_CASES), len(LEGACY_EXEMPT))
+        )
     return errors, warnings, covered
 
 
