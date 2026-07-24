@@ -105,6 +105,8 @@ humanizer-ru/
 │   ├── check_spec.py             # Agent Skills spec compliance
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_docs.py             # Documentation consistency checks
+│   ├── check_examples.py          # Before/After example honesty gate
+│   ├── check_budget.py            # Context budget vs the official spec
 │   └── count_style_markers.py    # Style marker counter for A/B runs
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints
 ├── research/                     # Protocols, raw model outputs, pilot results
@@ -119,6 +121,21 @@ The release policy separates a stable core (genre rules, false-positive boundari
 - Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in CI and manually by the developer.
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
+
+## Sources
+
+The pattern base draws on
+[Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)
+and its Russian counterpart
+[Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+
+Every regex marker in the fast layer carries an evidence record in
+`research/fixtures/marker-sources.json`: an immutable source URL, the date it was
+accessed, a verbatim sample, an evidence class, and a fixture. The validator
+prints honest coverage rather than a marketing number — currently 14 of 38
+markers have a full record; the rest are covered by fixtures only.
+
+Citation metadata for this repository lives in [CITATION.cff](CITATION.cff).
 
 ## Changelog
 
