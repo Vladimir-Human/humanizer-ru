@@ -8,20 +8,28 @@ on:
     branches: [main]
     paths:
       - 'SKILL.md'
+      - 'README.md'
+      - 'README.en.md'
       - 'scripts/**'
       - 'references/**'
       - 'research/fixtures/**'
       - 'research/validation/**'
       - 'tests/fixtures/**'
+      - 'eval/**'
+      - 'docs/**'
       - '.github/workflows/validators.yml'
   pull_request:
     paths:
       - 'SKILL.md'
+      - 'README.md'
+      - 'README.en.md'
       - 'scripts/**'
       - 'references/**'
       - 'research/fixtures/**'
       - 'research/validation/**'
       - 'tests/fixtures/**'
+      - 'eval/**'
+      - 'docs/**'
       - '.github/workflows/validators.yml'
   workflow_dispatch:
 
@@ -72,6 +80,53 @@ jobs:
       - uses: actions/checkout@v4
       - name: Human 0, raw только BOM, boundary совпал
         run: python3 scripts/check_corpus.py
+
+  examples:
+    name: Честность примеров До/После
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка валидатора
+        run: python3 scripts/check_examples.py --selftest
+      - name: Правка не дописывает факты за автора
+        run: python3 scripts/check_examples.py
+
+  budget:
+    name: Бюджет контекста по спецификации
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка валидатора
+        run: python3 scripts/check_budget.py --selftest
+      - name: Лимиты name / description / compatibility и размер SKILL.md
+        run: python3 scripts/check_budget.py SKILL.md --expect-dir humanizer-ru
+
+  eval-harness:
+    name: Нейтральный eval-корпус
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Прогон manifest.v1.json
+        run: python3 eval/run_eval.py
+
+  blind-eval:
+    name: Гарнесс слепой оценки
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Самопроверка метрик и обезличивания
+        run: python3 eval/blind_eval.py --selftest
+      - name: Отчёт без данных не выпускается
+        run: |
+          set +e
+          python3 eval/blind_eval.py
+          code=$?
+          set -e
+          if [ "$code" -ne 2 ]; then
+            echo "Ожидался контролируемый отказ 2, получен код $code" >&2
+            exit 1
+          fi
+          echo "Контролируемый отказ без данных подтверждён"
 
   release-preflight:
     name: Самопроверка сборки архива
