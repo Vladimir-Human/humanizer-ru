@@ -43,7 +43,7 @@ jobs:
     name: SKILL.md соответствует спецификации Agent Skills
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_spec.py --selftest
       - name: Строгая проверка SKILL.md
@@ -53,7 +53,7 @@ jobs:
     name: Реестр источников маркеров
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_fixture_sources.py --selftest
       - name: Гейт доказательств для зарегистрированных маркеров (14/14)
@@ -63,7 +63,7 @@ jobs:
     name: md↔py паритет regex
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Каждое выражение CASES задокументировано в chatbot-artifacts.md
         run: python3 scripts/check_markers.py --parity
 
@@ -71,7 +71,7 @@ jobs:
     name: Самопроверка стилевых маркеров
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: count_style_markers --selftest
         run: python3 scripts/count_style_markers.py --selftest
 
@@ -79,7 +79,7 @@ jobs:
     name: Регрессия корпусов валидации
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Human 0, raw только BOM, boundary совпал
         run: python3 scripts/check_corpus.py
 
@@ -87,7 +87,7 @@ jobs:
     name: Честность примеров До/После
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_examples.py --selftest
       - name: Правка не дописывает факты за автора
@@ -97,7 +97,7 @@ jobs:
     name: Паритет русской и английской витрины
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_readme_parity.py --selftest
       - name: Числа, разделы и оформление критичности совпадают
@@ -107,7 +107,7 @@ jobs:
     name: Бюджет контекста по спецификации
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_budget.py --selftest
       - name: Лимиты name / description / compatibility и размер SKILL.md
@@ -117,7 +117,7 @@ jobs:
     name: Нейтральный eval-корпус
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Прогон manifest.v1.json
         run: python3 eval/run_eval.py
 
@@ -125,7 +125,7 @@ jobs:
     name: Гарнесс слепой оценки
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Самопроверка метрик и обезличивания
         run: python3 eval/blind_eval.py --selftest
       - name: Отчёт без данных не выпускается
@@ -144,7 +144,7 @@ jobs:
     name: Самопроверка сборки архива
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: check_release.py --selftest
         run: python3 scripts/check_release.py --selftest
       - name: Сборка + верификация архива (allowlist, без research/tests/.github)
