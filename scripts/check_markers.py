@@ -19,6 +19,11 @@
 import re
 import sys
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 # name: (выражение, прямые образцы, отрицательные образцы, [многократный образец, ожидаемое число])
 CASES = {
     # --- A.1. Метки внутреннего цитирования OpenAI ---

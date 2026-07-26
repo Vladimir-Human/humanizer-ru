@@ -18,6 +18,11 @@ import tempfile
 import warnings
 import zipfile
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 ROOT_FILES = {
     "SKILL.md", "README.md", "README.en.md", "CHANGELOG.md", "PERSONA.md",
     "SECURITY.md", "SECURITY.en.md", "LICENSE",

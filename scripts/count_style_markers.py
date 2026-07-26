@@ -18,6 +18,11 @@ import io
 import re
 import sys
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 PATTERNS = {
     "bullets": re.compile(r"(?m)^\s*(?:[-*\u2022]|\d+\.)\s+"),
     "emdash": re.compile("\u2014"),
