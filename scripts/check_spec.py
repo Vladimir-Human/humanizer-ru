@@ -19,6 +19,11 @@ import re
 import sys
 import tempfile
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
@@ -62,6 +67,52 @@ def _scalar(v):
     return v
 
 
+BLOCK_SCALAR_RE = re.compile(r"^([|>])([+-]?)(\d*)$")
+
+
+def _fold_block_scalar(header, lines, start, base_indent):
+    """Собирает блочный скаляр YAML (|, >, |-, >-, >2 и т. п.).
+
+    Возвращает готовое значение и номер первой строки за блоком. Форма «|»
+    сохраняет переводы строк, «>» складывает абзац в одну строку. Пустая
+    строка внутри «>» остаётся разделителем абзацев — так же ведёт себя YAML.
+    Без этого «description: >-» разбиралось как скаляр «>-» длиной 2 символа,
+    и гейт DESC_LEN не мог сработать ни на каком тексте.
+    """
+    m = BLOCK_SCALAR_RE.match(header)
+    style, chomp = m.group(1), m.group(2)
+    i, n = start, len(lines)
+    body = []
+    while i < n:
+        raw = lines[i]
+        if not raw.strip():
+            body.append("")
+            i += 1
+            continue
+        cur = len(raw) - len(raw.lstrip(" "))
+        if cur <= base_indent:
+            break
+        body.append(raw.strip())
+        i += 1
+    while body and body[-1] == "":
+        body.pop()
+    if style == "|":
+        value = "\n".join(body)
+    else:
+        chunks, cur = [], []
+        for line in body:
+            if line:
+                cur.append(line)
+            else:
+                chunks.append(" ".join(cur))
+                cur = []
+        chunks.append(" ".join(cur))
+        value = "\n".join(chunks)
+    if chomp == "+":
+        value += "\n"
+    return value, i
+
+
 def parse_yaml_block(lines):
     """Мини-парсер подмножества YAML: скаляры, один уровень вложенности, списки."""
     data, errors = {}, []
@@ -85,6 +136,9 @@ def parse_yaml_block(lines):
             i += 1
             continue
         key, rest = m.group(1), m.group(2).strip()
+        if rest and BLOCK_SCALAR_RE.match(rest):
+            data[key], i = _fold_block_scalar(rest, lines, i + 1, 0)
+            continue
         if rest:
             data[key] = _scalar(rest)
             i += 1
@@ -100,7 +154,9 @@ def parse_yaml_block(lines):
             lm = re.match(r"^\s+-\s*(.*)$", sub)
             if sm:
                 skey, srest = sm.group(1), sm.group(2).strip()
-                if srest:
+                if srest and BLOCK_SCALAR_RE.match(srest):
+                    block[skey], i = _fold_block_scalar(srest, lines, i + 1, indent(sub))
+                elif srest:
                     block[skey] = _scalar(srest)
                     i += 1
                 else:
@@ -231,6 +287,19 @@ def _selftest():
         ("name длиннее 64", "---\nname: " + "a" * 65 + "\ndescription: x\n---\nт", "a" * 65, False, True, "NAME_LEN"),
         ("нет шапки", "# Просто markdown\n", "demo-skill", False, True, "FRONTMATTER"),
         ("незакрытая шапка", "---\nname: demo-skill\n", "demo-skill", False, True, "FRONTMATTER"),
+        # Блочные скаляры: до поддержки «>-» значение было строкой «>-» длиной
+        # 2 символа, поэтому DESC_LEN не мог сработать, а DESC_REQUIRED молчал.
+        ("description как >- парсится",
+         "---\nname: demo-skill\ndescription: >-\n  Проверяет русский текст.\n"
+         "  Использовать при проверке.\n---\nт", "demo-skill", False, False, None),
+        ("description как >- длиннее 1024 -> DESC_LEN",
+         "---\nname: demo-skill\ndescription: >-\n" + "  х" * 600 + "\n---\nт",
+         "demo-skill", False, True, "DESC_LEN"),
+        ("description как | длиннее 1024 -> DESC_LEN",
+         "---\nname: demo-skill\ndescription: |\n" + "  х" * 600 + "\n---\nт",
+         "demo-skill", False, True, "DESC_LEN"),
+        ("пустой блочный description -> DESC_REQUIRED",
+         "---\nname: demo-skill\ndescription: >-\n---\nт", "demo-skill", False, True, "DESC_REQUIRED"),
     ]
     failed = 0
     for label, content, dirname, strict, expect_fail, expect_code in cases:

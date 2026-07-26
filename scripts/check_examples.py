@@ -20,9 +20,16 @@
 """
 import argparse
 import glob
+import io
 import os
 import re
 import sys
+import tempfile
+
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -113,6 +120,13 @@ PAIR_RX = re.compile(
 
 AUTHOR_LABELS = ("с фактами автора", "author")
 
+# Нижняя граница числа пар при полном прогоне. Гейт проверяет только те пары,
+# которые нашёл PAIR_RX: если выражение перестанет совпадать (изменилась
+# разметка «До/После», опечатка в шаблоне), проверка молча найдёт ноль пар и
+# отчитается «пройден». Порог превращает такое обнуление в громкий отказ.
+# Значение взято с запасом ниже фактического (29 пар в версии 3.7.0).
+MIN_PAIRS = 10
+
 
 def check_text(text, path="<text>"):
     errors, warnings, stats = [], [], {"pairs": 0, "edit": 0, "authored": 0}
@@ -159,6 +173,39 @@ def selftest():
         if got != expected:
             ok = False
         print("[%s] %s (ошибок: %d, ожидалось: %d)" % (mark, name, got, expected))
+
+    # Порог MIN_PAIRS: обнуление PAIR_RX должно валить полный прогон, а не
+    # проходить молча. Подменяем выражение на заведомо несовпадающее и
+    # вызываем main() без списка файлов — это и есть полный прогон.
+    global PAIR_RX
+    saved_rx, saved_argv = PAIR_RX, sys.argv
+    try:
+        PAIR_RX = re.compile(r"(?!x)x")
+        sys.argv = ["check_examples.py"]
+        rc_blind = main()
+    finally:
+        PAIR_RX, sys.argv = saved_rx, saved_argv
+    blind_ok = rc_blind == 1
+    ok = ok and blind_ok
+    print("[%s] 0 пар при полном прогоне -> FAIL (код возврата: %d)"
+          % ("OK  " if blind_ok else "FAIL", rc_blind))
+
+    # Обратная сторона: единичный файл без пар — законный случай, порог молчит.
+    tmp = tempfile.mkdtemp()
+    lone = os.path.join(tmp, "без-пар.md")
+    with io.open(lone, "w", encoding="utf-8") as fh:
+        fh.write(u"# Файл без примеров\n\nПросто текст.\n")
+    saved_argv = sys.argv
+    try:
+        sys.argv = ["check_examples.py", lone]
+        rc_lone = main()
+    finally:
+        sys.argv = saved_argv
+    lone_ok = rc_lone == 0
+    ok = ok and lone_ok
+    print("[%s] отдельный файл без пар не валит порог (код возврата: %d)"
+          % ("OK  " if lone_ok else "FAIL", rc_lone))
+
     print("Самопроверка: " + ("пройдена" if ok else "ПРОВАЛЕНА"))
     return 0 if ok else 1
 
@@ -172,6 +219,7 @@ def main():
         return selftest()
 
     files = args.files
+    full_run = not files
     if not files:
         files = [os.path.join(ROOT, f) for f in TARGETS if os.path.exists(os.path.join(ROOT, f))]
         files += sorted(glob.glob(os.path.join(ROOT, "references", "*.md")))
@@ -187,6 +235,13 @@ def main():
         all_warn += warns
         for k in total:
             total[k] += stats[k]
+
+    if full_run and total["pairs"] < MIN_PAIRS:
+        all_err.append(
+            "полный прогон нашёл пар «До/После»: %d, ожидается не меньше %d — "
+            "проверьте PAIR_RX и разметку примеров: гейт мог перестать видеть пары"
+            % (total["pairs"], MIN_PAIRS)
+        )
 
     for w in all_warn:
         print("[WARN] " + w)

@@ -18,6 +18,11 @@ import io
 import re
 import sys
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 PATTERNS = {
     "bullets": re.compile(r"(?m)^\s*(?:[-*\u2022]|\d+\.)\s+"),
     "emdash": re.compile("\u2014"),
@@ -37,19 +42,55 @@ def count_text(text):
     return {k: len(rx.findall(text)) for k, rx in PATTERNS.items()}
 
 
-def main(paths):
+# Разметка markdown, которую снимает --skip-markup. Нужна, чтобы мерить
+# прозаический стиль собственных файлов проекта: в них списки, заголовки и
+# жирный — техническая структура документа, а не стилевые нарушения автора.
+_FENCED_RX = re.compile(r"(?ms)^[ \t]*(?:```|~~~).*?(?:^[ \t]*(?:```|~~~)[ \t]*$|\Z)")
+_INLINE_CODE_RX = re.compile(r"`[^`\n]*`")
+_TABLE_ROW_RX = re.compile(r"(?m)^[ \t]*\|.*$")
+_LINK_RX = re.compile(r"\[([^\]\n]*)\]\((?:[^)\s]+)(?:\s+\"[^\"]*\")?\)")
+_BARE_URL_RX = re.compile(r"(?i)\bhttps?://\S+")
+_HEADER_MARK_RX = re.compile(r"(?m)^[ \t]{0,3}#{1,6}[ \t]+")
+_BULLET_MARK_RX = re.compile(r"(?m)^([ \t]*)(?:[-*•]|\d+\.)[ \t]+")
+_BOLD_RX = re.compile(r"\*\*([^*\n]+)\*\*")
+_ITALIC_RX = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
+
+
+def strip_markup(text):
+    """Убирает разметку markdown, оставляя прозаический текст.
+
+    Снимаются: блоки кода, инлайн-код, строки таблиц, адресная часть ссылок,
+    маркеры заголовков и списков, звёздочки выделения. Видимый текст ссылок и
+    выделений сохраняется — «важно отметить» в жирном остаётся словом-подушкой.
+    """
+    text = _FENCED_RX.sub("", text)
+    text = _TABLE_ROW_RX.sub("", text)
+    text = _INLINE_CODE_RX.sub("", text)
+    text = _LINK_RX.sub(r"\1", text)
+    text = _BARE_URL_RX.sub("", text)
+    text = _HEADER_MARK_RX.sub("", text)
+    text = _BULLET_MARK_RX.sub(r"\1", text)
+    text = _BOLD_RX.sub(r"\1", text)
+    text = _ITALIC_RX.sub(r"\1", text)
+    return text
+
+
+def main(paths, skip_markup=False):
     if not paths:
         print("нет входных файлов", file=sys.stderr)
         return 2
+    if skip_markup:
+        print("# режим --skip-markup: разметка markdown снята, считается только проза")
     print("file\t" + "\t".join(COLS) + "\ttotal")
     grand = 0
     for p in paths:
         try:
             with io.open(p, encoding="utf-8") as fh:
-                c = count_text(fh.read())
+                raw = fh.read()
         except OSError as exc:
             print("ошибка чтения %s: %s" % (p, exc), file=sys.stderr)
             return 2
+        c = count_text(strip_markup(raw) if skip_markup else raw)
         total = sum(c.values())
         grand += total
         print(p + "\t" + "\t".join(str(c[k]) for k in COLS) + "\t" + str(total))
@@ -74,6 +115,33 @@ def selftest():
         ("bad: оборот не-Б-а-В", cb["neb"] == 1),
         ("good: ноль нарушений", sum(cg.values()) == 0),
     ]
+
+    # --skip-markup: структура документа не должна попадать в стилевой счёт,
+    # а проза внутри разметки — должна.
+    md = (u"# Заголовок\n\n"
+          u"- первый пункт\n- второй пункт\n\n"
+          u"| столбец | значение |\n|---|---|\n| a | b |\n\n"
+          u"```python\n# важно отметить в коде\nx = 1\n```\n\n"
+          u"См. [документацию](https://example.org/важно-отметить).\n\n"
+          u"**Важно отметить**, что текст остаётся прозой.\n"
+          u"Встрочный `код` и обычная фраза.\n")
+    raw_counts = count_text(md)
+    skipped = count_text(strip_markup(md))
+    checks += [
+        ("skip: заголовки обнулены", skipped["headers"] == 0 and raw_counts["headers"] >= 1),
+        ("skip: списки обнулены", skipped["bullets"] == 0 and raw_counts["bullets"] >= 2),
+        ("skip: жирный обнулён", skipped["bold"] == 0 and raw_counts["bold"] >= 1),
+        ("skip: слово-подушка в прозе сохраняется", skipped["pillow"] >= 1),
+        ("skip: слово-подушка из блока кода не считается",
+         skipped["pillow"] < raw_counts["pillow"]),
+        ("skip: строки таблицы не считаются",
+         u"столбец" not in strip_markup(md)),
+        ("skip: адрес ссылки убран, видимый текст остался",
+         u"example.org" not in strip_markup(md)
+         and u"документацию" in strip_markup(md)),
+        ("skip: обычный текст не портится",
+         count_text(strip_markup(good)) == cg),
+    ]
     fails = [n for n, p in checks if not p]
     for n, p in checks:
         print(("PASS: " if p else "FAIL: ") + n)
@@ -85,4 +153,5 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if "--selftest" in args:
         sys.exit(selftest())
-    sys.exit(main(args))
+    skip = "--skip-markup" in args
+    sys.exit(main([a for a in args if not a.startswith("--")], skip_markup=skip))

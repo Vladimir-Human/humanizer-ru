@@ -42,6 +42,11 @@ import subprocess
 import sys
 import tempfile
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SCRIPTS = os.path.join(ROOT, "scripts")
@@ -198,6 +203,22 @@ def run_fingerprint(run):
     return hashlib.sha256(raw).hexdigest()
 
 
+def key_path_for(out_dir, sep=None, altsep=None):
+    """Путь ключа: рядом с каталогом пакета, но никогда внутри него.
+
+    Хвостовой разделитель снимается с учётом обоих разделителей платформы.
+    На Windows os.sep = "\\", а os.altsep = "/", поэтому пути вида "C:\\pkt/"
+    законны, и снятие только os.sep оставляло ключ внутри пакета — судья
+    получал его вместе с парами, и блайндинг терялся.
+
+    Разделители можно передать явно, чтобы самопроверка воспроизводила
+    поведение Windows на любой платформе.
+    """
+    sep = os.sep if sep is None else sep
+    altsep = os.altsep if altsep is None else altsep
+    return out_dir.rstrip(sep + (altsep or "")) + ".key.json"
+
+
 def make_packet(run, out_dir, rng=None):
     """Обезличенный пакет; ключ создаётся рядом, но вне пакета."""
     if os.path.exists(out_dir) and os.listdir(out_dir):
@@ -224,7 +245,7 @@ def make_packet(run, out_dir, rng=None):
     with io.open(os.path.join(out_dir, "verdicts.template.json"), "w", encoding="utf-8") as fh:
         fh.write(json.dumps(template, ensure_ascii=False, indent=2))
     key = {"version": 1, "run_sha256": run_fingerprint(run), "pairs": pairs_key}
-    key_path = os.path.abspath(out_dir.rstrip(os.sep) + ".key.json")
+    key_path = os.path.abspath(key_path_for(out_dir))
     with io.open(key_path, "w", encoding="utf-8") as fh:
         fh.write(json.dumps(key, ensure_ascii=False, indent=2))
     return key, key_path
@@ -418,6 +439,22 @@ def selftest():
                          ("with" not in packet) and ("со скиллом" not in packet)))
     results.append(_case("Ключ лежит вне каталога пакета",
                          os.path.dirname(key_path) == os.path.dirname(tmp) and not key_path.startswith(tmp + os.sep)))
+    # Windows-случай: каталог пакета передан с хвостовым "/" при os.sep == "\".
+    # Снятие только os.sep оставляло ключ внутри пакета (блайндинг терялся).
+    win_dir = u"C:\\runs\\packet/"
+    win_key = key_path_for(win_dir, sep="\\", altsep="/")
+    old_win_key = win_dir.rstrip("\\") + ".key.json"
+    results.append(_case("Ключ вне пакета при хвостовом разделителе Windows",
+                         win_key == u"C:\\runs\\packet.key.json"
+                         and not win_key.startswith(win_dir),
+                         win_key))
+    results.append(_case("Прежняя логика на этом кейсе действительно падала",
+                         old_win_key.startswith(win_dir), old_win_key))
+    for tail in (u"", os.sep, os.sep * 2):
+        cand = key_path_for(u"/runs/packet" + tail)
+        results.append(_case("Ключ вне пакета при хвосте %r" % tail,
+                             cand == u"/runs/packet.key.json", cand))
+
     flipped = [t for t, v in pairs_key.items() if v["A"] == "with"]
     results.append(_case("Порядок вариантов перемешивается", 0 < len(flipped) < len(key), str(len(flipped))))
 

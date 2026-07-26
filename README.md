@@ -45,7 +45,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 1. Откройте `SKILL.md` и `references/` прямо на GitHub и убедитесь, что содержимое вас устраивает.
 2. Ставьте только выпуски со страницы **Releases** (подписанные теги вида `vX.Y.Z`), а не произвольное состояние ветки.
-3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `SECURITY.md`, `LICENSE`, `references/`, `scripts/check_markers.py` и `.github/` — ничего исполняемого при установке.
+3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` и `scripts/` — ничего исполняемого при установке. Каталогов `.github/`, `research/` и `tests/` в архиве нет: валидаторам, которым нужны корпуса и фикстуры, требуется полный клон репозитория.
 
 ### 1. Claude.ai (Веб-интерфейс)
 
@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.6.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.7.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -124,8 +124,8 @@ humanizer-ru/
 │   └── runs/README.md            # Реальных парных прогонов пока нет
 ├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
-│                             #     validators, docs-check
-├── references/               # 9 справочников паттернов и маркеров
+│                             #     validators, docs-check, release-check
+├── references/               # 11 справочников паттернов и маркеров
 ├── research/                 # Протоколы, реестр, аудит и BACKLOG.md
 └── tests/fixtures/           # Проверочные образцы
 ```
@@ -213,12 +213,12 @@ humanizer-ru/
 | `\]\(sandbox:/mnt/data/...\)` | OpenAI ChatGPT (анализ данных) | `\]\(sandbox:/mnt/data/...` |
 | Невидимые символы `U+E200–E204` | OpenAI ChatGPT (служебные разделители цитат) | `[\ue200-\ue204]` |
 | Короткая форма сноски: цифра в `U+EA01`/`U+EA02` (новое в v3.2) | OpenAI ChatGPT | `[\uea01\uea02]` |
-| `<think>…</think>` | DeepSeek и другие рассуждающие модели | `</?think>` |
-| Сцепка `ISO+3ISO+3` | OpenAI ChatGPT (ошибка отрисовки сносок) | `[A-Za-zА-Яа-яЁё)]\+\d+[A-ZА-ЯЁ]` |
+| `<think>…</think>` | DeepSeek и другие рассуждающие модели | `(?m)^\s*</?think>\|</think>\s*$` |
+| Сцепка `ISO+3ISO+3` | OpenAI ChatGPT (ошибка отрисовки сносок) | `[A-Za-z\u0410-\u042f\u0430-\u044f\u0401\u0451)]\+\d+(?=[A-Z\u0410-\u042f\u0401][A-Za-z\u0410-\u042f\u0430-\u044f\u0401\u0451&.\-]*(?: [A-Z\u0410-\u042f\u0401][A-Za-z\u0410-\u042f\u0430-\u044f\u0401\u0451&.\-]*){0,3}\+\d)` |
 | `[cite_start]` | Google Gemini (анализ PDF) | `\[cite_start\]` |
 | `[cite: 8]`, `[Cite: 12]`, `[cite: 19, 20, 21]` | Google Gemini (ссылка на фрагменты источника; расширено в v3.2) | `\[[Cc]ite:\s?\d+(?:,\s?\d+)*\]` |
 | `[span_N]` start_span / end_span (новое в v3.5) | Google Gemini (внутренние границы фрагментов) | `\[span_\d+\][\[(](?:start_span\|end_span)[\])]` |
-| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b-\u200d\u2060\ufeff]` |
+| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b\u200c\u2060\ufeff]\|(?<![\u1f000-\u1faff\u2600-\u27bf\ufe0f\u1f1e6-\u1f1ff])\u200d(?![\u1f000-\u1faff\u2600-\u27bf\ufe0f\u1f1e6-\u1f1ff])` |
 | `:::writing{variant="document" id="68427"}` | Writing-разметка интерфейса; атрибуция версии не подтверждена evidence registry | `:::\w+\{variant` |
 | `turn0image0`, `turn0news0`, `turn0video0`, `turn0ref0` | OpenAI ChatGPT (мультимедиа-инструменты) | `turn\d+(?:image\|news\|video\|ref)\d+` |
 | `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com` |
@@ -229,7 +229,7 @@ humanizer-ru/
 | `[attached_file:N]`, `[web:N]` | Perplexity (скобочная форма ссылок, осень 2025) | `\[(?:attached_file\|web):\d+\]` |
 | `citegenerated-reference-identifier` | ChatGPT (сгенерированный идентификатор) | `citegenerated-reference-identifier` |
 | `INSERT_SOURCE_URL`, `URL_HERE`, `PASTE_*_URL_HERE` | Placeholder-URL из шаблонных ответов | `\b(?:INSERT_SOURCE_URL(?:_\d+)?\|URL_HERE\|PASTE_\w+_URL_HERE)\b` |
-| `2025-XX-XX`, `2022-11-XX` | Placeholder-даты из шаблонных ответов (чаще всего «дата обращения») | `\b\d{4}-(?:\d{2}\|[Xx]{2})-[Xx]{2}\b` |
+| `2025-XX-XX`, `2022-11-XX` | Placeholder-даты из шаблонных ответов (чаще всего «дата обращения») | `\b(?:19\|20)\d{2}-(?:0[1-9]\|1[0-2]\|[Xx]{2})-[Xx]{2}\b` |
 | `ppl-ai-file-upload` в URL (новое в v3.5) | Perplexity (ссылки на Amazon S3-bucket) | `ppl-ai-file-upload` |
 
 Полный список с эталонными образцами — в `references/test-fixtures.md`.
@@ -244,7 +244,7 @@ humanizer-ru/
 
 ### Отпечатки моделей (новое в v2.3)
 
-`references/llm-fingerprints.md` не ведёт каталог актуальных версий моделей. Он описывает уровни доказательств, воспроизводимые артефакты и локальные наблюдения с явными ограничениями атрибуции. Версию или доступность модели нельзя выводить из стилистического признака без первичного датированного источника.
+`references/llm-fingerprints.md` не ведёт каталог актуальных версий моделей. Он описывает уровни доказательств, воспроизводимые артефакты и локальные наблюдения с явными ограничениями атрибуции. Версию или доступность модели нельзя выводить из стилистического признака без первичного датированного источника. Там же собраны ручные мягкие сигналы русских моделей — GigaChat, Алисы и YandexGPT: они помечены как наблюдения без корпусного подтверждения, регулярных выражений для них нет.
 
 **Шкала критичности:** высокая — мгновенно выдаёт ИИ · средняя — сильный сигнал · низкая — слабый сигнал
 
