@@ -19,6 +19,11 @@ import os
 import re
 import sys
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 MAX_NAME = 64
 MAX_DESCRIPTION = 1024
 MAX_COMPATIBILITY = 500

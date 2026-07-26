@@ -31,6 +31,11 @@ import re
 import sys
 import tempfile
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+ sys.stdout.reconfigure(errors="backslashreplace")
+ sys.stderr.reconfigure(errors="backslashreplace")
+
 DOC_FILES = ["README.md", "README.en.md", "SKILL.md", "CHANGELOG.md", "PERSONA.md"]
 RAW_TOKENS = ("ОТПЕЧАТК", "ВЕРДИКТ")
 LECHAT_LOG = "research/protocols/le-chat-test-log.md"
@@ -165,15 +170,17 @@ def check_repo(root):
                  "(протокол требует >= %d)"
                  % (LECHAT_LOG, runs, MIN_RUNS_FOR_MARKER))
 
-  # 10. Нет завышенных формулировок про «однозначность» всех выражений
-  ru_overclaim = OVERCLAIM_RU.search(text("README.md"))
-  if ru_overclaim:
-   errors.append("README.md: завышенная формулировка «%s» — "
-                 "описывайте классы A и B" % ru_overclaim.group(0))
-  en_overclaim = OVERCLAIM_EN.search(text("README.en.md"))
-  if en_overclaim:
-   errors.append("README.en.md: overclaim '%s' — "
-                 "describe marker classes A and B" % en_overclaim.group(0))
+ # 10. Нет завышенных формулировок про «однозначность» всех выражений.
+ # Проверка намеренно вне блока журнала Le Chat: она о README, а не о журнале,
+ # и не должна отключаться вместе с ним.
+ ru_overclaim = OVERCLAIM_RU.search(text("README.md"))
+ if ru_overclaim:
+  errors.append("README.md: завышенная формулировка «%s» — "
+                "описывайте классы A и B" % ru_overclaim.group(0))
+ en_overclaim = OVERCLAIM_EN.search(text("README.en.md"))
+ if en_overclaim:
+  errors.append("README.en.md: overclaim '%s' — "
+                "describe marker classes A and B" % en_overclaim.group(0))
 
  # 11. README.en.md упоминает актуальную структуру проекта
  en = text("README.en.md")
@@ -260,6 +267,13 @@ def _make_repo(root, version="3.3.5"):
  _w(root, WORKFLOWS_DIR + "/self-scan.yml",
     "name: Самопроверка скилла на собственные маркеры\non: push\n")
 
+def _drop_lechat_and_overclaim(root):
+ """Журнала Le Chat нет, а завышенная формулировка в README есть."""
+ os.remove(os.path.join(root, LECHAT_LOG))
+ _w(root, "README.md",
+    "# R\n[CHANGELOG.md](CHANGELOG.md)\n"
+    "Скилл содержит 38 однозначных маркеров.\n")
+
 def selftest():
  cases = []
 
@@ -320,6 +334,9 @@ def selftest():
       lambda r: _w(r, "README.md",
                    "# R\n[CHANGELOG.md](CHANGELOG.md)\n"
                    "Скилл содержит 36 однозначных маркеров.\n"),
+      "однозначных")
+ case("overclaim при отсутствующем журнале Le Chat -> FAIL",
+      _drop_lechat_and_overclaim,
       "однозначных")
  case("README.en без упоминания PERSONA.md -> FAIL",
       lambda r: _w(r, "README.en.md",

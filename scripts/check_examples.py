@@ -24,6 +24,11 @@ import os
 import re
 import sys
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TARGETS = ["SKILL.md", "README.md", "README.en.md"]

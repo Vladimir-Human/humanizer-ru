@@ -29,10 +29,10 @@ import os
 import re
 import sys
 
-import json
-import os
-import re
-import sys
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stderr.reconfigure(errors="backslashreplace")
 
 # Импортируем CASES из check_markers.py, чтобы гейт автоматически ловил
 # новые маркеры, не добавленные в реестр (новый case обязан попасть в SCOPE).
