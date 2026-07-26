@@ -12,13 +12,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-check:
     name: Тег соответствует релизному контракту
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout (full history + tags)
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -56,9 +61,28 @@ jobs:
           python3 scripts/check_docs.py
           python3 scripts/check_corpus.py
           python3 scripts/check_release.py --selftest
+          python3 scripts/check_examples.py --selftest
+          python3 scripts/check_examples.py
+          python3 scripts/check_readme_parity.py --selftest
+          python3 scripts/check_readme_parity.py
+          python3 scripts/check_budget.py --selftest
+          python3 scripts/check_budget.py SKILL.md --expect-dir humanizer-ru
+          python3 scripts/check_perf.py --selftest
+          python3 scripts/check_perf.py
+          python3 eval/run_eval.py --selftest
+          python3 eval/run_eval.py
+          python3 eval/blind_eval.py --selftest
+          python3 -m compileall -q scripts eval
 
       - name: Сборка и верификация детерминированного архива скилла
         run: |
           python3 scripts/check_release.py --root . --build dist/humanizer-ru.zip
           python3 scripts/check_release.py --verify dist/humanizer-ru.zip
           sha256sum dist/humanizer-ru.zip
+
+      - name: Приложить архив к прогону
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: humanizer-ru-zip
+          path: dist/humanizer-ru.zip
+          if-no-files-found: error

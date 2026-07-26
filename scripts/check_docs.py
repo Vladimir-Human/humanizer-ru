@@ -229,6 +229,22 @@ def check_repo(root):
                    "файл сохранён не в UTF-8" % (rel_fp, token))
      break
 
+ # 15. CITATION.cff согласован с версией скилла
+ cff_path = p("CITATION.cff")
+ if not os.path.exists(cff_path):
+  errors.append("CITATION.cff: файл отсутствует — на него ссылается docs-check")
+ else:
+  cff = text("CITATION.cff")
+  m_cff = re.search(r'(?m)^version:\s*"?(\d+\.\d+\.\d+)"?\s*$', cff)
+  if not m_cff:
+   errors.append("CITATION.cff: не найдено поле version вида X.Y.Z")
+  elif version and m_cff.group(1) != version:
+   errors.append("CITATION.cff: version %s != версии скилла %s"
+                 % (m_cff.group(1), version))
+  m_date = re.search(r'(?m)^date-released:\s*"?(\d{4}-\d{2}-\d{2})"?\s*$', cff)
+  if not m_date:
+   errors.append("CITATION.cff: date-released должно быть датой ISO (ГГГГ-ММ-ДД)")
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -266,6 +282,28 @@ def _make_repo(root, version="3.3.5"):
     "## Вердикт\n\nРазведочный пилот: ни один критерий приёмки не подтверждён.\n")
  _w(root, WORKFLOWS_DIR + "/self-scan.yml",
     "name: Самопроверка скилла на собственные маркеры\non: push\n")
+ _w(root, "CITATION.cff",
+    'cff-version: 1.2.0\nmessage: "Ссылайтесь так."\ntitle: "humanizer-ru"\n'
+    'authors:\n  - name: "Vladimir-Human"\n'
+    'version: %s\ndate-released: "2026-07-25"\n' % version)
+
+def _citation_wrong_version(root):
+ """В CITATION.cff версия чужая — гейт обязан это увидеть."""
+ _w(root, "CITATION.cff",
+    'cff-version: 1.2.0\nmessage: "Ссылайтесь так."\ntitle: "humanizer-ru"\n'
+    'authors:\n  - name: "Vladimir-Human"\n'
+    'version: 9.9.9\ndate-released: "2026-07-25"\n')
+
+def _citation_missing(root):
+ """CITATION.cff удалён."""
+ os.remove(os.path.join(root, "CITATION.cff"))
+
+def _citation_bad_date(root):
+ """date-released не в формате ISO."""
+ _w(root, "CITATION.cff",
+    'cff-version: 1.2.0\nmessage: "Ссылайтесь так."\ntitle: "humanizer-ru"\n'
+    'authors:\n  - name: "Vladimir-Human"\n'
+    'version: 3.3.5\ndate-released: "25 июля 2026"\n')
 
 def _drop_lechat_and_overclaim(root):
  """Журнала Le Chat нет, а завышенная формулировка в README есть."""
@@ -338,6 +376,15 @@ def selftest():
  case("overclaim при отсутствующем журнале Le Chat -> FAIL",
       _drop_lechat_and_overclaim,
       "однозначных")
+ case("CITATION.cff с чужой версией -> FAIL",
+      _citation_wrong_version,
+      "version 9.9.9")
+ case("CITATION.cff отсутствует -> FAIL",
+      _citation_missing,
+      "файл отсутствует")
+ case("CITATION.cff с датой не по ISO -> FAIL",
+      _citation_bad_date,
+      "date-released")
  case("README.en без упоминания PERSONA.md -> FAIL",
       lambda r: _w(r, "README.en.md",
                    "# R\n[CHANGELOG.md](CHANGELOG.md)\n"

@@ -4,7 +4,7 @@
 
 ## What this project does — and does not do
 
-Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`) and five CI verification scripts (`scripts/`, Python standard library only, no dependencies).
+Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`) and eleven CI verification scripts (`scripts/`, Python standard library only, no dependencies).
 
 Design guarantees:
 
@@ -23,7 +23,7 @@ Design guarantees:
 | Metadata poisoning or unwanted activation | The `description` is neutral and the skill activates only after an explicit user request |
 | Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release |
 | Installation-time content substitution | The manual process uses tagged releases and asks users to inspect files before installing |
-| Regression against the project's own rules | Five CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, and documentation consistency |
+| Regression against the project's own rules | Six CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, and release checks |
 
 ## Release integrity
 

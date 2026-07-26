@@ -7,7 +7,8 @@ abstract: >-
   regex-маркеров с реестром доказательств: immutable-источник, дата обращения,
   дословный образец, класс доказательства и fixture для каждой записи.
 authors:
-  - alias: Vladimir-Human
+  - name: "Vladimir-Human"
+    alias: Vladimir-Human
     website: "https://github.com/Vladimir-Human"
 repository-code: "https://github.com/Vladimir-Human/humanizer-ru"
 url: "https://github.com/Vladimir-Human/humanizer-ru"

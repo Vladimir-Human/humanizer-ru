@@ -45,7 +45,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 1. Откройте `SKILL.md` и `references/` прямо на GitHub и убедитесь, что содержимое вас устраивает.
 2. Ставьте только выпуски со страницы **Releases** (подписанные теги вида `vX.Y.Z`), а не произвольное состояние ветки.
-3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `SECURITY.md`, `LICENSE`, `references/`, `scripts/check_markers.py` и `.github/` — ничего исполняемого при установке.
+3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` и `scripts/` — ничего исполняемого при установке. Каталогов `.github/`, `research/` и `tests/` в архиве нет: валидаторам, которым нужны корпуса и фикстуры, требуется полный клон репозитория.
 
 ### 1. Claude.ai (Веб-интерфейс)
 
@@ -124,8 +124,8 @@ humanizer-ru/
 │   └── runs/README.md            # Реальных парных прогонов пока нет
 ├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
-│                             #     validators, docs-check
-├── references/               # 9 справочников паттернов и маркеров
+│                             #     validators, docs-check, release-check
+├── references/               # 11 справочников паттернов и маркеров
 ├── research/                 # Протоколы, реестр, аудит и BACKLOG.md
 └── tests/fixtures/           # Проверочные образцы
 ```
