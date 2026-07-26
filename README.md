@@ -116,12 +116,17 @@ humanizer-ru/
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
 │   ├── check_readme_parity.py    # Паритет и правдивость витрины RU/EN
-│   └── check_budget.py           # Бюджет контекста по спецификации
+│   ├── check_budget.py           # Бюджет контекста по спецификации
+│   ├── check_corpus.py           # Регрессия корпусов валидации
+│   ├── check_perf.py             # Скорость выражений на большом входе
+│   └── check_release.py          # Сборка и проверка релизного архива
 ├── eval/
 │   ├── run_eval.py               # Нейтральный корпус для любого скилла
 │   ├── blind_eval.py             # Слепая парная оценка эффекта
 │   ├── HOW-TO-RUN.md             # Протокол прогона и границы метрик
-│   └── runs/README.md            # Реальных парных прогонов пока нет
+│   ├── runs/                     # Парные прогоны: 2026-07-26-baseline
+│   └── results/                  # Отчёты прогонов целиком, включая
+│                                 #   метрики не в пользу скилла
 ├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check, release-check
