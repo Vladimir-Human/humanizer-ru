@@ -18,6 +18,7 @@ import io
 import os
 import re
 import sys
+import tempfile
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
@@ -199,6 +200,31 @@ def selftest():
 
     cases.append(("оценка токенов монотонна", estimate_tokens(u"а" * 300) > estimate_tokens(u"а" * 100), None))
 
+    # Разбор argv: значение --expect-dir не должно становиться путём к файлу.
+    # До правки этот порядок аргументов ронял валидатор попыткой открыть
+    # каталог как файл.
+    tmp = tempfile.mkdtemp()
+    skill_path = os.path.join(tmp, "SKILL.md")
+    with io.open(skill_path, "w", encoding="utf-8") as fh:
+        fh.write(SELFTEST_OK.replace("good-skill", "demo-dir"))
+    rc_before = main(["--expect-dir", "demo-dir", skill_path])
+    rc_after = main([skill_path, "--expect-dir", "demo-dir"])
+    cases.append(("--expect-dir перед путём разобран", rc_before == 0, rc_before))
+    cases.append(("--expect-dir после пути разобран", rc_after == 0, rc_after))
+    rc_missing_value = main([skill_path, "--expect-dir"])
+    cases.append(("--expect-dir без значения -> код 2", rc_missing_value == 2, rc_missing_value))
+
+    # Сбой чтения — код 2, без traceback.
+    rc_absent = main([os.path.join(tmp, "нет-файла.md")])
+    cases.append(("отсутствующий файл -> код 2", rc_absent == 2, rc_absent))
+    bad_bytes = os.path.join(tmp, "битый.md")
+    with open(bad_bytes, "wb") as fh:
+        fh.write(b"---\nname: x\n\xff\xfe not utf-8 \xff\n---\n")
+    rc_bad = main([bad_bytes])
+    cases.append(("файл не в UTF-8 -> код 2", rc_bad == 2, rc_bad))
+    rc_dir = main([tmp])
+    cases.append(("каталог вместо файла -> код 2", rc_dir == 2, rc_dir))
+
     ok = 0
     for title, passed, detail in cases:
         print("  %s %s" % ("[OK]  " if passed else "[FAIL]", title))
@@ -212,14 +238,33 @@ def selftest():
 def main(argv):
     if "--selftest" in argv:
         return selftest()
-    args = [a for a in argv if not a.startswith("-")]
+    # Пару «--expect-dir X» снимаем до сборки позиционных аргументов, иначе её
+    # значение попадает в путь: при вызове «--expect-dir humanizer-ru SKILL.md»
+    # валидатор пытался открыть каталог как файл. Порядок как в check_spec.py.
+    args = list(argv)
+    name_hint = None
+    if "--expect-dir" in args:
+        k = args.index("--expect-dir")
+        try:
+            name_hint = args[k + 1]
+        except IndexError:
+            print("после --expect-dir нужно имя каталога")
+            return 2
+        del args[k:k + 2]
+    args = [a for a in args if not a.startswith("-")]
     path = args[0] if args else "SKILL.md"
     root = os.path.dirname(os.path.abspath(path)) or "."
-    name_hint = None
-    if "--expect-dir" in argv:
-        name_hint = argv[argv.index("--expect-dir") + 1]
 
-    text = io.open(path, encoding="utf-8").read()
+    # Сбой чтения — это отказ инструмента (код 2), а не провал бюджета (код 1)
+    # и не traceback.
+    try:
+        text = io.open(path, encoding="utf-8").read()
+    except OSError as exc:
+        print("не удалось прочитать %s: %s" % (path, exc))
+        return 2
+    except UnicodeDecodeError as exc:
+        print("%s не читается как UTF-8: %s" % (path, exc))
+        return 2
     errors, warnings, stats = check_skill(text, name_hint=name_hint)
     ref_warnings, rows = check_references(root)
     warnings += ref_warnings

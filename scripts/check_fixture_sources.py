@@ -24,6 +24,7 @@
 Только стандартная библиотека. Коды возврата: 0 - гейт пройден, 1 - нарушения, 2 - ошибка входа.
 """
 
+import io
 import json
 import os
 import re
@@ -89,7 +90,34 @@ def _is_immutable(url: str) -> bool:
     return any(m in url for m in IMMUTABLE_MARKERS)
 
 
-def validate(entries, base_dir=".", allow_pending=False):
+# Корень репозитория: каталог выше scripts/. Считается от файла, а не от cwd,
+# чтобы граница не зависела от того, откуда запущен валидатор.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _reject_path(fixture, base_dir, repo_root=None):
+    """Причина отказа для fixture_file или пустая строка, если путь допустим.
+
+    Реестр — данные, а не код: значение fixture_file подставлялось прямо в
+    os.path.join, и абсолютный путь молча отбрасывал base_dir (join(base,
+    "/etc/passwd") == "/etc/passwd"). Запрещаем абсолютные пути и выход за
+    корень репозитория; легитимные «../../tests/fixtures/*.txt» остаются.
+    """
+    if not isinstance(fixture, str) or not fixture.strip():
+        return "fixture_file должен быть непустой строкой"
+    if fixture != fixture.strip():
+        return "fixture_file не должен начинаться или заканчиваться пробелом"
+    native = fixture.replace("\\", "/")
+    if os.path.isabs(fixture) or os.path.isabs(native) or re.match(r"^[A-Za-z]:", fixture):
+        return "fixture_file должен быть относительным путём, получено: " + fixture
+    root = os.path.abspath(repo_root or REPO_ROOT)
+    target = os.path.abspath(os.path.join(base_dir, fixture))
+    if target != root and not target.startswith(root + os.sep):
+        return "fixture_file выходит за корень репозитория: " + fixture
+    return ""
+
+
+def validate(entries, base_dir=".", allow_pending=False, repo_root=None):
     errors, warnings, covered = [], [], set()
     if not isinstance(entries, list) or not entries:
         return ["реестр должен быть непустым JSON-списком"], [], covered
@@ -152,6 +180,11 @@ def validate(entries, base_dir=".", allow_pending=False):
         fixture = e.get("fixture_file")
         if case == "openai_pua_short" and not fixture:
             errors.append(tag + ": для невидимых символов обязателен fixture_file с сырым образцом")
+        if fixture:
+            bad_path = _reject_path(fixture, base_dir, repo_root)
+            if bad_path:
+                errors.append(tag + ": " + bad_path)
+                fixture = None
         if fixture:
             path = os.path.join(base_dir, fixture)
             if not os.path.isfile(path):
@@ -264,63 +297,105 @@ def selftest():
     synth.write("# SYNTHETIC FIXTURE\nтекст.\uea012\uea02\n")
     synth.close()
     checks = []
-    err, _, cov = validate(ok, base_dir=base)
+    err, _, cov = validate(ok, base_dir=base, repo_root=base)
     checks.append(("полный тестовый реестр закрывает 14/14", not err and len(cov) == 14))
-    err, _, _ = validate(ok[:-1], base_dir=base)
+    err, _, _ = validate(ok[:-1], base_dir=base, repo_root=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
-    _, warn, _ = validate(ok[:-1], base_dir=base, allow_pending=True)
+    _, warn, _ = validate(ok[:-1], base_dir=base, repo_root=base, allow_pending=True)
     checks.append(("--allow-pending -> WARN вместо FAIL", any("гейт не закрыт" in x for x in warn)))
     bad = json.loads(json.dumps(ok)); bad[0]["verbatim_sample"] = "обычный текст"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("sample не ловится regex -> FAIL", any("НЕ ловится" in x for x in err)))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_class"] = "secondary"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
-    err, _, cov = validate(bad, base_dir=base)
+    err, _, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 14))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
-    err, _, cov = validate(bad, base_dir=base)
+    err, _, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 14))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
-    err, warn, cov = validate(bad, base_dir=base)
+    err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
                     and any("synthetic" in x for x in warn) and len(cov) == 13))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["fixture_file"] = os.path.basename(synth.name)
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("primary с fixture SYNTHETIC -> FAIL", any("не может быть primary" in x for x in err)))
     bad = json.loads(json.dumps(ok)); bad[2]["source_url"] = "ftp://x"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("некорректный URL -> FAIL", any("некорректный source_url" in x for x in err)))
     bad = json.loads(json.dumps(ok)); bad[3]["accessed"] = "13.07.2026"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("дата не ISO -> FAIL", any("YYYY-MM-DD" in x for x in err)))
     bad = json.loads(json.dumps(ok)); bad[1]["source_url"] = bad[0]["source_url"]
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL без disposition -> FAIL",
                    any("warning_disposition" in x for x in err)))
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
-    err, warn, cov = validate(bad, base_dir=base)
+    err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL с disposition закрывает",
                    not err and any("повторный source_url" in x for x in warn) and len(cov) == 14))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
-    err, _, _ = validate(bad, base_dir=base)
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
                    any("«ЗАДАЧА»" in x for x in err)))
     bad = json.loads(json.dumps(ok)); bad[0]["source_url"] = "https://example.org/live"
     bad[0]["accessed"] = "2024-01-01"
-    _, warn, _ = validate(bad, base_dir=base)
+    _, warn, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("живой URL старше 180 дней -> WARN",
                    any("не перепроверян" in x for x in warn)))
+    # Guard на fixture_file: реестр — данные, и путь из него не должен уводить
+    # проверку за пределы репозитория. Абсолютный путь особенно опасен, потому
+    # что os.path.join молча отбрасывает base_dir.
+    abs_fixture = os.path.abspath(tmp.name)
+    bad = json.loads(json.dumps(ok))
+    for e in bad:
+        if e["case"] == "openai_pua_short":
+            e["fixture_file"] = abs_fixture
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
+    checks.append(("абсолютный fixture_file -> FAIL",
+                   any("относительным путём" in x for x in err)))
+
+    bad = json.loads(json.dumps(ok))
+    for e in bad:
+        if e["case"] == "openai_pua_short":
+            e["fixture_file"] = "../../../../etc/passwd"
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
+    checks.append(("выход за корень репозитория -> FAIL",
+                   any("выходит за корень" in x for x in err)))
+
+    bad = json.loads(json.dumps(ok))
+    for e in bad:
+        if e["case"] == "openai_pua_short":
+            e["fixture_file"] = "C:\\Windows\\system32\\drivers\\etc\\hosts"
+    err, _, _ = validate(bad, base_dir=base, repo_root=base)
+    checks.append(("путь с буквой диска Windows -> FAIL",
+                   any("относительным путём" in x for x in err)))
+
+    # Легитимная форма из живого реестра: относительный путь внутрь tests/.
+    nested = os.path.join(base, "tests", "fixtures")
+    os.makedirs(nested, exist_ok=True)
+    legit_rel = os.path.join("tests", "fixtures", "pua-образец.txt")
+    with io.open(os.path.join(base, legit_rel), "w", encoding="utf-8") as fh:
+        fh.write(u"известная по ролям.2\n")
+    good = json.loads(json.dumps(ok))
+    for e in good:
+        if e["case"] == "openai_pua_short":
+            e["fixture_file"] = legit_rel.replace(os.sep, "/")
+    err, _, cov = validate(good, base_dir=base, repo_root=base)
+    checks.append(("относительный путь внутрь репозитория остаётся допустимым",
+                   not err and len(cov) == 14))
+
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
     for n, p in checks:
