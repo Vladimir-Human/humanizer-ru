@@ -35,6 +35,12 @@ FORBIDDEN_PARTS = {
     "research", "tests",
 }
 FORBIDDEN_NAMES = {".env", ".DS_Store", "Thumbs.db"}
+# Скрипты, которые в архив не попадают. check_corpus.py работает только по
+# каталогу research/, а его allowlist в архив не включает: с версии 3.7.0
+# валидатор отказывает кодом 2 вместо доклада «ОК» ни о чём, и держать его
+# в архиве значит отдавать пользователю заведомо неработающий инструмент.
+# check_fixture_sources.py остаётся: его импортирует check_readme_parity.py.
+EXCLUDED_SCRIPTS = {"scripts/check_corpus.py"}
 SECRET_NAME_RE = re.compile(r"(?:^|[._-])(secret|token|credential|private[_-]?key)(?:$|[._-])", re.I)
 FIXED_TIME = (2026, 7, 21, 0, 0, 0)
 
@@ -64,6 +70,8 @@ def _allowed(p: PurePosixPath) -> bool:
 def _validate_name(p: PurePosixPath) -> None:
     if any(part in FORBIDDEN_PARTS for part in p.parts):
         raise ReleaseError(f"forbidden path: {p}")
+    if str(p) in EXCLUDED_SCRIPTS:
+        raise ReleaseError(f"script excluded from release archive: {p}")
     if p.name in FORBIDDEN_NAMES or SECRET_NAME_RE.search(p.name):
         raise ReleaseError(f"sensitive or temporary filename: {p}")
     if not _allowed(p):
@@ -92,6 +100,8 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
     for path in sorted(candidates, key=lambda x: x.relative_to(root).as_posix()):
         rel = PurePosixPath(path.relative_to(root).as_posix())
         if any(part in FORBIDDEN_PARTS for part in rel.parts) or rel.name in FORBIDDEN_NAMES:
+            continue
+        if str(rel) in EXCLUDED_SCRIPTS:
             continue
         if path.is_symlink():
             raise ReleaseError(f"symlinks are not allowed: {rel}")
@@ -160,8 +170,10 @@ def _minimal(root: Path) -> None:
 
 def selftest() -> None:
     passed = 0
+    total = 0
     def expect_fail(fn, label: str) -> None:
-        nonlocal passed
+        nonlocal passed, total
+        total += 1
         try:
             fn()
         except (ReleaseError, zipfile.BadZipFile):
@@ -176,6 +188,7 @@ def selftest() -> None:
         assert digest_a == digest_b and a.read_bytes() == b.read_bytes()
         assert verify(a) == digest_a
         passed += 3
+        total += 3
 
         missing = base / "missing"; missing.mkdir(); (missing / "references").mkdir()
         (missing / "references" / "x.md").write_text("x", encoding="utf-8")
@@ -199,6 +212,7 @@ def selftest() -> None:
         with zipfile.ZipFile(outside_zip) as zf:
             assert "random.bin" not in zf.namelist()
         passed += 1
+        total += 1
 
         bad_utf = base / "bad-utf"; bad_utf.mkdir(); _minimal(bad_utf)
         (bad_utf / "references" / "bad.md").write_bytes(b"\xff")
@@ -221,7 +235,28 @@ def selftest() -> None:
 
         corrupt = base / "corrupt.zip"; corrupt.write_bytes(b"not a zip")
         expect_fail(lambda: verify(corrupt), "corrupt ZIP")
-    print(f"release preflight selftest: {passed}/11 PASS")
+
+        # 6.5: исключённые скрипты. Сборка их не берёт...
+        excluded = base / "excluded"; excluded.mkdir(); _minimal(excluded)
+        scripts_dir = excluded / "scripts"; scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "check_corpus.py").write_text("# заглушка\n", encoding="utf-8")
+        (scripts_dir / "check_markers.py").write_text("# заглушка\n", encoding="utf-8")
+        excluded_zip = base / "excluded.zip"; build(excluded, excluded_zip)
+        with zipfile.ZipFile(excluded_zip) as zf:
+            members = zf.namelist()
+        assert "scripts/check_corpus.py" not in members, "исключённый скрипт попал в архив"
+        assert "scripts/check_markers.py" in members, "нужный скрипт пропал из архива"
+        passed += 1
+        total += 1
+
+        # ...а верификация отвергает архив, в который его подсунули (fail-closed).
+        sneaked = base / "sneaked.zip"
+        with zipfile.ZipFile(sneaked, "w") as zf:
+            zf.writestr("SKILL.md", "x")
+            zf.writestr("references/x.md", "x")
+            zf.writestr("scripts/check_corpus.py", "# подсунуто\n")
+        expect_fail(lambda: verify(sneaked), "excluded script inside archive")
+    print(f"release preflight selftest: {passed}/{total} PASS")
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)

@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Чувствительная уязвимость
-    url: https://github.com/Vladimir-Human
-    about: Не публикуйте секреты и личные данные в открытом issue — используйте приватный контакт из профиля сопровождающего.
+    url: https://github.com/Vladimir-Human/humanizer-ru/blob/main/SECURITY.md
+    about: Порядок сообщения об уязвимости описан в SECURITY.md. Не публикуйте секреты и личные данные в открытом issue.
