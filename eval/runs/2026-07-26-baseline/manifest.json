@@ -1,0 +1,46 @@
+{
+  "run": "2026-07-26-baseline",
+  "model": "claude-fable-5 (сабагенты Claude Code; температура среды по умолчанию, не задавалась явно)",
+  "skill_version": "3.7.0-кандидат",
+  "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+  "judge": "LLM (claude-fable-5), не человек",
+  "note": "Первый парный прогон проекта. Ветка without — сабагент без скилла, ветка with — сабагент, читающий SKILL.md и references и следующий им. Промпт дословно одинаковый для обеих ветвей.",
+  "pairs": [
+    {
+      "id": "ai-gigachat-grechka",
+      "kind": "ai",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок",
+      "source_file": "research/raw/gigachat/04-гречка.txt"
+    },
+    {
+      "id": "ai-gigachat-podarok",
+      "kind": "ai",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок",
+      "source_file": "research/raw/gigachat/05-подарок-коллеге.txt"
+    },
+    {
+      "id": "ai-alisa-nebo",
+      "kind": "ai",
+      "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок",
+      "source_file": "research/raw/alisa/02-почему-небо-голубое.txt"
+    },
+    {
+      "id": "ai-alisa-pechat",
+      "kind": "ai",
+      "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок",
+      "source_file": "research/raw/alisa/01-слепая-печать.txt"
+    },
+    {
+      "id": "human-wikipedia",
+      "kind": "human",
+      "provenance": "Фрагмент статьи русской Википедии, написан сообществом; контрольная группа",
+      "source_file": "research/validation/human/09-wikipedia-modern.txt"
+    },
+    {
+      "id": "human-it-notation",
+      "kind": "human",
+      "provenance": "Написан в проекте для проверки ложных срабатываний; контрольная группа",
+      "source_file": "research/validation/human/11-it-notation.txt"
+    }
+  ]
+}

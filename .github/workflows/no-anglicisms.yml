@@ -12,24 +12,27 @@ on:
     paths:
       - 'SKILL.md'
       - 'README.md'
-      - 'references/**'
   pull_request:
     paths:
       - 'SKILL.md'
       - 'README.md'
-      - 'references/**'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: no-anglicisms-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   no-anglicisms:
     name: Поиск англицизмов в собственном тексте
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Сканировать SKILL.md и README.md на чёрный список калек
         run: |
