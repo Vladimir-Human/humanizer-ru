@@ -105,13 +105,20 @@ humanizer-ru/
 │   ├── check_spec.py             # Agent Skills spec compliance
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_docs.py             # Documentation consistency checks
-│   ├── check_examples.py          # Before/After example honesty gate
-│   ├── check_budget.py            # Context budget vs the official spec
+│   ├── check_examples.py         # Before/After example honesty gate
+│   ├── check_budget.py           # Context budget vs the official spec
+│   ├── check_readme_parity.py    # RU/EN showcase parity and honesty
+│   ├── check_corpus.py           # Validation corpus regression
+│   ├── check_perf.py             # Expression speed on a large input
+│   ├── check_release.py          # Release archive build and verification
 │   └── count_style_markers.py    # Style marker counter for A/B runs
 ├── eval/
-│   ├── run_eval.py                # Neutral corpus any candidate skill can run
-│   ├── blind_eval.py              # Blind paired evaluation of the skill effect
-│   └── HOW-TO-RUN.md              # Evaluation protocol and metric boundaries
+│   ├── run_eval.py               # Neutral corpus any candidate skill can run
+│   ├── blind_eval.py             # Blind paired evaluation of the skill effect
+│   ├── HOW-TO-RUN.md             # Evaluation protocol and metric boundaries
+│   ├── runs/                     # Paired runs: 2026-07-26-baseline
+│   └── results/                  # Full run reports, including metrics that
+│                                 #   do not favour the skill
 ├── docs/REVIEW.md                 # Review policy: three classes of change
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints
 ├── research/                     # Protocols, raw model outputs, pilot results
