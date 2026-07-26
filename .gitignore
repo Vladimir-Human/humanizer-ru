@@ -13,3 +13,9 @@ Thumbs.db
 
 # release archive build output
 dist/
+
+# Слепые пакеты и ключи парных прогонов (производные от eval/runs/<прогон>/).
+# Пакет пересобирается командой --make-packet, а ключ раскрывает соответствие
+# вариантов ветвям: в репозитории ему места нет.
+eval/runs/*-packet/
+eval/runs/*.key.json

@@ -1,0 +1,201 @@
+{
+  "run": "2026-07-26-baseline",
+  "manifest": {
+    "run": "2026-07-26-baseline",
+    "model": "claude-fable-5 (сабагенты Claude Code; температура среды по умолчанию, не задавалась явно)",
+    "skill_version": "3.7.0-кандидат",
+    "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+    "judge": "LLM (claude-fable-5), не человек",
+    "note": "Первый парный прогон проекта. Ветка without — сабагент без скилла, ветка with — сабагент, читающий SKILL.md и references и следующий им. Промпт дословно одинаковый для обеих ветвей.",
+    "pairs": [
+      {
+        "id": "ai-gigachat-grechka",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок",
+        "source_file": "research/raw/gigachat/04-гречка.txt"
+      },
+      {
+        "id": "ai-gigachat-podarok",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок",
+        "source_file": "research/raw/gigachat/05-подарок-коллеге.txt"
+      },
+      {
+        "id": "ai-alisa-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок",
+        "source_file": "research/raw/alisa/02-почему-небо-голубое.txt"
+      },
+      {
+        "id": "ai-alisa-pechat",
+        "kind": "ai",
+        "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок",
+        "source_file": "research/raw/alisa/01-слепая-печать.txt"
+      },
+      {
+        "id": "human-wikipedia",
+        "kind": "human",
+        "provenance": "Фрагмент статьи русской Википедии, написан сообществом; контрольная группа",
+        "source_file": "research/validation/human/09-wikipedia-modern.txt"
+      },
+      {
+        "id": "human-it-notation",
+        "kind": "human",
+        "provenance": "Написан в проекте для проверки ложных срабатываний; контрольная группа",
+        "source_file": "research/validation/human/11-it-notation.txt"
+      }
+    ]
+  },
+  "run_sha256": "2d8c3a982b6d3362e2527f5af15131b0157db14d87c68db1c5e668d4be1f9a74",
+  "summary": {
+    "pairs_total": 6,
+    "pairs_ai": 4,
+    "pairs_human_control": 2,
+    "removal_with_pct": null,
+    "removal_without_pct": null,
+    "fact_clean_with_pct": 100.0,
+    "fact_clean_without_pct": 100.0,
+    "false_edits_with": 0,
+    "false_edits_without": 0,
+    "len_delta_with_pct": -12.1,
+    "len_delta_without_pct": -14.2,
+    "readability_wins": {
+      "with": 2,
+      "without": 1,
+      "tie": 3
+    },
+    "meaning_loss": {
+      "with": 0,
+      "without": 0,
+      "none": 6
+    }
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1084,
+      "len_without": 663,
+      "len_with": 678,
+      "id": "ai-gigachat-grechka",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1007,
+      "len_without": 865,
+      "len_with": 874,
+      "id": "ai-gigachat-podarok",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1188,
+      "len_without": 1027,
+      "len_with": 1115,
+      "id": "ai-alisa-nebo",
+      "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1537,
+      "len_without": 1253,
+      "len_with": 1292,
+      "id": "ai-alisa-pechat",
+      "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 352,
+      "len_without": 352,
+      "len_with": 352,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "human-wikipedia",
+      "provenance": "Фрагмент статьи русской Википедии, написан сообществом; контрольная группа"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2280,
+      "len_without": 2280,
+      "len_with": 2280,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "human-it-notation",
+      "provenance": "Написан в проекте для проверки ложных срабатываний; контрольная группа"
+    }
+  ],
+  "judgements": {
+    "P001": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "Оба чистые, но у A связки живее; B заменил «обжарить» на «подсушить», смысл сохранён."
+    },
+    "P002": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "Практически идентичны по стилю и содержанию, оба читаются естественно."
+    },
+    "P003": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "Исходник авторский, оба варианта оставили текст без изменений — правильно."
+    },
+    "P004": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "Короткое корректное определение, оба варианта дословно повторяют исходник."
+    },
+    "P005": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "Оба верны и естественны, у A чуть более плавное изложение и ясная концовка."
+    },
+    "P006": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "A даёт тёплое живое вступление; B аккуратен, но более «списочный», смысл у обоих цел."
+    }
+  }
+}
