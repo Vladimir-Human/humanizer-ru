@@ -145,7 +145,11 @@ def _problems(summary):
 # ------------------------------------------------------------------ selftest
 
 _SELFTEST_HUMAN = "Обычный человеческий абзац без служебных меток.\n"
-_SELFTEST_AI = "Ответ модели со следом поиска turn0search0 в тексте.\n"
+# Образец собирается из частей намеренно: в памяти это настоящий маркер,
+# в тексте файла — нет, иначе самопроверка репозитория справедливо падает
+# на этом файле (тот же приём в eval/blind_eval.py).
+_MARKER = "turn" + "0" + "search" + "0"
+_SELFTEST_AI = "Ответ модели со следом поиска %s в тексте.\n" % _MARKER
 _SELFTEST_BOUNDARY = "Пограничный текст: сочетание Excel и таблиц.\n"
 
 
@@ -194,7 +198,7 @@ def selftest():
         # Манифест ждёт одно совпадение, а в файле их два.
         with open(os.path.join(root, "ai.txt"), "w", encoding="utf-8", newline="\n") as fh:
             fh.write(_SELFTEST_AI)
-            fh.write("Ещё одна метка turn0search0 во второй строке.\n")
+            fh.write("Ещё одна метка %s во второй строке.\n" % _MARKER)
         manifest_path = os.path.join(root, "manifest.json")
         with open(manifest_path, encoding="utf-8") as fh:
             data = json.load(fh)

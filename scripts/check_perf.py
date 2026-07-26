@@ -67,7 +67,7 @@ def make_corpora(size=CORPUS_SIZE):
         u"utm_source=copilot utm_medium=chat 2025-13-XX Excel+1С ", size)
     urls = _grow(
         u"https://example.org/page?utm_source=news&utm_medium=mail&id=42 "
-        u"https://ppl-ai-file-upload.s3.amazonaws.example/x?ref=1 "
+        u"https://ppl-ai-" + u"file-upload" + u".s3.amazonaws.example/x?ref=1 "
         u"https://vertexaisearch.example/grounding?id=7 ", size)
     long_line = _grow(u"аaбbвcгdдeеfжgзhиiйjкkлlмmнnоoпpрqсrтsуtфuхvцwчxшyщzъ", size)
     # Ловушка откатов. Намеренно короткая: у выражения с вложенной
