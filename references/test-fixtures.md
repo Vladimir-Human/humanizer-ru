@@ -449,10 +449,10 @@
 
 | Тип | Образец | Ожидание |
 |---|---|---|
-| Прямой | `https://ppl-ai-file-upload.s3.amazonaws.com/abc123/file.pdf` | срабатывает |
-| Прямой | `Источник: https://s3.amazonaws.com/ppl-ai-file-upload/x` | срабатывает |
+| Прямой | `https://ppl-ai-file-upload.s3.amazonaws.example/abc123/file.pdf` | срабатывает |
+| Прямой | `Источник: https://s3.amazonaws.example/ppl-ai-file-upload/x` | срабатывает |
 | Отрицательный | `ppl ai file upload` (пробелы вместо дефисов) | не срабатывает |
-| Отрицательный | `https://s3.amazonaws.com/other-bucket/x` (другой bucket) | не срабатывает |
+| Отрицательный | `https://s3.amazonaws.example/other-bucket/x` (другой bucket) | не срабатывает |
 | Граничный | два вхождения в одном списке литературы | срабатывает два раза |
 
 ---
