@@ -270,8 +270,8 @@ def _mk(case, sample, ec="primary", **extra):
 def selftest():
     import tempfile
     samples = {
-        "utm_copilot": "https://a.b/?utm_source=copilot.com",
-        "grok_referrer": "https://a.b/?referrer=grok.com",
+        "utm_copilot": "https://example.com/?utm_source=copilot.com",
+        "grok_referrer": "https://example.com/?referrer=grok.com",
         "grok_render_json": '[](grok_render_citation_card_json={"cardIds":["1"]})',
         "grok_card_tag": '<grok-card data-id="x" data-type="citation_card">',
         "turn_other": "turn0image0",
@@ -283,7 +283,7 @@ def selftest():
         "openai_pua_short": "текст.\uea012\uea02",
         "ref_name_search": '<ref name="0search12">',
         "gemini_span": "[span_2](start_span)",
-        "perplexity_s3": "https://ppl-ai-file-upload.s3.amazonaws.com/x",
+        "perplexity_s3": "https://ppl-ai-file-upload.s3.amazonaws.example/x",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")

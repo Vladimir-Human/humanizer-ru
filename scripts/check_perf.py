@@ -65,10 +65,12 @@ def make_corpora(size=CORPUS_SIZE):
         u"turn0searchX citeturn0 oaicite: contentReferenc "
         u"attached_file grok_render_citation_car <thin> "
         u"utm_source=copilot utm_medium=chat 2025-13-XX Excel+1С ", size)
+    # Домены зарезервированы RFC 2606: корпус нужен для плотности ссылок и
+    # параметров запроса, а не для воспроизведения примет конкретных моделей.
     urls = _grow(
         u"https://example.org/page?utm_source=news&utm_medium=mail&id=42 "
-        u"https://ppl-ai-" + u"file-upload" + u".s3.amazonaws.example/x?ref=1 "
-        u"https://vertexaisearch.example/grounding?id=7 ", size)
+        u"https://example.net/files/report.pdf?ref=1&token=abcdef "
+        u"https://example.com/search?q=test&page=7&sort=date ", size)
     long_line = _grow(u"аaбbвcгdдeеfжgзhиiйjкkлlмmнnоoпpрqсrтsуtфuхvцwчxшyщzъ", size)
     # Ловушка откатов. Намеренно короткая: у выражения с вложенной
     # квантификацией время растёт экспоненциально от числа токенов, поэтому
