@@ -328,10 +328,15 @@ CASES = {
     # --- A.5 доп. S3-ссылки Perplexity (v3.5) ---
     "perplexity_s3": (
         r"ppl-ai-file-upload",
-        ["Источник: https://ppl-ai-file-upload.s3.amazonaws.com/abc123/file.pdf",
-         "Ссылка https://s3.amazonaws.com/ppl-ai-file-upload/x в списке литературы."],
+        # Хосты в образцах — зарезервированные RFC 2606: выражению нужен только
+        # идентификатор бакета, а живой адрес S3 в поставляемом файле сканеры
+        # безопасности принимают за канал раздачи файлов. Подлинная форма
+        # приметы — в tests/fixtures/perplexity-s3.txt и в реестре
+        # research/fixtures/marker-sources.json; они в архив скилла не входят.
+        ["Источник: https://ppl-ai-file-upload.s3.amazonaws.example/abc123/file.pdf",
+         "Ссылка https://s3.amazonaws.example/ppl-ai-file-upload/x в списке литературы."],
         ["упоминание ppl ai file upload с пробелами",
-         "обычная ссылка https://s3.amazonaws.com/other-bucket/x"],
+         "обычная ссылка https://s3.amazonaws.example/other-bucket/x"],
         None,
     ),
     # --- A.6 доп. generated-reference-identifier (v3.1) ---
