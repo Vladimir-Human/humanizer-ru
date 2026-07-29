@@ -135,9 +135,13 @@ CASES = {
     ),
     "vertexaisearch": (
         r"vertexaisearch\.cloud\.google\.com/grounding-api-redirect",
-        ["https://vertexaisearch.cloud.google.com/grounding-api-redirect/AbCdEf"],
+        # Схема https:// в образце опущена намеренно: выражению нужен host+path
+        # самой приметы, а полный URL в поставляемом файле сканеры безопасности
+        # принимают за канал раздачи. Подлинная форма — в research/ и tests/,
+        # они в архив скилла не входят.
+        ["ссылка vertexaisearch.cloud.google.com/grounding-api-redirect/AbCdEf в тексте"],
         ["vertexaisearch.cloud.google.com без пути",
-         "https://cloud.google.com/vertex-ai-search"],
+         "обычная страница продукта cloud.google.com/vertex-ai-search"],
         None,
     ),
     # --- A.5. Прочие маркеры разметки ---
@@ -328,15 +332,17 @@ CASES = {
     # --- A.5 доп. S3-ссылки Perplexity (v3.5) ---
     "perplexity_s3": (
         r"ppl-ai-file-upload",
-        # Хосты в образцах — зарезервированные RFC 2606: выражению нужен только
-        # идентификатор бакета, а живой адрес S3 в поставляемом файле сканеры
-        # безопасности принимают за канал раздачи файлов. Подлинная форма
-        # приметы — в tests/fixtures/perplexity-s3.txt и в реестре
-        # research/fixtures/marker-sources.json; они в архив скилла не входят.
-        ["Источник: https://ppl-ai-file-upload.s3.amazonaws.example/abc123/file.pdf",
-         "Ссылка https://s3.amazonaws.example/ppl-ai-file-upload/x в списке литературы."],
+        # Схема https:// в образцах опущена намеренно: выражению нужен только
+        # идентификатор бакета ppl-ai-file-upload, а полный адрес S3 в
+        # поставляемом файле сканеры безопасности принимают за канал раздачи
+        # файлов. Подлинная форма приметы — в tests/fixtures/perplexity-s3.txt
+        # и в реестре research/fixtures/marker-sources.json; они в архив скилла
+        # не входят. Отрицательный образец сохраняет смысл: другой бакет
+        # (other-bucket) на том же сервисе под выражение не подпадает.
+        ["Источник: ссылка на бакет ppl-ai-file-upload в пути (сервис s3.amazonaws)",
+         "Ссылка на бакет ppl-ai-file-upload после имени сервиса s3.amazonaws в списке литературы."],
         ["упоминание ppl ai file upload с пробелами",
-         "обычная ссылка https://s3.amazonaws.example/other-bucket/x"],
+         "обычная ссылка на другой бакет other-bucket на сервисе s3.amazonaws"],
         None,
     ),
     # --- A.6 доп. generated-reference-identifier (v3.1) ---
