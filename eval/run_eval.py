@@ -42,6 +42,46 @@ except Exception as exc:  # noqa: BLE001
     CASES = {}
 
 
+class ManifestError(Exception):
+    """Отказ инструмента: манифест недоверенный и нарушил границу репозитория.
+
+    Отличается от обычной регрессии корпуса (пропал файл, разошёлся хеш):
+    те копятся в summary и дают код возврата 1, а ManifestError — код 2,
+    как отказ инструмента в check_corpus.py и check_fixture_sources.py.
+    """
+
+
+def _safe_path(rel, root):
+    """Абсолютный путь к записи корпуса внутри root либо ManifestError.
+
+    Манифест приходит через --candidate/--manifest и по замыслу гарнесса
+    может быть сторонним — то есть это недоверенный ввод. Значение entry["path"]
+    подставлялось прямо в os.path.join(root, rel), а join молча отбрасывает
+    base при абсолютном аргументе (join(root, "/etc/passwd") == "/etc/passwd")
+    и не мешает выходу через "..". Запрещаем всё, что уводит за корень:
+    абсолютный путь, букву диска Windows, обратный слэш, выход через ".."
+    и символическую ссылку, чья цель лежит вне корня.
+
+    Границу проводим по корню репозитория (research/fixtures/*.txt законно
+    указывают в ../../tests/fixtures/), а не по каталогу запуска. root задаётся
+    от __file__, поэтому не зависит от того, откуда валидатор вызван.
+    """
+    if not isinstance(rel, str) or not rel.strip():
+        raise ManifestError("путь записи корпуса должен быть непустой строкой")
+    native = rel.replace("\\", "/")
+    if os.path.isabs(rel) or os.path.isabs(native) or re.match(r"^[A-Za-z]:", rel):
+        raise ManifestError("путь записи корпуса должен быть относительным, получено: " + rel)
+    if "\\" in rel:
+        raise ManifestError("обратный слэш в пути записи корпуса запрещён: " + rel)
+    root_real = os.path.realpath(root)
+    # realpath снимает "." и "..", а также разворачивает символические ссылки,
+    # поэтому ссылка на файл вне корня будет поймана этим же сравнением.
+    target = os.path.realpath(os.path.join(root_real, rel))
+    if target != root_real and not target.startswith(root_real + os.sep):
+        raise ManifestError("путь записи корпуса выходит за корень репозитория: " + rel)
+    return target
+
+
 def _sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -75,8 +115,21 @@ def _scan_candidate(path, runner):
 
 
 def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
-    with open(manifest_path, encoding="utf-8") as fh:
-        manifest = json.load(fh)
+    # Манифест приходит из --manifest, то есть от вызывающего. Сбой чтения — это
+    # отказ инструмента (код 2), а не регрессия корпуса и не traceback: тот же
+    # порядок разделения кодов, что в scripts/check_budget.py.
+    try:
+        with open(manifest_path, encoding="utf-8") as fh:
+            manifest = json.load(fh)
+    except OSError as exc:
+        raise ManifestError("не удалось прочитать манифест %s: %s" % (manifest_path, exc))
+    except UnicodeDecodeError as exc:
+        raise ManifestError("манифест %s не читается как UTF-8: %s" % (manifest_path, exc))
+    except json.JSONDecodeError as exc:
+        raise ManifestError("манифест %s не является корректным JSON: %s" % (manifest_path, exc))
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("corpus"), list):
+        raise ManifestError("манифест %s: ожидается объект с полем corpus в виде списка"
+                            % manifest_path)
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()} if not candidate else None
 
     summary = {"manifest_version": manifest.get("version", "?"),
@@ -87,8 +140,10 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
                "boundary_unexpected": 0, "details": []}
 
     for entry in manifest["corpus"]:
-        rel = entry["path"]
-        path = os.path.join(root, rel)
+        rel = entry.get("path")
+        # Проверка границы — до любого обращения к файловой системе: недоверенный
+        # путь не должен даже проверяться на существование за пределами корня.
+        path = _safe_path(rel, root)
         summary["files"] += 1
         if not os.path.isfile(path):
             # Пропавший файл корпуса — провал прогона, а не примечание в details:
@@ -233,8 +288,135 @@ def selftest():
             passed += 1
         else:
             print("FAIL: %s (%s)" % (name, detail))
-    print("САМОПРОВЕРКА: %d/%d PASS" % (passed, len(cases)))
-    return 0 if passed == len(cases) else 1
+
+    # Граница пути: недоверенный манифест не должен читать файлы вне корня.
+    # Каждый кейс обязан быть отвергнут ManifestError (отказ инструмента, код 2),
+    # а не превратиться в тихий files_missing (регрессия корпуса, код 1).
+    passed += _boundary_selftest()
+
+    # Сбой чтения самого манифеста: отказ инструмента, а не traceback.
+    input_cases = []
+    tmp_input = tempfile.mkdtemp()
+    missing = os.path.join(tmp_input, "нет-такого.json")
+    input_cases.append(("отсутствующий манифест -> отказ", missing))
+    broken = os.path.join(tmp_input, "битый.json")
+    with open(broken, "w", encoding="utf-8") as fh:
+        fh.write("{не json")
+    input_cases.append(("манифест не является JSON -> отказ", broken))
+    not_object = os.path.join(tmp_input, "список.json")
+    with open(not_object, "w", encoding="utf-8") as fh:
+        fh.write("[1, 2, 3]")
+    input_cases.append(("манифест без поля corpus -> отказ", not_object))
+    for name, path in input_cases:
+        try:
+            run(path)
+            print("FAIL: %s (отказа не было)" % name)
+        except ManifestError:
+            passed += 1
+            print("PASS: %s" % name)
+        except Exception as exc:  # noqa: BLE001 — любой иной сбой считаем провалом
+            print("FAIL: %s (вместо отказа %s)" % (name, type(exc).__name__))
+
+    total = len(cases) + _BOUNDARY_TOTAL + len(input_cases)
+    print("САМОПРОВЕРКА: %d/%d PASS" % (passed, total))
+    return 0 if passed == total else 1
+
+
+# Кейсы границы пути живут отдельно: их проверка — «поднят ли ManifestError»,
+# а не «выставлен ли счётчик summary», как у регрессионных кейсов выше.
+_BOUNDARY_TOTAL = 5
+
+
+def _boundary_selftest():
+    """Отрицательные кейсы обхода пути плюс положительный контроль.
+
+    Доказывает, что гейт умеет падать на абсолютном пути, выходе через "..",
+    букве диска Windows и символической ссылке за корень — и что нормальный
+    относительный манифест по-прежнему проходит. Возвращает число PASS.
+    """
+    import shutil
+    import tempfile
+
+    def _run_probe(root, rel):
+        """Собирает манифест на одну запись с путём rel и запускает run()."""
+        payload = _SELFTEST_HUMAN
+        body = os.path.join(root, "внутри.txt")
+        with open(body, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(payload)
+        manifest = {"version": "boundary", "corpus": [
+            {"path": rel, "kind": "human", "sha256": _sha256(body)}]}
+        manifest_path = os.path.join(root, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(manifest, fh, ensure_ascii=False)
+        return run(manifest_path, None, root)
+
+    def _rejected(root, rel):
+        try:
+            _run_probe(root, rel)
+            return False
+        except ManifestError:
+            return True
+
+    negatives = [
+        ("абсолютный путь в манифесте -> ОТКАЗ",
+         lambda root: os.path.join(tempfile.gettempdir(), "секрет.txt")),
+        ("выход за корень через .. -> ОТКАЗ",
+         lambda root: os.path.join("..", "..", "..", "..", "etc", "passwd")),
+        ("буква диска Windows -> ОТКАЗ",
+         lambda root: "C:\\Windows\\system32\\drivers\\etc\\hosts"),
+    ]
+
+    passed = 0
+    for name, make_rel in negatives:
+        root = tempfile.mkdtemp()
+        try:
+            ok = _rejected(root, make_rel(root))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+        print(("PASS: " if ok else "FAIL: ") + name)
+        passed += 1 if ok else 0
+
+    # Символическая ссылка внутри корня, но с целью за его пределами.
+    name = "симлинк за пределы корня -> ОТКАЗ"
+    root = tempfile.mkdtemp()
+    outside = tempfile.mkdtemp()
+    try:
+        secret = os.path.join(outside, "секрет.txt")
+        with open(secret, "w", encoding="utf-8") as fh:
+            fh.write("данные вне корня\n")
+        link = os.path.join(root, "ссылка.txt")
+        supported = True
+        try:
+            os.symlink(secret, link)
+        except (OSError, NotImplementedError, AttributeError):
+            # Платформа без symlink (например, Windows без прав): кейс не
+            # применим, засчитываем как пройденный, чтобы не давать ложный сбой.
+            supported = False
+        if supported:
+            ok = _rejected(root, "ссылка.txt")
+        else:
+            ok = True
+            name += " (симлинки недоступны — кейс пропущен)"
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+        shutil.rmtree(outside, ignore_errors=True)
+    print(("PASS: " if ok else "FAIL: ") + name)
+    passed += 1 if ok else 0
+
+    # Положительный контроль: нормальный относительный путь внутри корня.
+    name = "нормальный относительный манифест по-прежнему проходит"
+    root = tempfile.mkdtemp()
+    try:
+        summary = _run_probe(root, "внутри.txt")
+        ok = summary["files"] == 1 and _problems(summary) == 0
+    except ManifestError:
+        ok = False
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+    print(("PASS: " if ok else "FAIL: ") + name)
+    passed += 1 if ok else 0
+
+    return passed
 
 
 def main():
@@ -245,7 +427,12 @@ def main():
     args = ap.parse_args()
     if args.selftest:
         return selftest()
-    summary = run(args.manifest, args.candidate)
+    try:
+        summary = run(args.manifest, args.candidate)
+    except ManifestError as exc:
+        # Отказ инструмента (код 2) — не регрессия корпуса (код 1).
+        print("ОТКАЗ: %s" % exc, file=sys.stderr)
+        return 2
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 1 if _problems(summary) else 0
 
