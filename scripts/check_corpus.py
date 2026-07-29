@@ -22,11 +22,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(errors="backslashreplace")
 
 try:
-    from check_markers import CASES, _inside_backticks, _console_text
-except Exception:  # noqa: BLE001
+    from check_markers import CASES, _console_text, _inside_backticks
+except Exception:  # ruff:ignore[blind-except]
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from check_markers import CASES, _inside_backticks, _console_text
+    from check_markers import CASES, _console_text, _inside_backticks
 
+import pathlib
 import re
 
 HUMAN_DIR = "research/validation/human"
@@ -55,7 +56,7 @@ RAW_EXPECTED = {
 def _scan_file(path, compiled):
     hits = []
     try:
-        with open(path, encoding="utf-8") as fh:
+        with pathlib.Path(path).open(encoding="utf-8") as fh:
             lines = fh.read().splitlines()
     except OSError as exc:
         return [(0, "read-error", str(exc))]
@@ -75,7 +76,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
     # Без корпусов проверять нечего, а прежний код печатал «ОК» и возвращал 0:
     # вне полного клона (в релизном архиве research/ нет) это выглядело как
     # успешная проверка. Отказ инструмента — код 2, отдельно от регрессии (1).
-    present = [d for d in ((human_dir, boundary_dir) + tuple(raw_dirs)) if os.path.isdir(d)]
+    present = [d for d in ((human_dir, boundary_dir) + tuple(raw_dirs)) if pathlib.Path(d).is_dir()]
     if not present:
         print("[СБОЙ] корпусов нет ни в одном из каталогов: %s"
               % ", ".join((human_dir, boundary_dir) + tuple(raw_dirs)))
@@ -84,7 +85,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
         return 2
 
     # Human corpus: 0 совпадений.
-    if os.path.isdir(human_dir):
+    if pathlib.Path(human_dir).is_dir():
         for fn in sorted(os.listdir(human_dir)):
             if not fn.endswith(".txt"):
                 continue
@@ -96,7 +97,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
     # Raw corpus: только ожидаемые совпадения.
     seen_expected = set()
     for d in raw_dirs:
-        if not os.path.isdir(d):
+        if not pathlib.Path(d).is_dir():
             continue
         for fn in sorted(os.listdir(d)):
             if not fn.endswith(".txt"):
@@ -114,7 +115,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
                 seen_expected.add(key)
 
     # Boundary corpus: ровно заявленные совпадения.
-    if os.path.isdir(boundary_dir):
+    if pathlib.Path(boundary_dir).is_dir():
         for fn in sorted(os.listdir(boundary_dir)):
             if not fn.endswith(".txt"):
                 continue
@@ -125,7 +126,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
                 fails.append("%s: boundary mismatch — ожидалось %s, найдено %s"
                              % (fn, expected, actual))
 
-    if not seen_expected and all(os.path.isdir(d) for d in raw_dirs):
+    if not seen_expected and all(pathlib.Path(d).is_dir() for d in raw_dirs):
         fails.append("raw-корпус: ни одного ожидаемого BOM-совпадения — проверьте corpus")
 
     if fails:
@@ -140,39 +141,39 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
 def selftest():
     import tempfile
     tmp = tempfile.mkdtemp()
-    human = os.path.join(tmp, "human"); os.makedirs(human)
-    boundary = os.path.join(tmp, "boundary"); os.makedirs(boundary)
-    raw = os.path.join(tmp, "raw", "le-chat"); os.makedirs(raw)
-    with open(os.path.join(human, "01.txt"), "w", encoding="utf-8") as f:
+    human = os.path.join(tmp, "human"); pathlib.Path(human).mkdir(parents=True)
+    boundary = os.path.join(tmp, "boundary"); pathlib.Path(boundary).mkdir(parents=True)
+    raw = os.path.join(tmp, "raw", "le-chat"); pathlib.Path(raw).mkdir(parents=True)
+    with pathlib.Path(os.path.join(human, "01.txt")).open("w", encoding="utf-8") as f:
         f.write("обычный человеческий текст без маркеров\n")
-    with open(os.path.join(boundary, "emoji-zwj.txt"), "w", encoding="utf-8") as f:
+    with pathlib.Path(os.path.join(boundary, "emoji-zwj.txt")).open("w", encoding="utf-8") as f:
         f.write("семья: \U0001F468\u200d\U0001F469\u200d\U0001F466\n")
-    with open(os.path.join(raw, "01-fast-канберра.txt"), "w", encoding="utf-8") as f:
+    with pathlib.Path(os.path.join(raw, "01-fast-канберра.txt")).open("w", encoding="utf-8") as f:
         f.write("\ufeffответ модели\n")
     checks = []
     rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
     checks.append(("чистый human + ожиданный raw BOM + ZWJ-граница -> OK", rc == 0))
-    with open(os.path.join(human, "02.txt"), "w", encoding="utf-8") as f:
+    with pathlib.Path(os.path.join(human, "02.txt")).open("w", encoding="utf-8") as f:
         f.write("текст с turn0search0 маркером\n")
     rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
     checks.append(("human с маркером -> FAIL", rc == 1))
-    os.unlink(os.path.join(human, "02.txt"))
+    pathlib.Path(os.path.join(human, "02.txt")).unlink()
 
     # Прежний кейс писал в boundary файл без маркеров: ожидалось пусто, найдено
     # пусто — проверка возвращала 0 и ничего не доказывала. Настоящий негатив —
     # boundary-файл с маркером, которого в BOUNDARY_EXPECTED нет.
     extra = os.path.join(boundary, "extra.txt")
-    with open(extra, "w", encoding="utf-8") as f:
+    with pathlib.Path(extra).open("w", encoding="utf-8") as f:
         f.write("граничный файл с turn0search0 внутри\n")
     rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
     checks.append(("boundary с незаявленным совпадением -> FAIL", rc == 1))
-    os.unlink(extra)
+    pathlib.Path(extra).unlink()
 
     # Ключ RAW_EXPECTED учитывает каталог: одноимённый файл в другом каталоге
     # модели не наследует разрешение на BOM.
     other_raw = os.path.join(tmp, "raw", "gigachat")
-    os.makedirs(other_raw)
-    with open(os.path.join(other_raw, "01-fast-канберра.txt"), "w", encoding="utf-8") as f:
+    pathlib.Path(other_raw).mkdir(parents=True)
+    with pathlib.Path(os.path.join(other_raw, "01-fast-канберра.txt")).open("w", encoding="utf-8") as f:
         f.write("﻿тот же файл, но другая модель\n")
     rc = run(human_dir=human, raw_dirs=(raw, other_raw), boundary_dir=boundary)
     checks.append(("одноимённый файл в другом каталоге не наследует разрешение -> FAIL",

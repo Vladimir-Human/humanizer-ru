@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Прогон регулярных выражений из references/chatbot-artifacts.md
 по проверочным образцам из references/test-fixtures.md.
 
@@ -16,6 +15,7 @@
 Ни одно работающее правило не удаляется (см. принцип в test-fixtures.md).
 """
 
+import pathlib
 import re
 import sys
 
@@ -402,7 +402,7 @@ def scan(paths: list) -> int:
     found = 0
     for path in paths:
         try:
-            with open(path, encoding="utf-8") as fh:
+            with pathlib.Path(path).open(encoding="utf-8") as fh:
                 lines = fh.read().splitlines()
         except OSError as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
@@ -471,7 +471,7 @@ def parity(md_path: str = "references/chatbot-artifacts.md") -> int:
     задокументированы, 1 — есть недокументированные (regex без описания).
     """
     try:
-        with open(md_path, encoding="utf-8") as fh:
+        with pathlib.Path(md_path).open(encoding="utf-8") as fh:
             doc = _canon_pattern(fh.read())
     except OSError as exc:
         print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)

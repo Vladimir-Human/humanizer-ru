@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """check_docs.py — проверка согласованности документации humanizer-ru.
 
 Проверки:
@@ -27,6 +26,7 @@ Exit 0 — все проверки пройдены, 1 — есть ошибки
 """
 import argparse
 import os
+import pathlib
 import re
 import sys
 import tempfile
@@ -50,9 +50,11 @@ LECHAT_WRONG_DASH = 'прежние пометки "дефис" были нев�
 WORKFLOWS_DIR = ".github/workflows"
 MOJIBAKE_TOKENS = ("РЎ", "Рџ", "СЂР")
 
+
 def _read(path):
- with open(path, "rb") as f:
+ with pathlib.Path(path).open("rb") as f:
   return f.read()
+
 
 def check_repo(root):
  errors = []
@@ -68,7 +70,7 @@ def check_repo(root):
 
  # 1. UTF-8 без BOM
  for rel in DOC_FILES:
-  if not os.path.exists(p(rel)):
+  if not pathlib.Path(p(rel)).exists():
    errors.append("%s: файл отсутствует" % rel)
    continue
   raw = _read(p(rel))
@@ -139,12 +141,12 @@ def check_repo(root):
      before = line[:start]
      if before.count("`") % 2 == 1 and line[start:].count("`") >= 1:
       continue
-    if not os.path.exists(os.path.join(base, target_path)):
+    if not pathlib.Path(os.path.join(base, target_path)).exists():
      errors.append("%s:%d: битая внутренняя ссылка -> %s" % (rel, lineno, target))
 
  # 8. Сырые файлы без аналитики
  raw_dir = p("research/raw")
- if os.path.isdir(raw_dir):
+ if pathlib.Path(raw_dir).is_dir():
   for dirpath, _dirs, files in os.walk(raw_dir):
    for fn in sorted(files):
     fp = os.path.join(dirpath, fn)
@@ -162,7 +164,7 @@ def check_repo(root):
       break
 
  # 9. Журнал Le Chat
- if os.path.exists(p(LECHAT_LOG)):
+ if pathlib.Path(p(LECHAT_LOG)).exists():
   t = text(LECHAT_LOG)
   runs = len(re.findall(r"^\|\s*\d+\s*\|", t, re.M))
   if "MARKER_FOUND" in t and runs < MIN_RUNS_FOR_MARKER:
@@ -210,7 +212,7 @@ def check_repo(root):
 
  # 14. Workflows: UTF-8 без BOM и без mojibake
  wf_dir = p(WORKFLOWS_DIR)
- if os.path.isdir(wf_dir):
+ if pathlib.Path(wf_dir).is_dir():
   for fn in sorted(os.listdir(wf_dir)):
    if not fn.endswith((".yml", ".yaml")):
     continue
@@ -231,7 +233,7 @@ def check_repo(root):
 
  # 15. CITATION.cff согласован с версией скилла
  cff_path = p("CITATION.cff")
- if not os.path.exists(cff_path):
+ if not pathlib.Path(cff_path).exists():
   errors.append("CITATION.cff: файл отсутствует — на него ссылается docs-check")
  else:
   cff = text("CITATION.cff")
@@ -249,15 +251,17 @@ def check_repo(root):
 
 # ------------------------------------------------------------------ selftest
 
+
 def _w(root, rel, content, binary=False):
  path = os.path.join(root, rel)
- os.makedirs(os.path.dirname(path), exist_ok=True)
+ pathlib.Path(os.path.dirname(path)).mkdir(exist_ok=True, parents=True)
  if binary:
-  with open(path, "wb") as f:
+  with pathlib.Path(path).open("wb") as f:
    f.write(content)
  else:
-  with open(path, "w", encoding="utf-8") as f:
+  with pathlib.Path(path).open("w", encoding="utf-8") as f:
    f.write(content)
+
 
 def _make_repo(root, version="3.3.5"):
  _w(root, "SKILL.md",
@@ -287,6 +291,7 @@ def _make_repo(root, version="3.3.5"):
     'authors:\n  - name: "Vladimir-Human"\n'
     'version: %s\ndate-released: "2026-07-25"\n' % version)
 
+
 def _citation_wrong_version(root):
  """В CITATION.cff версия чужая — гейт обязан это увидеть."""
  _w(root, "CITATION.cff",
@@ -294,9 +299,11 @@ def _citation_wrong_version(root):
     'authors:\n  - name: "Vladimir-Human"\n'
     'version: 9.9.9\ndate-released: "2026-07-25"\n')
 
+
 def _citation_missing(root):
  """CITATION.cff удалён."""
- os.remove(os.path.join(root, "CITATION.cff"))
+ pathlib.Path(os.path.join(root, "CITATION.cff")).unlink()
+
 
 def _citation_bad_date(root):
  """date-released не в формате ISO."""
@@ -305,12 +312,14 @@ def _citation_bad_date(root):
     'authors:\n  - name: "Vladimir-Human"\n'
     'version: 3.3.5\ndate-released: "25 июля 2026"\n')
 
+
 def _drop_lechat_and_overclaim(root):
  """Журнала Le Chat нет, а завышенная формулировка в README есть."""
- os.remove(os.path.join(root, LECHAT_LOG))
+ pathlib.Path(os.path.join(root, LECHAT_LOG)).unlink()
  _w(root, "README.md",
     "# R\n[CHANGELOG.md](CHANGELOG.md)\n"
     "Скилл содержит 38 однозначных маркеров.\n")
+
 
 def selftest():
  cases = []
@@ -437,6 +446,7 @@ def selftest():
  print("САМОПРОВЕРКА: %d/%d PASS" % (passed, total))
  return 0 if passed == total else 1
 
+
 def main():
  parser = argparse.ArgumentParser(
   description="Проверка согласованности документации humanizer-ru")
@@ -455,6 +465,7 @@ def main():
   sys.exit(1)
  print("ДОКУМЕНТАЦИЯ: все проверки пройдены.")
  sys.exit(0)
+
 
 if __name__ == "__main__":
  main()

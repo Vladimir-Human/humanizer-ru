@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Проверка реестра источников для образцов маркеров (issue #18). Версия 3.
 
 Отличие от версии 1: статуса confirmed недостаточно, чтобы закрыть гейт.
@@ -24,9 +23,9 @@
 Только стандартная библиотека. Коды возврата: 0 - гейт пройден, 1 - нарушения, 2 - ошибка входа.
 """
 
-import io
 import json
 import os
+import pathlib
 import re
 import sys
 
@@ -39,11 +38,11 @@ if hasattr(sys.stdout, "reconfigure"):
 # новые маркеры, не добавленные в реестр (новый case обязан попасть в SCOPE).
 try:
     from check_markers import CASES as _MARKER_CASES
-except Exception:  # noqa: BLE001 — fallback, если запуск из другого каталога
+except Exception:  # ruff:ignore[blind-except] — fallback, если запуск из другого каталога
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     try:
         from check_markers import CASES as _MARKER_CASES
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # ruff:ignore[blind-except]
         print("Не удалось импортировать CASES из check_markers.py: %s" % exc, file=sys.stderr)
         _MARKER_CASES = {}
 
@@ -108,7 +107,7 @@ def _reject_path(fixture, base_dir, repo_root=None):
     if fixture != fixture.strip():
         return "fixture_file не должен начинаться или заканчиваться пробелом"
     native = fixture.replace("\\", "/")
-    if os.path.isabs(fixture) or os.path.isabs(native) or re.match(r"^[A-Za-z]:", fixture):
+    if pathlib.Path(fixture).is_absolute() or pathlib.Path(native).is_absolute() or re.match(r"^[A-Za-z]:", fixture):
         return "fixture_file должен быть относительным путём, получено: " + fixture
     root = os.path.abspath(repo_root or REPO_ROOT)
     target = os.path.abspath(os.path.join(base_dir, fixture))
@@ -187,10 +186,10 @@ def validate(entries, base_dir=".", allow_pending=False, repo_root=None):
                 fixture = None
         if fixture:
             path = os.path.join(base_dir, fixture)
-            if not os.path.isfile(path):
+            if not pathlib.Path(path).is_file():
                 errors.append(tag + ": fixture_file не найден: " + str(fixture))
             else:
-                with open(path, encoding="utf-8") as fh:
+                with pathlib.Path(path).open(encoding="utf-8") as fh:
                     raw = fh.read()
                 if not re.search(SCOPE[case], raw):
                     errors.append(tag + ": fixture_file не содержит маркер " + case)
@@ -239,7 +238,7 @@ def validate(entries, base_dir=".", allow_pending=False, repo_root=None):
 
 def run(path, allow_pending):
     try:
-        with open(path, encoding="utf-8") as fh:
+        with pathlib.Path(path).open(encoding="utf-8") as fh:
             entries = json.load(fh)
     except (OSError, json.JSONDecodeError) as exc:
         print("Не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
@@ -387,10 +386,10 @@ def selftest():
 
     # Легитимная форма из живого реестра: относительный путь внутрь tests/.
     nested = os.path.join(base, "tests", "fixtures")
-    os.makedirs(nested, exist_ok=True)
+    pathlib.Path(nested).mkdir(exist_ok=True, parents=True)
     legit_rel = os.path.join("tests", "fixtures", "pua-образец.txt")
-    with io.open(os.path.join(base, legit_rel), "w", encoding="utf-8") as fh:
-        fh.write(u"известная по ролям.2\n")
+    with pathlib.Path(os.path.join(base, legit_rel)).open("w", encoding="utf-8") as fh:
+        fh.write("известная по ролям.2\n")
     good = json.loads(json.dumps(ok))
     for e in good:
         if e["case"] == "openai_pua_short":
@@ -399,7 +398,7 @@ def selftest():
     checks.append(("относительный путь внутрь репозитория остаётся допустимым",
                    not err and len(cov) == 14))
 
-    os.unlink(tmp.name); os.unlink(synth.name)
+    pathlib.Path(tmp.name).unlink(); pathlib.Path(synth.name).unlink()
     fails = [n for n, p in checks if not p]
     for n, p in checks:
         print(("PASS: " if p else "FAIL: ") + n)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Объективный подсчёт стилевых нарушений для A/B-теста PERSONA.md (issue #19).
 
 Один ответ модели = один текстовый файл. Считает:
@@ -14,7 +13,7 @@
     python3 scripts/count_style_markers.py --selftest
 Вывод: TSV-строка на файл + итог. Коды: 0 - ok, 1 - провал самопроверки, 2 - ошибка входа.
 """
-import io
+import pathlib
 import re
 import sys
 
@@ -85,7 +84,7 @@ def main(paths, skip_markup=False):
     grand = 0
     for p in paths:
         try:
-            with io.open(p, encoding="utf-8") as fh:
+            with pathlib.Path(p).open(encoding="utf-8") as fh:
                 raw = fh.read()
         except OSError as exc:
             print("ошибка чтения %s: %s" % (p, exc), file=sys.stderr)
@@ -118,13 +117,13 @@ def selftest():
 
     # --skip-markup: структура документа не должна попадать в стилевой счёт,
     # а проза внутри разметки — должна.
-    md = (u"# Заголовок\n\n"
-          u"- первый пункт\n- второй пункт\n\n"
-          u"| столбец | значение |\n|---|---|\n| a | b |\n\n"
-          u"```python\n# важно отметить в коде\nx = 1\n```\n\n"
-          u"См. [документацию](https://example.org/важно-отметить).\n\n"
-          u"**Важно отметить**, что текст остаётся прозой.\n"
-          u"Встрочный `код` и обычная фраза.\n")
+    md = ("# Заголовок\n\n"
+          "- первый пункт\n- второй пункт\n\n"
+          "| столбец | значение |\n|---|---|\n| a | b |\n\n"
+          "```python\n# важно отметить в коде\nx = 1\n```\n\n"
+          "См. [документацию](https://example.org/важно-отметить).\n\n"
+          "**Важно отметить**, что текст остаётся прозой.\n"
+          "Встрочный `код` и обычная фраза.\n")
     raw_counts = count_text(md)
     skipped = count_text(strip_markup(md))
     checks += [
@@ -135,10 +134,10 @@ def selftest():
         ("skip: слово-подушка из блока кода не считается",
          skipped["pillow"] < raw_counts["pillow"]),
         ("skip: строки таблицы не считаются",
-         u"столбец" not in strip_markup(md)),
+         "столбец" not in strip_markup(md)),
         ("skip: адрес ссылки убран, видимый текст остался",
-         u"example.org" not in strip_markup(md)
-         and u"документацию" in strip_markup(md)),
+         "example.org" not in strip_markup(md)
+         and "документацию" in strip_markup(md)),
         ("skip: обычный текст не портится",
          count_text(strip_markup(good)) == cg),
     ]

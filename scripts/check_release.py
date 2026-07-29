@@ -8,15 +8,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import io
-import os
-from pathlib import Path, PurePosixPath
 import re
 import stat
 import sys
 import tempfile
 import warnings
 import zipfile
+from pathlib import Path, PurePosixPath
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
@@ -44,8 +42,10 @@ EXCLUDED_SCRIPTS = {"scripts/check_corpus.py"}
 SECRET_NAME_RE = re.compile(r"(?:^|[._-])(secret|token|credential|private[_-]?key)(?:$|[._-])", re.I)
 FIXED_TIME = (2026, 7, 21, 0, 0, 0)
 
+
 class ReleaseError(ValueError):
     pass
+
 
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -53,6 +53,7 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
 
 def _safe_rel(path: str) -> PurePosixPath:
     if "\\" in path:
@@ -62,10 +63,12 @@ def _safe_rel(path: str) -> PurePosixPath:
         raise ReleaseError(f"unsafe archive path: {path!r}")
     return p
 
+
 def _allowed(p: PurePosixPath) -> bool:
     if len(p.parts) == 1:
         return p.name in ROOT_FILES
     return p.parts[0] in ROOT_DIRS
+
 
 def _validate_name(p: PurePosixPath) -> None:
     if any(part in FORBIDDEN_PARTS for part in p.parts):
@@ -77,11 +80,13 @@ def _validate_name(p: PurePosixPath) -> None:
     if not _allowed(p):
         raise ReleaseError(f"path is outside release allowlist: {p}")
 
+
 def _validate_text(name: str, data: bytes) -> None:
     try:
         data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ReleaseError(f"text file is not UTF-8: {name}: {exc}") from exc
+
 
 def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
     root = root.resolve()
@@ -117,6 +122,7 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
         raise ReleaseError("references/ must contain at least one file")
     return found
 
+
 def build(root: Path, output: Path) -> str:
     files = collect(root)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -129,9 +135,10 @@ def build(root: Path, output: Path) -> str:
             info.external_attr = (stat.S_IFREG | 0o644) << 16
             info.flag_bits |= 0x800
             zf.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
-    os.replace(tmp, output)
+    Path(tmp).replace(output)
     verify(output)
     return sha256(output)
+
 
 def verify(archive: Path) -> str:
     if not archive.is_file():
@@ -161,6 +168,7 @@ def verify(archive: Path) -> str:
             raise ReleaseError("references/ missing from ZIP")
     return sha256(archive)
 
+
 def _minimal(root: Path) -> None:
     (root / "references").mkdir(parents=True)
     (root / "scripts").mkdir(parents=True)
@@ -168,9 +176,11 @@ def _minimal(root: Path) -> None:
     (root / "references" / "test.md").write_text("Тест \uea01 1 \uea02\n", encoding="utf-8")
     (root / "scripts" / "noop.py").write_text("print('ok')\n", encoding="utf-8")
 
+
 def selftest() -> None:
     passed = 0
     total = 0
+
     def expect_fail(fn, label: str) -> None:
         nonlocal passed, total
         total += 1
@@ -258,6 +268,7 @@ def selftest() -> None:
         expect_fail(lambda: verify(sneaked), "excluded script inside archive")
     print(f"release preflight selftest: {passed}/{total} PASS")
 
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--selftest", action="store_true")
@@ -286,6 +297,7 @@ def main(argv: list[str] | None = None) -> int:
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"release preflight: FAIL: {exc}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """check_spec.py — проверка SKILL.md на соответствие Agent Skills Specification.
 
 Источник требований: https://agentskills.io/specification (снимок от 2026-07-13).
@@ -15,9 +14,9 @@
 Коды выхода: 0 — соответствует; 1 — есть нарушения; 2 — ошибка запуска или чтения.
 """
 import os
+import pathlib
 import re
 import sys
-import tempfile
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
@@ -248,7 +247,7 @@ def run_checks(text, skill_dir_name, strict=False):
 
 
 def run_file(path, strict=False, expect_dir=None):
-    with open(path, "r", encoding="utf-8") as f:
+    with pathlib.Path(path).open(encoding="utf-8") as f:
         text = f.read()
     dir_name = expect_dir or os.path.basename(os.path.dirname(os.path.abspath(path)))
     return run_checks(text, dir_name, strict=strict)
@@ -331,7 +330,7 @@ def main(argv):
             return 2
         del args[k:k + 2]
     path = args[0] if args else "SKILL.md"
-    if not os.path.isfile(path):
+    if not pathlib.Path(path).is_file():
         print("файл не найден: %s" % path)
         return 2
     return _report(run_file(path, strict=strict, expect_dir=expect_dir))

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """check_examples.py — гейт честности пар «До/После».
 
 Проверяет главное обещание скилла: правка не дописывает факты за автора.
@@ -20,8 +19,8 @@
 """
 import argparse
 import glob
-import io
 import os
+import pathlib
 import re
 import sys
 import tempfile
@@ -35,19 +34,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TARGETS = ["SKILL.md", "README.md", "README.en.md"]
 
-NUMWORDS = set("""
-один одна одно одного одним два две двух двумя три трех тремя четыре четырех
-пять пяти шесть шести семь семи восемь восьми девять девяти десять десяти
-одиннадцать двенадцать двадцать тридцать сорок пятьдесят сто ста
-тысяча тысячи тысяч миллион миллиона миллиард
-первый первая второй вторая третий третья четвертый пятый
-вдвое втрое вчетверо половина треть четверть
-""".split())
+NUMWORDS = set(["один", "одна", "одно", "одного", "одним", "два", "две", "двух", "двумя", "три", "трех", "тремя", "четыре", "четырех", "пять", "пяти", "шесть", "шести", "семь", "семи", "восемь", "восьми", "девять", "девяти", "десять", "десяти", "одиннадцать", "двенадцать", "двадцать", "тридцать", "сорок", "пятьдесят", "сто", "ста", "тысяча", "тысячи", "тысяч", "миллион", "миллиона", "миллиард", "первый", "первая", "второй", "вторая", "третий", "третья", "четвертый", "пятый", "вдвое", "втрое", "вчетверо", "половина", "треть", "четверть"])
 
 # Заглавные нарицательные, которые не являются проверяемым фактом.
-NOT_A_FACT = set("""
-Вселенной Вселенная Земля Земли Интернет Интернете
-""".split())
+NOT_A_FACT = set(["Вселенной", "Вселенная", "Земля", "Земли", "Интернет", "Интернете"])
 
 WORD_RX = re.compile(r"[а-яё]+")
 NUM_RX = re.compile(r"\d+")
@@ -193,8 +183,8 @@ def selftest():
     # Обратная сторона: единичный файл без пар — законный случай, порог молчит.
     tmp = tempfile.mkdtemp()
     lone = os.path.join(tmp, "без-пар.md")
-    with io.open(lone, "w", encoding="utf-8") as fh:
-        fh.write(u"# Файл без примеров\n\nПросто текст.\n")
+    with pathlib.Path(lone).open("w", encoding="utf-8") as fh:
+        fh.write("# Файл без примеров\n\nПросто текст.\n")
     saved_argv = sys.argv
     try:
         sys.argv = ["check_examples.py", lone]
@@ -221,13 +211,13 @@ def main():
     files = args.files
     full_run = not files
     if not files:
-        files = [os.path.join(ROOT, f) for f in TARGETS if os.path.exists(os.path.join(ROOT, f))]
+        files = [os.path.join(ROOT, f) for f in TARGETS if pathlib.Path(os.path.join(ROOT, f)).exists()]
         files += sorted(glob.glob(os.path.join(ROOT, "references", "*.md")))
 
     all_err, all_warn = [], []
     total = {"pairs": 0, "edit": 0, "authored": 0}
     for path in files:
-        with open(path, encoding="utf-8") as fh:
+        with pathlib.Path(path).open(encoding="utf-8") as fh:
             text = fh.read()
         rel = os.path.relpath(path, ROOT)
         errs, warns, stats = check_text(text, rel)

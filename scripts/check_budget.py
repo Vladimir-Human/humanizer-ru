@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Гейт бюджета контекста для формата Agent Skills.
 
 Официальная спецификация описывает трёхуровневую загрузку: метаданные читаются
@@ -14,8 +13,8 @@
 Оценка токенов консервативная: для кириллицы берётся 3.0 символа на токен,
 для остального — 4.0. Внешние зависимости не используются.
 """
-import io
 import os
+import pathlib
 import re
 import sys
 import tempfile
@@ -142,13 +141,13 @@ def check_skill(text, name_hint=None):
 def check_references(root):
     warnings, rows = [], []
     ref_dir = os.path.join(root, "references")
-    if not os.path.isdir(ref_dir):
+    if not pathlib.Path(ref_dir).is_dir():
         return warnings, rows
     for fn in sorted(os.listdir(ref_dir)):
         if not fn.endswith(".md"):
             continue
         path = os.path.join(ref_dir, fn)
-        text = io.open(path, encoding="utf-8").read()
+        text = pathlib.Path(path).open(encoding="utf-8").read()
         tok = estimate_tokens(text)
         rows.append((fn, tok))
         if tok > WARN_REFERENCE_TOKENS:
@@ -158,7 +157,7 @@ def check_references(root):
     return warnings, rows
 
 
-SELFTEST_OK = u"""---
+SELFTEST_OK = """---
 name: good-skill
 description: "Делает полезное и применяется тогда-то."
 ---
@@ -182,30 +181,30 @@ def selftest():
     e, _, _ = check_skill(SELFTEST_OK.replace("good-skill", "-good"))
     cases.append(("дефис в начале отловлен", any("name" in x for x in e), e))
 
-    long_desc = SELFTEST_OK.replace(u"Делает полезное и применяется тогда-то.", u"а" * 1025)
+    long_desc = SELFTEST_OK.replace("Делает полезное и применяется тогда-то.", "а" * 1025)
     e, _, _ = check_skill(long_desc)
     cases.append(("длинный description отловлен", any("description" in x for x in e), e))
 
-    e, _, _ = check_skill(SELFTEST_OK + u"\n".join([u"строка"] * 600))
+    e, _, _ = check_skill(SELFTEST_OK + "\n".join(["строка"] * 600))
     cases.append(("длинное тело отловлено", any("строк" in x for x in e), e))
 
-    e, _, _ = check_skill(SELFTEST_OK + u"я" * 40000)
+    e, _, _ = check_skill(SELFTEST_OK + "я" * 40000)
     cases.append(("перерасход токенов отловлен", any("токенов" in x for x in e), e))
 
     e, _, _ = check_skill(SELFTEST_OK, name_hint="other-dir")
     cases.append(("несовпадение с каталогом отловлено", any("каталог" in x for x in e), e))
 
-    e, _, _ = check_skill(u"без frontmatter")
+    e, _, _ = check_skill("без frontmatter")
     cases.append(("отсутствие frontmatter отловлено", e != [], e))
 
-    cases.append(("оценка токенов монотонна", estimate_tokens(u"а" * 300) > estimate_tokens(u"а" * 100), None))
+    cases.append(("оценка токенов монотонна", estimate_tokens("а" * 300) > estimate_tokens("а" * 100), None))
 
     # Разбор argv: значение --expect-dir не должно становиться путём к файлу.
     # До правки этот порядок аргументов ронял валидатор попыткой открыть
     # каталог как файл.
     tmp = tempfile.mkdtemp()
     skill_path = os.path.join(tmp, "SKILL.md")
-    with io.open(skill_path, "w", encoding="utf-8") as fh:
+    with pathlib.Path(skill_path).open("w", encoding="utf-8") as fh:
         fh.write(SELFTEST_OK.replace("good-skill", "demo-dir"))
     rc_before = main(["--expect-dir", "demo-dir", skill_path])
     rc_after = main([skill_path, "--expect-dir", "demo-dir"])
@@ -218,7 +217,7 @@ def selftest():
     rc_absent = main([os.path.join(tmp, "нет-файла.md")])
     cases.append(("отсутствующий файл -> код 2", rc_absent == 2, rc_absent))
     bad_bytes = os.path.join(tmp, "битый.md")
-    with open(bad_bytes, "wb") as fh:
+    with pathlib.Path(bad_bytes).open("wb") as fh:
         fh.write(b"---\nname: x\n\xff\xfe not utf-8 \xff\n---\n")
     rc_bad = main([bad_bytes])
     cases.append(("файл не в UTF-8 -> код 2", rc_bad == 2, rc_bad))
@@ -258,7 +257,7 @@ def main(argv):
     # Сбой чтения — это отказ инструмента (код 2), а не провал бюджета (код 1)
     # и не traceback.
     try:
-        text = io.open(path, encoding="utf-8").read()
+        text = pathlib.Path(path).open(encoding="utf-8").read()
     except OSError as exc:
         print("не удалось прочитать %s: %s" % (path, exc))
         return 2

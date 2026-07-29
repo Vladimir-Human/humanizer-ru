@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """blind_eval.py — слепая парная оценка эффекта скилла.
 
 Отвечает на вопрос, на который не отвечает ни один другой валидатор:
@@ -32,9 +31,9 @@
 """
 import argparse
 import hashlib
-import io
 import json
 import os
+import pathlib
 import random
 import re
 import secrets
@@ -65,7 +64,7 @@ FAIL = "[FAIL]"
 
 
 def read(path):
-    with io.open(path, encoding="utf-8") as fh:
+    with pathlib.Path(path).open(encoding="utf-8") as fh:
         return fh.read()
 
 
@@ -74,7 +73,7 @@ def scan_markers(text):
     fd, tmp = tempfile.mkstemp(suffix=".md")
     os.close(fd)
     try:
-        with io.open(tmp, "w", encoding="utf-8") as fh:
+        with pathlib.Path(tmp).open("w", encoding="utf-8") as fh:
             fh.write(text)
         proc = subprocess.run(
             [sys.executable, CHECK_MARKERS, "--scan", tmp],
@@ -83,7 +82,7 @@ def scan_markers(text):
         out = proc.stdout.decode("utf-8", "replace")
         err = proc.stderr.decode("utf-8", "replace")
     finally:
-        os.unlink(tmp)
+        pathlib.Path(tmp).unlink()
     if proc.returncode not in (0, 1):
         raise RuntimeError("check_markers завершился с кодом %d: %s" %
                            (proc.returncode, err.strip() or out.strip()))
@@ -136,7 +135,7 @@ ID_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 def load_run(run_dir):
     manifest_path = os.path.join(run_dir, "manifest.json")
-    if not os.path.isfile(manifest_path):
+    if not pathlib.Path(manifest_path).is_file():
         return None, "нет файла manifest.json в " + run_dir
     try:
         manifest = json.loads(read(manifest_path))
@@ -172,7 +171,7 @@ def load_run(run_dir):
             "without": os.path.join(run_dir, "without", pid + ".txt"),
             "with": os.path.join(run_dir, "with", pid + ".txt"),
         }
-        missing = [k for k, path in paths.items() if not os.path.isfile(path)]
+        missing = [k for k, path in paths.items() if not pathlib.Path(path).is_file()]
         if missing:
             return None, "пара %s: нет файлов %s" % (pid, ", ".join(missing))
         try:
@@ -221,10 +220,10 @@ def key_path_for(out_dir, sep=None, altsep=None):
 
 def make_packet(run, out_dir, rng=None):
     """Обезличенный пакет; ключ создаётся рядом, но вне пакета."""
-    if os.path.exists(out_dir) and os.listdir(out_dir):
+    if pathlib.Path(out_dir).exists() and os.listdir(out_dir):
         raise ValueError("каталог пакета не пуст: " + out_dir)
     rng = rng or secrets.SystemRandom()
-    os.makedirs(os.path.join(out_dir, "pairs"), exist_ok=True)
+    pathlib.Path(os.path.join(out_dir, "pairs")).mkdir(exist_ok=True, parents=True)
     pairs_key = {}
     order = list(run["items"])
     rng.shuffle(order)
@@ -234,24 +233,24 @@ def make_packet(run, out_dir, rng=None):
         a, b = (item["with"], item["without"]) if flip else (item["without"], item["with"])
         pairs_key[tag] = {"id": item["id"], "A": "with" if flip else "without",
                           "B": "without" if flip else "with", "kind": item["kind"]}
-        body = u"# %s\n\n## Исходный текст\n\n%s\n\n## Вариант A\n\n%s\n\n## Вариант B\n\n%s\n" % (
+        body = "# %s\n\n## Исходный текст\n\n%s\n\n## Вариант A\n\n%s\n\n## Вариант B\n\n%s\n" % (
             tag, item["source"].strip(), a.strip(), b.strip())
-        with io.open(os.path.join(out_dir, "pairs", tag + ".md"), "w", encoding="utf-8") as fh:
+        with pathlib.Path(os.path.join(out_dir, "pairs", tag + ".md")).open("w", encoding="utf-8") as fh:
             fh.write(body)
-    with io.open(os.path.join(out_dir, "INSTRUCTIONS.md"), "w", encoding="utf-8") as fh:
+    with pathlib.Path(os.path.join(out_dir, "INSTRUCTIONS.md")).open("w", encoding="utf-8") as fh:
         fh.write(JUDGE_INSTRUCTIONS)
     template = {tag: {"readability": "A|B|tie", "meaning_loss": "A|B|none", "note": ""}
                 for tag in sorted(pairs_key)}
-    with io.open(os.path.join(out_dir, "verdicts.template.json"), "w", encoding="utf-8") as fh:
+    with pathlib.Path(os.path.join(out_dir, "verdicts.template.json")).open("w", encoding="utf-8") as fh:
         fh.write(json.dumps(template, ensure_ascii=False, indent=2))
     key = {"version": 1, "run_sha256": run_fingerprint(run), "pairs": pairs_key}
     key_path = os.path.abspath(key_path_for(out_dir))
-    with io.open(key_path, "w", encoding="utf-8") as fh:
+    with pathlib.Path(key_path).open("w", encoding="utf-8") as fh:
         fh.write(json.dumps(key, ensure_ascii=False, indent=2))
     return key, key_path
 
 
-JUDGE_INSTRUCTIONS = u"""# Инструкция судье
+JUDGE_INSTRUCTIONS = """# Инструкция судье
 
 Перед вами исходный текст и две его редакции: Вариант A и Вариант B.
 Вы не знаете, как они получены, и знать не должны. Порядок вариантов
@@ -279,7 +278,6 @@ JUDGE_INSTRUCTIONS = u"""# Инструкция судье
 """
 
 
-
 def validate_judgements(run, judgements, key):
     if not isinstance(key, dict) or key.get("version") != 1 or not isinstance(key.get("pairs"), dict):
         raise ValueError("неподдерживаемый формат ключа")
@@ -304,6 +302,7 @@ def validate_judgements(run, judgements, key):
         if verdict.get("meaning_loss") not in ("A", "B", "none"):
             raise ValueError("%s: meaning_loss должен быть A, B или none" % tag)
     return key["pairs"]
+
 
 def aggregate(run, judgements=None, key=None):
     rows = []
@@ -390,13 +389,13 @@ def print_report(summary):
 # Образец собирается из частей намеренно: в памяти это настоящий маркер,
 # в тексте файла — нет. Иначе самопроверка репозитория справедливо падает
 # на этом файле. Проверено на практике при разработке этого скрипта.
-_ARTIFACT = u":content" + u"Reference[" + u"oai" + u"cite:" + u"1]"
-SRC = u"Важно отметить, что столица Австралии — Канберра " + _ARTIFACT + u"\nСтоит подчеркнуть, что город был основан специально."
-CLEAN = u"""Столица Австралии — Канберра.
+_ARTIFACT = ":content" + "Reference[" + "oai" + "cite:" + "1]"
+SRC = "Важно отметить, что столица Австралии — Канберра " + _ARTIFACT + "\nСтоит подчеркнуть, что город был основан специально."
+CLEAN = """Столица Австралии — Канберра.
 Город был основан специально."""
-INVENTED = u"""Столица Австралии — Канберра.
+INVENTED = """Столица Австралии — Канберра.
 Город основан в 1913 году по проекту Уолтера Берли Гриффина."""
-HUMAN = u"""Сегодня с утра лил дождь, и я всё-таки вышел без зонта."""
+HUMAN = """Сегодня с утра лил дождь, и я всё-таки вышел без зонта."""
 
 
 def _case(name, condition, detail=""):
@@ -419,7 +418,7 @@ def selftest():
 
     m3 = pair_metrics(HUMAN, HUMAN, HUMAN, "human")
     results.append(_case("Человеческий текст не тронут", m3["touched_with"] is False))
-    m4 = pair_metrics(HUMAN, HUMAN, HUMAN + u" Добавлено лишнее.", "human")
+    m4 = pair_metrics(HUMAN, HUMAN, HUMAN + " Добавлено лишнее.", "human")
     results.append(_case("Ложная правка поймана", m4["touched_with"] is True))
 
     run = {"manifest": {}, "items": [
@@ -441,19 +440,19 @@ def selftest():
                          os.path.dirname(key_path) == os.path.dirname(tmp) and not key_path.startswith(tmp + os.sep)))
     # Windows-случай: каталог пакета передан с хвостовым "/" при os.sep == "\".
     # Снятие только os.sep оставляло ключ внутри пакета (блайндинг терялся).
-    win_dir = u"C:\\runs\\packet/"
+    win_dir = "C:\\runs\\packet/"
     win_key = key_path_for(win_dir, sep="\\", altsep="/")
     old_win_key = win_dir.rstrip("\\") + ".key.json"
     results.append(_case("Ключ вне пакета при хвостовом разделителе Windows",
-                         win_key == u"C:\\runs\\packet.key.json"
+                         win_key == "C:\\runs\\packet.key.json"
                          and not win_key.startswith(win_dir),
                          win_key))
     results.append(_case("Прежняя логика на этом кейсе действительно падала",
                          old_win_key.startswith(win_dir), old_win_key))
-    for tail in (u"", os.sep, os.sep * 2):
-        cand = key_path_for(u"/runs/packet" + tail)
+    for tail in ("", os.sep, os.sep * 2):
+        cand = key_path_for("/runs/packet" + tail)
         results.append(_case("Ключ вне пакета при хвосте %r" % tail,
-                             cand == u"/runs/packet.key.json", cand))
+                             cand == "/runs/packet.key.json", cand))
 
     flipped = [t for t, v in pairs_key.items() if v["A"] == "with"]
     results.append(_case("Порядок вариантов перемешивается", 0 < len(flipped) < len(key), str(len(flipped))))
@@ -472,15 +471,15 @@ def selftest():
         root = tempfile.mkdtemp()
         manifest = {"run": "selftest", "model": "test-model", "skill_version": "test",
                     "prompt": "одинаковый промпт", "pairs": entries}
-        with io.open(os.path.join(root, "manifest.json"), "w", encoding="utf-8") as fh:
+        with pathlib.Path(os.path.join(root, "manifest.json")).open("w", encoding="utf-8") as fh:
             fh.write(json.dumps(manifest, ensure_ascii=False))
         for entry in entries:
             pid = entry.get("id", "")
             if not ID_RX.fullmatch(pid):
                 continue
             for branch in ("source", "without", "with"):
-                os.makedirs(os.path.join(root, branch), exist_ok=True)
-                with io.open(os.path.join(root, branch, pid + ".txt"), "w", encoding="utf-8") as fh:
+                pathlib.Path(os.path.join(root, branch)).mkdir(exist_ok=True, parents=True)
+                with pathlib.Path(os.path.join(root, branch, pid + ".txt")).open("w", encoding="utf-8") as fh:
                     fh.write("непустой текст")
         return load_run(root)
 
@@ -581,7 +580,7 @@ def main():
         if not key_path:
             print("%s Для вердиктов обязателен --key; ключ хранится вне пакета." % FAIL)
             return 2
-        if not os.path.isfile(key_path):
+        if not pathlib.Path(key_path).is_file():
             print("%s Не найден ключ обезличивания: %s" % (FAIL, key_path))
             return 2
         key = json.loads(read(key_path))
@@ -595,14 +594,14 @@ def main():
 
     out = args.out
     if not out:
-        os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
+        pathlib.Path(os.path.join(HERE, "results")).mkdir(exist_ok=True, parents=True)
         out = os.path.join(HERE, "results", os.path.basename(os.path.normpath(args.run)) + ".json")
     payload = {"run": os.path.basename(os.path.normpath(args.run)),
                "manifest": run["manifest"], "run_sha256": run_fingerprint(run),
                "summary": summary, "pairs": rows}
     if judgements is not None:
         payload["judgements"] = judgements
-    with io.open(out, "w", encoding="utf-8") as fh:
+    with pathlib.Path(out).open("w", encoding="utf-8") as fh:
         fh.write(json.dumps(payload, ensure_ascii=False, indent=2))
     print("")
     print("Отчёт: %s" % out)

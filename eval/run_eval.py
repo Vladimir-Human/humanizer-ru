@@ -22,6 +22,7 @@ import argparse
 import hashlib
 import json
 import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -36,8 +37,8 @@ MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manifest.v1
 
 try:
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
-    from check_markers import CASES, _inside_backticks, _console_text
-except Exception as exc:  # noqa: BLE001
+    from check_markers import CASES, _console_text, _inside_backticks
+except Exception as exc:  # ruff:ignore[blind-except]
     print("Не удалось импортировать check_markers: %s" % exc, file=sys.stderr)
     CASES = {}
 
@@ -69,7 +70,7 @@ def _safe_path(rel, root):
     if not isinstance(rel, str) or not rel.strip():
         raise ManifestError("путь записи корпуса должен быть непустой строкой")
     native = rel.replace("\\", "/")
-    if os.path.isabs(rel) or os.path.isabs(native) or re.match(r"^[A-Za-z]:", rel):
+    if pathlib.Path(rel).is_absolute() or pathlib.Path(native).is_absolute() or re.match(r"^[A-Za-z]:", rel):
         raise ManifestError("путь записи корпуса должен быть относительным, получено: " + rel)
     if "\\" in rel:
         raise ManifestError("обратный слэш в пути записи корпуса запрещён: " + rel)
@@ -84,7 +85,7 @@ def _safe_path(rel, root):
 
 def _sha256(path):
     h = hashlib.sha256()
-    with open(path, "rb") as fh:
+    with pathlib.Path(path).open("rb") as fh:
         for chunk in iter(lambda: fh.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -92,7 +93,7 @@ def _sha256(path):
 
 def _scan_default(path, compiled):
     hits = []
-    with open(path, encoding="utf-8") as fh:
+    with pathlib.Path(path).open(encoding="utf-8") as fh:
         for lineno, line in enumerate(fh.read().splitlines(), 1):
             for name, rx in compiled.items():
                 for m in rx.finditer(line):
@@ -119,7 +120,7 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
     # отказ инструмента (код 2), а не регрессия корпуса и не traceback: тот же
     # порядок разделения кодов, что в scripts/check_budget.py.
     try:
-        with open(manifest_path, encoding="utf-8") as fh:
+        with pathlib.Path(manifest_path).open(encoding="utf-8") as fh:
             manifest = json.load(fh)
     except OSError as exc:
         raise ManifestError("не удалось прочитать манифест %s: %s" % (manifest_path, exc))
@@ -145,7 +146,7 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
         # путь не должен даже проверяться на существование за пределами корня.
         path = _safe_path(rel, root)
         summary["files"] += 1
-        if not os.path.isfile(path):
+        if not pathlib.Path(path).is_file():
             # Пропавший файл корпуса — провал прогона, а не примечание в details:
             # иначе удаление всего корпуса давало бы зелёный отчёт.
             summary["files_missing"] += 1
@@ -180,15 +181,14 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
                     summary["details"].append({"file": rel, "kind": "ai",
                                                "expected": expected, "actual": len(hits),
                                                "cases": sorted(n for n in actual_names if n)})
-        elif kind == "boundary":
-            if expected is not None:
-                if len(hits) == expected and (not expected_case or expected_case in actual_names):
-                    summary["boundary_expected_ok"] += 1
-                else:
-                    summary["boundary_unexpected"] += 1
-                    summary["details"].append({"file": rel, "kind": "boundary",
-                                               "expected": expected, "actual": len(hits),
-                                               "cases": list(actual_names)})
+        elif kind == "boundary" and expected is not None:
+            if len(hits) == expected and (not expected_case or expected_case in actual_names):
+                summary["boundary_expected_ok"] += 1
+            else:
+                summary["boundary_unexpected"] += 1
+                summary["details"].append({"file": rel, "kind": "boundary",
+                                           "expected": expected, "actual": len(hits),
+                                           "cases": list(actual_names)})
     return summary
 
 
@@ -216,7 +216,7 @@ def _selftest_corpus(root):
     corpus = []
     for name, body in files.items():
         path = os.path.join(root, name)
-        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        with pathlib.Path(path).open("w", encoding="utf-8", newline="\n") as fh:
             fh.write(body)
         entry = {"path": name, "sha256": _sha256(path),
                  "kind": {"human.txt": "human", "ai.txt": "ai",
@@ -228,7 +228,7 @@ def _selftest_corpus(root):
             entry["expected_hits"] = 0
         corpus.append(entry)
     manifest_path = os.path.join(root, "manifest.json")
-    with open(manifest_path, "w", encoding="utf-8", newline="\n") as fh:
+    with pathlib.Path(manifest_path).open("w", encoding="utf-8", newline="\n") as fh:
         json.dump({"version": "selftest", "corpus": corpus}, fh, ensure_ascii=False)
     return manifest_path
 
@@ -243,24 +243,24 @@ def selftest():
         cases.append((name, mutate, expect_key))
 
     def _drop_file(root):
-        os.remove(os.path.join(root, "human.txt"))
+        pathlib.Path(os.path.join(root, "human.txt")).unlink()
 
     def _tamper(root):
-        with open(os.path.join(root, "human.txt"), "a", encoding="utf-8") as fh:
+        with pathlib.Path(os.path.join(root, "human.txt")).open("a", encoding="utf-8") as fh:
             fh.write("дописанная строка\n")
 
     def _break_expectation(root):
         # Манифест ждёт одно совпадение, а в файле их два.
-        with open(os.path.join(root, "ai.txt"), "w", encoding="utf-8", newline="\n") as fh:
+        with pathlib.Path(os.path.join(root, "ai.txt")).open("w", encoding="utf-8", newline="\n") as fh:
             fh.write(_SELFTEST_AI)
             fh.write("Ещё одна метка %s во второй строке.\n" % _MARKER)
         manifest_path = os.path.join(root, "manifest.json")
-        with open(manifest_path, encoding="utf-8") as fh:
+        with pathlib.Path(manifest_path).open(encoding="utf-8") as fh:
             data = json.load(fh)
         for entry in data["corpus"]:
             if entry["path"] == "ai.txt":
                 entry["sha256"] = _sha256(os.path.join(root, "ai.txt"))
-        with open(manifest_path, "w", encoding="utf-8", newline="\n") as fh:
+        with pathlib.Path(manifest_path).open("w", encoding="utf-8", newline="\n") as fh:
             json.dump(data, fh, ensure_ascii=False)
 
     case("целый корпус -> прогон чистый", lambda r: None, None)
@@ -300,11 +300,11 @@ def selftest():
     missing = os.path.join(tmp_input, "нет-такого.json")
     input_cases.append(("отсутствующий манифест -> отказ", missing))
     broken = os.path.join(tmp_input, "битый.json")
-    with open(broken, "w", encoding="utf-8") as fh:
+    with pathlib.Path(broken).open("w", encoding="utf-8") as fh:
         fh.write("{не json")
     input_cases.append(("манифест не является JSON -> отказ", broken))
     not_object = os.path.join(tmp_input, "список.json")
-    with open(not_object, "w", encoding="utf-8") as fh:
+    with pathlib.Path(not_object).open("w", encoding="utf-8") as fh:
         fh.write("[1, 2, 3]")
     input_cases.append(("манифест без поля corpus -> отказ", not_object))
     for name, path in input_cases:
@@ -314,7 +314,7 @@ def selftest():
         except ManifestError:
             passed += 1
             print("PASS: %s" % name)
-        except Exception as exc:  # noqa: BLE001 — любой иной сбой считаем провалом
+        except Exception as exc:  # ruff:ignore[blind-except] — любой иной сбой считаем провалом
             print("FAIL: %s (вместо отказа %s)" % (name, type(exc).__name__))
 
     total = len(cases) + _BOUNDARY_TOTAL + len(input_cases)
@@ -341,12 +341,12 @@ def _boundary_selftest():
         """Собирает манифест на одну запись с путём rel и запускает run()."""
         payload = _SELFTEST_HUMAN
         body = os.path.join(root, "внутри.txt")
-        with open(body, "w", encoding="utf-8", newline="\n") as fh:
+        with pathlib.Path(body).open("w", encoding="utf-8", newline="\n") as fh:
             fh.write(payload)
         manifest = {"version": "boundary", "corpus": [
             {"path": rel, "kind": "human", "sha256": _sha256(body)}]}
         manifest_path = os.path.join(root, "manifest.json")
-        with open(manifest_path, "w", encoding="utf-8", newline="\n") as fh:
+        with pathlib.Path(manifest_path).open("w", encoding="utf-8", newline="\n") as fh:
             json.dump(manifest, fh, ensure_ascii=False)
         return run(manifest_path, None, root)
 
@@ -382,12 +382,12 @@ def _boundary_selftest():
     outside = tempfile.mkdtemp()
     try:
         secret = os.path.join(outside, "секрет.txt")
-        with open(secret, "w", encoding="utf-8") as fh:
+        with pathlib.Path(secret).open("w", encoding="utf-8") as fh:
             fh.write("данные вне корня\n")
         link = os.path.join(root, "ссылка.txt")
         supported = True
         try:
-            os.symlink(secret, link)
+            pathlib.Path(link).symlink_to(secret)
         except (OSError, NotImplementedError, AttributeError):
             # Платформа без symlink (например, Windows без прав): кейс не
             # применим, засчитываем как пройденный, чтобы не давать ложный сбой.

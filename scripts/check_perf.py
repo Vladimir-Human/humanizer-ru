@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""check_perf.py — перф-гейт выражений маркеров (docs/REVIEW.md, класс B).
+r"""check_perf.py — перф-гейт выражений маркеров (docs/REVIEW.md, класс B).
 
 Требование REVIEW.md: выражение не дольше 0.5 с на входе в 30 000 символов.
 До этого гейта требование существовало только на словах: ни один валидатор
@@ -41,7 +40,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 try:
     from check_markers import CASES
-except Exception:  # noqa: BLE001 — запуск не из каталога scripts/
+except Exception:  # ruff:ignore[blind-except] — запуск не из каталога scripts/
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from check_markers import CASES
 
@@ -58,26 +57,26 @@ def _grow(chunk, size=CORPUS_SIZE):
 def make_corpora(size=CORPUS_SIZE):
     """Четыре синтетических корпуса по size символов."""
     prose = _grow(
-        u"Утром пошёл дождь, и мы решили остаться дома. "
-        u"Кофе закончился, пришлось идти в магазин на углу. "
-        u"Продавщица сказала, что привоз будет только к вечеру. ", size)
+        "Утром пошёл дождь, и мы решили остаться дома. "
+        "Кофе закончился, пришлось идти в магазин на углу. "
+        "Продавщица сказала, что привоз будет только к вечеру. ", size)
     near_miss = _grow(
-        u"turn0searchX citeturn0 oaicite: contentReferenc "
-        u"attached_file grok_render_citation_car <thin> "
-        u"utm_source=copilot utm_medium=chat 2025-13-XX Excel+1С ", size)
+        "turn0searchX citeturn0 oaicite: contentReferenc "
+        "attached_file grok_render_citation_car <thin> "
+        "utm_source=copilot utm_medium=chat 2025-13-XX Excel+1С ", size)
     # Домены зарезервированы RFC 2606: корпус нужен для плотности ссылок и
     # параметров запроса, а не для воспроизведения примет конкретных моделей.
     urls = _grow(
-        u"https://example.org/page?utm_source=news&utm_medium=mail&id=42 "
-        u"https://example.net/files/report.pdf?ref=1&token=abcdef "
-        u"https://example.com/search?q=test&page=7&sort=date ", size)
-    long_line = _grow(u"аaбbвcгdдeеfжgзhиiйjкkлlмmнnоoпpрqсrтsуtфuхvцwчxшyщzъ", size)
+        "https://example.org/page?utm_source=news&utm_medium=mail&id=42 "
+        "https://example.net/files/report.pdf?ref=1&token=abcdef "
+        "https://example.com/search?q=test&page=7&sort=date ", size)
+    long_line = _grow("аaбbвcгdдeеfжgзhиiйjкkлlмmнnоoпpрqсrтsуtфuхvцwчxшyщzъ", size)
     # Ловушка откатов. Намеренно короткая: у выражения с вложенной
     # квантификацией время растёт экспоненциально от числа токенов, поэтому
     # опасное поведение видно уже на 22 токенах, а на 30 000 символов прогон
     # не завершился бы вовсе. Хвост «!» не даёт выражению совпасть до конца
     # строки — именно это запускает полный перебор разбиений.
-    backtrack = (u"сл " * 22) + u"!"
+    backtrack = ("сл " * 22) + "!"
     return [
         ("проза", prose),
         ("near-miss", near_miss),
