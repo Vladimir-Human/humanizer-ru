@@ -283,7 +283,10 @@ def selftest():
         "openai_pua_short": "текст.\uea012\uea02",
         "ref_name_search": '<ref name="0search12">',
         "gemini_span": "[span_2](start_span)",
-        "perplexity_s3": "https://ppl-ai-file-upload.s3.amazonaws.example/x",
+        # verbatim_sample, а не source_url: валидным URL быть не обязано.
+        # Приведено к форме из живого реестра research/fixtures/marker-sources.json,
+        # где для этого маркера verbatim_sample равен ровно "ppl-ai-file-upload".
+        "perplexity_s3": "ppl-ai-file-upload",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
