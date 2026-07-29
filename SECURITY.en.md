@@ -24,6 +24,8 @@ Design guarantees:
 | Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release |
 | Installation-time content substitution | The manual process uses tagged releases and asks users to inspect files before installing |
 | Regression against the project's own rules | Six CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, and release checks |
+| Path traversal via data | Paths the validators take from data are confined to the repository root: corpus entries in `eval/manifest.v1.json` and the `fixture_file` field of the source registry. Absolute paths, drive letters, `..` escapes and symlinks pointing outside the root are rejected; the refusal is distinguishable from a corpus regression by exit code 2 |
+| Path given as a command-line argument | Deliberately NOT restricted. The validators in `scripts/` and `eval/` are local developer tools: a path named by the operator carries the operator's own authority. Scanning an arbitrary file (`check_markers.py --scan file.md`) is a documented capability, not a hole. Static analysers flag this as path traversal because they treat `argv` as untrusted by default — true for services, not for command-line utilities |
 
 ## Release integrity
 
