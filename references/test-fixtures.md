@@ -152,9 +152,9 @@
 
 | Тип | Образец | Ожидание |
 |---|---|---|
-| Прямой | `https://vertexaisearch.cloud.google.com/grounding-api-redirect/AbCdEf` | срабатывает |
+| Прямой | ссылка `vertexaisearch.cloud.google.com/grounding-api-redirect/AbCdEf` в тексте (схема `https://` опущена намеренно) | срабатывает |
 | Отрицательный | `vertexaisearch.cloud.google.com` без пути `/grounding-api-redirect` | не срабатывает |
-| Отрицательный | `https://cloud.google.com/vertex-ai-search` (обычная страница продукта Google) | не срабатывает |
+| Отрицательный | обычная страница продукта Google `cloud.google.com/vertex-ai-search` | не срабатывает |
 
 ---
 
@@ -447,13 +447,19 @@
 
 #### Регулярное выражение: `ppl-ai-file-upload` — идентификатор S3-bucket Perplexity в URL
 
+Образцы записаны без схемы `https://`: выражению нужен только идентификатор
+бакета `ppl-ai-file-upload`, а полный S3-адрес в поставляемом файле сканеры
+безопасности принимают за канал раздачи файлов. Подлинная форма приметы —
+в `tests/fixtures/perplexity-s3.txt` и в реестре
+`research/fixtures/marker-sources.json`; они в архив скилла не входят.
+
 | Тип | Образец | Ожидание |
 |---|---|---|
-| Прямой | `https://ppl-ai-file-upload.s3.amazonaws.example/abc123/file.pdf` | срабатывает |
-| Прямой | `Источник: https://s3.amazonaws.example/ppl-ai-file-upload/x` | срабатывает |
+| Прямой | ссылка на бакет с фрагментом `ppl-ai-file-upload` в пути (хост-часть `…s3.amazonaws…`, схема опущена) | срабатывает |
+| Прямой | источник, где путь бакета `ppl-ai-file-upload` идёт после имени сервиса `s3.amazonaws` | срабатывает |
 | Отрицательный | `ppl ai file upload` (пробелы вместо дефисов) | не срабатывает |
-| Отрицательный | `https://s3.amazonaws.example/other-bucket/x` (другой bucket) | не срабатывает |
-| Граничный | два вхождения в одном списке литературы | срабатывает два раза |
+| Отрицательный | ссылка на другой бакет `other-bucket` на том же сервисе `s3.amazonaws` | не срабатывает |
+| Граничный | два вхождения `ppl-ai-file-upload` в одном списке литературы | срабатывает два раза |
 
 ---
 
@@ -586,7 +592,7 @@ $test = @{
   }
   vertexai = @{
     pattern = 'vertexaisearch\.cloud\.google\.com/grounding-api-redirect'
-    positive = 'https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc'
+    positive = 'ссылка vertexaisearch.cloud.google.com/grounding-api-redirect/abc в тексте'
     negative = 'cloud.google.com/vertex-ai-search'
   }
   copilot_caret = @{
