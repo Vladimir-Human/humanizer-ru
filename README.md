@@ -77,7 +77,7 @@ mkdir -p ~/.claude/skills/humanizer-ru
 cp SKILL.md ~/.claude/skills/humanizer-ru/
 ```
 
-Способы этого раздела дают полный контроль над каждым шагом. Если такой контроль не нужен, быстрее поставить одной командой из каталога [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
+Если проверять каждый шаг вручную не нужно, быстрее поставить одной командой из каталога [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
 
 ## Использование
 
@@ -275,8 +275,8 @@ humanizer-ru/
 
 ## История изменений
 
-Актуальная версия — на значке в начале страницы. Полная история изменений —
-в [CHANGELOG.md](CHANGELOG.md) и на странице
+Актуальная версия — на значке в начале страницы. Полную историю изменений
+смотрите в [CHANGELOG.md](CHANGELOG.md) и на странице
 [GitHub Releases](https://github.com/Vladimir-Human/humanizer-ru/releases).
 
 ## Лицензия
