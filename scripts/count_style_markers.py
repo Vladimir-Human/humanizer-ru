@@ -87,7 +87,7 @@ def main(paths, skip_markup=False):
         try:
             with io.open(p, encoding="utf-8") as fh:
                 raw = fh.read()
-        except OSError as exc:
+        except (OSError, UnicodeDecodeError) as exc:
             print("ошибка чтения %s: %s" % (p, exc), file=sys.stderr)
             return 2
         c = count_text(strip_markup(raw) if skip_markup else raw)
@@ -101,7 +101,7 @@ def main(paths, skip_markup=False):
 def selftest():
     bad = ("\u041eтличный \u0432опрос! \u0412ажно \u043eтметить, \u0447то \u0434анный \u043eтвет \u044fвляется \u043fолным.\n"
            "- \u043fункт\n- \u043fункт\n## \u0417аголовок\n**\u0436ирно** (\u0443точнение \u0432 \u0441кобках)\n"
-           "\u0418И \u2014 \u044dто \u043dе \u0438грушка, \u0430 \u0438нструмент.\n")
+           "\u0418И \u2014 \u044dто \u043dе \u0438грушка, \u0430 \u0438нструмент. \U0001F680\n")
     good = "\u041dе \u0443верен, \u043dо \u043fохоже, \u043eтвет \u043fростой: \u0434а.\n"
     cb, cg = count_text(bad), count_text(good)
     checks = [
@@ -113,6 +113,10 @@ def selftest():
         ("bad: жирный", cb["bold"] == 1),
         ("bad: скобки", cb["parens"] == 1),
         ("bad: оборот не-Б-а-В", cb["neb"] == 1),
+        # Эти два счётчика раньше не проверялись ничем: обнуление обоих
+        # выражений давало самопроверку 17/17 PASS при мёртвых детекторах.
+        ("bad: длинное тире", cb["emdash"] >= 1),
+        ("bad: эмодзи", cb["emoji"] >= 1),
         ("good: ноль нарушений", sum(cg.values()) == 0),
     ]
 

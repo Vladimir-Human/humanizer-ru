@@ -247,9 +247,18 @@ def run_checks(text, skill_dir_name, strict=False):
     return issues
 
 
+class SpecInputError(Exception):
+    """Сбой чтения входного файла: отказ инструмента, код возврата 2."""
+
+
 def run_file(path, strict=False, expect_dir=None):
-    with open(path, "r", encoding="utf-8") as f:
-        text = f.read()
+    # Сбой чтения — отказ инструмента (код 2), как обещает docstring, а не
+    # traceback с кодом 1, неотличимым от найденного нарушения.
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise SpecInputError("не удалось прочитать %s: %s" % (path, exc))
     dir_name = expect_dir or os.path.basename(os.path.dirname(os.path.abspath(path)))
     return run_checks(text, dir_name, strict=strict)
 
@@ -334,7 +343,12 @@ def main(argv):
     if not os.path.isfile(path):
         print("файл не найден: %s" % path)
         return 2
-    return _report(run_file(path, strict=strict, expect_dir=expect_dir))
+    try:
+        issues = run_file(path, strict=strict, expect_dir=expect_dir)
+    except SpecInputError as exc:
+        print(exc)
+        return 2
+    return _report(issues)
 
 
 if __name__ == "__main__":

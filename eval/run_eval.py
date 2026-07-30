@@ -92,7 +92,7 @@ def _sha256(path):
 
 def _scan_default(path, compiled):
     hits = []
-    with open(path, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8", errors="replace") as fh:
         for lineno, line in enumerate(fh.read().splitlines(), 1):
             for name, rx in compiled.items():
                 for m in rx.finditer(line):
@@ -139,7 +139,18 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
                "boundary_expected_ok": 0,
                "boundary_unexpected": 0, "details": []}
 
-    for entry in manifest["corpus"]:
+    for pos, entry in enumerate(manifest["corpus"], 1):
+        # Манифест недоверенный целиком, а не только в поле пути: запись может
+        # оказаться строкой, а обязательного ключа может не быть. Раньше это
+        # давало AttributeError и KeyError наружу, то есть traceback с кодом 1
+        # вместо честного отказа инструмента.
+        if not isinstance(entry, dict):
+            raise ManifestError("запись корпуса %d должна быть объектом, получено: %s"
+                                % (pos, type(entry).__name__))
+        for field in ("path", "sha256"):
+            if not str(entry.get(field, "")).strip():
+                raise ManifestError("запись корпуса %d: пустое или отсутствующее поле %s"
+                                    % (pos, field))
         rel = entry.get("path")
         # Проверка границы — до любого обращения к файловой системе: недоверенный
         # путь не должен даже проверяться на существование за пределами корня.
