@@ -75,8 +75,8 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 38 regular expressions catch traces of machine generation. They fall into two classes:
 
-- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
-- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
+- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
+- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
 
 Run all markers against test fixtures:
 
