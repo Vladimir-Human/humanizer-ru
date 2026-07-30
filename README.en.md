@@ -37,8 +37,8 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ## Manual install
 
-1. Open the **Releases** page, pick the latest release, and download `Source code (zip)`. Review `SKILL.md` and `references/` before installing.
-2. **Claude.ai**: Settings → Skills → Upload skill (if the archive has a nested folder, re-zip so `SKILL.md` sits at the archive root).
+1. Open the **Releases** page, pick the latest release, and download the attached `humanizer-ru.zip`. That is the built skill archive: `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` and `scripts/`, nothing executable at install time. `Source code (zip)`, which GitHub attaches to every release, is the full repository tree including `.github/`, `research/` and `tests/` — take it only if you intend to run the validators. Review `SKILL.md` and `references/` before installing.
+2. **Claude.ai**: Settings → Skills → Upload skill. In `humanizer-ru.zip` `SKILL.md` already sits at the archive root, so no re-zipping is needed.
 3. **Claude Code (local)**:
 
 ```sh
