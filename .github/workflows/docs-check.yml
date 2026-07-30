@@ -9,13 +9,15 @@ on:
     branches: [main]
     paths:
       - '**.md'
+      - 'CITATION.cff'
       - 'scripts/check_docs.py'
-      - '.github/workflows/docs-check.yml'
+      - '.github/workflows/*.yml'
   pull_request:
     paths:
       - '**.md'
+      - 'CITATION.cff'
       - 'scripts/check_docs.py'
-      - '.github/workflows/docs-check.yml'
+      - '.github/workflows/*.yml'
   workflow_dispatch:
 
 permissions:

@@ -107,6 +107,26 @@ python3 scripts/check_release.py --verify dist/humanizer-ru.zip
 
 Далее: тег `vX.Y.Z`, заметки к релизу, проверка страницы каталога.
 
+**Приложить собранный архив к выпуску обязательно.** Обе витрины в разделе
+установки велят скачать со страницы Releases именно `humanizer-ru.zip`: у него
+`SKILL.md` лежит в корне, поэтому переупаковка не нужна. Автоматически он туда
+не попадает — `release-check.yml` кладёт архив только в артефакты прогона, а не
+в ассеты выпуска. Если шаг пропустить, инструкция установки будет вести на файл,
+которого на странице нет.
+
+```bash
+gh release create vX.Y.Z --title "vX.Y.Z" \
+  --notes-file research/RELEASE-DRAFT-vX.Y.Z.md dist/humanizer-ru.zip
+# либо к уже созданному выпуску:
+gh release upload vX.Y.Z dist/humanizer-ru.zip
+```
+
+Проверить после публикации:
+
+```bash
+gh release view vX.Y.Z --json assets --jq '.assets[].name'   # ожидается humanizer-ru.zip
+```
+
 ## Когда изменение отклоняется
 
 - Добавляет маркер без записи в реестре доказательств.

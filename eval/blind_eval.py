@@ -576,7 +576,11 @@ def main():
 
     judgements = key = None
     if args.judgements:
-        judgements = json.loads(read(args.judgements))
+        try:
+            judgements = json.loads(read(args.judgements))
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            print("не удалось прочитать вердикты %s: %s" % (args.judgements, exc))
+            return 2
         key_path = args.key
         if not key_path:
             print("%s Для вердиктов обязателен --key; ключ хранится вне пакета." % FAIL)
@@ -584,7 +588,11 @@ def main():
         if not os.path.isfile(key_path):
             print("%s Не найден ключ обезличивания: %s" % (FAIL, key_path))
             return 2
-        key = json.loads(read(key_path))
+        try:
+            key = json.loads(read(key_path))
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            print("не удалось прочитать ключ %s: %s" % (key_path, exc))
+            return 2
 
     try:
         rows, summary = aggregate(run, judgements, key)

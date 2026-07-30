@@ -227,8 +227,14 @@ def main():
     all_err, all_warn = [], []
     total = {"pairs": 0, "edit": 0, "authored": 0}
     for path in files:
-        with open(path, encoding="utf-8") as fh:
-            text = fh.read()
+        # Путь мог прийти из аргументов: сбой чтения — отказ инструмента,
+        # код 2, как у сестринских валидаторов, а не traceback.
+        try:
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        except (OSError, UnicodeDecodeError) as exc:
+            print("не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
+            return 2
         rel = os.path.relpath(path, ROOT)
         errs, warns, stats = check_text(text, rel)
         all_err += errs

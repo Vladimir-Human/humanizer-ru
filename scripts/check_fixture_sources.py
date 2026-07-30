@@ -190,8 +190,12 @@ def validate(entries, base_dir=".", allow_pending=False, repo_root=None):
             if not os.path.isfile(path):
                 errors.append(tag + ": fixture_file не найден: " + str(fixture))
             else:
-                with open(path, encoding="utf-8") as fh:
-                    raw = fh.read()
+                try:
+                    with open(path, encoding="utf-8") as fh:
+                        raw = fh.read()
+                except (OSError, UnicodeDecodeError) as exc:
+                    errors.append(tag + ": fixture_file не читается: %s" % exc)
+                    continue
                 if not re.search(SCOPE[case], raw):
                     errors.append(tag + ": fixture_file не содержит маркер " + case)
                 if ec == "primary" and "SYNTHETIC" in raw.upper():
@@ -241,7 +245,7 @@ def run(path, allow_pending):
     try:
         with open(path, encoding="utf-8") as fh:
             entries = json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         print("Не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
         return 2
     errors, warnings, covered = validate(
