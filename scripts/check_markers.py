@@ -404,7 +404,7 @@ def scan(paths: list) -> int:
         try:
             with open(path, encoding="utf-8") as fh:
                 lines = fh.read().splitlines()
-        except OSError as exc:
+        except (OSError, UnicodeDecodeError) as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
             return 2
         for lineno, line in enumerate(lines, 1):
@@ -473,7 +473,7 @@ def parity(md_path: str = "references/chatbot-artifacts.md") -> int:
     try:
         with open(md_path, encoding="utf-8") as fh:
             doc = _canon_pattern(fh.read())
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)
         return 2
     missing = [name for name, case in CASES.items() if _canon_pattern(case[0]) not in doc]

@@ -55,7 +55,7 @@ RAW_EXPECTED = {
 def _scan_file(path, compiled):
     hits = []
     try:
-        with open(path, encoding="utf-8") as fh:
+        with open(path, encoding="utf-8", errors="replace") as fh:
             lines = fh.read().splitlines()
     except OSError as exc:
         return [(0, "read-error", str(exc))]

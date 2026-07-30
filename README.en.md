@@ -8,7 +8,7 @@
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions), 38 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub, Socket, and Snyk.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions), 38 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -37,13 +37,13 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ## Manual install
 
-1. Open the **Releases** page, pick the latest release, and download `Source code (zip)`. Review `SKILL.md` and `references/` before installing.
-2. **Claude.ai**: Settings → Skills → Upload skill (if the archive has a nested folder, re-zip so `SKILL.md` sits at the archive root).
+1. Open the **Releases** page, pick the latest release, and download the attached `humanizer-ru.zip`. That is the built skill archive: `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` and `scripts/`, nothing executable at install time. `Source code (zip)`, which GitHub attaches to every release, is the full repository tree including `.github/`, `research/` and `tests/` — take it only if you intend to run the validators. Review `SKILL.md` and `references/` before installing.
+2. **Claude.ai**: Settings → Skills → Upload skill. In `humanizer-ru.zip` `SKILL.md` already sits at the archive root, so no re-zipping is needed.
 3. **Claude Code (local)**:
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.7.2 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.7.3 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -75,8 +75,8 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 38 regular expressions catch traces of machine generation. They fall into two classes:
 
-- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, invisible citation separators (`U+E200–E204`), Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
-- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
+- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
+- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
 
 Run all markers against test fixtures:
 
@@ -133,6 +133,7 @@ The release policy separates a stable core (genre rules, false-positive boundari
 - Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in CI and manually by the developer.
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
+- **On the red Snyk badge in the skills.sh catalogue.** The automated audit flags this skill with E005, "suspicious download URL". The finding is a false positive: the scanner sees the Perplexity S3 bucket identifier `ppl-ai-file-upload` — a documented Class A marker this skill uses to recognise machine-generated text — and reads the description of a marker as an instruction to download a file. The skill downloads nothing: following links from the text under review is forbidden by the safety-boundaries section of `SKILL.md` («Границы безопасности», the file is in Russian). This is the same class of false positive familiar from YARA rule sets and the EICAR test string: a tool that looks for an indicator has to contain that indicator. The catalogue's two other auditors return PASS. We will not drop the marker to satisfy a verdict — that would be a hole in the detector.
 
 ## Sources
 
