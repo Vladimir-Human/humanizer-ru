@@ -43,7 +43,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.7.2 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.7.3 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
