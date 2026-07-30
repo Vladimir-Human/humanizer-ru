@@ -148,7 +148,11 @@ def check_references(root):
         if not fn.endswith(".md"):
             continue
         path = os.path.join(ref_dir, fn)
-        text = io.open(path, encoding="utf-8").read()
+        try:
+            text = io.open(path, encoding="utf-8").read()
+        except (OSError, UnicodeDecodeError) as exc:
+            warnings.append("не удалось прочитать %s: %s" % (fn, exc))
+            continue
         tok = estimate_tokens(text)
         rows.append((fn, tok))
         if tok > WARN_REFERENCE_TOKENS:
