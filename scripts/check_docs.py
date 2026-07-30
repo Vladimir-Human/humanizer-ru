@@ -245,6 +245,21 @@ def check_repo(root):
   if not m_date:
    errors.append("CITATION.cff: date-released должно быть датой ISO (ГГГГ-ММ-ДД)")
 
+ # 16. Имя каталога вида humanizer-ru-X.Y.Z в документации привязано к версии.
+ # Такое имя появляется в примерах распаковки Source code (zip) и устаревает с
+ # каждым выпуском. Сплошная проверка версий здесь не годится: README законно
+ # ссылается на прошлые выпуски («новое в v3.2», «с версии 2.3»). Проверяется
+ # только шаблон имени каталога, где старая версия — прямая ошибка для читателя.
+ if version:
+  for rel in DOC_FILES:
+   if not os.path.exists(p(rel)):
+    continue
+   for found in re.findall(r"humanizer-ru-(\d+\.\d+\.\d+)", text(rel)):
+    if found != version:
+     errors.append("%s: имя каталога humanizer-ru-%s не совпадает с версией "
+                   "скилла %s — читатель распакует другую папку"
+                   % (rel, found, version))
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -415,6 +430,27 @@ def selftest():
       lambda r: _w(r, WORKFLOWS_DIR + "/self-scan.yml",
                    b"\xef\xbb\xbfname: x\non: push\n", binary=True),
       "BOM")
+ # Гейт 16. Проверка должна падать на устаревшем имени каталога и молчать на
+ # совпадающем, иначе она бесполезна: имя папки устаревает каждый выпуск.
+ case("устаревшее имя каталога humanizer-ru-X.Y.Z -> FAIL",
+      lambda r: _w(r, "README.md",
+                   "# R\n\nИстория — в [CHANGELOG.md](CHANGELOG.md).\n\n"
+                   "Папка вида `humanizer-ru-3.3.4`.\n\n"
+                   "```sh\ngit clone --branch v3.3.5 --depth 1 x\n```\n"),
+      "имя каталога")
+ case("устаревшее имя каталога в README.en.md -> FAIL",
+      lambda r: _w(r, "README.en.md",
+                   "# R\n\nSee [CHANGELOG.md](CHANGELOG.md).\n\n"
+                   "Validators: scripts/check_docs.py. Dialogue rules: PERSONA.md.\n"
+                   "Data lives in research/ and tests/fixtures/.\n"
+                   "Folder `humanizer-ru-1.0.0`.\n"),
+      "имя каталога")
+ case("совпадающее имя каталога -> OK",
+      lambda r: _w(r, "README.md",
+                   "# R\n\nИстория — в [CHANGELOG.md](CHANGELOG.md).\n\n"
+                   "Папка вида `humanizer-ru-3.3.5`.\n\n"
+                   "```sh\ngit clone --branch v3.3.5 --depth 1 x\n```\n"),
+      None)
 
  passed = 0
  for name, mutate, expect_token in cases:
