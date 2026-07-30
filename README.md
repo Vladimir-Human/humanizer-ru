@@ -53,7 +53,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 2. Зайдите в аккаунт Claude.ai и перейдите в **Settings** > **Skills**.
 3. Нажмите **Upload skill** и выберите скачанный архив.
 
-> **Примечание.** В `humanizer-ru.zip` файл `SKILL.md` лежит в корне архива, поэтому переупаковка не нужна. Она может понадобиться, только если вы взяли `Source code (zip)`: там всё вложено в папку вида `humanizer-ru-3.7.2`.
+> **Примечание.** В `humanizer-ru.zip` файл `SKILL.md` лежит в корне архива, поэтому переупаковка не нужна. Она может понадобиться, только если вы взяли `Source code (zip)`: там всё вложено в папку вида `humanizer-ru-<номер версии>`.
 
 ### 2. Организации (Enterprise & Team)
 
@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.7.3 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.7.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
