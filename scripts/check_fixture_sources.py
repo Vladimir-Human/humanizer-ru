@@ -241,7 +241,7 @@ def run(path, allow_pending):
     try:
         with open(path, encoding="utf-8") as fh:
             entries = json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         print("Не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
         return 2
     errors, warnings, covered = validate(
