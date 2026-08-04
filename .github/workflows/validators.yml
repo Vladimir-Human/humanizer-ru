@@ -87,6 +87,24 @@ jobs:
       - name: count_style_markers --selftest
         run: python3 scripts/count_style_markers.py --selftest
 
+  soft-signals:
+    name: Самопроверка сканера мягких признаков
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: scan_soft_signals --selftest (умеет падать)
+        run: python3 scripts/scan_soft_signals.py --selftest
+
+  gate-runner:
+    name: Самопроверка раннера всех гейтов
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: check_all --selftest (раннер умеет падать)
+        run: python3 scripts/check_all.py --selftest
+
   corpus:
     name: Регрессия корпусов валидации
     runs-on: ubuntu-latest
