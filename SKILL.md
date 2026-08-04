@@ -6,8 +6,8 @@ allowed-tools: "Read Grep Glob"
 compatibility: Claude.ai, Claude Code, opencode, и другие агенты, поддерживающие спецификацию agentskills.io. Только текст, без выполнения кода, без доступа к сети и файловой системе.
 metadata:
   author: Vladimir-Human
-  version: "3.7.4"
-  last_reviewed: "2026-07-30"
+  version: "3.8.0"
+  last_reviewed: "2026-08-04"
   next_review_due: "2026-10-31"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
@@ -16,7 +16,7 @@ metadata:
   sources: "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing; https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0; https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup"
 ---
 
-# Humanizer-ru — очеловечивание текста (v3.7.4)
+# Humanizer-ru — очеловечивание текста (v3.8.0)
 
 Скилл для редактирования русскоязычного текста со следами работы ИИ. Цель — сделать текст естественным, не искажая смысла. Опирается на проект Wikipedia AI Cleanup и его русский аналог.
 
@@ -117,6 +117,8 @@ metadata:
 | `scripts/check_markers.py` | Прогон всех регулярных выражений по трём уровням образцов; идёт в CI и перед релизом. Режим `--scan` проверяет произвольный текст | При обновлении маркеров и для проверки файла: `--scan файл.md` |
 | `scripts/check_examples.py` | Гейт честности примеров: в парах «До/После» не должно появляться чисел, дат и имён, которых нет в исходнике | При правке примеров в документации: `python3 scripts/check_examples.py` |
 | `scripts/check_budget.py` | Бюджет контекста по официальной спецификации: длина SKILL.md, размер description и compatibility, размер файлов references | Перед релизом: `python3 scripts/check_budget.py` |
+| `scripts/scan_soft_signals.py` | Счётчик мягких признаков: четыре категории, пороги дерева решений, жанровые исключения; авторства не определяет | Для измеримой проверки текста: `файл.md --genre жанр` |
+| `scripts/check_all.py` | Весь релизный чек-лист одной командой; исходы PASS / FAIL / SKIP | Перед релизом |
 | `eval/blind_eval.py` | Слепая парная оценка: сравнивает результат со скиллом и без него по снятию маркеров, дописанным фактам и ложным правкам | Перед изменением ядра: `python3 eval/blind_eval.py --run DIR` |
 | `docs/REVIEW.md` | Регламент review: три класса изменений и требования к каждому | Перед открытием pull request |
 
