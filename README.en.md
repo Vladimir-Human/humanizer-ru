@@ -43,7 +43,7 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.7.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.8.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ## Usage
@@ -70,6 +70,8 @@ Detects and fixes 37 patterns of machine-generated Russian text (25 base + 12 Ru
 | Communication | chat remnants ("Hope this helps!"), sycophancy, generic upbeat closings |
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+
+Since v3.8 the soft layer is countable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — the Main Rule stays with the agent. On the human control corpus it reports zero features; on Russian model outputs it surfaces candidates where the regex layer stays silent.
 
 ## Regex markers: classes A and B
 
@@ -111,7 +113,9 @@ humanizer-ru/
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
-│   └── count_style_markers.py    # Style marker counter for A/B runs
+│   ├── count_style_markers.py    # Style marker counter for A/B runs
+│   ├── scan_soft_signals.py      # Measurable soft-signal scanner
+│   └── check_all.py              # Full release checklist in one command
 ├── eval/
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
 │   ├── blind_eval.py             # Blind paired evaluation of the skill effect

@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.7.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.8.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -99,6 +99,8 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 С версии 2.3 SKILL.md — это карта с деревом решений. Полное описание паттернов и проверок лежит в подключаемых файлах `references/`.
 
+С версии 3.8 мягкий слой стал счётным. `scripts/scan_soft_signals.py` находит кандидатов по четырём категориям признаков, считает каждый паттерн один раз на текст и применяет пороги дерева решений; жанровые исключения берутся из `references/false-positives.md`. Скрипт печатает цитаты и рекомендацию объёма правки, вердикта об авторстве не даёт — Главное правило остаётся за агентом. На человеческом контрольном корпусе он не находит ни одного признака, на выводах русских моделей находит кандидатов там, где regex-слой молчит.
+
 ### Архитектура
 
 ```
@@ -119,7 +121,9 @@ humanizer-ru/
 │   ├── check_budget.py           # Бюджет контекста по спецификации
 │   ├── check_corpus.py           # Регрессия корпусов валидации
 │   ├── check_perf.py             # Скорость выражений на большом входе
-│   └── check_release.py          # Сборка и проверка релизного архива
+│   ├── check_release.py          # Сборка и проверка релизного архива
+│   ├── scan_soft_signals.py      # Счётчик мягких признаков
+│   └── check_all.py              # Весь релизный чек-лист одной командой
 ├── eval/
 │   ├── run_eval.py               # Нейтральный корпус для любого скилла
 │   ├── blind_eval.py             # Слепая парная оценка эффекта
@@ -215,7 +219,7 @@ humanizer-ru/
 | `【N†source】` | OpenAI Assistants | `【\d+(?::\d+)?†source】` |
 | `citeturn0file0` | OpenAI ChatGPT (поток) | `citeturn\d+[a-z]+\d+` |
 | `turn0file2`, `fileciteturn0file2turn0file6` | OpenAI file_search | `turn\d+file\d+` |
-| `\]\(sandbox:/mnt/data/...\)` | OpenAI ChatGPT (анализ данных) | `\]\(sandbox:/mnt/data/...` |
+| `\]\(sandbox:/mnt/data/...\)` | OpenAI ChatGPT (анализ данных) | `\]\(sandbox:/mnt/data/` |
 | Невидимые символы `U+E200–E204` | OpenAI ChatGPT (служебные разделители цитат) | `[\ue200-\ue204]` |
 | Короткая форма сноски: цифра в `U+EA01`/`U+EA02` (новое в v3.2) | OpenAI ChatGPT | `[\uea01\uea02]` |
 | `<think>…</think>` | DeepSeek и другие рассуждающие модели | `(?m)^\s*</?think>\|</think>\s*$` |

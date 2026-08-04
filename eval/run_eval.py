@@ -36,10 +36,16 @@ MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manifest.v1
 
 try:
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
-    from check_markers import CASES, _inside_backticks, _console_text
+    from check_markers import CASES, _console_text, _line_matches
 except Exception as exc:  # noqa: BLE001
     print("Не удалось импортировать check_markers: %s" % exc, file=sys.stderr)
     CASES = {}
+
+    def _console_text(text, encoding=None):
+        return text
+
+    def _line_matches(line, compiled):
+        return []
 
 
 class ManifestError(Exception):
@@ -91,15 +97,18 @@ def _sha256(path):
 
 
 def _scan_default(path, compiled):
+    """Скан файла эталонным кандидатом: та же логика, что у --scan.
+
+    Вложенные дубли одного артефакта схлопываются в check_markers.
+    _line_matches, поэтому expected_hits манифеста считают артефакты,
+    а не число совпавших выражений.
+    """
     hits = []
     with open(path, encoding="utf-8", errors="replace") as fh:
         for lineno, line in enumerate(fh.read().splitlines(), 1):
-            for name, rx in compiled.items():
-                for m in rx.finditer(line):
-                    if _inside_backticks(line, m.start(), m.end()):
-                        continue
-                    hits.append({"line": lineno, "case": name,
-                                 "fragment": _console_text(line.strip()[:80])})
+            for _start, _end, name in _line_matches(line, compiled):
+                hits.append({"line": lineno, "case": name,
+                             "fragment": _console_text(line.strip()[:80])})
     return hits
 
 
