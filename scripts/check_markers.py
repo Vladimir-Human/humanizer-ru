@@ -384,6 +384,31 @@ def _inside_backticks(line: str, start: int, end: int) -> bool:
     return line[:start].count("`") % 2 == 1 and line[end:].count("`") >= 1
 
 
+def _line_matches(line: str, compiled: dict) -> list:
+    """Совпадения всех выражений в строке без вложенных дублей.
+
+    Одна примета может совпасть с несколькими выражениями сразу:
+    «citeturn0file0» ловится и cite_turn, и turn_file, а полная форма
+    «:contentReference[oaicite:0]{index=0}» — ещё и усечённой oaicite_short.
+    В отчёте это раздувало счёт: один артефакт печатался два-три раза.
+    Совпадение, целиком лежащее внутри более длинного совпадения другого
+    выражения, отбрасывается; пересечения без вложенности (PUA-разделители
+    вокруг turn-метки) сохраняются. На вердикт это не влияло — любое
+    совпадение класса A достаточно, — но счёт в отчёте был завышен.
+    """
+    found = []
+    for name, rx in compiled.items():
+        for m in rx.finditer(line):
+            if _inside_backticks(line, m.start(), m.end()):
+                continue
+            found.append((m.start(), m.end(), name))
+    kept = [(s, e, name) for s, e, name in found
+            if not any(s2 <= s and e <= e2 and (e - s) < (e2 - s2)
+                       for s2, e2, _n in found)]
+    kept.sort()
+    return kept
+
+
 def _console_text(text: str, encoding=None) -> str:
     """Сохраняет диагностику читаемой и на консолях без поддержки PUA/BOM."""
     encoding = encoding or sys.stdout.encoding or "utf-8"
@@ -395,7 +420,8 @@ def scan(paths: list) -> int:
 
     Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
     Печатает каждое совпадение в формате «файл:строка [имя] фрагмент».
-    Совпадения внутри обратных кавычек пропускаются (документация выражений).
+    Совпадения внутри обратных кавычек пропускаются (документация выражений),
+    вложенные дубли одного артефакта схлопываются (см. _line_matches).
     Код возврата 0 — чисто, 1 — найдены маркеры.
     """
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
@@ -408,13 +434,10 @@ def scan(paths: list) -> int:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
             return 2
         for lineno, line in enumerate(lines, 1):
-            for name, rx in compiled.items():
-                for m in rx.finditer(line):
-                    if _inside_backticks(line, m.start(), m.end()):
-                        continue
-                    found += 1
-                    fragment = _console_text(line.strip()[:90])
-                    print(f"{path}:{lineno} [{name}] {fragment}")
+            for _start, _end, name in _line_matches(line, compiled):
+                found += 1
+                fragment = _console_text(line.strip()[:90])
+                print(f"{path}:{lineno} [{name}] {fragment}")
     if found:
         print(f"\nНайдено маркеров: {found}.")
         return 1
@@ -447,6 +470,22 @@ def main() -> int:
     if _console_text("\ufeff", "ascii") != r"\ufeff":
         print("ПРОВАЛ scan: невидимый символ не экранируется для ASCII-консоли")
         fails += 1
+
+    # Отчёт --scan не должен печатать один артефакт дважды из-за вложенных
+    # выражений — и обязан сохранять пересечения без вложенности
+    # (PUA-разделители рядом с turn-меткой считаются отдельно).
+    compiled_all = {name: re.compile(case[0]) for name, case in CASES.items()}
+    for text, expected in (
+        (":contentReference[oaicite:0]{index=0}", 1),
+        ("fileciteturn0file2turn0file6", 2),
+        ("\ue200cite\ue202turn0search3\ue201", 4),
+        ("обычная строка без примет", 0),
+    ):
+        got = len(_line_matches(text, compiled_all))
+        if got != expected:
+            print("ПРОВАЛ scan-дедупликация: ожидалось %d, найдено %d для %r"
+                  % (expected, got, _console_text(text[:40])))
+            fails += 1
 
     total = len(CASES)
     if fails:
