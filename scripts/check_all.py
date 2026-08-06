@@ -59,6 +59,8 @@ def _gates(quick, tmpdir):
           "references/chatbot-artifacts-markup.md",
           "references/chatbot-artifacts-legacy.md"], {0}),
         ("style: самопроверка", [PY, "scripts/count_style_markers.py", "--selftest"], [], {0}),
+        ("style: самопроверка порога", [PY, "scripts/check_own_style.py", "--selftest"], [], {0}),
+        ("style: порог на собственные файлы", [PY, "scripts/check_own_style.py"], [], {0}),
         ("soft-signals: самопроверка", [PY, "scripts/scan_soft_signals.py", "--selftest"], [], {0}),
         ("examples: самопроверка", [PY, "scripts/check_examples.py", "--selftest"], [], {0}),
         ("examples: честность До/После", [PY, "scripts/check_examples.py"], [], {0}),
