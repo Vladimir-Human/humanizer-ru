@@ -196,5 +196,17 @@
     "secondary_justification": "Неизменяемая ревизия дословно хранит скопированный текст с внутренней меткой цитирования «oai_citation:0‡wellington.scoop.co.nz»; происхождение копии из ChatGPT подкрепляется ссылками с utm_source=chatgpt.com в том же фрагменте (в викитексте знак равенства экранирован как {{=}}). Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
     "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию ChatGPT, пока не найден permalink первичного экспорта.",
     "evidence_note": "Образец процитирован в разделе страницы про внутренние цитаты ChatGPT; документация формы — в chatbot-artifacts-links.md, A.1. Усечённая форма «oaicite:N» — отдельный case oaicite_short, этой записью не покрывается."
+  },
+  {
+    "case": "writing_block",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367969322",
+    "accessed": "2026-08-06",
+    "platform": "неустановленная модель",
+    "verbatim_sample": ":::writing{variant=“document” id=“51724”}",
+    "secondary_justification": "Неизменяемая ревизия дословно хранит протёкшую разметку writing-блока с фигурными кавычками; раздел страницы назван «Unclassified: :::writing» и не атрибутирует форму модели; рядом показан локализованный вариант «:::écriture{variante=\"document\" id=\"28471\"}». Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать модель или её версию, пока не найден permalink первичного экспорта.",
+    "evidence_note": "Документация формы — в chatbot-artifacts-markup.md, A.11; там модель и версия также не атрибутированы. В протёкшем образце вместо прямых кавычек фигурные — выражение требует только префикс «:::» + слово + «{variant», поэтому ловит обе формы. Директивы Docusaurus вида «:::note» не совпадают: у них не бывает атрибута variant=."
   }
 ]
