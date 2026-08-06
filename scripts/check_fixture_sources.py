@@ -58,7 +58,7 @@ REGISTERED_CASES = {
     "placeholder_url", "placeholder_date", "deepseek_line_ref",
     "openai_pua_short", "ref_name_search", "gemini_span", "perplexity_s3",
     "gemini_cite_n", "source_plus_chain", "oai_citation", "writing_block",
-    "attributableIndex",
+    "attributableIndex", "oaicite_short",
 }
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
@@ -70,7 +70,7 @@ SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _M
 LEGACY_EXEMPT = {
     "assistants_source", "attached_file", "citation_n", "cite_turn",
     "contentReference", "copilot_caret", "gemini_cite_start", "grok_card",
-    "oaicite_short", "openai_pua", "sandbox_link",
+    "openai_pua", "sandbox_link",
     "think_tag", "turn_fetch", "turn_file", "turn_search", "utm_chatgpt", "utm_openai",
     "vertexaisearch", "zero_width",
 }
@@ -306,6 +306,9 @@ def selftest():
         "writing_block": ":::writing{variant=\u201cdocument\u201d id=\u201c51724\u201d}",
         # Форма из живого реестра: JSON-атрибуция в конце сноски.
         "attributableIndex": "{\"attribution\":{\"attributableIndex\":\"1009-1\"",
+        # Форма из живого реестра: усечённая метка oaicite внутри полной
+        # обёртки contentReference.
+        "oaicite_short": ":contentReference[oaicite:16]{index=16}",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
@@ -320,7 +323,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base, repo_root=base)
-    checks.append(("полный тестовый реестр закрывает 19/19", not err and len(cov) == 19))
+    checks.append(("полный тестовый реестр закрывает 20/20", not err and len(cov) == 20))
     err, _, _ = validate(ok[:-1], base_dir=base, repo_root=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, repo_root=base, allow_pending=True)
@@ -333,20 +336,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 19))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 20))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 19))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 20))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                    and any("synthetic" in x for x in warn) and len(cov) == 18))
+                    and any("synthetic" in x for x in warn) and len(cov) == 19))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -366,7 +369,7 @@ def selftest():
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL с disposition закрывает",
-                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 19))
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 20))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
@@ -416,7 +419,7 @@ def selftest():
             e["fixture_file"] = legit_rel.replace(os.sep, "/")
     err, _, cov = validate(good, base_dir=base, repo_root=base)
     checks.append(("относительный путь внутрь репозитория остаётся допустимым",
-                   not err and len(cov) == 19))
+                   not err and len(cov) == 20))
 
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
