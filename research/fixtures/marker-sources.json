@@ -285,5 +285,15 @@
     "platform": "Perplexity (атрибуция по форме)",
     "verbatim_sample": "journals, and memoirs.[citation:1]",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Elisa von der Recke от апреля 2026 дословно хранит текст с тремя метками вида [citation:N] без последующего определения; образец — фраза из предложения о сочинениях. Найден полнотекстовым поиском insource:/\\[citation:\\s?\\d/ по EN Wikipedia (правило 8). Статья источник модели не называет; форма документирована в chatbot-artifacts-links.md, A.5 как стиль Perplexity и других поисковых ИИ, поэтому атрибуция по форме, а не по источнику. Не путать с меткой DeepSeek «[citation:3]» — у неё своё правило (см. A.5)."
+  },
+  {
+    "case": "vertexaisearch",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Arda_Turan&oldid=1367547066",
+    "accessed": "2026-08-06",
+    "platform": "Google Vertex AI Search (атрибуция по ссылке)",
+    "verbatim_sample": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQ",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Arda Turan от августа 2026 дословно хранит пять ссылок вида https://vertexaisearch.cloud.google.com/grounding-api-redirect/… в качестве адресов источников внутри вики-сносок; образец — начало первой такой ссылки из сноски про назначение главным тренером Шахтёра. Найден полнотекстовым поиском insource по EN Wikipedia (правило 8). Ссылка сама называет службу Google Vertex AI Search, поэтому атрибуция по ссылке, а не по источнику; конкретная модель не утверждается. Форма документирована в chatbot-artifacts-links.md, A.4 как ссылки веб-поиска с заземлением Google Gemini."
   }
 ]
