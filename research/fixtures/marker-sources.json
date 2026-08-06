@@ -230,5 +230,16 @@
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": ":contentReference[oaicite:16]{index=16}",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Sial (tribe) от июня 2025 дословно хранит скопированный текст с десятью метками oaicite:16–oaicite:25 внутри обёрток :contentReference[oaicite:N]{index=N}; усечённая форма oaicite:N — внутренний фрагмент той же метки. Цепочка находки: Wikipedia:Signs_of_AI_writing, раздел «Internal formatting and reference markup bugs», где эта ревизия процитирована через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.1."
+  },
+  {
+    "case": "contentReference",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&oldid=1294765751",
+    "accessed": "2026-08-06",
+    "platform": "OpenAI ChatGPT",
+    "verbatim_sample": ":contentReference[oaicite:20]{index=20}",
+    "warning_disposition": "accepted-shared-source: ревизия уже использована записью oaicite_short цикла 12; обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: та же ревизия Talk:Sial (tribe) от июня 2025 дословно хранит десять полных обёрток :contentReference[oaicite:N]{index=N} (N=16–25) без экранирования; образец взят со строки про классификацию Сиалов как Раджпутов. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.1."
   }
 ]
