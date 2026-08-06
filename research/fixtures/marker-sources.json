@@ -207,14 +207,12 @@
   {
     "case": "attributableIndex",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367630835",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&oldid=1358429496",
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
-    "verbatim_sample": "{\"attribution\":{\"attributableIndex\":\"1009-1\"",
-    "secondary_justification": "Неизменяемая ревизия дословно хранит скопированный текст с JSON-атрибуцией в конце сноски — {\"attribution\":{\"attributableIndex\":\"1009-1\" (фрагмент про Евдокимову); раздел страницы атрибутирует форму ChatGPT. Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию ChatGPT, пока не найден permalink первичного экспорта.",
-    "evidence_note": "Документация формы — в chatbot-artifacts-links.md, A.5. В той же ревизии есть второй образец с фигурными кавычками — {“attribution”:{“attributableIndex”:“3795-0”; выражение требует только слова attributableIndex в границах слова, поэтому ловит обе формы. Закрывающая скобка JSON в викитексте экранирована шаблоном {{))}}."
+    "verbatim_sample": "{\"attribution\":{\"attributableIndex\":\"1009-1\"}}",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия examples-подстраницы Wikipedia:Signs_of_AI_writing/Examples/Aleftina Evdokimova от июня 2026 дословно хранит скопированный черновик про Алевтину Евдокимову с одиннадцатью JSON-атрибуциями вида {\"attribution\":{\"attributableIndex\":\"NNN-N\"}}; образец — полная форма первой сноски. Происхождение копии из ChatGPT подкрепляется ссылками с utm_source=chatgpt.com и метками oai_citation в том же тексте. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует черновик через examples-подстраницу (снимок oldid=1367630404, строка 1035). До цикла 20 запись опиралась на вторичный снимок страницы (oldid=1367630835, где закрывающая скобка JSON экранирована шаблоном {{))}}); усиление до primary сделано по найденному первоисточнику с полной формой JSON, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.5."
   },
   {
     "case": "oaicite_short",
