@@ -12,7 +12,7 @@ on:
     paths:
       - 'scripts/**'
       - 'references/chatbot-artifacts*.md'
-      - 'references/test-fixtures.md'
+      - 'references/test-fixtures*.md'
       - 'research/validation/**'
       - 'research/raw/**'
       - 'tests/fixtures/**'
@@ -20,7 +20,7 @@ on:
     paths:
       - 'scripts/**'
       - 'references/chatbot-artifacts*.md'
-      - 'references/test-fixtures.md'
+      - 'references/test-fixtures*.md'
       - 'research/validation/**'
       - 'research/raw/**'
       - 'tests/fixtures/**'
