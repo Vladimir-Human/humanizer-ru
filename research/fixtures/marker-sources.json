@@ -163,14 +163,12 @@
   {
     "case": "gemini_cite_n",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1366561867",
-    "accessed": "2026-08-06",
-    "platform": "Google Gemini",
-    "verbatim_sample": "[cite: 19, 20, 21]",
-    "secondary_justification": "Неизменяемая ревизия дословно хранит цитату скопированного черновика с метками Gemini: «…across sectors such as healthcare, real estate, and e-commerce[cite: 19, 20, 21]». Там же форма задокументирована: «Text copied from Google Gemini may contain [cite: 1] or [cite: 3, 12, 13]style markers» (разметка code снята, порядок знаков дословный). Это снимок чужого наблюдения, а не первичный экспорт ответа Gemini.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию Gemini, пока не найден permalink первичного экспорта.",
-    "evidence_note": "Страница-пример Draft:Parmod Maloo по состоянию на 2026-08-06 недоступна: список ревизий и поиск пусты, журнал удалений по этому титулу пуст — страница могла существовать под другим именем. Цитата в ревизии остаётся единственным доступным снимком; в викитексте ревизии метки обёрнуты шаблоном {{highlight|…}}."
+    "evidence_class": "primary",
+    "source_url": "https://es.wikipedia.org/w/index.php?title=Migraci%C3%B3n_de_las_400_familias&oldid=168718749",
+    "accessed": "2026-08-07",
+    "platform": "Google Gemini (атрибуция по форме)",
+    "verbatim_sample": "400 familias (932 personas) [cite: 40, 41]",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Migración de las 400 familias Испанской Википедии от 29 июля 2025 дословно хранит метку фрагментов [cite: 40, 41] в поле инфобокса о численности семей; в начале той же строки стоит метка [cite_start] того же вставленного блока. Образец — форма с перечислением нескольких фрагментов через запятую (расширение v3.2, chatbot-artifacts-markup.md, A.9). Форма внесена правкой 168718749 от 29 июля 2025 (Oficial K), в предшествующей ревизии 163064011 её нет. До цикла 28 запись опиралась на вторичный снимок Wikipedia:Signs_of_AI_writing (oldid=1366561867); усиление до primary сделано по найденному первоисточнику протёкшего текста, прежний класс и ограничение accepted-secondary-limit сняты обоснованно — permalink первичного протёкшего экспорта получен. Статья источник не называет; форма документирована в chatbot-artifacts-markup.md, A.9 как ссылка Google Gemini на фрагмент источника, поэтому атрибуция по форме, а не по источнику; конкретная модель не утверждается. Устанавливается существование формы в живом тексте; машинная генерация остального текста статьи не утверждается."
   },
   {
     "case": "source_plus_chain",
