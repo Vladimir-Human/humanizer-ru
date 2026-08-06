@@ -249,5 +249,16 @@
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": "\ue200cite\ue202turn0search1\ue201",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи List of English-medium schools in Bangladesh от февраля 2025 дословно хранит скопированный текст с двенадцатью невидимыми символами U+E200–U+E202 вокруг меток цитирования; образец взят со строки про филиал CGS в Дакке. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-markup.md, A.7. Маркер класса B: запись подтверждает существование формы, но самостоятельным вердиктом о генерации не является и требует ручной проверки. Короткую форму U+EA01/U+EA02 покрывает отдельная запись openai_pua_short."
+  },
+  {
+    "case": "turn_search",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&oldid=1274664396",
+    "accessed": "2026-08-06",
+    "platform": "OpenAI ChatGPT",
+    "verbatim_sample": "turn0search1",
+    "warning_disposition": "accepted-shared-source: ревизия уже использована записью openai_pua цикла 14; обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: та же ревизия List of English-medium schools in Bangladesh дословно хранит четыре метки turn0searchN (три «turn0search1», одна «turn0search0») внутри PUA-обёрток цитирования — U+E200, «cite», U+E202, идентификатор, U+E201. Голые формы без обёртки редки: документированные полные формы citeturn0news0 и citeturn1file0 (Signs of AI writing) имеют примерные ревизии PermaLink 1276934509 и 1286349902, но обе удалены из Википедии — проверка API в цикле 16 вернула badrevids, поэтому голой записи cite_turn пока нет. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.2."
   }
 ]
