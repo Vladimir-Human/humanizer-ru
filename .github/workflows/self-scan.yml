@@ -44,7 +44,7 @@ jobs:
             ! -path './scripts/check_corpus.py' \
             ! -path './references/test-fixtures.md' \
             ! -path './references/false-positives.md' \
-            ! -path './references/chatbot-artifacts.md' \
+            ! -path './references/chatbot-artifacts*.md' \
             ! -path './research/fixtures/*' \
             ! -path './research/AUDIT-*' \
             ! -path './research/CONSILIUM-REPORT.md' \

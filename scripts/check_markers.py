@@ -16,6 +16,7 @@
 Ни одно работающее правило не удаляется (см. принцип в test-fixtures.md).
 """
 
+import glob
 import re
 import sys
 
@@ -501,27 +502,40 @@ def _canon_pattern(text: str) -> str:
     return "".join(c if ord(c) < 128 else "\\u%04x" % ord(c) for c in text)
 
 
-def parity(md_path: str = "references/chatbot-artifacts.md") -> int:
+def parity(*md_paths: str) -> int:
     """Проверка md↔py паритета: каждое выражение CASES задокументировано в справочнике.
 
+    Справочник разбит на семейство файлов `references/chatbot-artifacts*.md`;
+    без явно переданных путей читаются все файлы семейства, и каждое выражение
+    обязано найтись хотя бы в одном.
     В markdown-таблицах вертикальная черта экранируется как `\\|`, а невидимые
     символы записаны escape-последовательностями, поэтому обе стороны
     нормализуются через _canon_pattern. Код возврата 0 — все выражения
-    задокументированы, 1 — есть недокументированные (regex без описания).
+    задокументированы, 1 — есть недокументированные (regex без описания),
+    2 — файлы семейства не найдены или не читаются.
     """
-    try:
-        with open(md_path, encoding="utf-8") as fh:
-            doc = _canon_pattern(fh.read())
-    except (OSError, UnicodeDecodeError) as exc:
-        print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)
+    if not md_paths:
+        md_paths = tuple(sorted(glob.glob("references/chatbot-artifacts*.md")))
+    if not md_paths:
+        print("Не найдены файлы references/chatbot-artifacts*.md", file=sys.stderr)
         return 2
+    parts = []
+    for md_path in md_paths:
+        try:
+            with open(md_path, encoding="utf-8") as fh:
+                parts.append(_canon_pattern(fh.read()))
+        except (OSError, UnicodeDecodeError) as exc:
+            print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)
+            return 2
+    doc = "\n".join(parts)
     missing = [name for name, case in CASES.items() if _canon_pattern(case[0]) not in doc]
     for name in missing:
-        print(f"ПРОВАЛ parity: {name} отсутствует в {md_path}")
+        print(f"ПРОВАЛ parity: {name} отсутствует в {', '.join(md_paths)}")
     if missing:
         print(f"Паритет: {len(CASES) - len(missing)}/{len(CASES)} задокументировано.")
         return 1
-    print(f"Паритет: все {len(CASES)} выражений задокументированы в {md_path}.")
+    print(f"Паритет: все {len(CASES)} выражений задокументированы "
+          f"в {len(md_paths)} файлах семейства chatbot-artifacts.")
     return 0
 
 

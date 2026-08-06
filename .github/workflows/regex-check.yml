@@ -11,7 +11,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/**'
-      - 'references/chatbot-artifacts.md'
+      - 'references/chatbot-artifacts*.md'
       - 'references/test-fixtures.md'
       - 'research/validation/**'
       - 'research/raw/**'
@@ -19,7 +19,7 @@ on:
   pull_request:
     paths:
       - 'scripts/**'
-      - 'references/chatbot-artifacts.md'
+      - 'references/chatbot-artifacts*.md'
       - 'references/test-fixtures.md'
       - 'research/validation/**'
       - 'research/raw/**'
