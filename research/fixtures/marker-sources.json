@@ -197,14 +197,12 @@
   {
     "case": "writing_block",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367969322",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Draft:Ak7&oldid=1357217465",
     "accessed": "2026-08-06",
     "platform": "неустановленная модель",
     "verbatim_sample": ":::writing{variant=“document” id=“51724”}",
-    "secondary_justification": "Неизменяемая ревизия дословно хранит протёкшую разметку writing-блока с фигурными кавычками; раздел страницы назван «Unclassified: :::writing» и не атрибутирует форму модели; рядом показан локализованный вариант «:::écriture{variante=\"document\" id=\"28471\"}». Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать модель или её версию, пока не найден permalink первичного экспорта.",
-    "evidence_note": "Документация формы — в chatbot-artifacts-markup.md, A.11; там модель и версия также не атрибутированы. В протёкшем образце вместо прямых кавычек фигурные — выражение требует только префикс «:::» + слово + «{variant», поэтому ловит обе формы. Директивы Docusaurus вида «:::note» не совпадают: у них не бывает атрибута variant=."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия черновика Draft:Ak7 от июня 2026 дословно хранит протёкшую разметку writing-блока дважды — английскую форму с фигурными кавычками «:::writing{variant=“document” id=“51724”}» и локализованный французский вариант «:::écriture{variante=\"document\" id=\"28471\"}». Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через permalink (снимок oldid=1367630404, строка 1132). До цикла 19 запись опиралась на вторичный снимок страницы (oldid=1367969322); усиление до primary сделано по найденному первоисточнику, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Модель не атрибутирована — источник не называет её. Документация формы — в chatbot-artifacts-markup.md, A.11; выражение требует только префикс «:::» + слово + «{variant», поэтому ловит обе формы. Директивы Docusaurus вида «:::note» не совпадают: у них не бывает атрибута variant=."
   },
   {
     "case": "attributableIndex",
