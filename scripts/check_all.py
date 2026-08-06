@@ -67,6 +67,8 @@ def _gates(quick, tmpdir):
         ("readme-parity: самопроверка", [PY, "scripts/check_readme_parity.py", "--selftest"], [], {0}),
         ("readme-parity: витрина", [PY, "scripts/check_readme_parity.py"],
          ["README.md", "README.en.md"], {0}),
+        ("maps: самопроверка", [PY, "scripts/check_reference_maps.py", "--selftest"], [], {0}),
+        ("maps: карты справочников", [PY, "scripts/check_reference_maps.py"], [], {0}),
         ("registry: самопроверка", [PY, "scripts/check_fixture_sources.py", "--selftest"], [], {0}),
         ("registry: реестр доказательств", [PY, "scripts/check_fixture_sources.py",
                                             "research/fixtures/marker-sources.json"],
