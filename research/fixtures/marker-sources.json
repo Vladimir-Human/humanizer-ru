@@ -176,14 +176,12 @@
   {
     "case": "source_plus_chain",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367206490",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=ISO/IEC_27017&oldid=1325099471",
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": "IT Governance+3ISO+3ISO+3",
-    "secondary_justification": "Неизменяемая ревизия дословно хранит цитату скопированного текста со сцепкой «IT Governance+3ISO+3ISO+3» — ошибкой отрисовки сносок ChatGPT, которую страница документирует в разделе про ошибки разметки ссылок. Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию ChatGPT, пока не найден permalink первичного экспорта.",
-    "evidence_note": "В викитексте ревизии сцепка обёрнута шаблоном {{highlight|…}}. Одиночная склейка «слово+число» выражением намеренно не ловится из-за столкновений с математикой и версиями; однозначность даёт именно цепочка из не меньше чем двух сегментов «+число» (см. chatbot-artifacts-markup.md, A.8)."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи ISO/IEC 27017 от ноября 2025 дословно хранит скопированный текст со сцепками «Источник+цифра» (семь вхождений, включая «IT Governance+3ISO+3ISO+3», «Microsoft Learn+2ISO+2», «ISO+2ISO+2»); образец из вводного абзаца. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff. До цикла 15 запись опиралась на вторичный снимок страницы (oldid=1367206490); усиление до primary сделано по найденному первоисточнику, прежний класс и ограничение сняты обоснованно. Атрибуция конкретной версии ChatGPT не подтверждена. Одиночная склейка «слово+число» выражением намеренно не ловится из-за столкновений с математикой и версиями; однозначность даёт именно цепочка из не меньше чем двух сегментов «+число» (см. chatbot-artifacts-markup.md, A.8)."
   },
   {
     "case": "oai_citation",
