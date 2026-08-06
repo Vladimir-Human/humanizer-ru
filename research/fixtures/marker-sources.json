@@ -260,5 +260,15 @@
     "verbatim_sample": "turn0search1",
     "warning_disposition": "accepted-shared-source: ревизия уже использована записью openai_pua цикла 14; обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: та же ревизия List of English-medium schools in Bangladesh дословно хранит четыре метки turn0searchN (три «turn0search1», одна «turn0search0») внутри PUA-обёрток цитирования — U+E200, «cite», U+E202, идентификатор, U+E201. Голые формы без обёртки редки: документированные полные формы citeturn0news0 и citeturn1file0 (Signs of AI writing) имеют примерные ревизии PermaLink 1276934509 и 1286349902, но обе удалены из Википедии — проверка API в цикле 16 вернула badrevids, поэтому голой записи cite_turn пока нет. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.2."
+  },
+  {
+    "case": "utm_chatgpt",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&oldid=1296028135",
+    "accessed": "2026-08-06",
+    "platform": "OpenAI ChatGPT",
+    "verbatim_sample": "?utm_source=chatgpt.com",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Independent Together от июня 2025 дословно хранит скопированный текст ChatGPT с шестью ссылками, несущими utm_source=chatgpt.com; первая сноска на wellington.scoop.co.nz несёт форму с амперсандом, образец — вопросительная форма из сносок на en.wikipedia.org. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff (снимок oldid=1367630404, строка 998). Форма документирована в chatbot-artifacts-links.md, A.3 как метка ссылок, сгенерированных до августа 2025. Атрибуция конкретной версии ChatGPT не подтверждена. Та же ревизия — первоисточник для oai_citation (запись цикла 9 опирается на вторичный снимок): кандидат на будущее усиление."
   }
 ]
