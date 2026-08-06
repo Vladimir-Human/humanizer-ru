@@ -12,6 +12,7 @@ on:
       - 'CITATION.cff'
       - 'scripts/check_docs.py'
       - 'scripts/check_own_style.py'
+      - 'scripts/check_reference_maps.py'
       - '.github/workflows/*.yml'
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - 'CITATION.cff'
       - 'scripts/check_docs.py'
       - 'scripts/check_own_style.py'
+      - 'scripts/check_reference_maps.py'
       - '.github/workflows/*.yml'
   workflow_dispatch:
 
@@ -44,3 +46,7 @@ jobs:
         run: python3 scripts/check_own_style.py --selftest
       - name: Порог стиля на собственные файлы
         run: python3 scripts/check_own_style.py
+      - name: Самопроверка карт справочников
+        run: python3 scripts/check_reference_maps.py --selftest
+      - name: Карты разбитых справочников
+        run: python3 scripts/check_reference_maps.py
