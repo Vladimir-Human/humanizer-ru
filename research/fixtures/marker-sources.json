@@ -208,5 +208,17 @@
     "secondary_justification": "Неизменяемая ревизия дословно хранит протёкшую разметку writing-блока с фигурными кавычками; раздел страницы назван «Unclassified: :::writing» и не атрибутирует форму модели; рядом показан локализованный вариант «:::écriture{variante=\"document\" id=\"28471\"}». Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
     "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать модель или её версию, пока не найден permalink первичного экспорта.",
     "evidence_note": "Документация формы — в chatbot-artifacts-markup.md, A.11; там модель и версия также не атрибутированы. В протёкшем образце вместо прямых кавычек фигурные — выражение требует только префикс «:::» + слово + «{variant», поэтому ловит обе формы. Директивы Docusaurus вида «:::note» не совпадают: у них не бывает атрибута variant=."
+  },
+  {
+    "case": "attributableIndex",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367630835",
+    "accessed": "2026-08-06",
+    "platform": "OpenAI ChatGPT",
+    "verbatim_sample": "{\"attribution\":{\"attributableIndex\":\"1009-1\"",
+    "secondary_justification": "Неизменяемая ревизия дословно хранит скопированный текст с JSON-атрибуцией в конце сноски — {\"attribution\":{\"attributableIndex\":\"1009-1\" (фрагмент про Евдокимову); раздел страницы атрибутирует форму ChatGPT. Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию ChatGPT, пока не найден permalink первичного экспорта.",
+    "evidence_note": "Документация формы — в chatbot-artifacts-links.md, A.5. В той же ревизии есть второй образец с фигурными кавычками — {“attribution”:{“attributableIndex”:“3795-0”; выражение требует только слова attributableIndex в границах слова, поэтому ловит обе формы. Закрывающая скобка JSON в викитексте экранирована шаблоном {{))}}."
   }
 ]
