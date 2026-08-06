@@ -186,14 +186,13 @@
   {
     "case": "oai_citation",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1367680556",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&oldid=1296028135",
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": "oai_citation:0‡wellington.scoop.co.nz",
-    "secondary_justification": "Неизменяемая ревизия дословно хранит скопированный текст с внутренней меткой цитирования «oai_citation:0‡wellington.scoop.co.nz»; происхождение копии из ChatGPT подкрепляется ссылками с utm_source=chatgpt.com в том же фрагменте (в викитексте знак равенства экранирован как {{=}}). Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию ChatGPT, пока не найден permalink первичного экспорта.",
-    "evidence_note": "Образец процитирован в разделе страницы про внутренние цитаты ChatGPT; документация формы — в chatbot-artifacts-links.md, A.1. Усечённая форма «oaicite:N» — отдельный case oaicite_short, этой записью не покрывается."
+    "warning_disposition": "accepted-shared-source: ревизия уже использована записью utm_chatgpt цикла 17; обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Independent Together от июня 2025 дословно хранит скопированный текст ChatGPT с шестью метками oai_citation:N; образец — метка первой сноски на wellington.scoop.co.nz. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff (снимок oldid=1367630404, строка 998). До цикла 18 запись опиралась на вторичный снимок страницы (oldid=1367680556); усиление до primary сделано по найденному первоисточнику, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.1. Усечённая форма «oaicite:N» — отдельный case oaicite_short, этой записью не покрывается."
   },
   {
     "case": "writing_block",
@@ -269,6 +268,7 @@
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": "?utm_source=chatgpt.com",
-    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Independent Together от июня 2025 дословно хранит скопированный текст ChatGPT с шестью ссылками, несущими utm_source=chatgpt.com; первая сноска на wellington.scoop.co.nz несёт форму с амперсандом, образец — вопросительная форма из сносок на en.wikipedia.org. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff (снимок oldid=1367630404, строка 998). Форма документирована в chatbot-artifacts-links.md, A.3 как метка ссылок, сгенерированных до августа 2025. Атрибуция конкретной версии ChatGPT не подтверждена. Та же ревизия — первоисточник для oai_citation (запись цикла 9 опирается на вторичный снимок): кандидат на будущее усиление."
+    "warning_disposition": "accepted-shared-source: ревизия также использована записью oai_citation (усилена до primary в цикле 18); обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Independent Together от июня 2025 дословно хранит скопированный текст ChatGPT с шестью ссылками, несущими utm_source=chatgpt.com; первая сноска на wellington.scoop.co.nz несёт форму с амперсандом, образец — вопросительная форма из сносок на en.wikipedia.org. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff (снимок oldid=1367630404, строка 998). Форма документирована в chatbot-artifacts-links.md, A.3 как метка ссылок, сгенерированных до августа 2025. Атрибуция конкретной версии ChatGPT не подтверждена. Та же ревизия — первоисточник для oai_citation: запись усилена в цикле 18."
   }
 ]
