@@ -160,5 +160,17 @@
     "secondary_justification": "Репозиторий содержит реальное вхождение access-date: 2025-XX-XX; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki.",
     "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не закреплён permalink файла с вхождением.",
     "evidence_note": "FALSE-POSITIVE-ОГОВОРКА обязательна: формат YYYY-XX-XX встречается и в человеческих черновиках; описана в false-positives.md."
+  },
+  {
+    "case": "gemini_cite_n",
+    "status": "confirmed",
+    "evidence_class": "secondary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1366561867",
+    "accessed": "2026-08-06",
+    "platform": "Google Gemini",
+    "verbatim_sample": "[cite: 19, 20, 21]",
+    "secondary_justification": "Неизменяемая ревизия дословно хранит цитату скопированного черновика с метками Gemini: «…across sectors such as healthcare, real estate, and e-commerce[cite: 19, 20, 21]». Там же форма задокументирована: «Text copied from Google Gemini may contain [cite: 1] or [cite: 3, 12, 13]style markers» (разметка code снята, порядок знаков дословный). Это снимок чужого наблюдения, а не первичный экспорт ответа Gemini.",
+    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию Gemini, пока не найден permalink первичного экспорта.",
+    "evidence_note": "Страница-пример Draft:Parmod Maloo по состоянию на 2026-08-06 недоступна: список ревизий и поиск пусты, журнал удалений по этому титулу пуст — страница могла существовать под другим именем. Цитата в ревизии остаётся единственным доступным снимком; в викитексте ревизии метки обёрнуты шаблоном {{highlight|…}}."
   }
 ]

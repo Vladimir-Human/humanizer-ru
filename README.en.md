@@ -149,7 +149,7 @@ and its Russian counterpart
 Every regex marker in the fast layer carries an evidence record in
 `research/fixtures/marker-sources.json`: an immutable source URL, the date it was
 accessed, a verbatim sample, an evidence class, and a fixture. The validator
-prints honest coverage rather than a marketing number — currently 14 of 38
+prints honest coverage rather than a marketing number — currently 15 of 38
 markers have a full record; the rest are covered by fixtures only.
 
 Citation metadata for this repository lives in [CITATION.cff](CITATION.cff).
