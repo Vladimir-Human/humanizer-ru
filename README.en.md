@@ -92,6 +92,8 @@ Scan any text for markers:
 python3 scripts/check_markers.py --scan file.md
 ```
 
+Note: `references/test-fixtures*.md` intentionally contain markers as reference samples, so scanning those files reports matches by design; the CI self-scan excludes these paths.
+
 ## Architecture
 
 ```

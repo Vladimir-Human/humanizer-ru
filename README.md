@@ -4,7 +4,7 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_установок-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BE%D0%BA-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[English version → README.en.md](README.en.md)**
 
@@ -44,7 +44,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 Скилл не выполняет код при активации: рабочая часть — только текстовые файлы разметки. В репозитории есть вспомогательные Python-скрипты (`scripts/`) для тестов и CI — они запускаются только вручную или в GitHub Actions. Правило одно для любых скиллов: **сначала прочитать, потом ставить**.
 
 1. Откройте `SKILL.md` и `references/` прямо на GitHub и убедитесь, что содержимое вас устраивает.
-2. Ставьте только выпуски со страницы **Releases** (подписанные теги вида `vX.Y.Z`), а не произвольное состояние ветки.
+2. Ставьте только выпуски со страницы **Releases** (аннотированные теги вида `vX.Y.Z`), а не произвольное состояние ветки.
 3. После распаковки убедитесь, что внутри лишь `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` и `scripts/` — ничего исполняемого при установке. Каталогов `.github/`, `research/` и `tests/` в архиве нет: валидаторам, которым нужны корпуса и фикстуры, требуется полный клон репозитория.
 
 ### 1. Claude.ai (Веб-интерфейс)
@@ -209,7 +209,9 @@ humanizer-ru/
 | Маркер | Источник | Регулярное выражение |
 |---|---|---|
 | `:contentReference[oaicite:N]{index=N}` | OpenAI ChatGPT | `:contentReference\[oaicite:\d+\]\{index=\d+\}` |
+| `oaicite:7` (усечённая форма метки) | OpenAI ChatGPT | `oaicite:\d+` |
 | `oai_citation:N‡` | OpenAI ChatGPT | `oai_citation:\d+‡` |
+| `attributableIndex` в JSON | Внутреннее поле разметки JSON-ответов при использовании инструментов | `\battributableIndex\b` |
 | `turn0search0`, `turn0fetch0` | OpenAI веб-поиск | `turn\d+(search\|fetch)\d+` |
 | `<ref name="0search12">` | Контекстный след внутреннего инструмента в имени вики-сноски | `<ref\b[^>]*\bname=["']\d+(?:search\|fetch\|file\|image\|news\|video\|ref)\d+["']` |
 | `?utm_source=chatgpt.com` | OpenAI ChatGPT | `[?&]utm_source=chatgpt\.com` |
@@ -238,6 +240,7 @@ humanizer-ru/
 | `grok_render_citation_card_json={...}` | xAI Grok (JSON карточек) | `grok_render_citation_card_json` |
 | `【85†L261-269】`, `【854†L119-L123】` | DeepSeek и производные (ссылки на строки) | `【\d+†L\d+(?:-L?\d+)?】` |
 | `[attached_file:N]`, `[web:N]` | Perplexity (скобочная форма ссылок, осень 2025) | `\[(?:attached_file\|web):\d+\]` |
+| `[citation:3]` | Perplexity и другие поисковые ИИ | `\[citation:\d+\]` |
 | `citegenerated-reference-identifier` | ChatGPT (сгенерированный идентификатор) | `citegenerated-reference-identifier` |
 | `INSERT_SOURCE_URL`, `URL_HERE`, `PASTE_*_URL_HERE` | Placeholder-URL из шаблонных ответов | `\b(?:INSERT_SOURCE_URL(?:_\d+)?\|URL_HERE\|PASTE_\w+_URL_HERE)\b` |
 | `2025-XX-XX`, `2022-11-XX` | Placeholder-даты из шаблонных ответов (чаще всего «дата обращения») | `\b(?:19\|20)\d{2}-(?:0[1-9]\|1[0-2]\|[Xx]{2})-[Xx]{2}\b` |

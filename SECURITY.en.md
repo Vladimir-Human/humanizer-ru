@@ -21,7 +21,7 @@ Design guarantees:
 | --- | --- |
 | Prompt injection inside text being reviewed | `SKILL.md` treats input text as data; instructions found inside it are not executed, and the agent warns the user about attempted injection |
 | Metadata poisoning or unwanted activation | The `description` is neutral and the skill activates only after an explicit user request |
-| Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release |
+| Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release (`scripts/check_release.py` rejects non-ASCII URLs at archive build and verification) |
 | Installation-time content substitution | The manual process uses tagged releases and asks users to inspect files before installing |
 | Regression against the project's own rules | Six CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, and release checks |
 | Path traversal via data | Paths the validators take from data are confined to the repository root: corpus entries in `eval/manifest.v1.json` and the `fixture_file` field of the source registry. Absolute paths, drive letters, `..` escapes and symlinks pointing outside the root are rejected; the refusal is distinguishable from a corpus regression by exit code 2 |
