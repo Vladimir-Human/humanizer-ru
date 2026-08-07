@@ -103,14 +103,12 @@
   {
     "case": "deepseek_line_ref",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "DeepSeek",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Gillingham_High_Street&oldid=1295285879",
+    "accessed": "2026-08-07",
+    "platform": "DeepSeek (атрибуция по форме)",
     "verbatim_sample": "【85†L261-269】",
-    "secondary_justification": "Страница дословно цитирует форму из наблюдений June 2025. Финальный поиск 2026-07-17 нашёл только обзорные и implementation-упоминания, не независимый immutable первичный образец; повторный source_url осознан и остаётся видимым предупреждением валидатора.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не усиливать атрибуцию конкретной версии или производных без permalink исходного текста.",
-    "evidence_note": "EN Wiki, раздел Markup. Ограничение повторного secondary URL зафиксировано в AUDIT-2026-07-17.md."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия examples-подстраницы Wikipedia:Signs_of_AI_writing/Examples/Gillingham High Street от 12 июня 2025 (OathOn) дословно хранит три метки вида 【N†LNNN-NNN】 в скопированном черновике про улицу Гиллингема: дважды 【85†L261-269】 и один раз 【85†L269-274】; образец — первая метка в предложении про кампанию «Love Gillingham». Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через Special:Permalink/1295285879 в разделе про разметку DeepSeek (правило 6). До цикла 34 запись опиралась на живую обзорную страницу (доступ 2026-07-13); усиление до primary сделано по найденному первоисточнику протёкшего текста, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Черновик источник не называет; форма документирована в chatbot-artifacts-markup.md, A.12 как ссылка DeepSeek и производных моделей на строки источника (скобки-уголки + кинжал + диапазон строк), поэтому атрибуция по форме, а не по источнику; конкретная модель не утверждается. Устанавливается существование формы в живом тексте; машинная генерация остального текста не утверждается."
   },
   {
     "case": "openai_pua_short",
