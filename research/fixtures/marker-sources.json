@@ -133,14 +133,12 @@
   {
     "case": "placeholder_url",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://github.com/jxnl/dots",
-    "accessed": "2026-07-13",
-    "platform": "разные модели",
-    "verbatim_sample": "INSERT_SOURCE_URL",
-    "secondary_justification": "Источник — каталог паттернов (audit-ai-writing/patterns.md), а не исходный сгенерированный текст; независимые подтверждения: sammcj/agentic-coding, conorbronsdon/avoid-ai-writing. Реальное вхождение-кандидат: Deupaxx/EveryDay-Writer.",
-    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не закреплён permalink реального вхождения в публикуемом тексте.",
-    "evidence_note": "Плейсхолдеры источников. Оговорка о ложных срабатываниях (черновики людей с TODO-заглушками) — в false-positives.md."
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Nishikant_Dubey&oldid=1367957147",
+    "accessed": "2026-08-07",
+    "platform": "разные модели (атрибуция по форме)",
+    "verbatim_sample": "url=URL_HERE",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Nishikant Dubey от 6 августа 2026 (JnhoIVe) дословно хранит две сноски {{cite web}} с незаполненным полем url=URL_HERE — в абзацах про запрос комитета по Meta и про извинения Цукерберга; образец — поле первой сноски. Найден полнотекстовым поиском insource:/URL_HERE/ по EN-разделу Википедии (правило 8), единственная живая статья; форма внесена правкой 1367957147 от 6 августа 2026, в предшествующей ревизии 1367526948 её нет. До цикла 36 запись опиралась на живой GitHub-каталог паттернов (доступ 2026-07-13); усиление до primary сделано по найденному первоисточнику в публикуемом тексте, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Статья источник не называет: незаполненное шаблонное поле — артефакт разных моделей и черновиков, поэтому атрибуция по форме, а не по модели; конкретная модель не утверждается. Оговорка о ложных срабатываниях (черновики людей с TODO-заглушками) — в false-positives.md."
   },
   {
     "case": "placeholder_date",
