@@ -25,15 +25,13 @@
   {
     "case": "perplexity_s3",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1365155084",
-    "accessed": "2026-07-21",
-    "platform": "Perplexity",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Grand_Mosque_of_Sabilal_Muhtadin&oldid=1345574273",
+    "accessed": "2026-08-07",
+    "platform": "Perplexity (атрибуция по форме)",
     "fixture_file": "../../tests/fixtures/perplexity-s3.txt",
     "verbatim_sample": "ppl-ai-file-upload",
-    "secondary_justification": "Неизменяемая ревизия EN Wikipedia дословно фиксирует форму: «Perplexity may also cite text to an Amazon S3 bucket, with ppl-ai-file-upload in the URL». Человек такой URL не создаёт; независимого immutable первичного образца с дословной ссылкой в проекте не зафиксировано.",
-    "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не атрибутировать конкретную версию, пока не найден permalink с дословной S3-ссылкой.",
-    "evidence_note": "Класс A по семантике (URL-артефакт), но запись реестра вторичная; ограничение зафиксировано в AUDIT-2026-07-21.md."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Grand Mosque of Sabilal Muhtadin от 26 марта 2026 (LumenArchivorum) дословно хранит ссылку на бакет https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/… в поле url сноски {{Cite journal}} на статью про архитектуру калимантанских мечетей. Найден полнотекстовым поиском insource:\"ppl-ai-file-upload\" по EN-разделу Википедии (правило 8): единственная живая статья в EN (в PT-разделе есть ещё одна — São João da Vitória); форма внесена правкой 1345574273 от 26 марта 2026, в предшествующей ревизии 1345570326 её нет, вхождение вне HTML-комментария (правило 12). До цикла 38 запись опиралась на снимок Wikipedia:Signs_of_AI_writing oldid=1365155084 (доступ 2026-07-21); усиление до primary сделано по найденному первоисточнику с дословной S3-ссылкой, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Статья источник не называет; форма документирована в chatbot-artifacts-links.md, A.5 как S3-ссылки Perplexity на загруженные файлы, поэтому атрибуция по форме, а не по источнику; конкретная модель не утверждается. Устанавливается существование формы в живом тексте; машинная генерация остального текста статьи не утверждается."
   },
   {
     "case": "grok_render_json",
