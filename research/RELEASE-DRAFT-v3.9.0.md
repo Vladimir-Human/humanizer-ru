@@ -60,4 +60,8 @@
 
 ### Архив
 
-SHA-256: заполняется при сборке релизного архива (см. scripts/check_release.py).
+SHA-256: df098faac371b6426426d86f0a42c4cacf3117fb6bacc0b4540eeb3fea7178df
+
+Собран `scripts/check_release.py --root . --build dist/humanizer-ru-v3.9.0.zip`
+и проверен `--verify` (2026-08-07); архив детерминированный, SHA
+воспроизводится пересборкой.
