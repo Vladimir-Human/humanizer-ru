@@ -1,0 +1,32 @@
+{
+  "P001": {
+    "readability": "B",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P002": {
+    "readability": "tie",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['tie', 'tie', 'A'], meaning_loss ['B', 'A', 'none']. раскол по смыслу (один судья против A, другой против B); "
+  },
+  "P003": {
+    "readability": "A",
+    "meaning_loss": "B",
+    "note": "панель 3 судей: readability ['tie', 'A', 'A'], meaning_loss ['B', 'B', 'B']. "
+  },
+  "P004": {
+    "readability": "tie",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P005": {
+    "readability": "tie",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P006": {
+    "readability": "B",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'A']. "
+  }
+}

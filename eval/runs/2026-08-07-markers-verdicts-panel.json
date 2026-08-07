@@ -1,0 +1,32 @@
+{
+  "P001": {
+    "readability": "tie",
+    "meaning_loss": "A",
+    "note": "панель 3 судей: readability ['B', 'tie', 'tie'], meaning_loss ['A', 'A', 'none']. "
+  },
+  "P002": {
+    "readability": "tie",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P003": {
+    "readability": "B",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['B', 'B', 'A'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P004": {
+    "readability": "B",
+    "meaning_loss": "A",
+    "note": "панель 3 судей: readability ['tie', 'B', 'B'], meaning_loss ['A', 'A', 'A']. "
+  },
+  "P005": {
+    "readability": "B",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['B', 'tie', 'B'], meaning_loss ['none', 'none', 'none']. "
+  },
+  "P006": {
+    "readability": "tie",
+    "meaning_loss": "none",
+    "note": "панель 3 судей: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']. "
+  }
+}
