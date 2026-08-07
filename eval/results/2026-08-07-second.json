@@ -1,0 +1,162 @@
+{
+  "run": "2026-08-07-second",
+  "manifest": {
+    "run": "2026-08-07-second",
+    "model": "модель автономного прогона Qwen Code (субагенты; температура среды по умолчанию, не задавалась явно)",
+    "skill_version": "3.8.0",
+    "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+    "judge": "человек (ожидается); механическая часть считается blind_eval.py",
+    "note": "Второй парный прогон (первый — 2026-07-26-baseline). Ветка without — субагент с дословно тем же промптом без скилла, ветка with — субагент, читающий SKILL.md и references/ и следующий им. Ограничение честности: обе ветви исполняла одна модельная семья, изоляция — только в доступе к материалам скилла; судейскую часть (читаемость, потеря смысла) модель не заполняет — пакет для человека-судьи собирается отдельно.",
+    "pairs": [
+      {
+        "id": "ai-gigachat-pechat",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/01-слепая-печать.txt без правок",
+        "source_file": "research/raw/gigachat/01-слепая-печать.txt"
+      },
+      {
+        "id": "ai-gigachat-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/02-почему-небо-голубое.txt без правок",
+        "source_file": "research/raw/gigachat/02-почему-небо-голубое.txt"
+      },
+      {
+        "id": "ai-gigachat-stolica",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/03-столица-австралии.txt без правок",
+        "source_file": "research/raw/gigachat/03-столица-австралии.txt"
+      },
+      {
+        "id": "ai-lechat-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в Le Chat (Mistral, режим fast); файл research/raw/le-chat/03-fast-небо-голубое.txt без правок",
+        "source_file": "research/raw/le-chat/03-fast-небо-голубое.txt"
+      },
+      {
+        "id": "human-wikinews",
+        "kind": "human",
+        "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа",
+        "source_file": "research/validation/human/10-wikinews.txt"
+      },
+      {
+        "id": "human-constitution",
+        "kind": "human",
+        "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру",
+        "source_file": "research/validation/human/08-constitution.txt"
+      }
+    ]
+  },
+  "run_sha256": "262f144b8f4b8adf67f5f5e647f5a83c2c37bd975310abb3deba53e319442988",
+  "summary": {
+    "pairs_total": 6,
+    "pairs_ai": 4,
+    "pairs_human_control": 2,
+    "removal_with_pct": null,
+    "removal_without_pct": null,
+    "fact_clean_with_pct": 100.0,
+    "fact_clean_without_pct": 75.0,
+    "false_edits_with": 0,
+    "false_edits_without": 0,
+    "len_delta_with_pct": -5.9,
+    "len_delta_without_pct": -7.4
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "два",
+        "три"
+      ],
+      "added_facts_with": [],
+      "len_source": 3282,
+      "len_without": 3044,
+      "len_with": 3234,
+      "id": "ai-gigachat-pechat",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/01-слепая-печать.txt без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2766,
+      "len_without": 2541,
+      "len_with": 2685,
+      "id": "ai-gigachat-nebo",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/02-почему-небо-голубое.txt без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1203,
+      "len_without": 997,
+      "len_with": 976,
+      "id": "ai-gigachat-stolica",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat; файл research/raw/gigachat/03-столица-австралии.txt без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 956,
+      "len_without": 845,
+      "len_with": 837,
+      "id": "ai-lechat-nebo",
+      "provenance": "Захвачен в Le Chat (Mistral, режим fast); файл research/raw/le-chat/03-fast-небо-голубое.txt без правок"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 223,
+      "len_without": 223,
+      "len_with": 223,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "human-wikinews",
+      "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 150,
+      "len_without": 150,
+      "len_with": 150,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "human-constitution",
+      "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+    }
+  ]
+}
