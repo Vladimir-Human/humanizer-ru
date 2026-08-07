@@ -4,7 +4,7 @@
 
 ## What this project does — and does not do
 
-Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`) and fifteen CI verification scripts (`scripts/`, Python standard library only, no dependencies).
+Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`) and fifteen CI verification scripts (`scripts/`, Python standard library only, no dependencies). Fourteen of them ship in the release archive: `check_corpus.py` stays in the repository because it only runs against the `research/` directory, which the archive does not include.
 
 Design guarantees:
 

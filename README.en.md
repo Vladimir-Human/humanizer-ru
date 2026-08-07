@@ -4,11 +4,11 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Version](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=version&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-266%2B_installs-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_installs-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions), 38 testable regex markers split into hard copy-paste artifacts and contextual indicators, all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators. All checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -71,7 +71,7 @@ Detects and fixes 37 patterns of machine-generated Russian text (25 base + 12 Ru
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
-Since v3.8 the soft layer is countable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — the Main Rule stays with the agent. On the human control corpus it reports zero features; on Russian model outputs it surfaces candidates where the regex layer stays silent.
+Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus it finds zero soft signals; on Russian model outputs it surfaces candidates where the regex layer stays silent.
 
 ## Regex markers: classes A and B
 
@@ -110,6 +110,8 @@ humanizer-ru/
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
 │   ├── check_readme_parity.py    # RU/EN showcase parity and honesty
+│   ├── check_own_style.py        # Soft-signal threshold on own prose
+│   ├── check_reference_maps.py   # Split-reference map integrity
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
@@ -134,7 +136,7 @@ The release policy separates a stable core (genre rules, false-positive boundari
 
 ## Security
 
-- Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in CI and manually by the developer.
+- Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in the repository's CI or manually by the developer.
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
 - **On the red Snyk badge in the skills.sh catalogue.** The automated audit flags this skill with E005, "suspicious download URL". The finding is a false positive: the scanner sees the Perplexity S3 bucket identifier `ppl-ai-file-upload` — a documented Class A marker this skill uses to recognise machine-generated text — and reads the description of a marker as an instruction to download a file. The skill downloads nothing: following links from the text under review is forbidden by the safety-boundaries section of `SKILL.md` («Границы безопасности», the file is in Russian). This is the same class of false positive familiar from YARA rule sets and the EICAR test string: a tool that looks for an indicator has to contain that indicator. The catalogue's two other auditors return PASS. We will not drop the marker to satisfy a verdict — that would be a hole in the detector.
@@ -146,11 +148,11 @@ The pattern base draws on
 and its Russian counterpart
 [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
-Every regex marker in the fast layer carries an evidence record in
-`research/fixtures/marker-sources.json`: an immutable source URL, the date it was
-accessed, a verbatim sample, an evidence class, and a fixture. The validator
-prints honest coverage rather than a marketing number — currently 32 of 38
-markers have a full record; the rest are covered by fixtures only.
+A full evidence record — an immutable source URL, the date it was accessed,
+a verbatim sample, an evidence class, and a fixture in
+`research/fixtures/marker-sources.json` — currently exists for 32 of 38
+fast-layer markers; the rest are covered by fixtures only. The validator
+prints this honest coverage rather than rounding it to a convenient number.
 
 Citation metadata for this repository lives in [CITATION.cff](CITATION.cff).
 
