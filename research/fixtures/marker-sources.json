@@ -69,14 +69,12 @@
   {
     "case": "grok_card_tag",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "Grok",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Draft:Mehak_Malik&oldid=1323207968",
+    "accessed": "2026-08-07",
+    "platform": "Grok (атрибуция по форме)",
     "verbatim_sample": "<grok-card data-id=\"e8ff4f\" data-type=\"citation_card\">",
-    "secondary_justification": "Страница дословно цитирует реальную ревизию Draft:Mehak Malik (ноябрь 2025) с этим тегом; сама страница — обзорная, не исходный текст.",
-    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не найден permalink ревизии Draft:Mehak Malik.",
-    "evidence_note": "EN Wiki, раздел Markup."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия черновика Draft:Mehak Malik от 20 ноября 2025 (Danishrehman-writer) дословно хранит четырнадцать XML-тегов вида <grok-card data-id=\"…\" data-type=\"citation_card\"> после вики-сносок; образец — тег с идентификатором e8ff4f сразу после сноски на DAWN.COM (CYBERLIFE: THE YEAR ON TIKTOK). Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через Special:PermanentLink/1323207968 (правило 6); до цикла 32 запись опиралась на живую обзорную страницу (доступ 2026-07-13), усиление до primary сделано по найденному первоисточнику, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Черновик источник не называет; форма документирована в chatbot-artifacts-links.md, A.4 как XML-тег карточек цитат Grok, поэтому атрибуция по форме, а не по источнику; конкретная модель не утверждается. Устанавливается существование формы в живом тексте; машинная генерация остального текста черновика не утверждается."
   },
   {
     "case": "attached_web_bracket",
