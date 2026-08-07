@@ -66,7 +66,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Самопроверка валидатора
         run: python3 scripts/check_fixture_sources.py --selftest
-      - name: Гейт доказательств для зарегистрированных маркеров (14/14)
+      - name: Гейт доказательств для зарегистрированных маркеров
         run: python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
 
   parity:

@@ -42,6 +42,9 @@ FORBIDDEN_NAMES = {".env", ".DS_Store", "Thumbs.db"}
 # check_fixture_sources.py остаётся: его импортирует check_readme_parity.py.
 EXCLUDED_SCRIPTS = {"scripts/check_corpus.py"}
 SECRET_NAME_RE = re.compile(r"(?:^|[._-])(secret|token|credential|private[_-]?key)(?:$|[._-])", re.I)
+# SECURITY обещает чистый ASCII в адресах: кириллические пути допустимы
+# только в процентной нотации. Ищем URL со схемой в байтовом тексте.
+URL_RE = re.compile(rb"https?://[^\s\"'<>`\[\]{}\x00-\x1f]+")
 FIXED_TIME = (2026, 7, 21, 0, 0, 0)
 
 class ReleaseError(ValueError):
@@ -83,6 +86,14 @@ def _validate_text(name: str, data: bytes) -> None:
     except UnicodeDecodeError as exc:
         raise ReleaseError(f"text file is not UTF-8: {name}: {exc}") from exc
 
+def _validate_ascii_urls(name: str, data: bytes) -> None:
+    for match in URL_RE.finditer(data):
+        url = match.group(0)
+        if not url.isascii():
+            shown = url.decode("utf-8", "replace")
+            raise ReleaseError(
+                f"non-ASCII address (homograph risk) in {name}: {shown}")
+
 def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
     root = root.resolve()
     if not root.is_dir():
@@ -109,6 +120,7 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
         data = path.read_bytes()
         if path.suffix.lower() in TEXT_SUFFIXES or rel.name in ROOT_FILES:
             _validate_text(str(rel), data)
+            _validate_ascii_urls(str(rel), data)
         found.append((rel, data))
     names = {str(p) for p, _ in found}
     if "SKILL.md" not in names:
@@ -155,6 +167,7 @@ def verify(archive: Path) -> str:
             data = zf.read(info)
             if p.suffix.lower() in TEXT_SUFFIXES or p.name in ROOT_FILES:
                 _validate_text(info.filename, data)
+                _validate_ascii_urls(info.filename, data)
         if "SKILL.md" not in seen:
             raise ReleaseError("SKILL.md is not at ZIP root")
         if not any(name.startswith("references/") for name in seen):
@@ -256,6 +269,30 @@ def selftest() -> None:
             zf.writestr("references/x.md", "x")
             zf.writestr("scripts/check_corpus.py", "# подсунуто\n")
         expect_fail(lambda: verify(sneaked), "excluded script inside archive")
+
+        # ASCII-чистота адресов: кириллический URL отвергается при сборке.
+        # Домен склеивается из двух литералов: сам скрипт обязан проходить
+        # собственную проверку (в исходнике нет готового не-ASCII URL).
+        homograph = base / "homograph"; homograph.mkdir(); _minimal(homograph)
+        (homograph / "references" / "homograph.md").write_text(
+            "Ссылка: https://" + "пример.рф/страница\n", encoding="utf-8")
+        expect_fail(lambda: collect(homograph), "non-ASCII address")
+
+        # ...процентная нотация для кириллицы законна...
+        encoded = base / "encoded"; encoded.mkdir(); _minimal(encoded)
+        (encoded / "references" / "encoded.md").write_text(
+            "https://ru.wikipedia.org/wiki/%D0%A2%D0%B5%D1%81%D1%82\n",
+            encoding="utf-8")
+        build(encoded, base / "encoded.zip")
+        passed += 1
+        total += 1
+
+        # ...а подсунутый в архив кириллический URL отвергается верификацией.
+        sneaked_url = base / "sneaked-url.zip"
+        with zipfile.ZipFile(sneaked_url, "w") as zf:
+            zf.writestr("SKILL.md", "x")
+            zf.writestr("references/x.md", "https://" + "пример.рф/")
+        expect_fail(lambda: verify(sneaked_url), "non-ASCII address inside archive")
     print(f"release preflight selftest: {passed}/{total} PASS")
 
 def main(argv: list[str] | None = None) -> int:
