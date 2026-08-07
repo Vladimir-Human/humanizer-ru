@@ -79,14 +79,12 @@
   {
     "case": "attached_web_bracket",
     "status": "confirmed",
-    "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
-    "platform": "Perplexity (предположительно)",
+    "evidence_class": "primary",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Hamish_Maxwell&oldid=1316436509",
+    "accessed": "2026-08-07",
+    "platform": "Perplexity (предположительно, атрибуция по форме)",
     "verbatim_sample": "[attached_file:1]",
-    "secondary_justification": "Страница дословно фиксирует обе ветки выражения: «tags like [attached_file:1] and [web:1] have been seen at the end of sentences. This may be Perplexity-specific». Наблюдение сообщества за реальными правками.",
-    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не найден permalink ревизии-примера.",
-    "evidence_note": "EN Wiki, раздел Markup, осень 2025."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Hamish Maxwell от 12 октября 2025 (BallaratNation) дословно хранит две метки [attached_file:1] в концах предложений — после сноски Mother Jones в абзаце про Philip Morris и в конце абзаца про управление репутацией. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту правку через diff 1316436509 в разделе про скобочные формы Perplexity (правило 6). До цикла 35 запись опиралась на живую обзорную страницу (доступ 2026-07-13); усиление до primary сделано по найденному первоисточнику, прежний класс и ограничение accepted-secondary-limit сняты обоснованно. Статья источник не называет; форма документирована в chatbot-artifacts-links.md, A.5 как скобочные метки [attached_file:N] и [web:N], которые, по наблюдению сообщества, может оставлять Perplexity, поэтому атрибуция по форме и остаётся предположительной; конкретная модель не утверждается. Устанавливается существование формы в живом тексте; машинная генерация остального текста статьи не утверждается."
   },
   {
     "case": "generated_ref_id",
