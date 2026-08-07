@@ -4,7 +4,7 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-266%2B_установок-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_установок-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[English version → README.en.md](README.en.md)**
 
@@ -118,6 +118,8 @@ humanizer-ru/
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
 │   ├── check_readme_parity.py    # Паритет и правдивость витрины RU/EN
+│   ├── check_own_style.py        # Порог мягких признаков на свою прозу
+│   ├── check_reference_maps.py   # Карты разбитых справочников
 │   ├── check_budget.py           # Бюджет контекста по спецификации
 │   ├── check_corpus.py           # Регрессия корпусов валидации
 │   ├── check_perf.py             # Скорость выражений на большом входе
@@ -134,7 +136,7 @@ humanizer-ru/
 ├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check, release-check
-├── references/               # 11 справочников паттернов и маркеров
+├── references/               # 11 справочников; два разбиты на части (16 файлов)
 ├── research/                 # Протоколы, реестр, аудит и BACKLOG.md
 └── tests/fixtures/           # Проверочные образцы
 ```
@@ -261,7 +263,7 @@ humanizer-ru/
 
 - Добавлен паттерн «канцелярит» («осуществлять деятельность», «в соответствии с»)
 - Список машинной лексики адаптирован под русский язык
-- Убран Title Case (заглавные в каждом слове заголовка — не применимо к русскому)
+- Title Case перевёрнут: в английском заголовки из слов с прописной — норма, а не признак ИИ; в русском такая манера не применяется, и её перенос в русские заголовки сам стал признаком (паттерн #21a, высокая критичность, только в сочетании с другими признаками)
 - Кавычки: «ёлочки» вместо „нижних лапок"
 
 ## Безопасность

@@ -52,6 +52,9 @@ MARKERS_RX = re.compile(
     u"[-\\s]?(?:маркеров|markers|выражений)", re.I | re.U)
 COVERAGE_RX = re.compile(u"(\\d+)\\s+(?:из|of)\\s+(\\d+)", re.I)
 HEADING_RX = re.compile(u"^#{2,3}\\s+(.+?)\\s*$", re.M)
+TREE_BLOCK_RX = re.compile(u"```[^\\n]*\\n(.*?)```", re.S)
+TOP_ENTRY_RX = re.compile(u"^[├└]── ")
+SCRIPT_NAME_RX = re.compile(u"^\\s*[│├└─\\s]*([A-Za-z0-9_]+\\.py)\\b")
 
 
 def read(path):
@@ -87,6 +90,45 @@ def headings(text):
 
 def has_heading(items, fragment):
     return any(fragment in item for item in items)
+
+
+def actual_scripts():
+    scripts_dir = os.path.join(ROOT, u"scripts")
+    return {name for name in os.listdir(scripts_dir) if name.endswith(u".py")}
+
+
+def listed_scripts(text):
+    """Имена .py из раздела scripts/ дерева в оградительном блоке."""
+    names = set()
+    for block in TREE_BLOCK_RX.findall(text):
+        inside = False
+        for line in block.split(u"\n"):
+            if TOP_ENTRY_RX.match(line) and u"scripts/" in line:
+                inside = True
+                continue
+            if inside and TOP_ENTRY_RX.match(line):
+                inside = False
+            if inside:
+                match = SCRIPT_NAME_RX.match(line)
+                if match:
+                    names.add(match.group(1))
+    return names
+
+
+def check_tree(texts):
+    errors = []
+    actual = actual_scripts()
+    for name in (RU, EN):
+        listed = listed_scripts(texts[name])
+        if not listed:
+            continue
+        for ghost in sorted(listed - actual):
+            errors.append(u"%s: в дереве заявлен несуществующий %s"
+                          % (name, ghost))
+        for missing in sorted(actual - listed):
+            errors.append(u"%s: в дереве нет существующего %s"
+                          % (name, missing))
+    return errors
 
 
 def check_numbers(ru_text, en_text, expected=None):
@@ -145,6 +187,7 @@ def check_circles(name, text):
 def check_all(texts, expected=None):
     errors = check_numbers(texts[RU], texts[EN], expected)
     errors += check_sections(texts[RU], texts[EN])
+    errors += check_tree(texts)
     for name in SHOWCASE:
         errors += check_circles(name, texts[name])
     return errors
@@ -237,6 +280,32 @@ def selftest():
     bad = dict(base); bad[SKILL] = GOOD_SKILL + CIRCLES[2] + u"\n"
     results.append(_case(u"Кружок в карте скилла отклоняется",
                          _has(check_all(bad, EXPECTED), u"кружок критичности")))
+
+    def _tree(names):
+        lines = [u"```", u"humanizer-ru/", u"├── scripts/"]
+        ordered = sorted(names)
+        for index, script in enumerate(ordered):
+            branch = u"└──" if index == len(ordered) - 1 else u"├──"
+            lines.append(u"│   %s %s" % (branch, script))
+        lines += [u"├── eval/", u"```"]
+        return u"\n".join(lines) + u"\n"
+
+    actual = sorted(actual_scripts())
+    with_tree = dict(base)
+    with_tree[RU] = base[RU] + _tree(actual)
+    with_tree[EN] = base[EN] + _tree(actual)
+    results.append(_case(u"Полное дерево scripts/ проходит",
+                         not check_tree(with_tree)))
+    ghost = dict(with_tree)
+    ghost[RU] = with_tree[RU].replace(actual[0], u"check_ghost.py", 1)
+    results.append(_case(u"Несуществующий скрипт в дереве отклоняется",
+                         _has(check_tree(ghost), u"несуществующий")))
+    partial = dict(with_tree)
+    partial[EN] = with_tree[EN].replace(
+        u"│   ├── %s\n" % actual[0], u"", 1)
+    results.append(_case(u"Пропущенный скрипт в дереве отклоняется",
+                         _has(check_tree(partial), u"в дереве нет")))
+
     passed = sum(results)
     print(u"Итог: %d/%d" % (passed, len(results)))
     return 0 if passed == len(results) else 1
