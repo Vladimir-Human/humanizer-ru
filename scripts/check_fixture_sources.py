@@ -61,7 +61,7 @@ REGISTERED_CASES = {
     "attributableIndex", "oaicite_short", "contentReference", "openai_pua",
     "turn_search", "utm_chatgpt", "zero_width", "citation_n",
     "vertexaisearch", "utm_openai", "copilot_caret", "gemini_cite_start",
-    "assistants_source",
+    "assistants_source", "cite_turn",
 }
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
@@ -71,7 +71,7 @@ SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _M
 # коммите. До v3.6.0 список выводился как CASES - SCOPE, из-за чего проверка
 # orphan была тавтологией и не могла упасть ни при каких условиях.
 LEGACY_EXEMPT = {
-    "attached_file", "cite_turn",
+    "attached_file",
     "grok_card", "sandbox_link",
     "think_tag", "turn_fetch", "turn_file",
 }
@@ -84,9 +84,11 @@ REQUIRED = ["case", "status", "evidence_note"]
 REQUIRED_CONFIRMED = ["source_url", "accessed", "verbatim_sample", "evidence_class"]
 
 # Признаки immutable-источника: permalink на конкретную ревизию/коммит/diff.
+# Снимки Wayback Machine (web.archive.org/web/<метка времени>/) фиксируют
+# страницу на конкретный момент и тоже считаются неизменяемыми.
 IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/", "/releases/tag/",
                     "Special:Permalink", "Special:Diff", "youtube.com/watch",
-                    "binance.com/en/square/post")
+                    "binance.com/en/square/post", "web.archive.org/web/")
 
 
 def _is_immutable(url: str) -> bool:
@@ -334,6 +336,8 @@ def selftest():
         "gemini_cite_start": "[cite_start]Il assurait ensuite leur **transport clandestin jusqu'à Carantec** [cite: 27]",
         # Форма из живого реестра: метка цитаты OpenAI Assistants (поиск по файлам).
         "assistants_source": "lo condannò a 19 anni di lavori forzati【8:16†source】",
+        # Форма из живого реестра: служебный токен поиска ChatGPT в публикуемом тексте.
+        "cite_turn": "responsible for filling orders. citeturn0search0",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
@@ -348,7 +352,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base, repo_root=base)
-    checks.append(("полный тестовый реестр закрывает 31/31", not err and len(cov) == 31))
+    checks.append(("полный тестовый реестр закрывает 32/32", not err and len(cov) == 32))
     err, _, _ = validate(ok[:-1], base_dir=base, repo_root=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, repo_root=base, allow_pending=True)
@@ -361,20 +365,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 31))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 32))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 31))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 32))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                    and any("synthetic" in x for x in warn) and len(cov) == 30))
+                    and any("synthetic" in x for x in warn) and len(cov) == 31))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -384,6 +388,9 @@ def selftest():
     bad = json.loads(json.dumps(ok)); bad[2]["source_url"] = "ftp://x"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("некорректный URL -> FAIL", any("некорректный source_url" in x for x in err)))
+    checks.append(("снимок Wayback Machine признаётся immutable-источником",
+                   _is_immutable("https://web.archive.org/web/20260514074800/https://example.org/page")
+                   and not _is_immutable("https://example.org/page")))
     bad = json.loads(json.dumps(ok)); bad[3]["accessed"] = "13.07.2026"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("дата не ISO -> FAIL", any("YYYY-MM-DD" in x for x in err)))
@@ -394,7 +401,7 @@ def selftest():
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL с disposition закрывает",
-                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 31))
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 32))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
@@ -444,7 +451,7 @@ def selftest():
             e["fixture_file"] = legit_rel.replace(os.sep, "/")
     err, _, cov = validate(good, base_dir=base, repo_root=base)
     checks.append(("относительный путь внутрь репозитория остаётся допустимым",
-                   not err and len(cov) == 31))
+                   not err and len(cov) == 32))
 
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
