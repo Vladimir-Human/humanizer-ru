@@ -57,12 +57,11 @@
     "case": "utm_copilot",
     "status": "confirmed",
     "evidence_class": "primary",
-    "source_url": "https://github.com/tectijuana/interfaz",
-    "accessed": "2026-07-13",
-    "platform": "Microsoft Copilot",
+    "source_url": "https://github.com/tectijuana/interfaz/blob/cdc97fc53f6b3030aa14285da456eef7a329d60a/entregas/2026a/research/Arquitecturas%20ARM%20aplicadas%20a%20sistemas%20multimedia/readme.md",
+    "accessed": "2026-08-07",
+    "platform": "Microsoft Copilot (атрибуция по UTM-метке)",
     "verbatim_sample": "?utm_source=copilot.com",
-    "warning_disposition": "accepted-primary-without-permalink: README реального репозитория содержит ссылки с utm_source=copilot.com, вставленные при копировании из Copilot; permalink на конкретный коммит не закреплён. Не повышать атрибуцию версии, пока не зафиксирован permalink.",
-    "evidence_note": "Дополнительные вхождения: rubysec/ruby-advisory-db, goobolabs/ds-ml-bootcamp, matomo-org/matomo. Оговорка о ложных срабатываниях — в false-positives.md."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: файл студенческой исследовательской работы в репозитории tectijuana/interfaz на коммите cdc97fc5 (11 июля 2026, единственный коммит этого пути) дословно хранит пять ссылок с меткой ?utm_source=copilot.com, включая ссылку на статью ARM architecture family в списке литературы. До цикла 41 запись указывала на живой репозиторий без permalink (ограничение accepted-primary-without-permalink); к циклу 41 текущий README репозитория меток уже не содержит (перестроен), форма сохранилась в студенческих работах — permalink зафиксирован, ограничение снято обоснованно. Указанные ранее дополнительные вхождения (rubysec/ruby-advisory-db, goobolabs/ds-ml-bootcamp, matomo-org/matomo) в цикле 41 не перепроверялись; по ds-ml-bootcamp точечная проверка первых 40 файлов дала 0. Оговорка о ложных срабатываниях — в false-positives.md."
   },
   {
     "case": "grok_card_tag",
