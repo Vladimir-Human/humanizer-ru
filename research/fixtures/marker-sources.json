@@ -92,13 +92,13 @@
     "case": "generated_ref_id",
     "status": "confirmed",
     "evidence_class": "secondary",
-    "source_url": "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing",
-    "accessed": "2026-07-13",
+    "source_url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1366561867",
+    "accessed": "2026-08-07",
     "platform": "ChatGPT",
     "verbatim_sample": "citegenerated-reference-identifier",
-    "secondary_justification": "Страница перечисляет форму рядом с citeturn-метками и ссылается на пример реальной правки. Финальный поиск 2026-07-17 не дал независимого immutable первичного примера; повторный source_url осознан и остаётся видимым предупреждением валидатора.",
+    "secondary_justification": "Неизменяемый снимок страницы дословно хранит упоминание формы в связке с citeturn-метками и ссылку на пример реальной правки (Special:PermaLink/1276907078). Первичный экспорт недостижим: ревизия-пример удалена (API возвращает badrevids для 1276907078, как и для 1276934509 и 1286349902), дословных вхождений простой формы в EN-разделе нет (insource, цикл 33), снимок web.archive.org для oldid=1276907078 (захват 2026-07-31) хранит страницу ошибки. Это снимок чужого наблюдения, а не первичный экспорт ответа модели.",
     "warning_disposition": "accepted-secondary-limit: не повышать доказательство до primary и не использовать атрибуцию версии или интерфейса, пока не найден permalink исходной правки.",
-    "evidence_note": "EN Wiki, раздел Markup. Ограничение повторного secondary URL зафиксировано в AUDIT-2026-07-17.md."
+    "evidence_note": "До цикла 33 запись указывала на живую страницу Wikipedia:Signs_of_AI_writing; в цикле 33 источник зафиксирован на неизменяемом снимке oldid=1366561867, потому что страница активно перестраивается и снимок гарантирует неизменность источника (упоминание формы сохраняется и в текущей версии, но в обёртке из PUA-символов, как и в снимке: \\ue200cite\\ue202''generated-reference-identifier''\\ue201 — нотация страницы; выражение кейса ловит простую форму). Поиск первоисточника в цикле 33: Special:PermaLink/1276907078 из снимка ведёт на удалённую ревизию (badrevids); insource:/generated-reference-identifier/ по EN-разделу — 0; web.archive.org захватил страницу oldid=1276907078 уже после удаления (страница ошибки). Ограничение повторного secondary URL, снятое переводом на снимок, ранее фиксировалось в AUDIT-2026-07-17.md."
   },
   {
     "case": "deepseek_line_ref",
