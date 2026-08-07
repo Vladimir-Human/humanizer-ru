@@ -67,7 +67,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.8.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.9.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
