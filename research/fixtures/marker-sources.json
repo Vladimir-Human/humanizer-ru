@@ -141,13 +141,13 @@
     "case": "placeholder_date",
     "status": "confirmed",
     "evidence_class": "secondary",
-    "source_url": "https://github.com/Deupaxx/EveryDay-Writer",
-    "accessed": "2026-07-13",
+    "source_url": "https://github.com/Deupaxx/EveryDay-Writer/blob/cb1e6ae33884a22348b73ed3efdc3c5c4c27fc35/core/ai_slop_commandments.md",
+    "accessed": "2026-08-07",
     "platform": "разные модели",
     "verbatim_sample": "2025-XX-XX",
-    "secondary_justification": "Репозиторий содержит реальное вхождение access-date: 2025-XX-XX; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki.",
-    "warning_disposition": "accepted-secondary-limit: не повышать до primary, пока не закреплён permalink файла с вхождением.",
-    "evidence_note": "FALSE-POSITIVE-ОГОВОРКА обязательна: формат YYYY-XX-XX встречается и в человеческих черновиках; описана в false-positives.md."
+    "secondary_justification": "Файл core/ai_slop_commandments.md репозитория Deupaxx/EveryDay-Writer на коммите cb1e6ae3 (23 апреля 2026, единственный коммит этого пути) дословно хранит форму access-date: 2025-XX-XX в списке «Prohibited examples» — это описание формы, а не протёкший артефакт, поэтому класс остаётся secondary; подтверждается также каталогами паттернов (jxnl/dots) и разделом Phrasal templates EN Wiki.",
+    "warning_disposition": "accepted-secondary-limit: не повышать до primary без живого вхождения формы в публикуемом тексте; поиск в EN-Википедии (цикл 37) живых вхождений вне HTML-комментариев не дал — найденные XX-даты там являются человеческой нотацией неизвестных дат.",
+    "evidence_note": "До цикла 42 запись указывала на живой репозиторий без permalink; в цикле 42 источник зафиксирован на /blob/-снимке единственного коммита файла. Прежнее обоснование «реальное вхождение» уточнено: вхождение хранится в списке запрещённых примеров чужой инструкции (мета-описание), первоисточником считаться не может (правило 12). FALSE-POSITIVE-ОГОВОРКА обязательна: формат YYYY-XX-XX встречается и в человеческих черновиках; описана в false-positives.md."
   },
   {
     "case": "gemini_cite_n",
