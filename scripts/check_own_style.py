@@ -38,7 +38,6 @@ SCOPE = (
     "README.en.md",
     "CONTRIBUTING.md",
     "PERSONA.md",
-    "docs/REVIEW.md",
     "eval/README.md",
     "eval/HOW-TO-RUN.md",
     "eval/runs/README.md",
