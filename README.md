@@ -133,7 +133,6 @@ humanizer-ru/
 │   ├── runs/                     # Парные прогоны: 2026-07-26-baseline
 │   └── results/                  # Отчёты прогонов целиком, включая
 │                                 #   метрики не в пользу скилла
-├── docs/REVIEW.md            # Регламент review: три класса изменений
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
 │                             #     validators, docs-check, release-check
 ├── references/               # 11 справочников; два разбиты на части (16 файлов)

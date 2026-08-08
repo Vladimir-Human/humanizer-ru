@@ -21,6 +21,9 @@
 13. Журнал Le Chat: прежние ошибочные пометки назывались "em-dash",
     а не "дефис".
 14. Файлы .github/workflows/*.yml — UTF-8 без BOM и без mojibake.
+15. Состав верхнего уровня совпадает с манифестом: новый файл или каталог
+    не может попасть в репозиторий незамеченным (урок docs/REVIEW.md,
+    пришедшего со старой веткой).
 
 CLI: python3 scripts/check_docs.py [--repo ПУТЬ] [--selftest]
 Exit 0 — все проверки пройдены, 1 — есть ошибки.
@@ -28,6 +31,7 @@ Exit 0 — все проверки пройдены, 1 — есть ошибки
 import argparse
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
@@ -49,6 +53,43 @@ PILOT_STRONG = ("эффективно", "на 72%", "не медленнее", "
 LECHAT_WRONG_DASH = 'прежние пометки "дефис" были неверны'
 WORKFLOWS_DIR = ".github/workflows"
 MOJIBAKE_TOKENS = ("РЎ", "Рџ", "СЂР")
+# Манифест состава верхнего уровня. Пополняется осознанно вместе с README:
+# всё, что лежит в корне репозитория, должно быть известно гейту.
+TOP_LEVEL_MANIFEST = frozenset((
+ ".editorconfig", ".gitattributes", ".gitignore",
+ "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
+ "LICENSE", "PERSONA.md", "README.en.md", "README.md",
+ "SECURITY.en.md", "SECURITY.md", "SKILL.md",
+ ".github", "eval", "references", "research", "scripts", "tests",
+))
+
+def _tracked_top_levels(root):
+ proc = None
+ try:
+  proc = subprocess.run(["git", "-C", root, "ls-files"],
+                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+ except OSError:
+  proc = None
+ if proc is not None and proc.returncode == 0:
+  tops = set()
+  for line in proc.stdout.decode("utf-8", "replace").splitlines():
+   top = line.split("/", 1)[0]
+   if top.startswith('"') and top.endswith('"'):
+    top = top[1:-1]
+   elif top.startswith('"'):
+    top = top[1:]
+   if top:
+    tops.add(top)
+  return tops
+ return {name for name in os.listdir(root) if name != ".git"}
+
+def _top_level_errors(root):
+ errors = []
+ for top in sorted(_tracked_top_levels(root)):
+  if top not in TOP_LEVEL_MANIFEST:
+   errors.append("новый объект верхнего уровня: %s — осознанно дополни "
+                 "манифест в scripts/check_docs.py и деревья README" % top)
+ return errors
 
 def _read(path):
  with open(path, "rb") as f:
@@ -269,6 +310,9 @@ def check_repo(root):
                    "скилла %s — читатель распакует другую папку"
                    % (rel, found, version))
 
+ # 15. Состав верхнего уровня: новое не проскакивает незамеченным.
+ errors.extend(_top_level_errors(root))
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -465,6 +509,14 @@ def selftest():
                    "Папка вида `humanizer-ru-3.3.5`.\n\n"
                    "```sh\ngit clone --branch v3.3.5 --depth 1 x\n```\n"),
       None)
+ # Гейт 15: новый объект верхнего уровня обязан валить гейт, пока манифест
+ # не дополнен осознанно; известный состав проходит молча.
+ case("новый каталог верхнего уровня -> FAIL",
+      lambda r: _w(r, "docs/REVIEW.md", "# Регламент\n"),
+      "верхнего уровня")
+ case("новый файл верхнего уровня -> FAIL",
+      lambda r: _w(r, "NOTES.md", "# Заметки\n"),
+      "верхнего уровня")
 
  passed = 0
  for name, mutate, expect_token in cases:

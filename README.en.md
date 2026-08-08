@@ -127,7 +127,6 @@ humanizer-ru/
 │   ├── runs/                     # Paired runs: 2026-07-26-baseline
 │   └── results/                  # Full run reports, including metrics that
 │                                 #   do not favour the skill
-├── docs/REVIEW.md                 # Review policy: three classes of change
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures

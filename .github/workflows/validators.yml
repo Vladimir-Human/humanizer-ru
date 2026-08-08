@@ -19,7 +19,6 @@ on:
       - 'CITATION.cff'
       - 'tests/fixtures/**'
       - 'eval/**'
-      - 'docs/**'
       - '.github/workflows/validators.yml'
   pull_request:
     paths:
@@ -35,7 +34,6 @@ on:
       - 'CITATION.cff'
       - 'tests/fixtures/**'
       - 'eval/**'
-      - 'docs/**'
       - '.github/workflows/validators.yml'
   workflow_dispatch:
 
