@@ -34,33 +34,41 @@
 | Подстрока для точного поиска | Что ловит |
 |---|---|
 | `:contentReference[oaicite:` | метки внутреннего цитирования OpenAI (A.1) |
-| `<grok-card` | тег карточки Grok (A.3) |
-| `grok_render_citation_card_json` | markdown-вставка карточки Grok (A.3) |
-| `grok_card://` | URI карточки Grok (A.3) |
-| `referrer=grok.com` | referrer-хвост ссылок Grok (A.3) |
+| `<grok-card` | тег карточки Grok (A.4) |
+| `grok_render_citation_card_json` | markdown-вставка карточки Grok (A.4) |
+| `grok_card://` | URI карточки Grok (A.4) |
 | `attached_file://` | URI прикреплённого файла (A.4) |
-| `](sandbox:/mnt/data/` | ссылка на файл песочницы ChatGPT (A.4) |
-| `utm_source=chatgpt.com` | UTM-хвост ссылок ChatGPT (A.2) |
-| `utm_source=copilot.com` | UTM-хвост ссылок Copilot (A.2) |
-| `utm_source=openai` | UTM-хвост ссылок OpenAI (A.2) |
+| `](sandbox:/mnt/data/` | ссылка на файл песочницы ChatGPT (A.6) |
+| `utm_source=chatgpt.com` | UTM-хвост ссылок ChatGPT (A.3) |
+| `utm_source=copilot.com` | UTM-хвост ссылок Copilot (A.3) |
+| `utm_source=openai` | UTM-хвост ссылок OpenAI (A.3) |
 | `citeturn` | слитная метка цитирования ChatGPT (A.2) |
 | `oai_citation:` | метка цитирования с кинжалом (A.1) |
-| `citegenerated-reference-identifier` | placeholder-имя ссылки (A.5) |
-| `[cite_start]` | метка цитаты Gemini (A.6) |
-| `[span_` и `(start_span)` | охватывающие метки Gemini (A.6) |
-| `ppl-ai-file-upload` | ссылка загрузки Perplexity (A.6) |
-| `[attached_file:` | скобочная форма вложений (A.4, класс B) |
+| `citegenerated-reference-identifier` | placeholder-имя ссылки (A.6) |
+| `[cite_start]` | метка цитаты Gemini (A.9) |
+| `[span_` и `(start_span)` | охватывающие метки Gemini (A.9) |
+| `ppl-ai-file-upload` | ссылка загрузки Perplexity (A.5) |
+| `[cite: ` | ссылка на фрагмент источника Gemini (A.9; заглавную форму `[Cite: ` проверять отдельно) |
+| `:::writing{variant` | блок writing-разметки (A.11) |
+| `attributableIndex` | внутреннее поле разметки инструментов (A.5) |
+| `[attached_file:` | скобочная форма вложений (A.5) |
+
+`referrer=grok.com` (A.3) в таблицы не входит: это маркер класса B, у
+формы есть законные человеческие источники, одного совпадения
+недостаточно — проверяется вручную вместе с контекстом ссылок.
 
 Формы с цифрами ищутся выражением в синтаксисе grep -E, если среда его
 исполняет, иначе — точным поиском по префиксу с ручной досмотром цифры:
 
 | Выражение | Что ловит |
 |---|---|
-| `turn[0-9]+search[0-9]+` | метки результатов поиска (A.1) |
-| `turn[0-9]+fetch[0-9]+` | метки загруженных страниц (A.1) |
-| `turn[0-9]+file[0-9]+` | метки файловых цитат (A.1) |
-| `turn[0-9]+image[0-9]+` | метки изображений (A.1) |
-| `\[citation:[0-9]+\]` | метки цитирования Perplexity (A.6) |
+| `turn[0-9]+search[0-9]+` | метки результатов поиска (A.2) |
+| `turn[0-9]+fetch[0-9]+` | метки загруженных страниц (A.2) |
+| `turn[0-9]+file[0-9]+` | метки файловых цитат (A.2) |
+| `turn[0-9]+image[0-9]+` | метки изображений (A.2) |
+| `\[citation:[0-9]+\]` | метки цитирования Perplexity (A.5) |
+| `【[0-9]+(:[0-9]+)?†source】` | метки цитаты OpenAI Assistants в уголках (A.6) |
+| `【[0-9]+†L[0-9]+(-L?[0-9]+)?】` | ссылки на строки источника DeepSeek (A.12) |
 
 Порядок применения:
 
