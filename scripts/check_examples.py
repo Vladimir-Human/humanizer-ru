@@ -140,23 +140,32 @@ def new_facts(before, after):
             b_words.add(w)
     out = set()
     for f in extract_facts(after) - b_facts:
-        if f.lower().replace("ё", "е") in b_low:
-            continue
         fl = f.lower().replace("ё", "е")
+        # Факт уже есть в «До» как отдельное слово или отдельное число:
+        # сравнение по границам, чтобы «12» не пряталось внутри «1234»,
+        # а «сто» — внутри «столица».
+        if fl.isdigit():
+            if re.search(r"(?<!\d)%s(?!\d)" % re.escape(fl), b_low):
+                continue
+        else:
+            if re.search(r"(?<![а-яё0-9])%s(?![а-яё0-9])" % re.escape(fl), b_low):
+                continue
         # Число словом, уже присутствующее в «До» цифрой (и наоборот), —
-        # тот же факт.
+        # тот же факт; только точное соответствие значения.
         if fl in WORD_TO_DIGIT and any(d in b_facts for d in WORD_TO_DIGIT[fl]):
             continue
         if fl.isdigit() and any(w in b_facts for w in DIGIT_WORD_VARIANTS.get(fl, ())):
             continue
-        # Падежные и числовые словоформы того же имени/числительного —
-        # не новый факт: основа совпадает префиксом (Иван -> Ивана,
-        # Петров -> Петрова, два -> две). Сравниваем со всеми заглавными
-        # словами и числительными «До», не только с фактами в начале
-        # предложений. Короткие совпадения не считаем, чтобы не склеить
-        # разные слова.
-        if len(fl) >= 3 and any(
+        # Падежные словоформы того же имени — не новый факт: основа
+        # совпадает префиксом (Иван -> Ивана, Петров -> Петрова).
+        # К числительным префиксное правило не применяется: «пять» —
+        # префикс «пятьдесят», но значение другое. Короткие совпадения
+        # не считаем, чтобы не склеить разные слова.
+        if fl in NUMWORDS or fl in WORD_TO_DIGIT:
+            pass
+        elif len(fl) >= 3 and any(
             (fl.startswith(bl) or bl.startswith(fl)) and len(bl) >= 3
+            and bl not in NUMWORDS and bl not in WORD_TO_DIGIT
             for bl in b_words
         ):
             continue
@@ -192,7 +201,11 @@ def check_text(text, path="<text>"):
         after = m.group("after").strip()
         label = (m.group("label") or "").strip().lower()
         line = text[: m.start()].count("\n") + 1
-        authored = any(k in label for k in AUTHOR_LABELS)
+        # Пометка понимается буквально: «author unknown» и прочие
+        # случайные подписи со словом author гейт не отключают.
+        # Скобки и пробелы нормализуются: в примерах метка живёт в виде
+        # «После (с фактами автора):».
+        authored = label.strip("() ").strip() in AUTHOR_LABELS
         added = new_facts(before, after)
         if authored:
             stats["authored"] += 1
