@@ -26,6 +26,9 @@
     пришедшего со старой веткой).
 16. В отслеживаемых .md нет маркеров merge-конфликта (урок
     research/GAPS.md, найденный независимой ревизией).
+17. CITATION.cff согласован с версией скилла.
+18. Имя каталога вида humanizer-ru-X.Y.Z в инструкциях привязано
+    к версии скилла.
 
 CLI: python3 scripts/check_docs.py [--repo ПУТЬ] [--selftest]
 Exit 0 — все проверки пройдены, 1 — есть ошибки.
@@ -91,7 +94,10 @@ CONFLICT_RX = re.compile(r"^(<{7}( |$)|\|{7}( |$)|>{7}( |$))")
 def _md_files(root):
  """Отслеживаемые .md; без git — обход каталога (самопроверка)."""
  try:
-  proc = subprocess.run(["git", "-C", root, "ls-files", "*.md"],
+  # core.quotepath=false: иначе кириллические пути приходят в октальных
+  # эскейпах и молча выпадают из проверки.
+  proc = subprocess.run(["git", "-c", "core.quotepath=false", "-C", root,
+                         "ls-files", "*.md"],
                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
   if proc.returncode == 0 and proc.stdout.strip():
    out = []
@@ -315,7 +321,7 @@ def check_repo(root):
                    "файл сохранён не в UTF-8" % (rel_fp, token))
      break
 
- # 15. CITATION.cff согласован с версией скилла
+ # 17. CITATION.cff согласован с версией скилла
  cff_path = p("CITATION.cff")
  if not os.path.exists(cff_path):
   errors.append("CITATION.cff: файл отсутствует — на него ссылается docs-check")
@@ -331,7 +337,7 @@ def check_repo(root):
   if not m_date:
    errors.append("CITATION.cff: date-released должно быть датой ISO (ГГГГ-ММ-ДД)")
 
- # 16. Имя каталога вида humanizer-ru-X.Y.Z в инструкциях привязано к версии.
+ # 18. Имя каталога вида humanizer-ru-X.Y.Z в инструкциях привязано к версии.
  # Такое имя появляется в примерах распаковки Source code (zip) и устаревает с
  # каждым выпуском. Сплошная проверка версий здесь не годится: README законно
  # ссылается на прошлые выпуски («новое в v3.2», «с версии 2.3»). Проверяется
