@@ -292,6 +292,15 @@ def main():
     if not files:
         files = [os.path.join(ROOT, f) for f in TARGETS if os.path.exists(os.path.join(ROOT, f))]
         files += sorted(glob.glob(os.path.join(ROOT, "references", "*.md")))
+    # TARGETS и glob по references/ пересекаются: без дедупликации пары
+    # считаются дважды (урок rev3: «34 пары» вместо реальных 32).
+    seen, unique = set(), []
+    for f in files:
+        norm = os.path.normcase(os.path.abspath(f))
+        if norm not in seen:
+            seen.add(norm)
+            unique.append(f)
+    files = unique
 
     all_err, all_warn = [], []
     total = {"pairs": 0, "edit": 0, "authored": 0}
