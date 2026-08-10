@@ -75,27 +75,6 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus the regex layer finds no matches, and the few soft-signal candidates on classical prose (literary dashes, repetitions) stay neutral under the genre exceptions; on Russian model outputs it surfaces candidates where the regex layer stays silent.
 
-## Regex markers: classes A and B
-
-38 regular expressions catch traces of machine generation. They fall into two classes:
-
-- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
-- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
-
-Run all markers against test fixtures:
-
-```sh
-python3 scripts/check_markers.py
-```
-
-Scan any text for markers:
-
-```sh
-python3 scripts/check_markers.py --scan file.md
-```
-
-Note: `references/test-fixtures*.md` intentionally contain markers as reference samples, so scanning those files reports matches by design; the CI self-scan excludes these paths.
-
 ## Architecture
 
 ```
@@ -143,6 +122,28 @@ The release policy separates a stable core (genre rules, false-positive boundari
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
 - **On the red Snyk badge in the skills.sh catalogue.** The automated audit flags this skill with E005, "suspicious download URL". The finding is a false positive: the scanner sees the Perplexity S3 bucket identifier `ppl-ai-file-upload` — a documented Class A marker this skill uses to recognise machine-generated text — and reads the description of a marker as an instruction to download a file. The skill downloads nothing: following links from the text under review is forbidden by the safety-boundaries section of `SKILL.md` («Границы безопасности», the file is in Russian). This is the same class of false positive familiar from YARA rule sets and the EICAR test string: a tool that looks for an indicator has to contain that indicator. The catalogue's two other auditors return PASS. We will not drop the marker to satisfy a verdict — that would be a hole in the detector.
+
+## Regex markers: classes A and B
+
+38 regular expressions catch traces of machine generation. They fall into two classes:
+
+- **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
+- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), zero-width characters, and reference names containing internal-tool identifiers. A B marker alone is never an authorship verdict.
+
+Run all markers against test fixtures:
+
+```sh
+python3 scripts/check_markers.py
+```
+
+Scan any text for markers:
+
+```sh
+python3 scripts/check_markers.py --scan file.md
+```
+
+Note: `references/test-fixtures*.md` intentionally contain markers as reference samples, so scanning those files reports matches by design; the CI self-scan excludes these paths.
+
 
 ## Sources
 
