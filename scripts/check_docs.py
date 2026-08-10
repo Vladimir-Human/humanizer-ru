@@ -24,6 +24,8 @@
 15. Состав верхнего уровня совпадает с манифестом: новый файл или каталог
     не может попасть в репозиторий незамеченным (урок docs/REVIEW.md,
     пришедшего со старой веткой).
+16. В отслеживаемых .md нет маркеров merge-конфликта (урок
+    research/GAPS.md, найденный независимой ревизией).
 
 CLI: python3 scripts/check_docs.py [--repo ПУТЬ] [--selftest]
 Exit 0 — все проверки пройдены, 1 — есть ошибки.
@@ -82,6 +84,49 @@ def _tracked_top_levels(root):
     tops.add(top)
   return tops
  return {name for name in os.listdir(root) if name != ".git"}
+
+CONFLICT_RX = re.compile(r"^(<{7}( |$)|\|{7}( |$)|>{7}( |$))")
+
+
+def _md_files(root):
+ """Отслеживаемые .md; без git — обход каталога (самопроверка)."""
+ try:
+  proc = subprocess.run(["git", "-C", root, "ls-files", "*.md"],
+                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+  if proc.returncode == 0 and proc.stdout.strip():
+   out = []
+   for line in proc.stdout.decode("utf-8", "replace").splitlines():
+    rel = line.strip()
+    if rel.startswith('"') and rel.endswith('"'):
+     rel = rel[1:-1]
+    if rel:
+     out.append(rel)
+   return out
+ except OSError:
+  pass
+ found = []
+ for dirpath, dirnames, filenames in os.walk(root):
+  dirnames[:] = [d for d in dirnames if d != ".git"]
+  for name in filenames:
+   if name.endswith(".md"):
+    rel = os.path.relpath(os.path.join(dirpath, name), root)
+    found.append(rel.replace(os.sep, "/"))
+ return found
+
+
+def _conflict_marker_errors(root):
+ errors = []
+ for rel in _md_files(root):
+  try:
+   t = _read(os.path.join(root, rel)).decode("utf-8", "replace")
+  except OSError:
+   continue
+  for n, ln in enumerate(t.splitlines(), 1):
+   if CONFLICT_RX.match(ln):
+    errors.append("%s:%d: маркер merge-конфликта — слияние не завершено"
+                  % (rel, n))
+ return errors
+
 
 def _top_level_errors(root):
  errors = []
@@ -313,6 +358,10 @@ def check_repo(root):
  # 15. Состав верхнего уровня: новое не проскакивает незамеченным.
  errors.extend(_top_level_errors(root))
 
+ # 16. Маркеры merge-конфликта не должны быть закоммичены
+ #     (урок research/GAPS.md, найденный независимой ревизией).
+ errors.extend(_conflict_marker_errors(root))
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -517,6 +566,12 @@ def selftest():
  case("новый файл верхнего уровня -> FAIL",
       lambda r: _w(r, "NOTES.md", "# Заметки\n"),
       "верхнего уровня")
+ # Гейт 16: закоммиченные маркеры merge-конфликта — баг, найденный
+ # независимой ревизией в research/GAPS.md.
+ case("маркер merge-конфликта в .md -> FAIL",
+      lambda r: _w(r, "research/GAPS.md",
+                   "текст\n<<<<<<< HEAD\nнаше\n>>>>>>> ветка\n"),
+      "merge-конфликта")
 
  passed = 0
  for name, mutate, expect_token in cases:
