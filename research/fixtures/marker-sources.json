@@ -254,6 +254,16 @@
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: официальная документация веб-инструмента web.run в репозитории OpenAI Codex (файл codex-rs/ext/web-search/web_run_description.md, /blob/-снимок на коммите f1f9d0c3 от июня 2026) дословно приводит ref_id вида turn0fetch3 в примерах команд click и find к загруженной странице. Форма turnNfetchN — внутренние идентификаторы загруженных страниц веб-инструмента; в копируемый текст они обнажаются вместе с обёртками цитирования. Найдено поиском grep.app по токену turn0fetch; присутствие формы на данном SHA проверено по raw-файлу. Атрибуция конкретной версии модели не утверждается."
   },
   {
+    "case": "turn_file",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://www.youtube.com/watch?v=vsdpQCvl6Zk",
+    "accessed": "2026-08-10",
+    "platform": "OpenAI ChatGPT (атрибуция по форме)",
+    "verbatim_sample": "This move, which comes on the back of additional camera evidence from Australia, is expected to significantly impact rivals by curbing the flexible wing designs that have long benefited teams like McLaren and Ferrari, while potentially giving Red Bull and Max Verstappen a competitive boost citeturn1file0.",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: описание видео «FIA Clampdown, McLaren in the Crosshairs, Advantage Red Bull?» (youtube.com/watch?v=vsdpQCvl6Zk) дословно содержит токен citeturn1file0 в конце предложения про преимущество Red Bull — файловый маркер цитирования ChatGPT, обнажившийся при копировании машинного текста без очистки. Это более чистый первичный источник, чем пример из эссе Wikipedia:Signs of AI writing: ревизии-примеры 1276934509 и 1286349902 удалены (badrevids), снимков Wayback эссе за февраль-июнь 2025 нет (первый снимок 2025-07-11, 404); текущая ревизия эссе лишь документирует форму. Атрибуция конкретной версии модели не утверждается; маркер contextual и сам по себе не является вердиктом об авторстве."
+  },
+  {
     "case": "utm_chatgpt",
     "status": "confirmed",
     "evidence_class": "primary",
