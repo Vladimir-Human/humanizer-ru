@@ -33,7 +33,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-TARGETS = ["SKILL.md", "README.md", "README.en.md"]
+TARGETS = ["SKILL.md", "README.md", "README.en.md",
+           os.path.join("references", "test-fixtures-pairs.md"),
+           os.path.join("references", "test-fixtures-cases.md")]
 
 NUMWORDS = set("""
 один одна одно одного одним два две двух двумя три трех тремя четыре четырех
