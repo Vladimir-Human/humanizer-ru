@@ -51,8 +51,10 @@ references/false-positives.md: художественная проза — пр�
 """
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
@@ -741,6 +743,31 @@ def selftest():
     dumped = json.loads(json.dumps(analyze(ai_like), ensure_ascii=False))
     case("json-отчёт сериализуется без потерь",
          dumped["features_total"] == rep0_total(ai_like))
+
+    # 8. Порог --max-cats: гейт человеческого корпуса. Две категории —
+    # уже повод для вердикта по дереву решений, одна — стилистическая
+    # особенность; 0 отключает порог.
+    sig_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "содержательная")
+    lex_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "языковая")
+    chat_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "коммуникативная")
+    two_text = sig_pos + " " + lex_pos
+    case("образец для max-cats даёт две категории",
+         analyze(two_text)["categories_total"] == 2)
+    case("образец для max-cats даёт одну категорию",
+         analyze(chat_pos)["categories_total"] == 1)
+    with tempfile.TemporaryDirectory() as td:
+        p_two = os.path.join(td, "two.txt")
+        p_one = os.path.join(td, "one.txt")
+        with open(p_two, "w", encoding="utf-8") as fh:
+            fh.write(two_text)
+        with open(p_one, "w", encoding="utf-8") as fh:
+            fh.write(chat_pos)
+        case("--max-cats 1: две категории валят проверку",
+             main([p_two, "--max-cats", "1"]) == 1)
+        case("--max-cats 1: одна категория проходит",
+             main([p_one, "--max-cats", "1"]) == 0)
+        case("--max-cats 0: порог выключен",
+             main([p_two, "--max-cats", "0"]) == 0)
 
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
