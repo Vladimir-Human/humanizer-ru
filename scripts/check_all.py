@@ -76,11 +76,13 @@ def _gates(quick, tmpdir):
         ("corpus: регрессия корпусов", [PY, "scripts/check_corpus.py"],
          ["research/validation/human"], {0}),
         ("corpus: мягкие сигналы человеческих текстов",
-         [PY, "scripts/scan_soft_signals.py", "--max-cats", "1"] + [
-             os.path.join("research", "validation", "human", name)
-             for name in sorted(os.listdir(os.path.join(ROOT, "research",
-                                                        "validation", "human")))
-             if name.endswith(".txt")],
+         [PY, "scripts/scan_soft_signals.py", "--max-cats", "1"] + (
+             [os.path.join("research", "validation", "human", name)
+              for name in sorted(os.listdir(os.path.join(ROOT, "research",
+                                                         "validation", "human")))
+              if name.endswith(".txt")]
+             if os.path.isdir(os.path.join(ROOT, "research", "validation",
+                                           "human")) else []),
          ["research/validation/human"], {0}),
         ("perf: самопроверка", [PY, "scripts/check_perf.py", "--selftest"], [], {0}),
     ]
