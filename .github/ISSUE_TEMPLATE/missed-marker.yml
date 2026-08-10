@@ -17,7 +17,7 @@ body:
     id: version
     attributes:
       label: Версия humanizer-ru
-      placeholder: v3.5.0
+      placeholder: v3.9.0
     validations:
       required: true
   - type: input
