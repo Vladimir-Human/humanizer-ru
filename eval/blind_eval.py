@@ -24,7 +24,7 @@
 Запуск
 ------
   python3 eval/blind_eval.py --selftest
-  python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline
+  python3 eval/blind_eval.py --run eval/runs/2026-07-26-baseline
   python3 eval/blind_eval.py --run DIR --make-packet /tmp/packet
   python3 eval/blind_eval.py --run DIR --judgements /tmp/packet/verdicts.json --key /tmp/packet.key.json
 
