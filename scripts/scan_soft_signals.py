@@ -69,7 +69,7 @@ GENRES = ("neutral", "fiction", "legal", "academic", "marketing", "chat")
 # Жанровые исключения — по дереву решений SKILL.md и false-positives.md.
 SUPPRESS = {
     "neutral": set(),
-    "fiction": {"rule_of_three", "emdash_density"},
+    "fiction": {"rule_of_three", "emdash_bold"},
     "legal": None,  # особый случай: мягкие признаки не считаются вовсе
     "academic": {"est_avoidance", "mitigation_cascade", "link_fillers",
                  "neg_parallel"},
@@ -107,6 +107,21 @@ _FENCED_RX = re.compile(r"(?ms)^[ \t]*(?:```|~~~).*?(?:^[ \t]*(?:```|~~~)[ \t]*$
 _TABLE_ROW_RX = re.compile(r"(?m)^[ \t]*\|.*$")
 _HEADING_RX = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 _EMOJI_RX = "[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u2705\u2728\u274C\u2757\u2B50]"
+
+
+def _fenced_lines(text):
+    """Номера строк внутри блоков кода ``` — их детекторы разметки
+    не считают: bash-комментарий «# раздел» не заголовок."""
+    inside = set()
+    fence = False
+    for n, l in enumerate(text.splitlines(), 1):
+        if l.lstrip().startswith("```"):
+            fence = not fence
+            inside.add(n)
+            continue
+        if fence:
+            inside.add(n)
+    return inside
 
 
 def _prose(text):
@@ -174,8 +189,23 @@ _TRIPLE_RX = re.compile(r"(?<![а-яa-z\d\u0451,-])%s,\s+%s\s+и\s+%s" % (_ITEM,
 def _rule_of_three(text, lines):
     hits = []
     for lineno, line in enumerate(lines, 1):
-        for m in _TRIPLE_RX.finditer(_norm(line)):
-            # Четвёрки и длиннее не считаем: перед совпадением нет запятой.
+        norm = _norm(line)
+        for m in _TRIPLE_RX.finditer(norm):
+            # Четвёрки и длиннее не считаем: совпадение может начинаться
+            # с пробела после запятой («a, b, c и d» ловится с «b»),
+            # поэтому запятую ищем за пробелами перед совпадением.
+            j = m.start() - 1
+            while j >= 0 and norm[j] in " \t":
+                j -= 1
+            if j >= 0 and norm[j] == ",":
+                continue
+            # Чисто числовые перечисления (годы, номера) — не риторика:
+            # если каждый элемент тройки несёт цифру, это перечисление
+            # чисел с обвязкой («вышли в 2019, 2020 и 2021 годах»),
+            # а не риторическое правило трёх.
+            parts = [p for p in re.split(r",\s+|\s+и\s+", m.group(0)) if p]
+            if parts and all(re.search(r"\d", p) for p in parts):
+                continue
             hits.append((lineno, line.strip()[:90]))
     return hits
 
@@ -214,8 +244,9 @@ _EMOJI_ITEM_RX = re.compile(r"^\s*(?:[-*\u2022]\s*)?%s+\s*(?:\*\*|[А-ЯЁA-Z])"
 
 
 def _emoji_lists(text, lines):
+    blocked = _fenced_lines(text)
     return [(n, l.strip()[:90]) for n, l in enumerate(lines, 1)
-            if _EMOJI_ITEM_RX.match(l)]
+            if n not in blocked and _EMOJI_ITEM_RX.match(l)]
 
 
 _BOLD_RX = re.compile(r"\*\*[^*\n]+\*\*")
@@ -240,9 +271,13 @@ def _dash_and_bold(text, lines):
 
 
 def _tiny_tables(text, lines):
+    blocked = _fenced_lines(text)
     hits = []
     i = 0
     while i < len(lines) - 1:
+        if i + 1 in blocked:
+            i += 1
+            continue
         if lines[i].lstrip().startswith("|") and re.match(
                 r"^\s*\|?[\s:|-]+\|[\s:|-]*$", lines[i + 1]):
             rows = 0
@@ -268,7 +303,8 @@ def _heading_levels(lines):
 
 
 def _heading_hierarchy(text, lines):
-    heads = _heading_levels(lines)
+    blocked = _fenced_lines(text)
+    heads = [h for h in _heading_levels(lines) if h[0] not in blocked]
     hits = []
     h1 = [h for h in heads if h[1] == 1]
     if len(h1) > 1:
@@ -283,8 +319,11 @@ _CAP_WORD_RX = re.compile(r"^[А-ЯЁ][а-яё]+$")
 
 
 def _title_case(text, lines):
+    blocked = _fenced_lines(text)
     hits = []
     for n, lv, title in _heading_levels(lines):
+        if n in blocked:
+            continue
         words = title.split()
         caps = sum(1 for w in words[1:] if _CAP_WORD_RX.match(w))
         if caps >= 2:
@@ -743,6 +782,39 @@ def selftest():
     dumped = json.loads(json.dumps(analyze(ai_like), ensure_ascii=False))
     case("json-отчёт сериализуется без потерь",
          dumped["features_total"] == rep0_total(ai_like))
+
+    # 7b. Правило трёх: четвёрки и числовые перечисления не считаются
+    # (урок rev3: «a, b, c и d» ловилось с «b», годы считались риторикой).
+    quad = "На конференции будут доклады, дискуссии, мастер-классы " \
+           "и нетворкинг. И доклады, дискуссии, мастер-классы и воркшопы. " \
+           "Снова доклады, дискуссии, мастер-классы и воркшопы."
+    case("четвёрки не считаются правилом трёх",
+         "rule_of_three" not in analyze(quad)["categories"].get("языковая", [])
+         and all(d["id"] != "rule_of_three" for d in analyze(quad)["findings"]))
+    years = "в 2019, 2020 и 2021 годах. В 2019, 2020 и 2021 годах. " \
+            "За 2019, 2020 и 2021 годы."
+    case("перечисления годов не считаются правилом трёх",
+         all(d["id"] != "rule_of_three" for d in analyze(years)["findings"]))
+    fenced = ("```bash\n# главный раздел\n### подобласть без второго уровня\n"
+              "```\nОбычный текст без заголовков.")
+    case("заголовки внутри блоков кода не дают #21",
+         all(d["id"] not in ("heading_hierarchy", "title_case")
+             for d in analyze(fenced)["findings"]))
+
+    # 7a. Жанровые исключения ссылаются на существующие детекторы
+    # (урок rev3: «emdash_density» жил в SUPPRESS, а в REGISTRY был
+    # «emdash_bold» — художка получала тире-признак вопреки скиллу).
+    for genre, suppressed in SUPPRESS.items():
+        if suppressed is None:
+            continue
+        for det_id in suppressed:
+            case("SUPPRESS[%s] знает детектор %s" % (genre, det_id),
+                 det_id in _IDS)
+    fic = analyze("Утро было такое — свежее, прозрачное, тонкое. Город ещё "
+                  "спал — только редкие шаги отдавались эхом.", genre="fiction")
+    case("художка: тире-детектор подавлен",
+         "emdash_bold" not in fic["categories"].get("структурная", [])
+         and all(d["id"] != "emdash_bold" for d in fic["findings"]))
 
     # 8. Порог --max-cats: гейт человеческого корпуса. Две категории —
     # уже повод для вердикта по дереву решений, одна — стилистическая
