@@ -208,7 +208,8 @@
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
     "verbatim_sample": ":contentReference[oaicite:16]{index=16}",
-    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Sial (tribe) от июня 2025 дословно хранит скопированный текст с десятью метками oaicite:16–oaicite:25 внутри обёрток :contentReference[oaicite:N]{index=N}; усечённая форма oaicite:N — внутренний фрагмент той же метки. Цепочка находки: Wikipedia:Signs_of_AI_writing, раздел «Internal formatting and reference markup bugs», где эта ревизия процитирована через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.1."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия страницы обсуждения Talk:Sial (tribe) от июня 2025 дословно хранит скопированный текст с десятью метками oaicite:16–oaicite:25 внутри обёрток :contentReference[oaicite:N]{index=N}; усечённая форма oaicite:N — внутренний фрагмент той же метки. Цепочка находки: Wikipedia:Signs_of_AI_writing, раздел «Internal formatting and reference markup bugs», где эта ревизия процитирована через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.1.",
+    "warning_disposition": "accepted-shared-source: ревизия уже использована записью contentReference; обе формы — фрагменты одного протёкшего текста (Talk:Sial (tribe)), общность источника осознанна и не повышает класс ни одной из записей."
   },
   {
     "case": "contentReference",
@@ -230,7 +231,8 @@
     "platform": "OpenAI ChatGPT",
     "fixture_file": "../../tests/fixtures/openai-pua.txt",
     "verbatim_sample": "citeturn0search1",
-    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи List of English-medium schools in Bangladesh от февраля 2025 дословно хранит скопированный текст с двенадцатью невидимыми символами U+E200–U+E202 вокруг меток цитирования; образец взят со строки про филиал CGS в Дакке. Файл tests/fixtures/openai-pua.txt — дословный срез этой ревизии со всеми двенадцатью живыми PUA-байтами (добавлен в цикле 31, чтобы запись была проверяема без сети). Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-markup.md, A.7. Маркер класса B: запись подтверждает существование формы, но самостоятельным вердиктом о генерации не является и требует ручной проверки. Короткую форму U+EA01/U+EA02 покрывает отдельная запись openai_pua_short."
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи List of English-medium schools in Bangladesh от февраля 2025 дословно хранит скопированный текст с двенадцатью невидимыми символами U+E200–U+E202 вокруг меток цитирования; образец взят со строки про филиал CGS в Дакке. Файл tests/fixtures/openai-pua.txt — дословный срез этой ревизии со всеми двенадцатью живыми PUA-байтами (добавлен в цикле 31, чтобы запись была проверяема без сети). Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-markup.md, A.7. Маркер класса B: запись подтверждает существование формы, но самостоятельным вердиктом о генерации не является и требует ручной проверки. Короткую форму U+EA01/U+EA02 покрывает отдельная запись openai_pua_short.",
+    "warning_disposition": "accepted-shared-source: ревизия уже использована записью turn_search; невидимые PUA-обёртки и метки turn0searchN — фрагменты одного протёкшего текста (List of English-medium schools in Bangladesh), общность источника осознанна и не повышает класс ни одной из записей."
   },
   {
     "case": "turn_search",
