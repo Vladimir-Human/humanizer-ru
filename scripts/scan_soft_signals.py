@@ -67,6 +67,15 @@ CONTENT, LANGUAGE, STRUCTURE, COMMUNICATION = (
 GENRES = ("neutral", "fiction", "legal", "academic", "marketing", "chat")
 
 # Жанровые исключения — по дереву решений SKILL.md и false-positives.md.
+# Точечные исключения отдельных фраз внутри детектора: false-positives.md
+# §4 («погрузиться» в академическом тексте) и §11 («играет важную роль» —
+# затёртое, но допустимое академическое клише).
+GENRE_PHRASE_EXCLUDES = {
+    "academic": {
+        "ai_lexicon": ["погрузиться"],
+        "significance": ["играет важную роль"],
+    },
+}
 SUPPRESS = {
     "neutral": set(),
     "fiction": {"rule_of_three", "emdash_bold"},
@@ -403,17 +412,26 @@ def _cutoff(text, lines):
 # min_hits (сколько вхождений нужно, чтобы признак был засчитан), finder,
 # pos/neg — встроенные образцы самопроверки. Обнулённый детектор ловится
 # самопроверкой: каждый pos обязан сработать (урок count_style_markers 3.7.3).
+_AI_LEXICON_PHRASES = [
+    "безусловно", "крайне важно", "более того", "следует отметить",
+    "стоит подчеркнуть", "важно подчеркнуть", "синерги*",
+    "многогранн*", "всеобъемлющ*", "в контексте", "погрузиться",
+    "раскрыть потенциал", "по сути", "комплексный подход"]
+
+_SIGNIFICANCE_PHRASES = [
+    "является свидетельством", "знаменует собой",
+    "подчеркивает важность", "играет ключевую роль",
+    "играет важную роль", "играет решающую роль",
+    "закладывает фундамент", "неизгладимый след",
+    "в постоянно меняющемся ландшафте", "поворотный момент",
+    "непреходящее значение", "оставил глубокий след", "стал вехой",
+    "отражает более широкие тенденции"]
+
+
 REGISTRY = [
     dict(id="significance", cat=CONTENT, pat="#2 раздувание значимости",
-         crit="средняя", min_hits=2,
-         finder=_make_phrase_finder([
-             "является свидетельством", "знаменует собой",
-             "подчеркивает важность", "играет ключевую роль",
-             "играет важную роль", "играет решающую роль",
-             "закладывает фундамент", "неизгладимый след",
-             "в постоянно меняющемся ландшафте", "поворотный момент",
-             "непреходящее значение", "оставил глубокий след", "стал вехой",
-             "отражает более широкие тенденции"]),
+         crit="средняя", min_hits=2, phrases=_SIGNIFICANCE_PHRASES,
+         finder=_make_phrase_finder(_SIGNIFICANCE_PHRASES),
          pos="Открытие завода знаменует собой поворотный момент и играет ключевую роль.",
          neg="Завод открылся в 1989 году и начал выпускать насосы."),
     dict(id="media_mentions", cat=CONTENT, pat="#3 акцент на медийности",
@@ -471,12 +489,8 @@ REGISTRY = [
          pos="Актуальность темы обусловлена возрастающей ролью технологий.",
          neg="В работе разбирается, как удалёнка изменила занятость."),
     dict(id="ai_lexicon", cat=LANGUAGE, pat="#10 машинная лексика",
-         crit="высокая", min_hits=4,
-         finder=_make_phrase_finder([
-             "безусловно", "крайне важно", "более того", "следует отметить",
-             "стоит подчеркнуть", "важно подчеркнуть", "синерги*",
-             "многогранн*", "всеобъемлющ*", "в контексте", "погрузиться",
-             "раскрыть потенциал", "по сути", "комплексный подход"]),
+         crit="высокая", min_hits=4, phrases=_AI_LEXICON_PHRASES,
+         finder=_make_phrase_finder(_AI_LEXICON_PHRASES),
          pos=("Безусловно, крайне важно раскрыть потенциал синергии. Более "
               "того, в контексте комплексного подхода это по сути главное."),
          neg="Важно, чтобы все элементы работали вместе."),
@@ -634,13 +648,19 @@ def analyze(text, genre="neutral", plain_text=False):
                                     "канцелярит здесь норма жанра")
         return report
     suppressed = SUPPRESS[genre]
+    genre_excl = GENRE_PHRASE_EXCLUDES.get(genre, {})
     triggered_patterns = {}
     for det in REGISTRY:
         if det["id"] in suppressed:
             continue
         if det["id"] == "markdown_traces" and not plain_text:
             continue
-        hits = det["finder"](text, lines)
+        finder = det["finder"]
+        excl = genre_excl.get(det["id"])
+        if excl and "phrases" in det:
+            finder = _make_phrase_finder([p for p in det["phrases"]
+                                           if p not in excl])
+        hits = finder(text, lines)
         if len(hits) >= det["min_hits"]:
             report["findings"].append({
                 "id": det["id"], "category": det["cat"], "pattern": det["pat"],
@@ -782,6 +802,20 @@ def selftest():
     dumped = json.loads(json.dumps(analyze(ai_like), ensure_ascii=False))
     case("json-отчёт сериализуется без потерь",
          dumped["features_total"] == rep0_total(ai_like))
+
+    # 7c. Академические клише по false-positives §4/§11 не считаются
+    # в жанре academic: «играет важную роль», «погрузиться».
+    acad = ("Следует отметить, что более того, в контексте задачи стоит "
+            "погрузиться в детали доказательства.")
+    case("нейтральный жанр видит машинную лексику",
+         any(d["id"] == "ai_lexicon" for d in analyze(acad)["findings"]))
+    case("academic: «погрузиться» исключён из лексики",
+         all(d["id"] != "ai_lexicon" for d in analyze(acad, genre="academic")["findings"]))
+    sig2 = "Метод играет важную роль в сходимости. Результат знаменует собой новый этап."
+    case("academic: «играет важную роль» не доводит значимость до порога",
+         any(d["id"] == "significance" for d in analyze(sig2)["findings"])
+         and all(d["id"] != "significance"
+                 for d in analyze(sig2, genre="academic")["findings"]))
 
     # 7b. Правило трёх: четвёрки и числовые перечисления не считаются
     # (урок rev3: «a, b, c и d» ловилось с «b», годы считались риторикой).
