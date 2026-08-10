@@ -110,6 +110,24 @@ def extract_facts(text):
     return facts
 
 
+# Число цифрой и то же число словом — один факт, а не дописка
+# («2–3 дня» в «До» и «два-три дня» в «После»). Соответствие только
+# по значению: подмена числа на другое число по-прежнему ловится.
+DIGIT_WORD_VARIANTS = {
+    "0": ("ноль",), "1": ("один", "одна", "одно", "одного", "одним"),
+    "2": ("два", "две", "двух", "двумя"),
+    "3": ("три", "трех", "тремя"),
+    "4": ("четыре", "четырех"), "5": ("пять", "пяти"),
+    "6": ("шесть", "шести"), "7": ("семь", "семи"),
+    "8": ("восемь", "восьми"), "9": ("девять", "девяти"),
+    "10": ("десять", "десяти"),
+}
+WORD_TO_DIGIT = {}
+for _d, _ws in DIGIT_WORD_VARIANTS.items():
+    for _w in _ws:
+        WORD_TO_DIGIT.setdefault(_w, set()).add(_d)
+
+
 def new_facts(before, after):
     """Факты, появившиеся в «После» и отсутствующие в «До»."""
     b_low = _strip_markup(before).lower().replace("ё", "е")
@@ -124,13 +142,19 @@ def new_facts(before, after):
     for f in extract_facts(after) - b_facts:
         if f.lower().replace("ё", "е") in b_low:
             continue
+        fl = f.lower().replace("ё", "е")
+        # Число словом, уже присутствующее в «До» цифрой (и наоборот), —
+        # тот же факт.
+        if fl in WORD_TO_DIGIT and any(d in b_facts for d in WORD_TO_DIGIT[fl]):
+            continue
+        if fl.isdigit() and any(w in b_facts for w in DIGIT_WORD_VARIANTS.get(fl, ())):
+            continue
         # Падежные и числовые словоформы того же имени/числительного —
         # не новый факт: основа совпадает префиксом (Иван -> Ивана,
         # Петров -> Петрова, два -> две). Сравниваем со всеми заглавными
         # словами и числительными «До», не только с фактами в начале
         # предложений. Короткие совпадения не считаем, чтобы не склеить
         # разные слова.
-        fl = f.lower().replace("ё", "е")
         if len(fl) >= 3 and any(
             (fl.startswith(bl) or bl.startswith(fl)) and len(bl) >= 3
             for bl in b_words
