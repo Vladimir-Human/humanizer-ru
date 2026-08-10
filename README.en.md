@@ -8,7 +8,9 @@
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns (25 base + 13 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators. All checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
+
+It ships 38 patterns (25 base + 13 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
