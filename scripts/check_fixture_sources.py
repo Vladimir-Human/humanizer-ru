@@ -61,7 +61,7 @@ REGISTERED_CASES = {
     "attributableIndex", "oaicite_short", "contentReference", "openai_pua",
     "turn_search", "utm_chatgpt", "zero_width", "citation_n",
     "vertexaisearch", "utm_openai", "copilot_caret", "gemini_cite_start",
-    "assistants_source", "cite_turn",
+    "assistants_source", "cite_turn", "turn_fetch",
 }
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
@@ -73,7 +73,7 @@ SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _M
 LEGACY_EXEMPT = {
     "attached_file",
     "grok_card", "sandbox_link",
-    "think_tag", "turn_fetch", "turn_file",
+    "think_tag", "turn_file",
 }
 
 STATUSES = {"confirmed", "lead", "none"}
@@ -320,6 +320,9 @@ def selftest():
         "openai_pua": "\ue200cite\ue202turn0search1\ue201",
         # Форма из живого реестра: идентификатор результата поиска ChatGPT.
         "turn_search": "turn0search1",
+        # Форма из живого реестра: ref_id загруженной страницы веб-инструмента
+        # web.run (документация официального репозитория OpenAI Codex).
+        "turn_fetch": "turn0fetch3",
         # Форма из живого реестра: UTM-метка ссылок ChatGPT до августа 2025.
         "utm_chatgpt": "?utm_source=chatgpt.com",
         # Форма из живого реестра: невидимые пробелы U+200B в конце фраз.
@@ -352,7 +355,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base, repo_root=base)
-    checks.append(("полный тестовый реестр закрывает 32/32", not err and len(cov) == 32))
+    checks.append(("полный тестовый реестр закрывает 33/33", not err and len(cov) == 33))
     err, _, _ = validate(ok[:-1], base_dir=base, repo_root=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, repo_root=base, allow_pending=True)
@@ -365,20 +368,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 32))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 33))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 32))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 33))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                    and any("synthetic" in x for x in warn) and len(cov) == 31))
+                    and any("synthetic" in x for x in warn) and len(cov) == 32))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -401,7 +404,7 @@ def selftest():
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL с disposition закрывает",
-                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 32))
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 33))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
@@ -451,7 +454,7 @@ def selftest():
             e["fixture_file"] = legit_rel.replace(os.sep, "/")
     err, _, cov = validate(good, base_dir=base, repo_root=base)
     checks.append(("относительный путь внутрь репозитория остаётся допустимым",
-                   not err and len(cov) == 32))
+                   not err and len(cov) == 33))
 
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]
