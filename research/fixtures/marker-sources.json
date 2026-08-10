@@ -274,6 +274,16 @@
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: тест LibreChat (danny-avila/LibreChat, файл api/server/services/Threads/processMessages.spec.js, /blob/-снимок на коммите 270c6d23 от августа 2024, изменение #3565) дословно воспроизводит сообщение OpenAI Assistants со ссылками на скачивание файлов вида [имя](sandbox:/mnt/data/файл.csv) — такие ссылки оставляет Code Interpreter (Advanced Data Analysis), в копируемый текст они попадают при потере аннотаций. Присутствие маркера на данном SHA проверено по raw-файлу (три вхождения), вводящий коммит подтверждён по diff. Атрибуция конкретной версии модели не утверждается."
   },
   {
+    "case": "think_tag",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://github.com/lobehub/lobe-ui/blob/603612abef69fe725afacd87d69a2f01c6cf19fd/src/Markdown/demos/custom/thinking/content.ts",
+    "accessed": "2026-08-10",
+    "platform": "DeepSeek-R1 через Ollama (атрибуция по фикстуре)",
+    "verbatim_sample": "这个解释听起来合理，但我需要确认一下是否正确。\n</think>\n天空呈现蓝色主要是由于阳光穿过地球大气层时的散射现象。",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: демо-фикстура библиотеки LobeUI (lobehub/lobe-ui, файл src/Markdown/demos/custom/thinking/content.ts, /blob/-снимок на коммите 603612ab) дословно воспроизводит кейс протечки из lobehub/lobe-chat issue #5530: DeepSeek-R1 через Ollama отдаёт служебный тег рассуждений </think> прямо в видимый ответ. В файле два таких блока; взят блок «ollama» (ответ про голубое небо), тег стоит отдельной строкой, как в живой протечке. Raw-файл на данном SHA проверен: два совпадения выражения. Конкретная сборка модели не утверждается."
+  },
+  {
     "case": "utm_chatgpt",
     "status": "confirmed",
     "evidence_class": "primary",
