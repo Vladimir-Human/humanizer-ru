@@ -760,6 +760,10 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", dest="as_json")
     ap.add_argument("--fail-at", type=int, default=0, metavar="N",
                     help="код 1, если признаков не меньше N (0 — выключено)")
+    ap.add_argument("--max-cats", type=int, default=0, metavar="N",
+                    help="код 1, если категорий мягких признаков больше N "
+                         "(0 — выключено; по дереву решений одна категория — "
+                         "стилистическая особенность, не машинный след)")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -769,6 +773,7 @@ def main(argv=None):
         print("нет входных файлов", file=sys.stderr)
         return 2
     worst = 0
+    worst_cats = 0
     payload = []
     for path in args.files:
         try:
@@ -779,6 +784,7 @@ def main(argv=None):
             return 2
         report = analyze(text, genre=args.genre, plain_text=args.plain_text)
         worst = max(worst, report["features_total"])
+        worst_cats = max(worst_cats, report["categories_total"])
         if args.as_json:
             payload.append(dict(report, file=path))
         else:
@@ -786,6 +792,8 @@ def main(argv=None):
     if args.as_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     if args.fail_at and worst >= args.fail_at:
+        return 1
+    if args.max_cats and worst_cats > args.max_cats:
         return 1
     return 0
 
