@@ -1,0 +1,303 @@
+{
+  "run": "2026-08-10-genres",
+  "manifest": {
+    "run": "2026-08-10-genres",
+    "model": "субагенты Prime Agent (модель оркестратора); температура среды по умолчанию, не задавалась явно",
+    "skill_version": "3.9.0 + записи реестра (поведение скилла не менялось)",
+    "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+    "judge": "Слепая панель из трёх LLM-судей (субагенты Prime Agent), большинство голосов; вердикты расшифрованы ключом прогона. Инструкция — та, что в пакете этого прогона.",
+    "note": "Прогон проверяет расширенный человеческий корпус (четыре новых жанра 2026-08-10 плюс it-notation) на ложные правки и заново измеряет снятие маркеров на реальных машинных текстах. Ветки with и without отличаются ровно загруженностью скилла.",
+    "pairs": [
+      {
+        "id": "ai-gigachat-pechat",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+      },
+      {
+        "id": "ai-gigachat-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+      },
+      {
+        "id": "ai-gigachat-grechka",
+        "kind": "ai",
+        "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+      },
+      {
+        "id": "ai-alisa-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок"
+      },
+      {
+        "id": "ai-lechat-nebo",
+        "kind": "ai",
+        "provenance": "Захвачен в Le Chat 14 июля 2026; файл в research/raw без правок"
+      },
+      {
+        "id": "hum-ostrovsky",
+        "kind": "human",
+        "provenance": "А. Н. Островский, драма; добавлен в корпус 2026-08-10"
+      },
+      {
+        "id": "hum-krylov",
+        "kind": "human",
+        "provenance": "И. А. Крылов, басня; добавлен в корпус 2026-08-10"
+      },
+      {
+        "id": "hum-afanasyev",
+        "kind": "human",
+        "provenance": "Народная сказка у Афанасьева; добавлен в корпус 2026-08-10"
+      },
+      {
+        "id": "hum-perelman",
+        "kind": "human",
+        "provenance": "Я. И. Перельман, научно-фантастический рассказ; добавлен в корпус 2026-08-10"
+      },
+      {
+        "id": "hum-it-notation",
+        "kind": "human",
+        "provenance": "Написан в проекте для проверки ложных срабатываний"
+      }
+    ]
+  },
+  "run_sha256": "1fd77c197484991608d646187d014d676ad31f3810b945fab01c50c623645a2b",
+  "summary": {
+    "pairs_total": 10,
+    "pairs_ai": 5,
+    "pairs_human_control": 5,
+    "removal_with_pct": null,
+    "removal_without_pct": null,
+    "fact_clean_with_pct": 100.0,
+    "fact_clean_without_pct": 80.0,
+    "false_edits_with": 0,
+    "false_edits_without": 0,
+    "len_delta_with_pct": -8.2,
+    "len_delta_without_pct": -6.0,
+    "readability_wins": {
+      "with": 3,
+      "without": 1,
+      "tie": 6
+    },
+    "meaning_loss": {
+      "with": 0,
+      "without": 0,
+      "none": 10
+    }
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 3282,
+      "len_without": 3025,
+      "len_with": 2964,
+      "id": "ai-gigachat-pechat",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2766,
+      "len_without": 2670,
+      "len_with": 2451,
+      "id": "ai-gigachat-nebo",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "вдвое"
+      ],
+      "added_facts_with": [],
+      "len_source": 1084,
+      "len_without": 794,
+      "len_with": 669,
+      "id": "ai-gigachat-grechka",
+      "provenance": "Захвачен в веб-интерфейсе GigaChat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1188,
+      "len_without": 1167,
+      "len_with": 1094,
+      "id": "ai-alisa-nebo",
+      "provenance": "Захвачен в Алисе (YandexGPT) 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 956,
+      "len_without": 769,
+      "len_with": 812,
+      "id": "ai-lechat-nebo",
+      "provenance": "Захвачен в Le Chat 14 июля 2026; файл в research/raw без правок"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 644,
+      "len_without": 644,
+      "len_with": 644,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "hum-ostrovsky",
+      "provenance": "А. Н. Островский, драма; добавлен в корпус 2026-08-10"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1113,
+      "len_without": 1113,
+      "len_with": 1113,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "hum-krylov",
+      "provenance": "И. А. Крылов, басня; добавлен в корпус 2026-08-10"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 675,
+      "len_without": 675,
+      "len_with": 675,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "hum-afanasyev",
+      "provenance": "Народная сказка у Афанасьева; добавлен в корпус 2026-08-10"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 655,
+      "len_without": 655,
+      "len_with": 655,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "hum-perelman",
+      "provenance": "Я. И. Перельман, научно-фантастический рассказ; добавлен в корпус 2026-08-10"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2087,
+      "len_without": 2087,
+      "len_with": 2087,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "hum-it-notation",
+      "provenance": "Написан в проекте для проверки ложных срабатываний"
+    }
+  ],
+  "judgements": {
+    "P001": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P002": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P003": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P004": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P005": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P006": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P007": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P008": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P009": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    },
+    "P010": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "панель 3 судей (рубрика-2): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+    }
+  }
+}
