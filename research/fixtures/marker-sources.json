@@ -113,7 +113,7 @@
     "accessed": "2026-07-14",
     "platform": "ChatGPT",
     "fixture_file": "../../tests/fixtures/openai-pua-short.txt",
-    "verbatim_sample": "\uea012\uea02",
+    "verbatim_sample": "2",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: дословные PUA-байты U+EA01/U+EA02 найдены на live-странице EN Wikipedia:Signs_of_AI_writing (revision 1363998845, July 2025) в блоке AI-сгенерированного текста про аниме Reze Arc. Файл tests/fixtures/openai-pua-short.txt содержит verbatim срез текста с 3 парами PUA-маркеров (2, 3, 5). Шаблон: U+EA01 + число + U+EA02 — компактная форма citation-маркера ChatGPT."
   },
   {
@@ -229,7 +229,7 @@
     "accessed": "2026-08-06",
     "platform": "OpenAI ChatGPT",
     "fixture_file": "../../tests/fixtures/openai-pua.txt",
-    "verbatim_sample": "\ue200cite\ue202turn0search1\ue201",
+    "verbatim_sample": "citeturn0search1",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи List of English-medium schools in Bangladesh от февраля 2025 дословно хранит скопированный текст с двенадцатью невидимыми символами U+E200–U+E202 вокруг меток цитирования; образец взят со строки про филиал CGS в Дакке. Файл tests/fixtures/openai-pua.txt — дословный срез этой ревизии со всеми двенадцатью живыми PUA-байтами (добавлен в цикле 31, чтобы запись была проверяема без сети). Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-markup.md, A.7. Маркер класса B: запись подтверждает существование формы, но самостоятельным вердиктом о генерации не является и требует ручной проверки. Короткую форму U+EA01/U+EA02 покрывает отдельная запись openai_pua_short."
   },
   {
@@ -242,6 +242,16 @@
     "verbatim_sample": "turn0search1",
     "warning_disposition": "accepted-shared-source: ревизия уже использована записью openai_pua цикла 14; обе формы — фрагменты одного протёкшего текста, общий источник осознан и не повышает класс ни одной из записей.",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: та же ревизия List of English-medium schools in Bangladesh дословно хранит четыре метки turn0searchN (три «turn0search1», одна «turn0search0») внутри PUA-обёрток цитирования — U+E200, «cite», U+E202, идентификатор, U+E201. Голые формы без обёртки редки: документированные полные формы citeturn0news0 и citeturn1file0 (Signs of AI writing) имеют примерные ревизии PermaLink 1276934509 и 1286349902, но обе удалены из Википедии — проверка API в цикле 16 вернула badrevids, поэтому голой записи cite_turn пока нет. Атрибуция конкретной версии ChatGPT не подтверждена. Документация формы — в chatbot-artifacts-links.md, A.2."
+  },
+  {
+    "case": "turn_fetch",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://github.com/openai/codex/blob/f1f9d0c3b5606d8da1c7f7839fc6e0cb85dd5d04/codex-rs/ext/web-search/web_run_description.md",
+    "accessed": "2026-08-10",
+    "platform": "OpenAI ChatGPT / Codex (веб-инструмент web.run)",
+    "verbatim_sample": "* `click`: {\"click\": [{\"ref_id\": \"turn0fetch3\", \"id\": 17}]}",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: официальная документация веб-инструмента web.run в репозитории OpenAI Codex (файл codex-rs/ext/web-search/web_run_description.md, /blob/-снимок на коммите f1f9d0c3 от июня 2026) дословно приводит ref_id вида turn0fetch3 в примерах команд click и find к загруженной странице. Форма turnNfetchN — внутренние идентификаторы загруженных страниц веб-инструмента; в копируемый текст они обнажаются вместе с обёртками цитирования. Найдено поиском grep.app по токену turn0fetch; присутствие формы на данном SHA проверено по raw-файлу. Атрибуция конкретной версии модели не утверждается."
   },
   {
     "case": "utm_chatgpt",
@@ -261,7 +271,7 @@
     "source_url": "https://en.wikipedia.org/w/index.php?title=Amu_Television&oldid=1241301672",
     "accessed": "2026-08-06",
     "platform": "неустановленная модель",
-    "verbatim_sample": "significant issues\u200b\u200b.",
+    "verbatim_sample": "significant issues​​.",
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: ревизия статьи Amu Television от августа 2024 дословно хранит скопированный текст с двадцатью тремя невидимыми пробелами U+200B; образец — фраза из раздела про новостные программы с двумя невидимыми пробелами перед точкой. Цепочка находки: Wikipedia:Signs_of_AI_writing цитирует эту ревизию через diff (снимок oldid=1367630404, строка 251). Модель не атрибутирована. Маркер класса B: нулевые пробелы заносятся и другим копированием (сайты, CMS, рассылки), поэтому самостоятельным вердиктом о генерации не являются и требуют ручной проверки; ложные срабатывания описаны в references/false-positives.md."
   },
   {
