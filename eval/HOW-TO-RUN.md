@@ -26,7 +26,7 @@
 Структура каталога:
 
 ```
-eval/runs/2026-07-25-baseline/
+eval/runs/2026-07-26-baseline/
   manifest.json
   source/<id>.txt      исходный текст
   without/<id>.txt     результат без скилла
@@ -37,7 +37,7 @@ eval/runs/2026-07-25-baseline/
 
 ```json
 {
-  "run": "2026-07-25-baseline",
+  "run": "2026-07-26-baseline",
   "model": "укажите модель и версию",
   "skill_version": "3.6.0",
   "prompt": "дословный промпт, одинаковый для обеих веток",
@@ -59,7 +59,7 @@ AI-пару и не меньше трети человеческих контр�
 ## Шаг 2. Механические метрики
 
 ```bash
-python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline
+python3 eval/blind_eval.py --run eval/runs/2026-07-26-baseline
 ```
 
 Отчёт ложится в `eval/results/`. При отсутствии файлов скрипт выходит с ошибкой,
@@ -68,7 +68,7 @@ python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline
 ## Шаг 3. Слепой судья
 
 ```bash
-python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline --make-packet /tmp/packet
+python3 eval/blind_eval.py --run eval/runs/2026-07-26-baseline --make-packet /tmp/packet
 ```
 
 В `/tmp/packet/pairs/` лягут файлы вида `P001.md`: исходный текст и два варианта
@@ -83,7 +83,7 @@ python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline --make-packet /tm
 Заполненные вердикты возвращаются обратно:
 
 ```bash
-python3 eval/blind_eval.py --run eval/runs/2026-07-25-baseline \
+python3 eval/blind_eval.py --run eval/runs/2026-07-26-baseline \
   --judgements /tmp/packet/verdicts.json \
   --key /tmp/packet.key.json
 ```

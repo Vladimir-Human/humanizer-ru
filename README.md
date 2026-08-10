@@ -230,7 +230,8 @@ humanizer-ru/
 | `oaicite:7` (усечённая форма метки) | OpenAI ChatGPT | `oaicite:\d+` |
 | `oai_citation:N‡` | OpenAI ChatGPT | `oai_citation:\d+‡` |
 | `attributableIndex` в JSON | Внутреннее поле разметки JSON-ответов при использовании инструментов | `\battributableIndex\b` |
-| `turn0search0`, `turn0fetch0` | OpenAI веб-поиск | `turn\d+(search\|fetch)\d+` |
+| `turn0search0` | OpenAI веб-поиск | `turn\d+search\d+` |
+| `turn0fetch0` | OpenAI загрузка страниц | `turn\d+fetch\d+` |
 | `<ref name="0search12">` | Контекстный след внутреннего инструмента в имени вики-сноски | `<ref\b[^>]*\bname=["']\d+(?:search\|fetch\|file\|image\|news\|video\|ref)\d+["']` |
 | `?utm_source=chatgpt.com` | OpenAI ChatGPT | `[?&]utm_source=chatgpt\.com` |
 | `?utm_source=openai` | OpenAI API | `[?&]utm_source=openai` |
