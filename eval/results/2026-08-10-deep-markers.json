@@ -1,0 +1,200 @@
+{
+  "run": "2026-08-10-deep-markers",
+  "manifest": {
+    "run": "2026-08-10-deep-markers",
+    "model": "субагенты Prime Agent (модель оркестратора); температура среды по умолчанию, не задавалась явно",
+    "skill_version": "integration/all: глубокая перезапись + петля самопроверки + Grep-слой (коммит a952cd0)",
+    "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+    "judge": "ожидается: панель GLM-5.2 по рубрике-2",
+    "note": "Второе доказательство глубокой перезаписи на другом корпусе: тела реальных машинных текстов с трансплантированными маркерами (провенанс прогона 2026-08-07-markers дословно). Обе ветки исполнены заново одним исполнителем и одним промптом.",
+    "pairs": [
+      {
+        "id": "ai-gigachat-nebo",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/02-почему-небо-голубое.txt, уже с приклеенными доменами rbc.ru/claw.ru/ya-uznayu.ru/t-j.ru) + трансплантированные маркеры: citeturn0search0, citeturn2search2, [cite_start]…[cite: 4], 【1†source】"
+      },
+      {
+        "id": "ai-gigachat-pechat",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/01-слепая-печать.txt) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 2], 【2†source】, ссылка с utm_source=chatgpt.com"
+      },
+      {
+        "id": "ai-gigachat-stolica",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/03-столица-австралии.txt, уже с приклеенными доменами и строкой «Факт-контроль») + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 1], 【4†source】, ссылка с utm_source=chatgpt.com"
+      },
+      {
+        "id": "ai-lechat-nebo",
+        "kind": "ai",
+        "provenance": "Реальный вывод Le Chat (research/raw/le-chat/03-fast-небо-голубое.txt, с чат-ботовским хвостом) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 3], 【2†source】"
+      },
+      {
+        "id": "human-constitution",
+        "kind": "human",
+        "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+      },
+      {
+        "id": "human-wikinews",
+        "kind": "human",
+        "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+      }
+    ]
+  },
+  "run_sha256": "da624a6ab72b0fc40fa33cb87d3f7a33cc6e7076b6d34947645d5b4d71df2a5c",
+  "summary": {
+    "pairs_total": 6,
+    "pairs_ai": 4,
+    "pairs_human_control": 2,
+    "removal_with_pct": 100.0,
+    "removal_without_pct": 100.0,
+    "fact_clean_with_pct": 50.0,
+    "fact_clean_without_pct": 100.0,
+    "false_edits_with": 0,
+    "false_edits_without": 1,
+    "len_delta_with_pct": -14.7,
+    "len_delta_without_pct": -11.3,
+    "readability_wins": {
+      "with": 5,
+      "without": 0,
+      "tie": 1
+    },
+    "meaning_loss": {
+      "with": 0,
+      "without": 0,
+      "none": 6
+    }
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2832,
+      "len_without": 2619,
+      "len_with": 2475,
+      "id": "ai-gigachat-nebo",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/02-почему-небо-голубое.txt, уже с приклеенными доменами rbc.ru/claw.ru/ya-uznayu.ru/t-j.ru) + трансплантированные маркеры: citeturn0search0, citeturn2search2, [cite_start]…[cite: 4], 【1†source】"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [
+        "два",
+        "три"
+      ],
+      "len_source": 3391,
+      "len_without": 3113,
+      "len_with": 3028,
+      "id": "ai-gigachat-pechat",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/01-слепая-печать.txt) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 2], 【2†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [
+        "два"
+      ],
+      "len_source": 1326,
+      "len_without": 1014,
+      "len_with": 980,
+      "id": "ai-gigachat-stolica",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/03-столица-австралии.txt, уже с приклеенными доменами и строкой «Факт-контроль») + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 1], 【4†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 4,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1005,
+      "len_without": 756,
+      "len_with": 615,
+      "id": "ai-lechat-nebo",
+      "provenance": "Реальный вывод Le Chat (research/raw/le-chat/03-fast-небо-голубое.txt, с чат-ботовским хвостом) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 3], 【2†source】"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 150,
+      "len_without": 150,
+      "len_with": 150,
+      "touched_without": false,
+      "touched_with": false,
+      "id": "human-constitution",
+      "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 223,
+      "len_without": 214,
+      "len_with": 223,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-wikinews",
+      "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+    }
+  ],
+  "judgements": {
+    "P001": {
+      "readability": "tie",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Оба варианта — дословные копии исходника без единой правки. Исходник — формальное утверждение (конституционная норма), править не нужно. Оба сохранили его целиком."
+    },
+    "P002": {
+      "readability": "B",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Оба варианта перевели нумерованный список в связную прозу и сохранили все содержание (рэлеевское рассеяние, цвета радуги, молекулы, короткие/длинные волны, чувствительность глаз, закат). Тело текста почти идентично. B снял служебную обёртку (Режим/Вопрос/Дата/Клиент/Ответ Le Chat) и чат-ботовский хвост; A оставил её. B читается как самостоятельное человеческое объяснение, A — как лог чат-бота."
+    },
+    "P003": {
+      "readability": "B",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Оба сохранили вопрос/шапку и все факты (Канберра, 1908, Уолтер Гриффин с Мэрион, 410 301 / 2024, 460 тыс., Куинбиан, спор Сидней/Мельбурн, факт-контроль). A допустил опечатку «администивный» (пропущено р); B оставил висящий markdown-линк на Википедию после «Канберра». Опечатка в A — реальная ошибка, у B чище."
+    },
+    "P004": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Оба сохранили все пункты и числа (ФЫВА-ОЛДЖ, 90 градусов, 15–20 мин, 98–100%, 7–10 дней, 150–200 зн/мин, 95%, все названия тренажёров, таймлайн). A снял чат-ботовскую шапку (Вопрос/Ответ GigaChat) и перелил инструкцию в связную прозу с переходами; B оставил шапку и нумерованный/буллетный список. Список-против-прозы нейтрален по инструкции, так что решает служебная обёртка: A — самостоятельное человеческое руководство, B — ответ чат-бота."
+    },
+    "P005": {
+      "readability": "A",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Исходник — чистое, человечески написанное новостное предложение, правки не требовало. A оставил его дословно. B переписал без нужды («Стартовала», «доставлен», добавил «уже», убрал «космическая»), слегка сместив тон. По инструкции переписывать хороший человеческий текст без необходимости — минус."
+    },
+    "P006": {
+      "readability": "B",
+      "meaning_loss": "none",
+      "note": "Единогласно (3/3) панель GLM-5.2: Оба сохранили все содержание (рэлеевское рассеяние, белый свет, азот/кислород, короткие/длинные волны, колбочки, высота/космос/влажность, закат). A оставил чат-ботовскую обёртку (Вопрос/Ответ GigaChat) и все подзаголовки-секции; B снял обёртку, слил секции в текущую прозу с естественным переходом «Казалось бы» и одним встроенным риторическим вопросом. B читается как цельный научно-популярный текст."
+    }
+  }
+}
