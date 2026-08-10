@@ -19,6 +19,7 @@
 2 — ошибка запуска (файл семейства исчез, не читается). Только стандартная
 библиотека.
 """
+import fnmatch
 import glob
 import io
 import os
@@ -136,12 +137,25 @@ def selftest():
                       and "1." in errs[0]))
 
         with io.open(part_b, "w", encoding="utf-8") as fh:
-            fh.write("### 3. Третий\n")
+            fh.write("### 3. Третий\n\nИндекс: `mini.md`.\n")
         with io.open(index, "a", encoding="utf-8") as fh:
             fh.write("См. `нет-такого.md`.\n")
         errs = index_refs(index, td, refs)
         cases.append(("битая ссылка индекса видна",
                       any("нет-такого.md" in e for e in errs)))
+
+        # Свойство 3: чужой .md в references/ без упоминания виден.
+        stray_path = os.path.join(refs, "stray-note.md")
+        with io.open(stray_path, "w", encoding="utf-8") as fh:
+            fh.write("Заметка без упоминаний.\n")
+        errs = stray_references(td)
+        cases.append(("чужой файл в references/ виден",
+                      any("stray-note.md" in e for e in errs)))
+        with io.open(part_a, "a", encoding="utf-8") as fh:
+            fh.write("\nСм. `stray-note.md`.\n")
+        errs = stray_references(td)
+        cases.append(("упомянутый чужой файл не в претензии",
+                      all("stray-note.md" not in e for e in errs)))
 
     ok = 0
     for name, passed in cases:
@@ -149,6 +163,43 @@ def selftest():
         ok += 1 if passed else 0
     print("Самопроверка: %d/%d" % (ok, len(cases)))
     return 0 if ok == len(cases) else 1
+
+
+def stray_references(root):
+    """Чужие .md в references/: файл вне семейств обязан быть упомянутым.
+
+    Каталог references/ целиком уходит в релизный архив; подброшенный
+    файл, который нигде не назван, уехал бы туда незамеченным
+    (урок rev4: мусорные references/trash-*.md проходили зелёным).
+    """
+    texts = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d != ".git"]
+        for name in filenames:
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(dirpath, name)
+            try:
+                with io.open(path, encoding="utf-8") as fh:
+                    texts[path] = fh.read()
+            except (OSError, UnicodeDecodeError):
+                pass
+    fam_patterns = [os.path.basename(fam["glob"]) for fam in FAMILIES]
+    errors = []
+    refs_dir = os.path.join(root, "references")
+    if not os.path.isdir(refs_dir):
+        return errors
+    for name in sorted(os.listdir(refs_dir)):
+        if not name.endswith(".md"):
+            continue
+        if any(fnmatch.fnmatch(name, pat) for pat in fam_patterns):
+            continue
+        path = os.path.join(refs_dir, name)
+        if any(name in t for p, t in texts.items() if p != path):
+            continue
+        errors.append("лишний файл %s не упомянут ни в одном документе"
+                      % ("references/" + name))
+    return errors
 
 
 def main(argv):
@@ -171,6 +222,10 @@ def main(argv):
         else:
             print("OK %s: %d файлов, заголовки и ссылки целы"
                   % (family["name"], len(files)))
+    stray = stray_references(ROOT)
+    for e in stray:
+        print("ПРОВАЛ справочники: %s" % e)
+    total_errors += len(stray)
     if broken:
         return 2
     if total_errors:
