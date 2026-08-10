@@ -195,7 +195,7 @@ def check_all(texts, expected=None):
 
 RU_ONLY_SAMPLE = u"\n".join(u"### " + name for name in RU_ONLY)
 GOOD_RU = u"""# Скилл
-37 паттернов и 38 regex-маркеров.
+38 паттернов и 38 regex-маркеров.
 Запись доказательств есть у 36 из 38 маркеров.
 ## Что ему давать
 ## Установка за 30 секунд
@@ -210,7 +210,7 @@ GOOD_RU = u"""# Скилл
 ## Лицензия
 """ + RU_ONLY_SAMPLE + u"\n"
 GOOD_EN = u"""# Skill
-37 patterns and 38 regex markers.
+38 patterns and 38 regex markers.
 Currently 36 of 38 markers have a full record.
 ## What to give it
 ## Install in 30 seconds
@@ -249,7 +249,7 @@ def selftest():
     wordy[EN] = GOOD_EN.replace(u"38 regex markers", u"38 testable regex markers")
     results.append(_case(u"Определение перед regex не мешает",
                          not check_all(wordy, EXPECTED)))
-    bad = dict(base); bad[EN] = GOOD_EN.replace(u"37 patterns", u"54 patterns")
+    bad = dict(base); bad[EN] = GOOD_EN.replace(u"38 patterns", u"54 patterns")
     results.append(_case(u"Разное число паттернов отклоняется",
                          _has(check_all(bad, EXPECTED), u"количество паттернов")))
     bad = dict(base); bad[EN] = GOOD_EN.replace(u"38 regex markers", u"41 regex markers")

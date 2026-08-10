@@ -4,11 +4,11 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BE%D0%BA-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[English version → README.en.md](README.en.md)**
 
-Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 37 паттернов (25 базовых + 12 расширений), 38 проверяемых regex-маркеров классов A и B, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub и Socket; про красную плашку Snyk — в разделе «Безопасность».
+Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. 38 паттернов (25 базовых + 13 расширений), 38 проверяемых regex-маркеров классов A и B, автоматический прогон проверок в CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub и Socket; про красную плашку Snyk — в разделе «Безопасность».
 
 **До:**
 
@@ -95,11 +95,11 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 ## Что делает
 
-Находит 37 паттернов машинного текста на русском языке (25 базовых + 12 расширений для русского) и 38 проверяемых regex-маркеров классов A и B и убирает их из текста. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+Находит 38 паттернов машинного текста на русском языке (25 базовых + 13 расширений для русского) и 38 проверяемых regex-маркеров классов A и B и убирает их из текста. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
 С версии 2.3 SKILL.md — это карта с деревом решений. Полное описание паттернов и проверок лежит в подключаемых файлах `references/`.
 
-С версии 3.8 мягкий слой стал счётным. `scripts/scan_soft_signals.py` находит кандидатов по четырём категориям признаков, считает каждый паттерн один раз на текст и применяет пороги дерева решений; жанровые исключения берутся из `references/false-positives.md`. Скрипт печатает цитаты и рекомендацию объёма правки, вердикта об авторстве не даёт — Главное правило остаётся за агентом. На человеческом контрольном корпусе он не находит ни одного признака, на выводах русских моделей находит кандидатов там, где regex-слой молчит.
+С версии 3.8 мягкий слой стал счётным. `scripts/scan_soft_signals.py` находит кандидатов по четырём категориям признаков, считает каждый паттерн один раз на текст и применяет пороги дерева решений; жанровые исключения берутся из `references/false-positives.md`. Скрипт печатает цитаты и рекомендацию объёма правки, вердикта об авторстве не даёт — Главное правило остаётся за агентом. На человеческом контрольном корпусе совпадений нет: regex-слой молчит, а единичных кандидатов мягких признаков на классических текстах (литературные тире, повторы) жанровые исключения не превращают в вердикт; на выводах русских моделей находит кандидатов там, где regex-слой молчит.
 
 ### Архитектура
 

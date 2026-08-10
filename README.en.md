@@ -4,11 +4,11 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Version](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=version&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-401%2B_installs-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[Русская версия → README.md](README.md)**
 
-An agent skill that finds and removes traces of machine generation from Russian-language text: 37 patterns (25 base + 12 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators. All checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+An agent skill that finds and removes traces of machine generation from Russian-language text: 38 patterns (25 base + 13 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators. All checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -60,7 +60,7 @@ Or directly:
 
 ## What it does
 
-Detects and fixes 37 patterns of machine-generated Russian text (25 base + 12 Russian-specific extensions), grouped into four families:
+Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Russian-specific extensions), grouped into four families:
 
 | Family | Examples |
 |---|---|
@@ -71,7 +71,7 @@ Detects and fixes 37 patterns of machine-generated Russian text (25 base + 12 Ru
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
-Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus it finds zero soft signals; on Russian model outputs it surfaces candidates where the regex layer stays silent.
+Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus the regex layer finds no matches, and the few soft-signal candidates on classical prose (literary dashes, repetitions) stay neutral under the genre exceptions; on Russian model outputs it surfaces candidates where the regex layer stays silent.
 
 ## Regex markers: classes A and B
 
