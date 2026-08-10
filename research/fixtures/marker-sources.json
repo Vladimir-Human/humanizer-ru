@@ -264,6 +264,16 @@
     "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: описание видео «FIA Clampdown, McLaren in the Crosshairs, Advantage Red Bull?» (youtube.com/watch?v=vsdpQCvl6Zk) дословно содержит токен citeturn1file0 в конце предложения про преимущество Red Bull — файловый маркер цитирования ChatGPT, обнажившийся при копировании машинного текста без очистки. Это более чистый первичный источник, чем пример из эссе Wikipedia:Signs of AI writing: ревизии-примеры 1276934509 и 1286349902 удалены (badrevids), снимков Wayback эссе за февраль-июнь 2025 нет (первый снимок 2025-07-11, 404); текущая ревизия эссе лишь документирует форму. Атрибуция конкретной версии модели не утверждается; маркер contextual и сам по себе не является вердиктом об авторстве."
   },
   {
+    "case": "sandbox_link",
+    "status": "confirmed",
+    "evidence_class": "primary",
+    "source_url": "https://github.com/danny-avila/LibreChat/blob/270c6d23506d363985d036e2ee6b7f69e84d596b/api/server/services/Threads/processMessages.spec.js",
+    "accessed": "2026-08-10",
+    "platform": "OpenAI ChatGPT (Assistants API / Advanced Data Analysis)",
+    "verbatim_sample": "1. [Download Dummy Data 1](sandbox:/mnt/data/dummy_data1.csv)",
+    "evidence_note": "РЕАЛЬНЫЙ ОБРАЗЕЦ: тест LibreChat (danny-avila/LibreChat, файл api/server/services/Threads/processMessages.spec.js, /blob/-снимок на коммите 270c6d23 от августа 2024, изменение #3565) дословно воспроизводит сообщение OpenAI Assistants со ссылками на скачивание файлов вида [имя](sandbox:/mnt/data/файл.csv) — такие ссылки оставляет Code Interpreter (Advanced Data Analysis), в копируемый текст они попадают при потере аннотаций. Присутствие маркера на данном SHA проверено по raw-файлу (три вхождения), вводящий коммит подтверждён по diff. Атрибуция конкретной версии модели не утверждается."
+  },
+  {
     "case": "utm_chatgpt",
     "status": "confirmed",
     "evidence_class": "primary",
