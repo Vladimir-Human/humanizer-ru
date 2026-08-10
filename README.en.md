@@ -151,7 +151,7 @@ and its Russian counterpart
 
 A full evidence record — an immutable source URL, the date it was accessed,
 a verbatim sample, an evidence class, and a fixture in
-`research/fixtures/marker-sources.json` — currently exists for 35 of 38
+`research/fixtures/marker-sources.json` — currently exists for 36 of 38
 fast-layer markers; the rest are covered by fixtures only. The validator
 prints this honest coverage rather than rounding it to a convenient number.
 

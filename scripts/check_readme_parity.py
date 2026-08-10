@@ -196,7 +196,7 @@ def check_all(texts, expected=None):
 RU_ONLY_SAMPLE = u"\n".join(u"### " + name for name in RU_ONLY)
 GOOD_RU = u"""# Скилл
 37 паттернов и 38 regex-маркеров.
-Запись доказательств есть у 35 из 38 маркеров.
+Запись доказательств есть у 36 из 38 маркеров.
 ## Что ему давать
 ## Установка за 30 секунд
 ## Установка вручную
@@ -211,7 +211,7 @@ GOOD_RU = u"""# Скилл
 """ + RU_ONLY_SAMPLE + u"\n"
 GOOD_EN = u"""# Skill
 37 patterns and 38 regex markers.
-Currently 35 of 38 markers have a full record.
+Currently 36 of 38 markers have a full record.
 ## What to give it
 ## Install in 30 seconds
 ## Manual install
@@ -225,7 +225,7 @@ Currently 35 of 38 markers have a full record.
 ## License
 """
 GOOD_SKILL = u"# Карта\nКритичность: высокая, средняя, низкая.\n"
-EXPECTED = (35, 38)
+EXPECTED = (36, 38)
 
 
 def _has(errors, fragment):
@@ -256,12 +256,12 @@ def selftest():
     results.append(_case(u"Разное число маркеров отклоняется",
                          _has(check_all(bad, EXPECTED), u"regex-маркеров")))
     bad = dict(base)
-    bad[RU] = GOOD_RU.replace(u"35 из 38", u"38 из 38")
-    bad[EN] = GOOD_EN.replace(u"35 of 38", u"38 of 38")
+    bad[RU] = GOOD_RU.replace(u"36 из 38", u"38 из 38")
+    bad[EN] = GOOD_EN.replace(u"36 of 38", u"38 of 38")
     results.append(_case(u"Синхронное завышение покрытия отклоняется",
                          _has(check_all(bad, EXPECTED), u"по коду должно быть")))
     bad = dict(base); bad[RU] = GOOD_RU.replace(
-        u"Запись доказательств есть у 35 из 38 маркеров.\n", u"")
+        u"Запись доказательств есть у 36 из 38 маркеров.\n", u"")
     results.append(_case(u"Умолчание о покрытии отклоняется",
                          _has(check_all(bad, EXPECTED), u"не заявлено покрытие")))
     bad = dict(base); bad[EN] = GOOD_EN.replace(u"## Security", u"Security")
