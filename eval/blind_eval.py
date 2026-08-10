@@ -87,7 +87,7 @@ def scan_markers(text):
     if proc.returncode not in (0, 1):
         raise RuntimeError("check_markers завершился с кодом %d: %s" %
                            (proc.returncode, err.strip() or out.strip()))
-    hits = re.findall(r"^\S+:\d+ \[([a-z0-9_]+)\]", out, re.M)
+    hits = re.findall(r"^\S+:\d+ \[([A-Za-z0-9_]+)\]", out, re.M)
     if proc.returncode == 1 and not hits:
         raise RuntimeError("check_markers сообщил совпадение, но вывод не распознан")
     return hits
