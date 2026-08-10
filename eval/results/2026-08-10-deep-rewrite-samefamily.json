@@ -252,52 +252,52 @@
     "P001": {
       "readability": "tie",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
     },
     "P002": {
       "readability": "B",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'none']"
     },
     "P003": {
       "readability": "B",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['B', 'B', 'B'], meaning_loss ['none', 'none', 'none']"
     },
     "P004": {
       "readability": "tie",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
     },
     "P005": {
       "readability": "A",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
     },
     "P006": {
       "readability": "A",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
     },
     "P007": {
       "readability": "tie",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
     },
     "P008": {
       "readability": "tie",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
     },
     "P009": {
       "readability": "A",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['B', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['A', 'A', 'A'], meaning_loss ['none', 'none', 'none']"
     },
     "P010": {
       "readability": "tie",
       "meaning_loss": "none",
-      "note": "кросс-панель GLM-5.2 x3: readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
+      "note": "панель 3 судей (глубокая перезапись): readability ['tie', 'tie', 'tie'], meaning_loss ['none', 'none', 'none']"
     }
   }
 }
