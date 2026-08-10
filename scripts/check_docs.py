@@ -88,7 +88,9 @@ def _tracked_top_levels(root):
   return tops
  return {name for name in os.listdir(root) if name != ".git"}
 
-CONFLICT_RX = re.compile(r"^(<{7}( |$)|\|{7}( |$)|>{7}( |$))")
+# Ровно семь «=» — разделитель conflict-слияния; длинные линии «========»
+# и «=======» другой длины остаются законной markdown-разметкой.
+CONFLICT_RX = re.compile(r"^(<{7}( |$)|\|{7}( |$)|>{7}( |$)|={7}$)")
 
 
 def _md_files(root):
@@ -578,6 +580,13 @@ def selftest():
       lambda r: _w(r, "research/GAPS.md",
                    "текст\n<<<<<<< HEAD\nнаше\n>>>>>>> ветка\n"),
       "merge-конфликта")
+ case("разделитель ======= в .md -> FAIL",
+      lambda r: _w(r, "research/GAPS.md",
+                   "текст\n<<<<<<< HEAD\nнаше\n=======\nчужое\n>>>>>>> ветка\n"),
+      "merge-конфликта")
+ case("длинные ======= не маркер -> OK",
+      lambda r: _w(r, "research/GAPS.md", "заголовок\n========\n"),
+      None)
 
  passed = 0
  for name, mutate, expect_token in cases:
