@@ -882,6 +882,11 @@ def verify_results(results_dir, runs_dir):
                 if summary[k] is not None:
                     errors.append("%s: сводка %s = %s, по парам null"
                                   % (name, k, summary[k]))
+            elif not isinstance(summary[k], (int, float)):
+                errors.append("%s: сводка %s = %r — пересчитываемое поле "
+                              "обязано быть числом (мусор вместо числа "
+                              "ронял гейт трейзбеком: находка rev10, R10-3)"
+                              % (name, k, summary[k]))
             elif abs(float(summary[k]) - float(v)) > 0.06:
                 errors.append("%s: сводка %s = %s, по парам %s"
                               % (name, k, summary[k], v))
@@ -909,6 +914,19 @@ def verify_results(results_dir, runs_dir):
         # Встроенные вердикты дают ключенезависимые инварианты:
         # число ничьих и распределение потерь смысла «none» (rev8).
         if has_jud:
+            # Исторические записи хранят сырые метки A/B, новые —
+            # разрешённые with/without; мусорные значения ловятся в обоих.
+            allowed_r = {"with", "without", "tie", "A", "B"}
+            allowed_m = {"with", "without", "none", "A", "B"}
+            for pid, v in jud.items():
+                if (not isinstance(v, dict)
+                        or v.get("readability") not in allowed_r
+                        or v.get("meaning_loss") not in allowed_m):
+                    errors.append("%s: вердикт %s = %r — метки обязаны быть "
+                                  "из %s и %s" % (name, pid, v,
+                                                  sorted(allowed_r),
+                                                  sorted(allowed_m)))
+                    break
             if len(jud) != len(pairs):
                 errors.append("%s: вердиктов %s, пар %s"
                               % (name, len(jud), len(pairs)))
@@ -926,6 +944,52 @@ def verify_results(results_dir, runs_dir):
                 if isinstance(ml, dict) and ml.get("none", 0) != none_cnt:
                     errors.append("%s: meaning_loss.none = %s, по вердиктам "
                                   "%s" % (name, ml.get("none"), none_cnt))
+        # Панельная запись обязана пересчитываться из собственных сырых
+        # вердиктов судей: удаление panel или перепись итогов панели
+        # раньше не ловились (находка rev10, R10-4).
+        njudges = data.get("judges", 1)
+        if not isinstance(njudges, int) or njudges < 1:
+            errors.append("%s: judges обязан быть целым >= 1" % name)
+            njudges = 1
+        panel = data.get("panel")
+        if panel is None and njudges >= 2:
+            errors.append("%s: запись сводилась панелью из %s судей, но "
+                          "panel-блок отсутствует" % (name, njudges))
+        if panel is not None:
+            if not isinstance(panel, dict):
+                errors.append("%s: panel обязан быть объектом" % name)
+            else:
+                verdicts_raw = panel.get("judges_verdicts")
+                pair_ids = sorted(p.get("id") for p in pairs
+                                  if isinstance(p.get("id"), str))
+                if (not isinstance(verdicts_raw, list)
+                        or len(verdicts_raw) < 2):
+                    errors.append("%s: panel.judges_verdicts обязан быть "
+                                  "списком минимум из двух судей" % name)
+                elif (panel.get("judges") != len(verdicts_raw)):
+                    errors.append("%s: panel.judges = %s, сырых вердиктов %s"
+                                  % (name, panel.get("judges"),
+                                     len(verdicts_raw)))
+                elif any(sorted(v) != pair_ids or not isinstance(v, dict)
+                         for v in verdicts_raw):
+                    errors.append("%s: сырые вердикты судей обязаны "
+                                  "покрывать ровно пары записи" % name)
+                else:
+                    try:
+                        exp_comb, exp_dis = panel_majority(verdicts_raw)
+                    except ValueError as exc:
+                        errors.append("%s: panel.judges_verdicts не сводится: "
+                                      "%s" % (name, exc))
+                    else:
+                        if jud != exp_comb:
+                            errors.append("%s: сводные вердикты не сходятся "
+                                          "с большинством сырых" % name)
+                        if panel.get("disagreement_pairs") != exp_dis:
+                            errors.append("%s: disagreement_pairs = %s, по "
+                                          "сырым вердиктам %s"
+                                          % (name,
+                                             panel.get("disagreement_pairs"),
+                                             exp_dis))
     return errors, notes
 
 
@@ -984,9 +1048,20 @@ def main():
         print("    Ключ: %s — судье не показывать." % key_path)
         return 0
 
+    if args.key and not args.judgements:
+        print("%s --key без --judgements: ключ сам по себе не нужен." % FAIL)
+        return 2
     if args.judgements and len(args.judgements) != len(args.key):
         print("%s На каждый файл вердиктов нужен свой --key." % FAIL)
         return 2
+    seen_j = set()
+    for jpath in args.judgements:
+        sig = os.path.abspath(jpath)
+        if sig in seen_j:
+            print("%s дубль файла вердиктов: %s — панель из копий одного "
+                  "судьи недопустима." % (FAIL, jpath))
+            return 2
+        seen_j.add(sig)
     resolved_list = []
     for pos, jpath in enumerate(args.judgements):
         try:
@@ -1050,7 +1125,10 @@ def main():
                  "rule": "большинство; без строгого большинства пара "
                          "уходит в tie/none",
                  "disagreement_pairs": disagreements,
-                 "per_judge": per_judge}
+                 "per_judge": per_judge,
+                 # Сырые вердикты каждого судьи по id пар: сводку можно
+                 # пересчитать из самого репо (находка rev10, R10-4).
+                 "judges_verdicts": resolved_list}
     else:
         judgements = key = None
         rows, summary = aggregate(run)
@@ -1069,7 +1147,10 @@ def main():
         out = os.path.join(HERE, "results", os.path.basename(os.path.normpath(args.run)) + ".json")
     payload = {"run": os.path.basename(os.path.normpath(args.run)),
                "manifest": run["manifest"], "run_sha256": run_fingerprint(run),
-               "summary": summary, "pairs": rows}
+               "summary": summary, "pairs": rows,
+               # Число судей, чьи вердикты легли в запись: panel-блок
+               # обязателен при >= 2 (находка rev10, R10-4).
+               "judges": len(resolved_list) if resolved_list else 1}
     if judgements is not None:
         payload["judgements"] = judgements
     if panel:
