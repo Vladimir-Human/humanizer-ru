@@ -19,9 +19,12 @@ vaniley/grok_answer_mail_ru), 3 Gemini (экспериментальная ст�
 153699618) и 2 Copilot/Bing (ответ в GitHub-issue bestdreambot/freex#11,
 атрибуция заголовком issue, и ответ Bing в режиме Creative из статьи
 Click.ru на Хабре, 2023-03-22). Файлы находятся в `research/raw/` и не
-содержат аналитики. Единственное совпадение на исходном корпусе - `U+FEFF` в
-начале `raw/le-chat/01-fast-канберра.txt`; это BOM файла, не текстовый
-артефакт модели, что прямо предусмотрено в `chatbot-artifacts.md`.
+содержат аналитики. Ожидаемые совпадения на исходном корпусе:
+`U+FEFF` в начале `raw/le-chat/01-fast-канберра.txt` (это BOM файла,
+не текстовый артефакт модели, что прямо предусмотрено в
+`chatbot-artifacts.md`) и живые span-метки Gemini в
+`raw/gemini/02-valans-span.txt` и `raw/gemini/03-eretria-span.txt`
+(маркер `gemini_span` заявлен как ожидаемое совпадение).
 
 ## Human-корпус
 
@@ -33,8 +36,9 @@ Click.ru на Хабре, 2023-03-22). Файлы находятся в `researc
 лексикографическое предисловие в дореформенной орфографии, а также текст,
 написанный в проекте для проверки ложных срабатываний. Все авторы классики
 умерли более семидесяти лет назад; тексты взяты дословными фрагментами
-из Викитеки (обращение 2026-08-11). Каждый файл содержит короткий дословный фрагмент, чтобы
-результат проверки можно было воспроизвести без сетевого доступа.
+из Викитеки (обращение 2026-08-11). Каждый файл содержит короткий
+дословный фрагмент, чтобы результат проверки можно было воспроизвести
+без сетевого доступа.
 
 | Файл | Форма | Автор и источник |
 |---|---|---|
@@ -68,7 +72,7 @@ Click.ru на Хабре, 2023-03-22). Файлы находятся в `researc
 ## Команда проверки
 
 ```sh
-python3 scripts/check_markers.py --scan research/raw/gigachat/*.txt research/raw/alisa/*.txt research/raw/le-chat/*.txt
+python3 scripts/check_markers.py --scan research/raw/gigachat/*.txt research/raw/alisa/*.txt research/raw/le-chat/*.txt research/raw/deepseek/*.txt research/raw/grok/*.txt research/raw/gemini/*.txt research/raw/copilot/*.txt
 python3 scripts/check_markers.py --scan research/validation/human/*.txt
 ```
 
