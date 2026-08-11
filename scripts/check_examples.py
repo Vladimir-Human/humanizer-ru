@@ -66,7 +66,8 @@ NOT_A_FACT = set("""
 """.split())
 
 WORD_RX = re.compile(r"[а-яё]+")
-NUM_RX = re.compile(r"\d+")
+NUM_RX = re.compile(r"\d+(?:[ \u00a0\u202f]\d{3})*")
+_DIGIT_SEP_RX = re.compile(r"[ \u00a0\u202f]")
 CAP_RX = re.compile(r"\b([А-ЯЁ][а-яё]{2,}|[А-ЯЁ]{2,}|[A-Z][A-Za-z]+|[A-Z]{2,})\b")
 SENT_END = ".!?…:—–«»\"'()[]—"
 
@@ -107,11 +108,22 @@ def extract_facts(text):
     clean = _strip_markup(text)
     facts = set()
     for m in NUM_RX.finditer(clean):
-        facts.add(m.group(0))
+        facts.add(_DIGIT_SEP_RX.sub("", m.group(0)))
     low = clean.lower().replace("ё", "е")
-    for w in WORD_RX.findall(low):
+    seq = WORD_RX.findall(low)
+    for w in seq:
         if w in NUMWORDS or w.replace("е", "ё") in NUMWORDS:
             facts.add(w)
+    # Составное числительное («двадцать пять») — один факт, иначе его
+    # компоненты гасятся по отдельности несвязанными числами.
+    run = []
+    for w in seq + [""]:
+        if w in NUMWORDS:
+            run.append(w)
+        else:
+            if len(run) >= 2 and _compound_value(run) is not None:
+                facts.add(" ".join(run))
+            run = []
     starts = _sentence_starts(clean)
     for m in CAP_RX.finditer(clean):
         if m.start() in starts:
@@ -147,8 +159,6 @@ DIGIT_WORD_VARIANTS = {
     "1000000": ("миллион", "миллиона", "миллионов", "миллиону", "миллионом"),
     "1000000000": ("миллиард", "миллиарда", "миллиардов"),
     "1000000000000": ("триллион", "триллиона", "триллионов"),
-    "12": ("дюжина", "дюжины"),
-    "50": ("полсотни",),
     "200": ("двести", "двухсот"),
     "300": ("триста", "трехсот"),
     "400": ("четыреста", "четырехсот"),
@@ -163,12 +173,15 @@ DIGIT_WORD_VARIANTS = {
 DIGIT_WORD_VARIANTS["1000"] += ("тысячам", "тысячах")
 DIGIT_WORD_VARIANTS["1000000"] += ("миллионах",)
 DIGIT_WORD_VARIANTS["100"] += ("сотня", "сотни", "сотен")
+DIGIT_WORD_VARIANTS["12"] += ("дюжина", "дюжины")
+DIGIT_WORD_VARIANTS["50"] += ("полсотни",)
 for _coll, _digit in (("двое", "2"), ("трое", "3"), ("четверо", "4"),
                       ("пятеро", "5"), ("шестеро", "6"), ("семеро", "7"),
                       ("восьмеро", "8"), ("девятеро", "9"), ("десятеро", "10")):
     DIGIT_WORD_VARIANTS[_digit] += (_coll,)
-# Составные числа словами («двадцать пять») цифре не сопоставляются:
-# это осознанная граница детектора, такие подмены по-прежнему ловятся.
+# Все словоформы из карты соответствий — тоже числительные: без этого
+# «двадцати», «пятисот» и т.п. не извлекались и эквивалентность молчала.
+NUMWORDS |= set(w for ws in DIGIT_WORD_VARIANTS.values() for w in ws)
 WORD_TO_DIGIT = {}
 
 # Окончания, которыми словоформа может отличаться от основы: падежные
@@ -196,6 +209,33 @@ for _d, _ws in DIGIT_WORD_VARIANTS.items():
         WORD_TO_DIGIT.setdefault(_w, set()).add(_d)
 
 
+def _compound_value(words):
+    """Значения составного числительного (множество) либо None.
+
+    «двадцать пять» -> {25}, «сто два» -> {102}. Годен только строго
+    убывающий порядок разрядов: «два три» (диапазон) и «пять двадцать»
+    составными не считаются; «две тысячи двадцать» тоже не склеивается
+    (тысяча больше двух) — слова остаются отдельными фактами."""
+    variants = []
+    for w in words:
+        ds = WORD_TO_DIGIT.get(w)
+        if not ds:
+            return None
+        variants.append(sorted(int(d) for d in ds))
+    totals = set()
+
+    def walk(i, total, prev):
+        if i == len(variants):
+            totals.add(total)
+            return
+        for v in variants[i]:
+            if v < prev:
+                walk(i + 1, total + v, v)
+
+    walk(0, 0, 10 ** 12)
+    return totals or None
+
+
 def new_facts_split(before, after):
     """Факты, появившиеся в «После» и отсутствующие в «До».
 
@@ -212,8 +252,17 @@ def new_facts_split(before, after):
     for w in WORD_RX.findall(b_low):
         if w in NUMWORDS:
             b_words.add(w)
+    after_facts = extract_facts(after)
+    comp_words = set()
+    for f in after_facts:
+        if " " in f:
+            comp_words |= set(f.split())
     out = set()
-    for f in extract_facts(after) - b_facts:
+    for f in after_facts - b_facts:
+        if f.lower().replace("ё", "е") in comp_words:
+            # Слово входит в составное числительное «После»; фактом
+            # является составное целиком, а не его части.
+            continue
         fl = f.lower().replace("ё", "е")
         # Факт уже есть в «До» как отдельное слово или отдельное число:
         # сравнение по границам, чтобы «12» не пряталось внутри «1234»,
@@ -230,6 +279,12 @@ def new_facts_split(before, after):
             continue
         if fl.isdigit() and any(w in b_facts for w in DIGIT_WORD_VARIANTS.get(fl, ())):
             continue
+        # Составное числительное, уже присутствующее в «До» цифрой:
+        # «25 дней» и «двадцать пять дней» — один факт.
+        if " " in fl:
+            cvs = _compound_value(fl.split())
+            if cvs and any(str(v) in b_facts for v in cvs):
+                continue
         # Падежные словоформы того же имени — не новый факт: основа
         # совпадает префиксом (Иван -> Ивана, Петров -> Петрова).
         # К числительным префиксное правило не применяется: «пять» —
@@ -243,9 +298,11 @@ def new_facts_split(before, after):
             continue
         out.add(f)
     def _is_numeric(f):
-        # Число цифрой или числительное с известным значением — числовой
-        # факт; подмена значения (20 -> тридцать) остаётся ошибкой.
-        return bool(NUM_RX.fullmatch(f)) or f in WORD_TO_DIGIT
+        # Число цифрой или числительное с известным значением (включая
+        # составные) — числовой факт; подмена значения остаётся ошибкой.
+        if NUM_RX.fullmatch(f) or f in WORD_TO_DIGIT:
+            return True
+        return bool(" " in f and _compound_value(f.split()))
     hard = sorted(f for f in out if _is_numeric(f))
     soft = sorted(f for f in out if not _is_numeric(f))
     return hard, soft
