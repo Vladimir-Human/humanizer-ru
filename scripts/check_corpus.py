@@ -31,7 +31,8 @@ import re
 
 HUMAN_DIR = "research/validation/human"
 RAW_DIRS = ("research/raw/gigachat", "research/raw/alisa", "research/raw/le-chat",
-          "research/raw/deepseek", "research/raw/grok")
+          "research/raw/deepseek", "research/raw/grok",
+          "research/raw/gemini", "research/raw/copilot")
 BOUNDARY_DIR = "research/validation/boundary"
 
 # Ожидаемые совпадения в boundary-корпусе: файл -> множество имён case.
@@ -50,6 +51,10 @@ BOUNDARY_EXPECTED = {
 # и разрешение по одному имени распространялось бы на все одноимённые файлы.
 RAW_EXPECTED = {
     "le-chat/01-fast-канберра.txt": ("zero_width",),  # U+FEFF BOM
+    # Живые span-метки Gemini в правках Русской Википедии (ревизии
+    # 153681223 и 153699618): маркер gemini_span обязан совпасть.
+    "gemini/02-valans-span.txt": ("gemini_span",),
+    "gemini/03-eretria-span.txt": ("gemini_span",),
 }
 
 
