@@ -133,23 +133,46 @@ def _fenced_lines(text):
     inside = set()
     open_line = None
     fence_char = None
+    fence_len = 0
+    item_content_indent = None  # отступ содержимого текущего пункта списка
+    item_rx = re.compile(r"^(\s{0,3})([-*+]|\d{1,9}[.)])(\s+)")
     for n, l in enumerate(text.splitlines(), 1):
         indent = len(l) - len(l.lstrip(" \t\u00a0"))
         stripped = l.lstrip()
-        # CommonMark 4.4: fenced-блок открывается только с отступом до
-        # трёх пробелов; четыре и больше после строки абзаца — ленивое
-        # продолжение абзаца (видимая проза), а не код. Маскировать их —
-        # давать канал укрытия маркеров (находка rev9a R9A-9).
+        marker = item_rx.match(l)
+        if marker:
+            # Пункт списка задаёт отступ содержимого: маркер + до четырёх
+            # пробелов после него (CommonMark 5.2).
+            after = marker.group(3)
+            item_content_indent = (len(marker.group(1)) +
+                                   len(marker.group(2)) +
+                                   (1 if len(after) >= 5 else len(after)))
+        elif stripped and (item_content_indent is None
+                           or indent < item_content_indent):
+            item_content_indent = None
+        # Эффективный отступ: внутри пункта списка содержимое может стоять
+        # на его отступе, и забор там законен (CommonMark 4.4 + 5.2):
+        # до трёх пробелов сверх отступа содержимого (находка rev10, R10-5).
+        eff = indent
+        if item_content_indent and indent >= item_content_indent:
+            eff = indent - item_content_indent
         if fence_char is None:
-            if indent <= 3 and stripped.startswith("```"):
+            if eff <= 3 and stripped.startswith("```"):
                 fence_char, open_line = "`", n
-            elif indent <= 3 and stripped.startswith("~~~"):
+                fence_len = len(stripped) - len(stripped.lstrip("`"))
+            elif eff <= 3 and stripped.startswith("~~~"):
                 fence_char, open_line = "~", n
+                fence_len = len(stripped) - len(stripped.lstrip("~"))
             continue
-        if indent <= 3 and stripped.startswith(fence_char * 3):
+        # Закрывающий забор: тот же символ, не короче открывающего и без
+        # инфо-строки — иначе вложенный ``` закрывал бы внешний ````
+        # (находка rev10, R10-5).
+        close_len = len(stripped) - len(stripped.lstrip(fence_char))
+        if (eff <= 3 and close_len >= fence_len
+                and stripped.rstrip() == fence_char * close_len):
             for k in range(open_line, n + 1):
                 inside.add(k)
-            fence_char, open_line = None, None
+            fence_char, open_line, fence_len = None, None, 0
     return inside
 def _prose(text):
     """Текст без блоков кода и строк таблиц — для количественных осей.
@@ -231,7 +254,8 @@ _INTRO_WORDS = frozenset("""
 # Хвостовые слова многословных вводных конструкций: «по моему мнению»,
 # «к нашему счастью», «в некоторой мере», «в первую очередь», «по сути».
 # Запятая после них закрывает вводную конструкцию, а не перечисление.
-_INTRO_TAILS = frozenset(("мнению", "счастью", "мере", "очереди", "сути"))
+_INTRO_TAILS = {"мнению": ("по",), "счастью": ("к",), "сути": ("по",),
+                "очереди": ("первую",), "мере": ("в",)}
 # Слова, с которых может начинаться вводная конструкция из двух слов:
 # «к сожалению», «в целом». Дефис в «во-первых» сохраняется: полные
 # формы добавлены в _INTRO_WORDS целиком.
@@ -259,7 +283,29 @@ def _intro_before(norm, comma_pos):
     while k >= 0 and norm[k] not in " \t,.;:!?":
         k -= 1
     word = norm[k + 1:end]
-    if word in _INTRO_TAILS:
+
+    def _tail_with_lead(tail_word, pos_before):
+        # Хвост вводной («счастью», «мнению»...) считается вводным только
+        # со своим служебным словом: «к счастью», «по мнению», «по сути»,
+        # «в первую очередь», «в ... мере». Служебное слово может стоять
+        # через одно («к нашему счастью», «по моему мнению», «в некоторой
+        # мере»). Без служебного слова хвост — обычный член перечисления
+        # («рады нашему счастью, успехам, здоровью и благополучию» —
+        # находка rev10, R10-6).
+        kb2 = pos_before
+        for _ in range(2):
+            while kb2 >= 0 and norm[kb2] in " \t":
+                kb2 -= 1
+            end_l = kb2 + 1
+            while kb2 >= 0 and norm[kb2] not in " \t,.;:!?":
+                kb2 -= 1
+            if kb2 + 1 < end_l and norm[kb2 + 1:end_l] in _INTRO_TAILS[tail_word]:
+                return True
+            if kb2 < 0:
+                break
+        return False
+
+    if word in _INTRO_TAILS and _tail_with_lead(word, k):
         return True
     # Хвост многословной вводной может стоять не последним словом перед
     # запятой: «к счастью для всех,». Смотрим три слова назад.
@@ -271,7 +317,8 @@ def _intro_before(norm, comma_pos):
         while kb >= 0 and norm[kb] not in " \t,.;:!?":
             kb -= 1
         if kb + 1 < end_b and norm[kb + 1:end_b] in _INTRO_TAILS:
-            return True
+            if _tail_with_lead(norm[kb + 1:end_b], kb):
+                return True
         if kb < 0:
             break
     if word not in _INTRO_WORDS:
@@ -964,6 +1011,28 @@ def selftest():
     case("отступ 4 пробела — не забор: проза внутри видна детекторам",
          any(d["id"] == "rule_of_three"
              for d in analyze(indent_fence)["findings"]))
+    # Регрессии раунда 10: заборы внутри пунктов списка и вложенные
+    # заборы разной длины (R10-5), асимметрия четвёрок (R10-6).
+    list_fence = ("- пункт с кодом:\n\n"
+                  "    ```\n"
+                  "    Будут доклады, дискуссии и нетворкинг.\n"
+                  "    ```\n")
+    case("забор внутри пункта списка маскируется (CommonMark 5.2)",
+         all(d["id"] != "rule_of_three"
+             for d in analyze(list_fence)["findings"]))
+    nested_fence = ("````markdown\n```\nБудут доклады, дискуссии и "
+                    "нетворкинг.\n```\n````\nХвост.")
+    case("вложенный ``` не закрывает внешний ```` забор",
+         all(d["id"] != "rule_of_three"
+             for d in analyze(nested_fence)["findings"]))
+    quartet_a = "Мы рады нашему счастью, успехам, здоровью и благополучию."
+    quartet_b = "Мы рады нашему урожаю, успехам, здоровью и благополучию."
+    case("четвёрка «счастью, … и благополучию» не считается тройкой",
+         all(d["id"] != "rule_of_three"
+             for d in analyze(quartet_a)["findings"]))
+    case("четвёрки «счастью» и «урожаю» обрабатываются одинаково",
+         [d["id"] for d in analyze(quartet_a)["findings"]]
+         == [d["id"] for d in analyze(quartet_b)["findings"]])
     years = "в 2019, 2020 и 2021 годах. В 2019, 2020 и 2021 годах. " \
             "За 2019, 2020 и 2021 годы."
     case("перечисления годов не считаются правилом трёх",
