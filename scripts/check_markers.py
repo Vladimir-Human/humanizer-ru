@@ -537,10 +537,34 @@ def parity(*md_paths: str) -> int:
             print(f"Не удалось прочитать {md_path}: {exc}", file=sys.stderr)
             return 2
     doc = "\n".join(parts)
-    missing = [name for name, case in CASES.items() if _canon_pattern(case[0]) not in doc]
+    missing, drift = [], []
+    for name, case in CASES.items():
+        pat = _canon_pattern(case[0])
+        if pat not in doc:
+            missing.append(name)
+            continue
+        # Файл, упоминающий кейс как идентификатор (полный спан в
+        # обратных кавычках), обязан нести его точное выражение: порча
+        # одной из дублированных строк роняет гейт, а не проходит за
+        # счёт целого двойника в соседнем файле. Упоминания имени
+        # внутри литералов и прозы не считаются (урок rev6: имена
+        # кейсов входят в сами маркеры вроде `:contentReference[...`).
+        id_ref = "`" + name + "`"
+        for md_path, part in zip(md_paths, parts):
+            if id_ref not in part or pat in part:
+                continue
+            # Правило действует только для табличных строк: проза вправе
+            # называть кейс без выражения (оно живёт в своей строке).
+            for line in part.splitlines():
+                if line.lstrip().startswith("|") and id_ref in line:
+                    drift.append((name, md_path))
+                    break
     for name in missing:
         print(f"ПРОВАЛ parity: {name} отсутствует в {', '.join(md_paths)}")
-    if missing:
+    for name, md_path in drift:
+        print(f"ПРОВАЛ parity: {name} упомянут в {md_path}, но точного "
+              f"выражения там нет")
+    if missing or drift:
         print(f"Паритет: {len(CASES) - len(missing)}/{len(CASES)} задокументировано.")
         return 1
     print(f"Паритет: все {len(CASES)} выражений задокументированы "
