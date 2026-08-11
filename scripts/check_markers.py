@@ -499,7 +499,16 @@ def main() -> int:
 def _canon_pattern(text: str) -> str:
     """Каноническая форма для сравнения regex в коде и в markdown-таблицах."""
     text = text.replace("\\|", "|").replace('\\"', '"').replace("\\'", "'")
-    return "".join(c if ord(c) < 128 else "\\u%04x" % ord(c) for c in text)
+    out = []
+    for c in text:
+        o = ord(c)
+        if o < 128:
+            out.append(c)
+        elif o <= 0xFFFF:
+            out.append("\\u%04x" % o)
+        else:
+            out.append("\\U%08x" % o)
+    return "".join(out)
 
 
 def parity(*md_paths: str) -> int:
