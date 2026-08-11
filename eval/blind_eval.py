@@ -550,9 +550,14 @@ def selftest():
 # (докатная небрежность): сверка отпечатка невозможна, файл остаётся как
 # историческая запись с задокументированным дрейфом.
 KNOWN_DRIFT = {
-    "2026-08-10-genres.json":
+    # Имя файла -> (причина, зафиксированный исторический run_sha256).
+    # Отпечаток обязан совпадать с зафиксированным дословно: исключение
+    # снимает требование «отпечаток = текущий прогон», но не позволяет
+    # подставить произвольный sha (находка rev7).
+    "2026-08-10-genres.json": (
         "рубрика-1: отчёт сгенерирован из состояния манифеста, не попавшего "
         "ни в один коммит (21102e6); рубрика-2 по тому же прогону сходится",
+        "56f26c24f1e62e93b25f455322eb9837a9a53ea4aef7759ea4f68039ef63add6"),
 }
 
 
@@ -630,40 +635,69 @@ def verify_results(results_dir, runs_dir):
                           % (name, run_dir, err))
             continue
         if run_fingerprint(run) != stored:
-            if name in KNOWN_DRIFT:
+            drift = KNOWN_DRIFT.get(name)
+            if drift and stored == drift[1]:
                 notes.append("%s: известный исторический дрейф — %s"
-                             % (name, KNOWN_DRIFT[name]))
+                             % (name, drift[0]))
             else:
                 errors.append("%s: run_sha256 не сходится с прогоном %s — "
                               "каталог прогона или results правили после "
                               "отчёта" % (name, run_dir))
                 continue
         pairs = data.get("pairs") or []
-        # Пары обязаны совпадать с файлами прогона по длинам.
+        # Пары обязаны совпадать с файлами прогона по длинам, числам
+        # маркеров и процентам удаления (пересчёт из фактического
+        # содержимого; маркеры стабильны для всех записанных прогонов).
         for p in pairs:
             pid = p.get("id", "")
             lens = (("source", p.get("len_source")),
                     ("without", p.get("len_without")),
                     ("with", p.get("len_with")))
+            texts = {}
             for sub, want in lens:
                 fp = os.path.join(runs_dir, run_dir, sub, pid + ".txt")
-                if want is None:
-                    continue
                 try:
-                    got = len(read(fp))
+                    content = read(fp)
                 except OSError:
-                    errors.append("%s: в прогоне %s нет файла пары %s/%s"
-                                  % (name, run_dir, sub, pid))
-                    continue
-                if got != want:
-                    errors.append("%s: пара %s/%s — длина %s не сходится "
-                                  "с файлом прогона (%s)"
-                                  % (name, pid, sub, want, got))
+                    content = None
+                    if want is not None:
+                        errors.append("%s: в прогоне %s нет файла пары %s/%s"
+                                      % (name, run_dir, sub, pid))
+                else:
+                    texts[sub] = content
+                    if want is not None and len(content) != want:
+                        errors.append("%s: пара %s/%s — длина %s не сходится "
+                                      "с файлом прогона (%s)"
+                                      % (name, pid, sub, want, len(content)))
+            if set(texts) == {"source", "without", "with"}:
+                m_src = len(scan_markers(texts["source"]))
+                m_wo = len(scan_markers(texts["without"]))
+                m_w = len(scan_markers(texts["with"]))
+                want_m = (p.get("markers_source"), p.get("markers_without"),
+                          p.get("markers_with"))
+                if want_m != (None, None, None) and want_m != (m_src, m_wo, m_w):
+                    errors.append("%s: пара %s — маркеры %s не сходятся с "
+                                  "пересчётом из прогона (%s)"
+                                  % (name, pid, want_m, (m_src, m_wo, m_w)))
+                elif m_src:
+                    for sub, mk, key in (("without", m_wo, "removal_without_pct"),
+                                         ("with", m_w, "removal_with_pct")):
+                        exp_pct = round(100.0 * (m_src - mk) / m_src, 1)
+                        got_pct = p.get(key)
+                        if got_pct is not None and abs(got_pct - exp_pct) > 0.06:
+                            errors.append("%s: пара %s — %s = %s, по маркерам "
+                                          "прогона %s"
+                                          % (name, pid, key, got_pct, exp_pct))
         # Сводка обязана пересчитываться из собственных пар.
         summary = data.get("summary") or {}
         exp = _expected_summary(pairs)
         for k, v in exp.items():
             if k not in summary:
+                # Поле, которое пересчитывается из пар, не может быть
+                # опущено: опускание — способ спрятать неблагоприятное
+                # число (находка rev7).
+                errors.append("%s: в сводке нет пересчитываемого поля %s"
+                              % (name, k))
                 continue
             if v is None:
                 if summary[k] is not None:
