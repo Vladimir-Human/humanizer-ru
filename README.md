@@ -250,7 +250,7 @@ humanizer-ru/
 | `[cite_start]` | Google Gemini (анализ PDF) | `\[cite_start\]` |
 | `[cite: 8]`, `[Cite: 12]`, `[cite: 19, 20, 21]` | Google Gemini (ссылка на фрагменты источника; расширено в v3.2) | `\[[Cc]ite:\s?\d+(?:,\s?\d+)*\]` |
 | `[span_N]` start_span / end_span (новое в v3.5) | Google Gemini (внутренние границы фрагментов) | `\[span_\d+\][\[(](?:start_span\|end_span)[\])]` |
-| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b\u200c\u2060\ufeff]\|(?<![\u1f000-\u1faff\u2600-\u27bf\ufe0f\u1f1e6-\u1f1ff])\u200d(?![\u1f000-\u1faff\u2600-\u27bf\ufe0f\u1f1e6-\u1f1ff])` |
+| Символы нулевой ширины `U+200B`–`U+200D`, `U+2060`, `U+FEFF` | Внутренние разделители цитат и кодировочные артефакты; `U+FEFF` в начале файла - BOM, не ИИ | `[\u200b\u200c\u2060\ufeff]\|(?<![\U0001f000-\U0001faff\u2600-\u27bf\ufe0f\U0001f1e6-\U0001f1ff])\u200d(?![\U0001f000-\U0001faff\u2600-\u27bf\ufe0f\U0001f1e6-\U0001f1ff])` |
 | `:::writing{variant="document" id="68427"}` | Writing-разметка интерфейса; атрибуция версии не подтверждена evidence registry | `:::\w+\{variant` |
 | `turn0image0`, `turn0news0`, `turn0video0`, `turn0ref0` | OpenAI ChatGPT (мультимедиа-инструменты) | `turn\d+(?:image\|news\|video\|ref)\d+` |
 | `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com` |
