@@ -546,6 +546,57 @@ def selftest():
     return 0 if all(results) else 1
 
 
+# Результаты, сгенерированные из состояния прогона, не попавшего в коммиты
+# (докатная небрежность): сверка отпечатка невозможна, файл остаётся как
+# историческая запись с задокументированным дрейфом.
+KNOWN_DRIFT = {
+    "2026-08-10-genres.json":
+        "рубрика-1: отчёт сгенерирован из состояния манифеста, не попавшего "
+        "ни в один коммит (21102e6); рубрика-2 по тому же прогону сходится",
+}
+
+
+def verify_results(results_dir, runs_dir):
+    """run_sha256 каждого results-файла обязан совпадать с прогоном."""
+    errors, notes = [], []
+    run_dirs = [d for d in os.listdir(runs_dir)
+                if os.path.isdir(os.path.join(runs_dir, d))]
+    for name in sorted(os.listdir(results_dir)):
+        if not name.endswith(".json"):
+            continue
+        path = os.path.join(results_dir, name)
+        try:
+            data = json.loads(read(path))
+        except (ValueError, OSError) as exc:
+            errors.append("%s: не читается: %r" % (name, exc))
+            continue
+        stored = data.get("run_sha256")
+        if not stored:
+            notes.append("%s: нет run_sha256 — файл не из слепого прогона" % name)
+            continue
+        stem = name[:-5]
+        matches = [d for d in run_dirs if stem.startswith(d)]
+        if not matches:
+            errors.append("%s: прогон не найден — файл не подтверждается "
+                          "ничем в репозитории" % name)
+            continue
+        run_dir = max(matches, key=len)
+        run, err = load_run(os.path.join(runs_dir, run_dir))
+        if run is None:
+            errors.append("%s: прогон %s не загружается: %s"
+                          % (name, run_dir, err))
+            continue
+        if run_fingerprint(run) != stored:
+            if name in KNOWN_DRIFT:
+                notes.append("%s: известный исторический дрейф — %s"
+                             % (name, KNOWN_DRIFT[name]))
+            else:
+                errors.append("%s: run_sha256 не сходится с прогоном %s — "
+                              "каталог прогона или results правили после "
+                              "отчёта" % (name, run_dir))
+    return errors, notes
+
+
 def main():
     parser = argparse.ArgumentParser(description="Слепая парная оценка эффекта скилла")
     parser.add_argument("--selftest", action="store_true")
@@ -554,10 +605,26 @@ def main():
     parser.add_argument("--judgements", help="заполненные вердикты судьи")
     parser.add_argument("--key", help="ключ обезличивания")
     parser.add_argument("--out", help="куда сохранить отчёт JSON")
+    parser.add_argument("--verify-results", action="store_true",
+                        help="сверить run_sha256 всех results с прогонами")
     args = parser.parse_args()
 
     if args.selftest:
         return selftest()
+
+    if args.verify_results:
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        errors, notes = verify_results(os.path.join(root, "eval", "results"),
+                                       os.path.join(root, "eval", "runs"))
+        for n in notes:
+            print("[NOTE] %s" % n)
+        for e in errors:
+            print("[FAIL] %s" % e)
+        if errors:
+            print("ЦЕЛОСТНОСТЬ: %d нарушений" % len(errors))
+            return 1
+        print("ЦЕЛОСТНОСТЬ: все results подтверждены прогонами")
+        return 0
 
     if not args.run:
         print("Нужен --run или --selftest.")

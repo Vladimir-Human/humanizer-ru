@@ -99,6 +99,9 @@ def _gates(quick, tmpdir):
     gates += [
         ("blind-eval: самопроверка", [PY, "eval/blind_eval.py", "--selftest"],
          ["eval/blind_eval.py"], {0}),
+        ("blind-eval: целостность results", [PY, "eval/blind_eval.py",
+                                              "--verify-results"],
+         ["eval/blind_eval.py", "eval/results", "eval/runs"], {0}),
         # Без парных прогонов гарнесс обязан отказать кодом 2 (fail-closed);
         # при собранных данных законен и код 0 — оба исхода не ошибка.
         ("blind-eval: отказ без данных", [PY, "eval/blind_eval.py"],
