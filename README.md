@@ -139,7 +139,7 @@ humanizer-ru/
 │   ├── HOW-TO-RUN.md             # Протокол прогона и границы метрик
 │   ├── README.md                 # Карта eval и словарь метрик
 │   ├── manifest.v1.json          # Схема нейтрального корпуса
-│   ├── runs/                     # Парные прогоны (9 записей; см. runs/README.md)
+│   ├── runs/                     # Парные прогоны (10 записей; см. runs/README.md)
 │   └── results/                  # Отчёты прогонов целиком, включая
 │                                 #   метрики не в пользу скилла
 ├── .github/workflows/        # CI: regex-check, self-scan, no-anglicisms,
