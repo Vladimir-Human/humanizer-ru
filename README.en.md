@@ -85,6 +85,9 @@ humanizer-ru/
 ├── README.en.md                  # This file
 ├── CHANGELOG.md                  # Full version history
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
+├── CITATION.cff                  # Citation card
+├── LICENSE                       # MIT
+├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── scripts/
 │   ├── check_markers.py          # Regex test runner and text scanner
 │   ├── check_spec.py             # Agent Skills spec compliance
@@ -105,7 +108,9 @@ humanizer-ru/
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
 │   ├── blind_eval.py             # Blind paired evaluation of the skill effect
 │   ├── HOW-TO-RUN.md             # Evaluation protocol and metric boundaries
-│   ├── runs/                     # Paired runs: 2026-07-26-baseline
+│   ├── README.md                 # Eval map and metric glossary
+│   ├── manifest.v1.json          # Neutral corpus schema
+│   ├── runs/                     # Paired runs (9 records; see runs/README.md)
 │   └── results/                  # Full run reports, including metrics that
 │                                 #   do not favour the skill
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints
