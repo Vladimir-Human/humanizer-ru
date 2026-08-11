@@ -175,6 +175,28 @@ DIGIT_WORD_VARIANTS["1000000"] += ("миллионах",)
 DIGIT_WORD_VARIANTS["100"] += ("сотня", "сотни", "сотен")
 DIGIT_WORD_VARIANTS["12"] += ("дюжина", "дюжины")
 DIGIT_WORD_VARIANTS["50"] += ("полсотни",)
+# Порядковые формы в косвенных падежах («в две тысячи двадцатом году»):
+# без них составные годы словами распадались на части.
+for _base, _digit in (("одиннадцать", "11"), ("двенадцать", "12"),
+                      ("тринадцать", "13"), ("четырнадцать", "14"),
+                      ("пятнадцать", "15"), ("шестнадцать", "16"),
+                      ("семнадцать", "17"), ("восемнадцать", "18"),
+                      ("девятнадцать", "19"), ("двадцать", "20"),
+                      ("тридцать", "30"), ("пятьдесят", "50"),
+                      ("шестьдесят", "60"), ("семьдесят", "70"),
+                      ("восемьдесят", "80"), ("девяносто", "90")):
+    if _digit == "90":
+        DIGIT_WORD_VARIANTS[_digit] += ("девяностом", "девяностого")
+    elif _digit in ("50", "60", "70", "80"):
+        _stem = {"50": "пятидесятом", "60": "шестидесятом",
+                 "70": "семидесятом", "80": "восьмидесятом"}[_digit]
+        DIGIT_WORD_VARIANTS[_digit] += (_stem, _stem[:-1] + "ого")
+    elif _digit == "40":
+        pass
+    else:
+        # Основа косвенных падежей без мягкого знака: двадцать -> двадцатом.
+        DIGIT_WORD_VARIANTS[_digit] += (_base[:-1] + "ом", _base[:-1] + "ого")
+DIGIT_WORD_VARIANTS["40"] += ("сороковом", "сорокового", "сороковых")
 for _coll, _digit in (("двое", "2"), ("трое", "3"), ("четверо", "4"),
                       ("пятеро", "5"), ("шестеро", "6"), ("семеро", "7"),
                       ("восьмеро", "8"), ("девятеро", "9"), ("десятеро", "10")):
@@ -209,13 +231,31 @@ for _d, _ws in DIGIT_WORD_VARIANTS.items():
         WORD_TO_DIGIT.setdefault(_w, set()).add(_d)
 
 
+def _eval_numeral(vals):
+    """Значение последовательности числительных либо None.
+
+    Правила русской записи: масштабные слова (тысяча и выше) умножают
+    накопленную перед ними часть («две тысячи двадцать» = 2020,
+    «пятьсот тысяч» = 500000, «тысяча сто» = 1100); внутри части
+    без масштаба разряды строго убывают («два три» — не число)."""
+    total, current, last_small = 0, 0, 10 ** 12
+    for v in vals:
+        if v >= 1000:
+            total += (current if current > 0 else 1) * v
+            current, last_small = 0, 10 ** 12
+        else:
+            if v >= last_small:
+                return None
+            current += v
+            last_small = v
+    return total + current
+
+
 def _compound_value(words):
     """Значения составного числительного (множество) либо None.
 
-    «двадцать пять» -> {25}, «сто два» -> {102}. Годен только строго
-    убывающий порядок разрядов: «два три» (диапазон) и «пять двадцать»
-    составными не считаются; «две тысячи двадцать» тоже не склеивается
-    (тысяча больше двух) — слова остаются отдельными фактами."""
+    «двадцать пять» -> {25}, «две тысячи двадцать» -> {2020}. У слов
+    с несколькими цифровыми соответствиями перебираются варианты."""
     variants = []
     for w in words:
         ds = WORD_TO_DIGIT.get(w)
@@ -224,15 +264,16 @@ def _compound_value(words):
         variants.append(sorted(int(d) for d in ds))
     totals = set()
 
-    def walk(i, total, prev):
+    def walk(i, chosen):
         if i == len(variants):
-            totals.add(total)
+            v = _eval_numeral(chosen)
+            if v is not None:
+                totals.add(v)
             return
         for v in variants[i]:
-            if v < prev:
-                walk(i + 1, total + v, v)
+            walk(i + 1, chosen + [v])
 
-    walk(0, 0, 10 ** 12)
+    walk(0, [])
     return totals or None
 
 
@@ -246,6 +287,7 @@ def new_facts_split(before, after):
     и ложные срабатывания на падежах — предупреждения честнее."""
     b_low = _strip_markup(before).lower().replace("ё", "е")
     b_facts = extract_facts(before)
+    b_compounds = [f for f in b_facts if " " in f]
     b_words = set()
     for m in CAP_RX.finditer(_strip_markup(before)):
         b_words.add(m.group(0).lower().replace("ё", "е"))
@@ -253,15 +295,24 @@ def new_facts_split(before, after):
         if w in NUMWORDS:
             b_words.add(w)
     after_facts = extract_facts(after)
-    comp_words = set()
+    # Сколько раз слово занято в составных числительных «После»: слово
+    # гасится как компонент только если все его вхождения заняты
+    # составными; лишнее вхождение — самостоятельный факт
+    # («двадцать пять рублей и пять копеек»: второе «пять» не гасится).
+    from collections import Counter as _Counter
+    _seq = WORD_RX.findall(_strip_markup(after).lower().replace("ё", "е"))
+    _word_cnt = _Counter(_seq)
+    comp_slots = _Counter()
     for f in after_facts:
         if " " in f:
-            comp_words |= set(f.split())
+            for w in f.split():
+                comp_slots[w] += 1
     out = set()
     for f in after_facts - b_facts:
-        if f.lower().replace("ё", "е") in comp_words:
-            # Слово входит в составное числительное «После»; фактом
-            # является составное целиком, а не его части.
+        fl0 = f.lower().replace("ё", "е")
+        if fl0 in comp_slots and _word_cnt[fl0] <= comp_slots[fl0]:
+            # Все вхождения слова заняты составными числительными;
+            # фактом является составное целиком, а не его части.
             continue
         fl = f.lower().replace("ё", "е")
         # Факт уже есть в «До» как отдельное слово или отдельное число:
@@ -278,6 +329,13 @@ def new_facts_split(before, after):
         if fl in WORD_TO_DIGIT and any(d in b_facts for d in WORD_TO_DIGIT[fl]):
             continue
         if fl.isdigit() and any(w in b_facts for w in DIGIT_WORD_VARIANTS.get(fl, ())):
+            continue
+        # Цифра в «После» против составного словом в «До»:
+        # «двадцать пять» -> «25» тот же факт (обратная эквивалентность).
+        if fl.isdigit() and any(
+                cvs and int(fl) in cvs
+                for cvs in (_compound_value(cb.split())
+                            for cb in b_compounds)):
             continue
         # Составное числительное, уже присутствующее в «До» цифрой:
         # «25 дней» и «двадцать пять дней» — один факт.
