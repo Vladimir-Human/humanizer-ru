@@ -211,6 +211,28 @@ _ITEM = r"[а-яa-z\d\u0451-]+(?:\s+[а-яa-z\d\u0451-]+){0,2}"
 _TRIPLE_RX = re.compile(r"(?<![а-яa-z\d\u0451,-])%s,\s+%s\s+и\s+%s" % (_ITEM, _ITEM, _ITEM))
 
 
+_INTRO_WORDS = frozenset("""
+безусловно конечно разумеется несомненно например кстати однако впрочем
+действительно фактически собственно очевидно бесспорно
+""".split())
+
+
+def _intro_before(norm, comma_pos):
+    """Перед запятой стоит вводное слово — она не признак четвёрки.
+
+    «Безусловно, подход включает анализ, разработку и тестирование»:
+    запятая закрывает вводное слово, а не перечисление; считать такую
+    тройку продолжением списка — терять настоящие совпадения."""
+    k = comma_pos - 1
+    while k >= 0 and norm[k] in " \t":
+        k -= 1
+    end = k + 1
+    while k >= 0 and norm[k] not in " \t,.;:!?":
+        k -= 1
+    word = norm[k + 1:end]
+    return word in _INTRO_WORDS
+
+
 def _rule_of_three(text, lines):
     hits = []
     for lineno, line in enumerate(lines, 1):
@@ -222,7 +244,7 @@ def _rule_of_three(text, lines):
             j = m.start() - 1
             while j >= 0 and norm[j] in " \t":
                 j -= 1
-            if j >= 0 and norm[j] == ",":
+            if j >= 0 and norm[j] == "," and not _intro_before(norm, j):
                 continue
             # Четвёрки вида «X, Y и Z, W» считаются: риторическая тройка
             # в них присутствует, а запятая после третьего члена может
@@ -854,6 +876,11 @@ def selftest():
     case("четвёрки не считаются правилом трёх",
          "rule_of_three" not in analyze(quad)["categories"].get("языковая", [])
          and all(d["id"] != "rule_of_three" for d in analyze(quad)["findings"]))
+    intro = ("Безусловно, подход включает анализ, разработку и тестирование. "
+             "Конечно, план включает анализ, разработку и внедрение. "
+             "Разумеется, цикл включает анализ, разработку и проверку.")
+    case("вводное слово перед тройкой не маскирует правило трёх",
+         any(d["id"] == "rule_of_three" for d in analyze(intro)["findings"]))
     years = "в 2019, 2020 и 2021 годах. В 2019, 2020 и 2021 годах. " \
             "За 2019, 2020 и 2021 годы."
     case("перечисления годов не считаются правилом трёх",
