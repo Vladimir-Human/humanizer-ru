@@ -556,8 +556,49 @@ KNOWN_DRIFT = {
 }
 
 
+def _avg_round(values):
+    values = [v for v in values if v is not None]
+    return round(sum(values) / len(values), 1) if values else None
+
+
+def _expected_summary(pairs):
+    """Пересчёт сводки из встроенных пар (формулы aggregate)."""
+    ai = [p for p in pairs if p.get("kind") == "ai"]
+    human = [p for p in pairs if p.get("kind") == "human"]
+    exp = {
+        "pairs_total": len(pairs),
+        "pairs_ai": len(ai),
+        "pairs_human_control": len(human),
+        "removal_with_pct": _avg_round([p.get("removal_with_pct") for p in ai]),
+        "removal_without_pct": _avg_round([p.get("removal_without_pct") for p in ai]),
+        "false_edits_with": sum(1 for p in human if p.get("touched_with")),
+        "false_edits_without": sum(1 for p in human if p.get("touched_without")),
+        "len_delta_with_pct": _avg_round(
+            [round(100.0 * (p["len_with"] - p["len_source"]) / p["len_source"], 1)
+             for p in pairs if p.get("len_source")]),
+        "len_delta_without_pct": _avg_round(
+            [round(100.0 * (p["len_without"] - p["len_source"]) / p["len_source"], 1)
+             for p in pairs if p.get("len_source")]),
+    }
+    if ai:
+        exp["fact_clean_with_pct"] = round(
+            100.0 * sum(1 for p in ai if not p.get("added_facts_with")) / len(ai), 1)
+        exp["fact_clean_without_pct"] = round(
+            100.0 * sum(1 for p in ai if not p.get("added_facts_without")) / len(ai), 1)
+    return exp
+
+
 def verify_results(results_dir, runs_dir):
-    """run_sha256 каждого results-файла обязан совпадать с прогоном."""
+    """Целостность results: отпечаток, привязка пар к прогону, сводка.
+
+    - run_sha256 обязателен и обязан совпадать с фактическим прогоном;
+    - пары обязаны совпадать с файлами прогона по длинам;
+    - сводка обязана пересчитываться из собственных пар;
+    - вердиктные итоги (readability/meaning) сверяются по сумме.
+    Вердикты судей живут вне репозитория (ключи обезличивания не
+    коммитятся), поэтому читаемость и потери смысла пересчитать из
+    репо нельзя — якорем служит run_sha256 прогона.
+    """
     errors, notes = [], []
     run_dirs = [d for d in os.listdir(runs_dir)
                 if os.path.isdir(os.path.join(runs_dir, d))]
@@ -572,10 +613,12 @@ def verify_results(results_dir, runs_dir):
             continue
         stored = data.get("run_sha256")
         if not stored:
-            notes.append("%s: нет run_sha256 — файл не из слепого прогона" % name)
+            errors.append("%s: нет run_sha256 — отчёт не привязан ни к "
+                          "какому прогону" % name)
             continue
         stem = name[:-5]
-        matches = [d for d in run_dirs if stem.startswith(d)]
+        matches = [d for d in run_dirs
+                   if stem == d or stem.startswith(d + "-")]
         if not matches:
             errors.append("%s: прогон не найден — файл не подтверждается "
                           "ничем в репозитории" % name)
@@ -594,6 +637,49 @@ def verify_results(results_dir, runs_dir):
                 errors.append("%s: run_sha256 не сходится с прогоном %s — "
                               "каталог прогона или results правили после "
                               "отчёта" % (name, run_dir))
+                continue
+        pairs = data.get("pairs") or []
+        # Пары обязаны совпадать с файлами прогона по длинам.
+        for p in pairs:
+            pid = p.get("id", "")
+            lens = (("source", p.get("len_source")),
+                    ("without", p.get("len_without")),
+                    ("with", p.get("len_with")))
+            for sub, want in lens:
+                fp = os.path.join(runs_dir, run_dir, sub, pid + ".txt")
+                if want is None:
+                    continue
+                try:
+                    got = len(read(fp))
+                except OSError:
+                    errors.append("%s: в прогоне %s нет файла пары %s/%s"
+                                  % (name, run_dir, sub, pid))
+                    continue
+                if got != want:
+                    errors.append("%s: пара %s/%s — длина %s не сходится "
+                                  "с файлом прогона (%s)"
+                                  % (name, pid, sub, want, got))
+        # Сводка обязана пересчитываться из собственных пар.
+        summary = data.get("summary") or {}
+        exp = _expected_summary(pairs)
+        for k, v in exp.items():
+            if k not in summary:
+                continue
+            if v is None:
+                if summary[k] is not None:
+                    errors.append("%s: сводка %s = %s, по парам null"
+                                  % (name, k, summary[k]))
+            elif abs(float(summary[k]) - float(v)) > 0.06:
+                errors.append("%s: сводка %s = %s, по парам %s"
+                              % (name, k, summary[k], v))
+        rw = summary.get("readability_wins") or {}
+        if rw and sum(rw.values()) != len(pairs):
+            errors.append("%s: readability_wins в сумме %s, пар %s"
+                          % (name, sum(rw.values()), len(pairs)))
+        ml = summary.get("meaning_loss") or {}
+        if ml and sum(ml.values()) != len(pairs):
+            errors.append("%s: meaning_loss в сумме %s, пар %s"
+                          % (name, sum(ml.values()), len(pairs)))
     return errors, notes
 
 
