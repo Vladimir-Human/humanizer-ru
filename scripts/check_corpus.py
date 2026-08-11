@@ -3,8 +3,9 @@
 
 Гарантирует, что:
 - human corpus (research/validation/human/*.txt) не содержит совпадений regex;
-- AI raw corpus (research/raw/**/*.txt) содержит только известное ожидаемое
-  совпадение (BOM в начале файла Le Chat), не артефакт модели;
+- AI raw corpus (research/raw/**/*.txt) содержит только заявленные
+  ожидаемые совпадения (BOM в начале файла Le Chat и живые span-метки
+  Gemini), не артефакт модели;
 - boundary controls (research/validation/boundary/*.txt) совпадают ровно с
   заявленными ожиданиями (документирует границы ложных срабатываний).
 
