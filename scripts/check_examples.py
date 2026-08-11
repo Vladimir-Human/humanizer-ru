@@ -69,7 +69,6 @@ WORD_RX = re.compile(r"[а-яё]+")
 NUM_RX = re.compile(r"\d+(?:[ \u00a0\u202f]\d{3})*")
 _DIGIT_SEP_RX = re.compile(r"[ \u00a0\u202f]")
 CAP_RX = re.compile(r"\b([А-ЯЁ][а-яё]{2,}|[А-ЯЁ]{2,}|[A-Z][A-Za-z]+|[A-Z]{2,})\b")
-SENT_END = ".!?…:—–«»\"'()[]—"
 
 
 def _strip_markup(text):

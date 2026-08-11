@@ -44,10 +44,12 @@ references/false-positives.md: художественная проза — пр�
                    (#20) считаются признаком, а не оформлением
     --json         машиночитаемый отчёт вместо текстового
     --fail-at N    код возврата 1, если признаков не меньше N (для сценариев CI)
+    --max-cats N   код возврата 1, если находки легли в больше чем N категорий
+                   (для корпусных гейтов: N=0 выключает порог)
 
 Коды возврата: 0 — прогон выполнен (наличие находок не ошибка), 1 — провал
-самопроверки или порога --fail-at, 2 — ошибка входа. Только стандартная
-библиотека.
+самопроверки, порога --fail-at или --max-cats, 2 — ошибка входа. Только
+стандартная библиотека.
 """
 import argparse
 import json
@@ -176,7 +178,6 @@ def _make_phrase_finder(phrases):
     def finder(text, lines):
         return _find_phrases(lines, rx)
 
-    finder.prose_mask = True
     return finder
 
 
@@ -259,10 +260,6 @@ def _rule_of_three(text, lines):
                 continue
             hits.append((lineno, line.strip()[:90]))
     return hits
-
-
-_mitigation.prose_mask = True
-_neg_parallel.prose_mask = True
 
 
 _UNAVAILABLE = _phrase_rx(["не раскрывается", "не раскрываются",
@@ -790,7 +787,7 @@ def selftest():
     # 2. Харнесс умеет падать: детектор с мёртвой лексикой не проходит pos.
     dead = dict(REGISTRY[0])
     dead["finder"] = _make_phrase_finder(["\u00a7\u00a7\u043d\u0435\u0442-\u0442\u0430\u043a\u043e\u0439-\u0444\u0440\u0430\u0437\u044b\u00a7\u00a7"])
-    case("харнесс ловит обнулённый детектор", not fires(dead, dead["pos"]))
+    case("гарнесс ловит обнулённый детектор", not fires(dead, dead["pos"]))
 
     # 3. Признак считается один раз на текст.
     rep = analyze("Эксперты считают одно. Эксперты считают другое. "
