@@ -551,19 +551,20 @@ def parity(*md_paths: str) -> int:
         # кейсов входят в сами маркеры вроде `:contentReference[...`).
         id_ref = "`" + name + "`"
         for md_path, part in zip(md_paths, parts):
-            if id_ref not in part or pat in part:
-                continue
-            # Правило действует только для табличных строк: проза вправе
-            # называть кейс без выражения (оно живёт в своей строке).
+            # Проверка построчная: каждая табличная строка, называющая
+            # кейс полным идентификатором, обязана нести его точное
+            # выражение в этой же строке. Корректный паттерн в прозе
+            # того же файла испорченную строку не оправдывает (rev7),
+            # а порча единственной строки не прячется за двойником.
             for line in part.splitlines():
-                if line.lstrip().startswith("|") and id_ref in line:
+                if line.lstrip().startswith("|") and id_ref in line \
+                        and pat not in line:
                     drift.append((name, md_path))
-                    break
     for name in missing:
         print(f"ПРОВАЛ parity: {name} отсутствует в {', '.join(md_paths)}")
     for name, md_path in drift:
-        print(f"ПРОВАЛ parity: {name} упомянут в {md_path}, но точного "
-              f"выражения там нет")
+        print(f"ПРОВАЛ parity: табличная строка с {name} в {md_path} "
+              f"не несёт точного выражения")
     if missing or drift:
         print(f"Паритет: {len(CASES) - len(missing)}/{len(CASES)} задокументировано.")
         return 1
