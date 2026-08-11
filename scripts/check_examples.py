@@ -242,8 +242,12 @@ def new_facts_split(before, after):
         ):
             continue
         out.add(f)
-    hard = sorted(f for f in out if NUM_RX.fullmatch(f))
-    soft = sorted(f for f in out if not NUM_RX.fullmatch(f))
+    def _is_numeric(f):
+        # Число цифрой или числительное с известным значением — числовой
+        # факт; подмена значения (20 -> тридцать) остаётся ошибкой.
+        return bool(NUM_RX.fullmatch(f)) or f in WORD_TO_DIGIT
+    hard = sorted(f for f in out if _is_numeric(f))
+    soft = sorted(f for f in out if not _is_numeric(f))
     return hard, soft
 
 
