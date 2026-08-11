@@ -22,7 +22,7 @@
 |---|---|---|---|
 | `2026-08-10-genres-rubric2.json` | `2026-08-10-genres` | 3:1:6 | рубрика-2 вместо рубрики-1 |
 | `2026-08-10-deep-rewrite-samefamily.json` | `2026-08-10-deep-rewrite` | 5:0:5 | панель той же модельной семьи |
-| `2026-08-07-markers-after.json` | `2026-08-07-markers` | 0:3:3 | точка «после» переработки rewrite-guide |
+| `2026-08-07-markers-after.json` | `2026-08-07-markers-after` | 0:3:3 | точка «после» переработки rewrite-guide |
 
 Подробности по базовой линии — ниже; по остальным прогона — в их
 `manifest.json` и `analysis.md`, сводные числа — в `eval/results/`.
