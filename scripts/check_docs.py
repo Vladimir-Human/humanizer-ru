@@ -71,7 +71,8 @@ TOP_LEVEL_MANIFEST = frozenset((
 def _tracked_top_levels(root):
  proc = None
  try:
-  proc = subprocess.run(["git", "-C", root, "ls-files"],
+  proc = subprocess.run(["git", "-c", "core.quotepath=false", "-C", root,
+                         "ls-files"],
                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
  except OSError:
   proc = None
