@@ -166,18 +166,19 @@ def selftest():
 
 
 def stray_references(root):
-    """Чужие .md в references/: файл вне семейств обязан быть упомянутым.
+    """Чужие файлы в references/: вне семейств обязаны быть упомянутыми.
 
     Каталог references/ целиком уходит в релизный архив; подброшенный
-    файл, который нигде не назван, уехал бы туда незамеченным
-    (урок rev4: мусорные references/trash-*.md проходили зелёным).
+    файл любого расширения в любом подкаталоге, который нигде не назван,
+    уехал бы туда незамеченным (урок rev4/rev5: мусорные файлы проходили
+    зелёным через верхний уровень, вложенный каталог и не-.md).
+    Упоминанием считается имя в обратных кавычках или в цели
+    markdown-ссылки; простое вхождение подстрокой в текст не считается.
     """
     texts = {}
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d != ".git"]
         for name in filenames:
-            if not name.endswith(".md"):
-                continue
             path = os.path.join(dirpath, name)
             try:
                 with io.open(path, encoding="utf-8") as fh:
@@ -189,16 +190,22 @@ def stray_references(root):
     refs_dir = os.path.join(root, "references")
     if not os.path.isdir(refs_dir):
         return errors
-    for name in sorted(os.listdir(refs_dir)):
-        if not name.endswith(".md"):
-            continue
-        if any(fnmatch.fnmatch(name, pat) for pat in fam_patterns):
-            continue
-        path = os.path.join(refs_dir, name)
-        if any(name in t for p, t in texts.items() if p != path):
-            continue
-        errors.append("лишний файл %s не упомянут ни в одном документе"
-                      % ("references/" + name))
+    for dirpath, dirnames, filenames in os.walk(refs_dir):
+        dirnames.sort()
+        for name in sorted(filenames):
+            path = os.path.join(dirpath, name)
+            rel = os.path.relpath(path, root).replace(os.sep, "/")
+            if dirpath == refs_dir and name.endswith(".md") and any(
+                    fnmatch.fnmatch(name, pat) for pat in fam_patterns):
+                continue
+            esc = re.escape(name)
+            mention_rx = re.compile(
+                r"`%s`|\]\((?:references/|\./)?%s\)" % (esc, esc))
+            if any(mention_rx.search(t) for p, t in texts.items()
+                   if p != path):
+                continue
+            errors.append("лишний файл %s не упомянут ни в одном документе"
+                          % rel)
     return errors
 
 
