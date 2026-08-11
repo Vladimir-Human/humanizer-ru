@@ -599,10 +599,16 @@ def verify_results(results_dir, runs_dir):
     - run_sha256 обязателен и обязан совпадать с фактическим прогоном;
     - пары обязаны совпадать с файлами прогона по длинам;
     - сводка обязана пересчитываться из собственных пар;
-    - вердиктные итоги (readability/meaning) сверяются по сумме.
+    - состав и kind пар сверяются с манифестом, дубликаты id запрещены;
+    - touched_* человеческих пар пересчитывается из файлов прогона;
+    - вердиктные итоги сверяются по сумме, ничьим и «none».
     Вердикты судей живут вне репозитория (ключи обезличивания не
-    коммитятся), поэтому читаемость и потери смысла пересчитать из
-    репо нельзя — якорем служит run_sha256 прогона.
+    коммитятся), поэтому распределение читаемости with/without
+    пересчитать из репо нельзя — его защищает ключ обезличивания.
+    Граница: added_facts_* выводятся детектором фактов версии на момент
+    прогона и механически не пересчитываются из файлов — проверяется
+    только тип (список строк); подмена значений ловится лишь сверкой
+    сводки fact_clean.
     """
     errors, notes = [], []
     run_dirs = [d for d in os.listdir(runs_dir)
@@ -669,33 +675,69 @@ def verify_results(results_dir, runs_dir):
                         errors.append("%s: пара %s/%s — длина %s не сходится "
                                       "с файлом прогона (%s)"
                                       % (name, pid, sub, want, len(content)))
-            required = ("markers_source", "markers_without", "markers_with",
-                        "removal_without_pct", "removal_with_pct",
-                        "added_facts_without", "added_facts_with",
-                        "len_source", "len_without", "len_with")
-            for field in required:
-                if field not in p:
-                    errors.append("%s: пара %s — нет обязательного поля %s"
+            if not isinstance(pid, str) or not pid:
+                errors.append("%s: у пары нет читаемого id" % name)
+                continue
+            kind = p.get("kind")
+            if kind not in ("ai", "human"):
+                errors.append("%s: пара %s — kind должен быть ai или human"
+                              % (name, pid))
+            for field in ("markers_source", "markers_without",
+                          "markers_with", "len_source", "len_without",
+                          "len_with"):
+                if not isinstance(p.get(field), int):
+                    errors.append("%s: пара %s — поле %s обязано быть целым "
+                                  "(null приравнивается к отсутствию: "
+                                  "значения восстановимы из прогона)"
                                   % (name, pid, field))
+            for field in ("removal_without_pct", "removal_with_pct"):
+                val = p.get(field)
+                if val is not None and not isinstance(val, (int, float)):
+                    errors.append("%s: пара %s — %s обязан быть числом или "
+                                  "null" % (name, pid, field))
+            for field in ("added_facts_without", "added_facts_with"):
+                val = p.get(field)
+                if not isinstance(val, list) or not all(
+                        isinstance(x, str) for x in val):
+                    errors.append("%s: пара %s — %s обязан быть списком "
+                                  "строк" % (name, pid, field))
             if set(texts) == {"source", "without", "with"}:
                 m_src = len(scan_markers(texts["source"]))
                 m_wo = len(scan_markers(texts["without"]))
                 m_w = len(scan_markers(texts["with"]))
                 want_m = (p.get("markers_source"), p.get("markers_without"),
                           p.get("markers_with"))
-                if want_m != (None, None, None) and want_m != (m_src, m_wo, m_w):
+                if want_m != (m_src, m_wo, m_w):
                     errors.append("%s: пара %s — маркеры %s не сходятся с "
                                   "пересчётом из прогона (%s)"
                                   % (name, pid, want_m, (m_src, m_wo, m_w)))
-                elif m_src:
+                if m_src:
                     for sub, mk, key in (("without", m_wo, "removal_without_pct"),
                                          ("with", m_w, "removal_with_pct")):
                         exp_pct = round(100.0 * (m_src - mk) / m_src, 1)
                         got_pct = p.get(key)
-                        if got_pct is not None and abs(got_pct - exp_pct) > 0.06:
+                        if got_pct is None:
+                            errors.append("%s: пара %s — %s не может быть "
+                                          "null при %s маркерах источника"
+                                          % (name, pid, key, m_src))
+                        elif abs(got_pct - exp_pct) > 0.06:
                             errors.append("%s: пара %s — %s = %s, по маркерам "
                                           "прогона %s"
                                           % (name, pid, key, got_pct, exp_pct))
+            if kind == "human" and set(texts) == {"source", "without", "with"}:
+                exp_tw = norm(texts["source"]) != norm(texts["without"])
+                exp_twith = norm(texts["source"]) != norm(texts["with"])
+                for key, exp_t in (("touched_without", exp_tw),
+                                   ("touched_with", exp_twith)):
+                    got_t = p.get(key)
+                    if got_t is None:
+                        errors.append("%s: human-пара %s — нет обязательного "
+                                      "поля %s" % (name, pid, key))
+                    elif bool(got_t) != exp_t:
+                        errors.append("%s: human-пара %s — %s = %s, по "
+                                      "файлам прогона %s (обнуление прячет "
+                                      "ложные правки на живом тексте)"
+                                      % (name, pid, key, got_t, exp_t))
         # Состав пар обязан совпадать с манифестом прогона: призрачные
         # пары и выбрасывание неугодных пар меняют сводку (находка rev8).
         man_pairs = run.get("pairs") if isinstance(run, dict) else None
@@ -703,7 +745,19 @@ def verify_results(results_dir, runs_dir):
             man_pairs = run.get("manifest", {}).get("pairs")
         if isinstance(man_pairs, list):
             man_ids = {e.get("id") for e in man_pairs if isinstance(e, dict)}
-            res_ids = {p.get("id") for p in pairs}
+            man_kind = {e.get("id"): e.get("kind") for e in man_pairs
+                        if isinstance(e, dict)}
+            res_ids = {p.get("id") for p in pairs
+                       if isinstance(p.get("id"), str)}
+            if len(res_ids) != len(pairs):
+                seen, dups = set(), []
+                for p in pairs:
+                    pid = p.get("id")
+                    if pid in seen:
+                        dups.append(str(pid))
+                    seen.add(pid)
+                errors.append("%s: повтор id пары (дубль смещает средние): "
+                              "%s" % (name, ", ".join(sorted(dups))))
             ghost = sorted(man_ids - res_ids)
             extra = sorted(res_ids - man_ids)
             if ghost:
@@ -712,6 +766,13 @@ def verify_results(results_dir, runs_dir):
             if extra:
                 errors.append("%s: в results пары, которых нет в манифесте "
                               "прогона: %s" % (name, ", ".join(extra)))
+            for p in pairs:
+                pid = p.get("id")
+                if pid in man_kind and p.get("kind") != man_kind[pid]:
+                    errors.append("%s: пара %s — kind %s, в манифесте %s "
+                                  "(перевод ai в human выводит пару из "
+                                  "средних)" % (name, pid, p.get("kind"),
+                                                man_kind[pid]))
         # Сводка обязана пересчитываться из собственных пар.
         summary = data.get("summary") or {}
         exp = _expected_summary(pairs)
@@ -730,31 +791,45 @@ def verify_results(results_dir, runs_dir):
             elif abs(float(summary[k]) - float(v)) > 0.06:
                 errors.append("%s: сводка %s = %s, по парам %s"
                               % (name, k, summary[k], v))
-        rw = summary.get("readability_wins") or {}
-        if rw and sum(rw.values()) != len(pairs):
+        # Взаимная обязательность: сводка без вердиктов (и наоборот) —
+        # способ заглушить инварианты (находка rev9a).
+        rw = summary.get("readability_wins")
+        ml = summary.get("meaning_loss")
+        jud = data.get("judgements")
+        has_jud = isinstance(jud, dict) and bool(jud)
+        if (rw is not None or ml is not None) and not has_jud:
+            errors.append("%s: в сводке есть итоги судейства, но встроенные "
+                          "вердикты отсутствуют или пусты" % name)
+        if has_jud and (rw is None or ml is None):
+            errors.append("%s: есть вердикты, но сводка без %s"
+                          % (name, "readability_wins/meaning_loss"
+                             if rw is None and ml is None
+                             else ("readability_wins" if rw is None
+                                   else "meaning_loss")))
+        if isinstance(rw, dict) and sum(rw.values()) != len(pairs):
             errors.append("%s: readability_wins в сумме %s, пар %s"
                           % (name, sum(rw.values()), len(pairs)))
-        ml = summary.get("meaning_loss") or {}
-        if ml and sum(ml.values()) != len(pairs):
+        if isinstance(ml, dict) and sum(ml.values()) != len(pairs):
             errors.append("%s: meaning_loss в сумме %s, пар %s"
                           % (name, sum(ml.values()), len(pairs)))
         # Встроенные вердикты дают ключенезависимые инварианты:
         # число ничьих и распределение потерь смысла «none» (rev8).
-        jud = data.get("judgements")
-        if isinstance(jud, dict):
+        if has_jud:
             if len(jud) != len(pairs):
                 errors.append("%s: вердиктов %s, пар %s"
                               % (name, len(jud), len(pairs)))
             else:
                 tie_cnt = sum(1 for v in jud.values()
-                              if v.get("readability") == "tie")
+                              if isinstance(v, dict)
+                              and v.get("readability") == "tie")
                 none_cnt = sum(1 for v in jud.values()
-                               if v.get("meaning_loss") == "none")
-                if rw and rw.get("tie", 0) != tie_cnt:
+                               if isinstance(v, dict)
+                               and v.get("meaning_loss") == "none")
+                if isinstance(rw, dict) and rw.get("tie", 0) != tie_cnt:
                     errors.append("%s: readability_wins.tie = %s, по "
                                   "вердиктам %s" % (name, rw.get("tie"),
                                                     tie_cnt))
-                if ml and ml.get("none", 0) != none_cnt:
+                if isinstance(ml, dict) and ml.get("none", 0) != none_cnt:
                     errors.append("%s: meaning_loss.none = %s, по вердиктам "
                                   "%s" % (name, ml.get("none"), none_cnt))
     return errors, notes
