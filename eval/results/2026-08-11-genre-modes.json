@@ -218,6 +218,7 @@
       "provenance": "В. И. Даль, предисловие к 3-му изданию словаря, Викитека"
     }
   ],
+  "judges": 3,
   "judgements": {
     "ai-copilot-audit": {
       "readability": "with",
@@ -299,6 +300,110 @@
           "with": 0,
           "without": 1,
           "none": 7
+        }
+      }
+    ],
+    "judges_verdicts": [
+      {
+        "ai-copilot-audit": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-krylyshki": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "human-dal-predvaritelnoe": {
+          "readability": "with",
+          "meaning_loss": "without"
+        },
+        "ai-grok-gran": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-gemini-utopia": {
+          "readability": "tie",
+          "meaning_loss": "none"
+        },
+        "human-gercen-byloe": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-otrava": {
+          "readability": "without",
+          "meaning_loss": "none"
+        },
+        "human-gilyarovsky-moskva": {
+          "readability": "with",
+          "meaning_loss": "none"
+        }
+      },
+      {
+        "ai-gemini-utopia": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "human-gercen-byloe": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-copilot-audit": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-otrava": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-krylyshki": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "human-dal-predvaritelnoe": {
+          "readability": "with",
+          "meaning_loss": "without"
+        },
+        "human-gilyarovsky-moskva": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-grok-gran": {
+          "readability": "with",
+          "meaning_loss": "none"
+        }
+      },
+      {
+        "ai-gemini-utopia": {
+          "readability": "tie",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-otrava": {
+          "readability": "without",
+          "meaning_loss": "none"
+        },
+        "ai-grok-gran": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "human-gercen-byloe": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "human-dal-predvaritelnoe": {
+          "readability": "without",
+          "meaning_loss": "without"
+        },
+        "ai-copilot-audit": {
+          "readability": "with",
+          "meaning_loss": "none"
+        },
+        "ai-deepseek-krylyshki": {
+          "readability": "without",
+          "meaning_loss": "none"
+        },
+        "human-gilyarovsky-moskva": {
+          "readability": "with",
+          "meaning_loss": "none"
         }
       }
     ]
