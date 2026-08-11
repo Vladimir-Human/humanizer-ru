@@ -119,17 +119,28 @@ _EMOJI_RX = "[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u2705\u2728\u274C\
 
 
 def _fenced_lines(text):
-    """Номера строк внутри блоков кода ``` — их детекторы разметки
-    не считают: bash-комментарий «# раздел» не заголовок."""
+    """Номера строк внутри блоков кода (``` и ~~~).
+
+    Содержимое fenced-блоков — цитата, а не стиль автора, поэтому его
+    не считает ни один детектор: ни разметки (bash-комментарий
+    «# раздел» не заголовок), ни лексики. Забор закрывается тем же
+    символом, которым открыт; отступ перед забором (включая неразрывные
+    пробелы-артефакты) допускается."""
     inside = set()
-    fence = False
+    fence_char = None
     for n, l in enumerate(text.splitlines(), 1):
-        if l.lstrip().startswith("```"):
-            fence = not fence
-            inside.add(n)
+        stripped = l.lstrip()
+        if fence_char is None:
+            if stripped.startswith("```"):
+                fence_char = "`"
+                inside.add(n)
+            elif stripped.startswith("~~~"):
+                fence_char = "~"
+                inside.add(n)
             continue
-        if fence:
-            inside.add(n)
+        inside.add(n)
+        if stripped.startswith(fence_char * 3):
+            fence_char = None
     return inside
 
 
@@ -662,7 +673,11 @@ def analyze(text, genre="neutral", plain_text=False):
         return report
     suppressed = SUPPRESS[genre]
     genre_excl = GENRE_PHRASE_EXCLUDES.get(genre, {})
-    masked_lines = None
+    # Содержимое fenced-блоков — цитата, а не стиль автора: все
+    # детекторы работают по маскированным строкам (номера строк
+    # сохраняются, маскировка только гасит содержимое).
+    fenced = _fenced_lines(text)
+    masked_lines = ["" if n in fenced else l for n, l in enumerate(lines, 1)]
     triggered_patterns = {}
     for det in REGISTRY:
         if det["id"] in suppressed:
@@ -674,16 +689,7 @@ def analyze(text, genre="neutral", plain_text=False):
         if excl and "phrases" in det:
             finder = _make_phrase_finder([p for p in det["phrases"]
                                            if p not in excl])
-        if getattr(finder, "prose_mask", False):
-            # Фразовые детекторы не читают блоки кода: JSON с «в контексте»
-            # внутри fenced-блока — цитата, а не стиль автора.
-            if masked_lines is None:
-                fenced = _fenced_lines(text)
-                masked_lines = ["" if n in fenced else l
-                                for n, l in enumerate(lines, 1)]
-            hits = finder(text, masked_lines)
-        else:
-            hits = finder(text, lines)
+        hits = finder(text, masked_lines)
         if len(hits) >= det["min_hits"]:
             report["findings"].append({
                 "id": det["id"], "category": det["cat"], "pattern": det["pat"],
