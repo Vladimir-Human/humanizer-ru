@@ -110,7 +110,7 @@ humanizer-ru/
 │   ├── HOW-TO-RUN.md             # Evaluation protocol and metric boundaries
 │   ├── README.md                 # Eval map and metric glossary
 │   ├── manifest.v1.json          # Neutral corpus schema
-│   ├── runs/                     # Paired runs (9 records; see runs/README.md)
+│   ├── runs/                     # Paired runs (10 records; see runs/README.md)
 │   └── results/                  # Full run reports, including metrics that
 │                                 #   do not favour the skill
 ├── references/                   # Full pattern descriptions, fixtures, model fingerprints

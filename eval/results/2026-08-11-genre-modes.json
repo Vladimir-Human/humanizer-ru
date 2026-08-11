@@ -1,0 +1,308 @@
+{
+  "run": "2026-08-11-genre-modes",
+  "manifest": {
+    "run": "2026-08-11-genre-modes",
+    "model": "экзекьюторы — семейство оркестратора; судьи — GLM-5.2",
+    "skill_version": "v3.9.0-89-geccb791",
+    "prompt": "жанровый прогон приёмки S2/S3: источники — машинные тексты новых жанров и человеческий контроль",
+    "judge": "панель 3 судьи GLM-5.2, большинство; плюс пересудейство для замера позиционного шума",
+    "note": "GOALS: судейство только жанровых прогонов; маркерные решает механика",
+    "pairs": [
+      {
+        "id": "ai-gemini-utopia",
+        "kind": "ai",
+        "provenance": "Gemini 2.5 Pro, экспериментальная вики-статья (ревизия 145078970)"
+      },
+      {
+        "id": "ai-deepseek-krylyshki",
+        "kind": "ai",
+        "provenance": "DeepSeek-V3, Хабр 877496 (рецепты)"
+      },
+      {
+        "id": "ai-grok-gran",
+        "kind": "ai",
+        "provenance": "grok-3-latest, HF vaniley/grok_answer_mail_ru"
+      },
+      {
+        "id": "ai-copilot-audit",
+        "kind": "ai",
+        "provenance": "Microsoft Copilot, issue bestdreambot/freex#11"
+      },
+      {
+        "id": "ai-deepseek-otrava",
+        "kind": "ai",
+        "provenance": "DeepSeek-V3, Хабр 877496 (галлюцинация-синонимия)"
+      },
+      {
+        "id": "human-gercen-byloe",
+        "kind": "human",
+        "provenance": "А. И. Герцен, «Былое и думы», Викитека"
+      },
+      {
+        "id": "human-gilyarovsky-moskva",
+        "kind": "human",
+        "provenance": "В. А. Гиляровский, «Москва и москвичи», Викитека"
+      },
+      {
+        "id": "human-dal-predvaritelnoe",
+        "kind": "human",
+        "provenance": "В. И. Даль, предисловие к 3-му изданию словаря, Викитека"
+      }
+    ]
+  },
+  "run_sha256": "b5f74ba4653b2a07af9eaa765f0895f7a20a7ea43950f7b919b8b8f5c4339734",
+  "summary": {
+    "pairs_total": 8,
+    "pairs_ai": 5,
+    "pairs_human_control": 3,
+    "removal_with_pct": null,
+    "removal_without_pct": null,
+    "fact_clean_with_pct": 100.0,
+    "fact_clean_without_pct": 60.0,
+    "false_edits_with": 0,
+    "false_edits_without": 3,
+    "len_delta_with_pct": -11.9,
+    "len_delta_without_pct": -14.0,
+    "readability_wins": {
+      "with": 6,
+      "without": 1,
+      "tie": 1
+    },
+    "meaning_loss": {
+      "with": 0,
+      "without": 0,
+      "none": 8
+    }
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "Атлантиду",
+        "Вести",
+        "Грядущая",
+        "Историю",
+        "Новую",
+        "два"
+      ],
+      "added_facts_with": [],
+      "len_source": 2302,
+      "len_without": 2062,
+      "len_with": 2051,
+      "id": "ai-gemini-utopia",
+      "provenance": "Gemini 2.5 Pro, экспериментальная вики-статья (ревизия 145078970)"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1162,
+      "len_without": 1146,
+      "len_with": 974,
+      "id": "ai-deepseek-krylyshki",
+      "provenance": "DeepSeek-V3, Хабр 877496 (рецепты)"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "второй"
+      ],
+      "added_facts_with": [],
+      "len_source": 3071,
+      "len_without": 2782,
+      "len_with": 2555,
+      "id": "ai-grok-gran",
+      "provenance": "grok-3-latest, HF vaniley/grok_answer_mail_ru"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2083,
+      "len_without": 1961,
+      "len_with": 1281,
+      "id": "ai-copilot-audit",
+      "provenance": "Microsoft Copilot, issue bestdreambot/freex#11"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 777,
+      "len_without": 679,
+      "len_with": 677,
+      "id": "ai-deepseek-otrava",
+      "provenance": "DeepSeek-V3, Хабр 877496 (галлюцинация-синонимия)"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "двадцати пяти",
+        "четыре"
+      ],
+      "added_facts_with": [],
+      "len_source": 1259,
+      "len_without": 1287,
+      "len_with": 1259,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-gercen-byloe",
+      "provenance": "А. И. Герцен, «Былое и думы», Викитека"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "Москвы"
+      ],
+      "added_facts_with": [],
+      "len_source": 1775,
+      "len_without": 1786,
+      "len_with": 1775,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-gilyarovsky-moskva",
+      "provenance": "В. А. Гиляровский, «Москва и москвичи», Викитека"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "Даля"
+      ],
+      "added_facts_with": [],
+      "len_source": 945,
+      "len_without": 234,
+      "len_with": 945,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-dal-predvaritelnoe",
+      "provenance": "В. И. Даль, предисловие к 3-му изданию словаря, Викитека"
+    }
+  ],
+  "judgements": {
+    "P001": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "P002": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "P003": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "P004": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "P005": {
+      "readability": "tie",
+      "meaning_loss": "none"
+    },
+    "P006": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "P007": {
+      "readability": "without",
+      "meaning_loss": "none"
+    },
+    "P008": {
+      "readability": "with",
+      "meaning_loss": "none"
+    }
+  },
+  "panel": {
+    "judges": 3,
+    "rule": "большинство; без строгого большинства пара уходит в tie/none",
+    "disagreement_pairs": [
+      "P001",
+      "P002",
+      "P003",
+      "P005",
+      "P006",
+      "P007"
+    ],
+    "per_judge": [
+      {
+        "judge": 1,
+        "readability_wins": {
+          "with": 6,
+          "without": 1,
+          "tie": 1
+        },
+        "meaning_loss": {
+          "with": 0,
+          "without": 1,
+          "none": 7
+        }
+      },
+      {
+        "judge": 2,
+        "readability_wins": {
+          "with": 8,
+          "without": 0,
+          "tie": 0
+        },
+        "meaning_loss": {
+          "with": 0,
+          "without": 1,
+          "none": 7
+        }
+      },
+      {
+        "judge": 3,
+        "readability_wins": {
+          "with": 4,
+          "without": 3,
+          "tie": 1
+        },
+        "meaning_loss": {
+          "with": 0,
+          "without": 1,
+          "none": 7
+        }
+      }
+    ]
+  }
+}
