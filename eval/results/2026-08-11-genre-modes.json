@@ -70,8 +70,8 @@
     },
     "meaning_loss": {
       "with": 0,
-      "without": 0,
-      "none": 8
+      "without": 1,
+      "none": 7
     }
   },
   "pairs": [
@@ -219,35 +219,35 @@
     }
   ],
   "judgements": {
-    "P001": {
+    "ai-copilot-audit": {
       "readability": "with",
       "meaning_loss": "none"
     },
-    "P002": {
+    "ai-deepseek-krylyshki": {
       "readability": "with",
       "meaning_loss": "none"
     },
-    "P003": {
-      "readability": "with",
-      "meaning_loss": "none"
-    },
-    "P004": {
-      "readability": "with",
-      "meaning_loss": "none"
-    },
-    "P005": {
-      "readability": "tie",
-      "meaning_loss": "none"
-    },
-    "P006": {
-      "readability": "with",
-      "meaning_loss": "none"
-    },
-    "P007": {
+    "ai-deepseek-otrava": {
       "readability": "without",
       "meaning_loss": "none"
     },
-    "P008": {
+    "ai-gemini-utopia": {
+      "readability": "tie",
+      "meaning_loss": "none"
+    },
+    "ai-grok-gran": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "human-dal-predvaritelnoe": {
+      "readability": "with",
+      "meaning_loss": "without"
+    },
+    "human-gercen-byloe": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "human-gilyarovsky-moskva": {
       "readability": "with",
       "meaning_loss": "none"
     }
@@ -256,12 +256,10 @@
     "judges": 3,
     "rule": "большинство; без строгого большинства пара уходит в tie/none",
     "disagreement_pairs": [
-      "P001",
-      "P002",
-      "P003",
-      "P005",
-      "P006",
-      "P007"
+      "ai-deepseek-krylyshki",
+      "ai-deepseek-otrava",
+      "ai-gemini-utopia",
+      "human-dal-predvaritelnoe"
     ],
     "per_judge": [
       {
