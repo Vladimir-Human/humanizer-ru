@@ -119,31 +119,31 @@ _EMOJI_RX = "[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u2705\u2728\u274C\
 
 
 def _fenced_lines(text):
-    """Номера строк внутри блоков кода (``` и ~~~).
+    """Номера строк внутри ЗАКРЫТЫХ блоков кода (``` и ~~~).
 
-    Содержимое fenced-блоков — цитата, а не стиль автора, поэтому его
-    не считает ни один детектор: ни разметки (bash-комментарий
-    «# раздел» не заголовок), ни лексики. Забор закрывается тем же
-    символом, которым открыт; отступ перед забором (включая неразрывные
-    пробелы-артефакты) допускается."""
+    Незакрытый забор не маскируется: одиночный ``` в начале текста не
+    должен глушить все детекторы (находка rev7). Это либо сломанная
+    вставка, либо намеренный артефакт — содержимое после него всё
+    равно анализируется. Строки забора закрытой пары маскируются вместе
+    с содержимым; забор закрывается тем же символом, которым открыт;
+    отступ перед забором (включая неразрывные пробелы-артефакты)
+    допускается."""
     inside = set()
+    open_line = None
     fence_char = None
     for n, l in enumerate(text.splitlines(), 1):
         stripped = l.lstrip()
         if fence_char is None:
             if stripped.startswith("```"):
-                fence_char = "`"
-                inside.add(n)
+                fence_char, open_line = "`", n
             elif stripped.startswith("~~~"):
-                fence_char = "~"
-                inside.add(n)
+                fence_char, open_line = "~", n
             continue
-        inside.add(n)
         if stripped.startswith(fence_char * 3):
-            fence_char = None
+            for k in range(open_line, n + 1):
+                inside.add(k)
+            fence_char, open_line = None, None
     return inside
-
-
 def _prose(text):
     """Текст без блоков кода и строк таблиц — для количественных осей."""
     return _TABLE_ROW_RX.sub("", _FENCED_RX.sub("", text))
