@@ -161,7 +161,12 @@ def _find_phrases(lines, rx):
 
 def _make_phrase_finder(phrases):
     rx = _phrase_rx(phrases)
-    return lambda text, lines: _find_phrases(lines, rx)
+
+    def finder(text, lines):
+        return _find_phrases(lines, rx)
+
+    finder.prose_mask = True
+    return finder
 
 
 # --------------------------------------------------------------- сложные детекторы
@@ -208,10 +213,10 @@ def _rule_of_three(text, lines):
                 j -= 1
             if j >= 0 and norm[j] == ",":
                 continue
-            # Четвёрка с хвостом («X, Y и Z, W»): после тройки идёт
-            # запятая и продолжение списка.
-            if re.match(r"\s*,\s*\S", norm[m.end():]):
-                continue
+            # Четвёрки вида «X, Y и Z, W» считаются: риторическая тройка
+            # в них присутствует, а запятая после третьего члена может
+            # начинать придаточное («…и тестирование, что подтверждено») —
+            # выключать совпадение по запятой означало бы терять тройки.
             # Чисто числовые перечисления (годы, номера) — не риторика:
             # если каждый элемент тройки несёт цифру, это перечисление
             # чисел с обвязкой («вышли в 2019, 2020 и 2021 годах»),
@@ -221,6 +226,10 @@ def _rule_of_three(text, lines):
                 continue
             hits.append((lineno, line.strip()[:90]))
     return hits
+
+
+_mitigation.prose_mask = True
+_neg_parallel.prose_mask = True
 
 
 _UNAVAILABLE = _phrase_rx(["не раскрывается", "не раскрываются",
@@ -653,6 +662,7 @@ def analyze(text, genre="neutral", plain_text=False):
         return report
     suppressed = SUPPRESS[genre]
     genre_excl = GENRE_PHRASE_EXCLUDES.get(genre, {})
+    masked_lines = None
     triggered_patterns = {}
     for det in REGISTRY:
         if det["id"] in suppressed:
@@ -664,7 +674,16 @@ def analyze(text, genre="neutral", plain_text=False):
         if excl and "phrases" in det:
             finder = _make_phrase_finder([p for p in det["phrases"]
                                            if p not in excl])
-        hits = finder(text, lines)
+        if getattr(finder, "prose_mask", False):
+            # Фразовые детекторы не читают блоки кода: JSON с «в контексте»
+            # внутри fenced-блока — цитата, а не стиль автора.
+            if masked_lines is None:
+                fenced = _fenced_lines(text)
+                masked_lines = ["" if n in fenced else l
+                                for n, l in enumerate(lines, 1)]
+            hits = finder(text, masked_lines)
+        else:
+            hits = finder(text, lines)
         if len(hits) >= det["min_hits"]:
             report["findings"].append({
                 "id": det["id"], "category": det["cat"], "pattern": det["pat"],
