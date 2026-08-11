@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Build and verify a deterministic humanizer-ru skill archive.
+"""Сборка и проверка детерминированного релизного архива humanizer-ru.
 
-Standard-library only. The archive is intended for review and skill upload,
-not as a replacement for GitHub's source archive.
+Только стандартная библиотека. Архив предназначен для ревью и загрузки
+скилла, а не для замены исходного архива GitHub.
 """
 from __future__ import annotations
 
@@ -59,10 +59,10 @@ def sha256(path: Path) -> str:
 
 def _safe_rel(path: str) -> PurePosixPath:
     if "\\" in path:
-        raise ReleaseError(f"backslash in archive path: {path!r}")
+        raise ReleaseError(f"обратный слеш в пути архива: {path!r}")
     p = PurePosixPath(path)
     if p.is_absolute() or not p.parts or any(part in {"", ".", ".."} for part in p.parts):
-        raise ReleaseError(f"unsafe archive path: {path!r}")
+        raise ReleaseError(f"небезопасный путь архива: {path!r}")
     return p
 
 def _allowed(p: PurePosixPath) -> bool:
@@ -72,19 +72,19 @@ def _allowed(p: PurePosixPath) -> bool:
 
 def _validate_name(p: PurePosixPath) -> None:
     if any(part in FORBIDDEN_PARTS for part in p.parts):
-        raise ReleaseError(f"forbidden path: {p}")
+        raise ReleaseError(f"запрещённый путь: {p}")
     if str(p) in EXCLUDED_SCRIPTS:
-        raise ReleaseError(f"script excluded from release archive: {p}")
+        raise ReleaseError(f"скрипт исключён из релизного архива: {p}")
     if p.name in FORBIDDEN_NAMES or SECRET_NAME_RE.search(p.name):
-        raise ReleaseError(f"sensitive or temporary filename: {p}")
+        raise ReleaseError(f"чувствительное или служебное имя файла: {p}")
     if not _allowed(p):
-        raise ReleaseError(f"path is outside release allowlist: {p}")
+        raise ReleaseError(f"путь вне белого списка релиза: {p}")
 
 def _validate_text(name: str, data: bytes) -> None:
     try:
         data.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise ReleaseError(f"text file is not UTF-8: {name}: {exc}") from exc
+        raise ReleaseError(f"текстовый файл не в UTF-8: {name}: {exc}") from exc
 
 def _validate_ascii_urls(name: str, data: bytes) -> None:
     for match in URL_RE.finditer(data):
@@ -92,15 +92,15 @@ def _validate_ascii_urls(name: str, data: bytes) -> None:
         if not url.isascii():
             shown = url.decode("utf-8", "replace")
             raise ReleaseError(
-                f"non-ASCII address (homograph risk) in {name}: {shown}")
+                f"не-ASCII адрес (риск гомоглифа) в {name}: {shown}")
 
 def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
     root = root.resolve()
     if not root.is_dir():
-        raise ReleaseError(f"release root is not a directory: {root}")
+        raise ReleaseError(f"корень релиза не каталог: {root}")
     skill = root / "SKILL.md"
     if not skill.is_file():
-        raise ReleaseError("SKILL.md must be a regular file at archive root")
+        raise ReleaseError("SKILL.md обязан быть обычным файлом в корне архива")
     found: list[tuple[PurePosixPath, bytes]] = []
     candidates: list[Path] = []
     candidates.extend(root / name for name in sorted(ROOT_FILES) if (root / name).is_file())
@@ -115,7 +115,7 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
         if str(rel) in EXCLUDED_SCRIPTS:
             continue
         if path.is_symlink():
-            raise ReleaseError(f"symlinks are not allowed: {rel}")
+            raise ReleaseError(f"симлинки не допускаются: {rel}")
         _validate_name(rel)
         data = path.read_bytes()
         if path.suffix.lower() in TEXT_SUFFIXES or rel.name in ROOT_FILES:
@@ -124,9 +124,9 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
         found.append((rel, data))
     names = {str(p) for p, _ in found}
     if "SKILL.md" not in names:
-        raise ReleaseError("SKILL.md missing from collected files")
+        raise ReleaseError("SKILL.md отсутствует среди собранных файлов")
     if not any(name.startswith("references/") for name in names):
-        raise ReleaseError("references/ must contain at least one file")
+        raise ReleaseError("в references/ должен быть хотя бы один файл")
     return found
 
 def build(root: Path, output: Path) -> str:
@@ -147,31 +147,31 @@ def build(root: Path, output: Path) -> str:
 
 def verify(archive: Path) -> str:
     if not archive.is_file():
-        raise ReleaseError(f"archive not found: {archive}")
+        raise ReleaseError(f"архив не найден: {archive}")
     seen: set[str] = set()
     with zipfile.ZipFile(archive, "r") as zf:
         bad = zf.testzip()
         if bad:
-            raise ReleaseError(f"corrupt ZIP member: {bad}")
+            raise ReleaseError(f"битый элемент ZIP: {bad}")
         for info in zf.infolist():
             if info.is_dir():
                 continue
             p = _safe_rel(info.filename)
             _validate_name(p)
             if info.filename in seen:
-                raise ReleaseError(f"duplicate ZIP member: {info.filename}")
+                raise ReleaseError(f"дубликат элемента ZIP: {info.filename}")
             seen.add(info.filename)
             mode = info.external_attr >> 16
             if stat.S_ISLNK(mode):
-                raise ReleaseError(f"symlink in ZIP: {info.filename}")
+                raise ReleaseError(f"симлинк внутри ZIP: {info.filename}")
             data = zf.read(info)
             if p.suffix.lower() in TEXT_SUFFIXES or p.name in ROOT_FILES:
                 _validate_text(info.filename, data)
                 _validate_ascii_urls(info.filename, data)
         if "SKILL.md" not in seen:
-            raise ReleaseError("SKILL.md is not at ZIP root")
+            raise ReleaseError("SKILL.md не в корне ZIP")
         if not any(name.startswith("references/") for name in seen):
-            raise ReleaseError("references/ missing from ZIP")
+            raise ReleaseError("references/ отсутствует в ZIP")
     return sha256(archive)
 
 def _minimal(root: Path) -> None:
@@ -192,7 +192,7 @@ def selftest() -> None:
         except (ReleaseError, zipfile.BadZipFile):
             passed += 1
         else:
-            raise AssertionError(f"expected failure: {label}")
+            raise AssertionError(f"ожидался провал: {label}")
     with tempfile.TemporaryDirectory(prefix="humanizer-release-") as td:
         base = Path(td)
         good = base / "good"; good.mkdir(); _minimal(good)
@@ -293,7 +293,7 @@ def selftest() -> None:
             zf.writestr("SKILL.md", "x")
             zf.writestr("references/x.md", "https://" + "пример.рф/")
         expect_fail(lambda: verify(sneaked_url), "non-ASCII address inside archive")
-    print(f"release preflight selftest: {passed}/{total} PASS")
+    print(f"САМОПРОВЕРКА релизного префлайта: {passed}/{total} PASS")
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -307,21 +307,21 @@ def main(argv: list[str] | None = None) -> int:
             selftest()
         if args.build:
             if not args.root:
-                parser.error("--build requires --root")
+                parser.error("--build требует --root")
             digest = build(args.root, args.build)
-            print(f"built: {args.build}")
+            print(f"собрано: {args.build}")
             print(f"sha256: {digest}")
         elif args.root:
             files = collect(args.root)
-            print(f"release tree: {len(files)} files PASS")
+            print(f"релизное дерево: {len(files)} файлов, ОК")
         if args.verify:
-            print(f"verified: {args.verify}")
+            print(f"проверено: {args.verify}")
             print(f"sha256: {verify(args.verify)}")
         if not any((args.selftest, args.root, args.verify)):
-            parser.error("choose --selftest, --root/--build, or --verify")
+            parser.error("выберите --selftest, --root/--build или --verify")
         return 0
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
-        print(f"release preflight: FAIL: {exc}", file=sys.stderr)
+        print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1
 
 if __name__ == "__main__":

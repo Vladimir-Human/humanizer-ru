@@ -261,7 +261,7 @@ def run(path, allow_pending):
         print("[FAIL] " + e)
     print("Закрывает гейт: %d/%d" % (len(covered), len(SCOPE)))
     if errors:
-        print("ГЕЙТ #18: НЕ ПРОЙДЕН - закрывать issue нельзя.")
+        print("ГЕЙТ #18: НЕ ПРОЙДЕН - закрывать обсуждение нельзя.")
         return 1
     print("ГЕЙТ #18: пройден" + (
         " (режим --allow-pending, закрытие ещё не разрешено)" if allow_pending and warnings else ""))
