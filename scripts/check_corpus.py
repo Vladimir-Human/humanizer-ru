@@ -30,7 +30,8 @@ except Exception:  # noqa: BLE001
 import re
 
 HUMAN_DIR = "research/validation/human"
-RAW_DIRS = ("research/raw/gigachat", "research/raw/alisa", "research/raw/le-chat")
+RAW_DIRS = ("research/raw/gigachat", "research/raw/alisa", "research/raw/le-chat",
+          "research/raw/deepseek", "research/raw/grok")
 BOUNDARY_DIR = "research/validation/boundary"
 
 # Ожидаемые совпадения в boundary-корпусе: файл -> множество имён case.
