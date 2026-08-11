@@ -270,7 +270,7 @@ humanizer-ru/
 | `2025-XX-XX`, `2022-11-XX` | Placeholder-даты из шаблонных ответов (чаще всего «дата обращения») | `\b(?:19\|20)\d{2}-(?:0[1-9]\|1[0-2]\|[Xx]{2})-[Xx]{2}\b` |
 | `ppl-ai-file-upload` в URL (новое в v3.5) | Perplexity (ссылки на Amazon S3-bucket) | `ppl-ai-file-upload` |
 
-Полный список с эталонными образцами — в `references/test-fixtures.md`.
+Полный список с дословными образцами — в `references/test-fixtures.md`.
 
 ### Подлог источников (новое в v2.3)
 
