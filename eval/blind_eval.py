@@ -323,7 +323,10 @@ def resolve_judgements(run, judgements, key):
         mapping = mappings[tag]
         choice = verdict["readability"]
         ml = verdict["meaning_loss"]
-        out[tag] = {
+        # Ключ — id пары из ключа, а не обезличенный тег: каждый пакет
+        # назначает теги своим перемешиванием, и сводка панели по тегам
+        # молча слила бы голоса разных пар (раунд 10, R10-1).
+        out[mapping["id"]] = {
             "readability": mapping[choice] if choice in ("A", "B") else "tie",
             "meaning_loss": mapping[ml] if ml in ("A", "B") else "none",
         }
@@ -609,6 +612,28 @@ def selftest():
                          combined2 == resolved_one))
     results.append(_case("Панель: отклонившийся судья помечен в разнобое",
                          sorted(disagreements2) == sorted(resolved_one)))
+
+    # Регрессия R10-1: пакеты судей перемешивают пары под тегами по-своему;
+    # сводка обязана ключить вердикты по id пары, а не по тегу.
+    tags = sorted(key["pairs"])
+    shuffled = tags[1:] + tags[:1]
+    key2 = {"version": key["version"], "run_sha256": key["run_sha256"],
+            "pairs": {new_tag: dict(key["pairs"][old_tag])
+                      for new_tag, old_tag in zip(tags, shuffled)}}
+    verdicts2 = {}
+    for tag, mapping in key2["pairs"].items():
+        original = resolved_one[mapping["id"]]
+        verdicts2[tag] = {
+            "readability": next(l for l in ("A", "B")
+                                if mapping.get(l) == original["readability"])
+            if original["readability"] in ("with", "without") else "tie",
+            "meaning_loss": next(l for l in ("A", "B")
+                                 if mapping.get(l) == original["meaning_loss"])
+            if original["meaning_loss"] in ("with", "without") else "none",
+        }
+    resolved_two = resolve_judgements(run, verdicts2, key2)
+    results.append(_case("Панель: перемешанные теги не сливают чужие пары",
+                         resolved_two == resolved_one))
 
     print("")
     print("Итог: %d/%d" % (sum(results), len(results)))
