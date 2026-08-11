@@ -669,6 +669,14 @@ def verify_results(results_dir, runs_dir):
                         errors.append("%s: пара %s/%s — длина %s не сходится "
                                       "с файлом прогона (%s)"
                                       % (name, pid, sub, want, len(content)))
+            required = ("markers_source", "markers_without", "markers_with",
+                        "removal_without_pct", "removal_with_pct",
+                        "added_facts_without", "added_facts_with",
+                        "len_source", "len_without", "len_with")
+            for field in required:
+                if field not in p:
+                    errors.append("%s: пара %s — нет обязательного поля %s"
+                                  % (name, pid, field))
             if set(texts) == {"source", "without", "with"}:
                 m_src = len(scan_markers(texts["source"]))
                 m_wo = len(scan_markers(texts["without"]))
@@ -688,6 +696,22 @@ def verify_results(results_dir, runs_dir):
                             errors.append("%s: пара %s — %s = %s, по маркерам "
                                           "прогона %s"
                                           % (name, pid, key, got_pct, exp_pct))
+        # Состав пар обязан совпадать с манифестом прогона: призрачные
+        # пары и выбрасывание неугодных пар меняют сводку (находка rev8).
+        man_pairs = run.get("pairs") if isinstance(run, dict) else None
+        if man_pairs is None and isinstance(run, dict):
+            man_pairs = run.get("manifest", {}).get("pairs")
+        if isinstance(man_pairs, list):
+            man_ids = {e.get("id") for e in man_pairs if isinstance(e, dict)}
+            res_ids = {p.get("id") for p in pairs}
+            ghost = sorted(man_ids - res_ids)
+            extra = sorted(res_ids - man_ids)
+            if ghost:
+                errors.append("%s: в results нет пар прогона: %s"
+                              % (name, ", ".join(ghost)))
+            if extra:
+                errors.append("%s: в results пары, которых нет в манифесте "
+                              "прогона: %s" % (name, ", ".join(extra)))
         # Сводка обязана пересчитываться из собственных пар.
         summary = data.get("summary") or {}
         exp = _expected_summary(pairs)
@@ -714,6 +738,25 @@ def verify_results(results_dir, runs_dir):
         if ml and sum(ml.values()) != len(pairs):
             errors.append("%s: meaning_loss в сумме %s, пар %s"
                           % (name, sum(ml.values()), len(pairs)))
+        # Встроенные вердикты дают ключенезависимые инварианты:
+        # число ничьих и распределение потерь смысла «none» (rev8).
+        jud = data.get("judgements")
+        if isinstance(jud, dict):
+            if len(jud) != len(pairs):
+                errors.append("%s: вердиктов %s, пар %s"
+                              % (name, len(jud), len(pairs)))
+            else:
+                tie_cnt = sum(1 for v in jud.values()
+                              if v.get("readability") == "tie")
+                none_cnt = sum(1 for v in jud.values()
+                               if v.get("meaning_loss") == "none")
+                if rw and rw.get("tie", 0) != tie_cnt:
+                    errors.append("%s: readability_wins.tie = %s, по "
+                                  "вердиктам %s" % (name, rw.get("tie"),
+                                                    tie_cnt))
+                if ml and ml.get("none", 0) != none_cnt:
+                    errors.append("%s: meaning_loss.none = %s, по вердиктам "
+                                  "%s" % (name, ml.get("none"), none_cnt))
     return errors, notes
 
 
