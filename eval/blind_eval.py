@@ -312,6 +312,58 @@ def validate_judgements(run, judgements, key):
             raise ValueError("%s: meaning_loss должен быть A, B или none" % tag)
     return key["pairs"]
 
+def resolve_judgements(run, judgements, key):
+    """Вердикты одного судьи -> разрешённые метки по парам.
+
+    Возвращает словарь pair_id -> {"readability": with|without|tie,
+    "meaning_loss": with|without|none}."""
+    mappings = validate_judgements(run, judgements, key)
+    out = {}
+    for tag, verdict in judgements.items():
+        mapping = mappings[tag]
+        choice = verdict["readability"]
+        ml = verdict["meaning_loss"]
+        out[tag] = {
+            "readability": mapping[choice] if choice in ("A", "B") else "tie",
+            "meaning_loss": mapping[ml] if ml in ("A", "B") else "none",
+        }
+    return out
+
+
+def panel_majority(resolved_list):
+    """Большинство по нескольким судьям (GOALS: 3 судьи, большинство).
+
+    Вход: список разрешённых словарей от каждого судьи. Возвращает
+    (сводный словарь меток, список пар без единогласия). Пара без
+    строгого большинства по читаемости уходит в «tie», по потерям
+    смысла — в «none»: при разнобое скиллу даётся презумпция."""
+    if not resolved_list:
+        raise ValueError("панель пустая")
+    pair_ids = set(resolved_list[0])
+    for r in resolved_list[1:]:
+        if set(r) != pair_ids:
+            raise ValueError("вердикты судей покрывают разные пары")
+    combined, disagreements = {}, []
+    for pid in sorted(pair_ids):
+        votes_r = [r[pid]["readability"] for r in resolved_list]
+        votes_m = [r[pid]["meaning_loss"] for r in resolved_list]
+        def majority(votes, neutral):
+            best, best_n = None, 0
+            for v in sorted(set(votes)):
+                n = votes.count(v)
+                if n > best_n:
+                    best, best_n = v, n
+            if best_n * 2 <= len(votes):
+                return neutral, False
+            return best, len(set(votes)) == 1
+        read, unan_r = majority(votes_r, "tie")
+        loss, unan_m = majority(votes_m, "none")
+        combined[pid] = {"readability": read, "meaning_loss": loss}
+        if not (unan_r and unan_m):
+            disagreements.append(pid)
+    return combined, disagreements
+
+
 def aggregate(run, judgements=None, key=None):
     rows = []
     for item in run["items"]:
@@ -540,6 +592,23 @@ def selftest():
     except ValueError:
         wrong_key_rejected = True
     results.append(_case("Ключ от другого прогона отклоняется", wrong_key_rejected))
+
+    # Панель: большинство по нескольким судьям и замер разнобоя.
+    resolved_one = resolve_judgements(run, verdicts, key)
+    combined, disagreements = panel_majority([resolved_one] * 3)
+    results.append(_case("Панель из трёх одинаковых судей единогласна",
+                         combined == resolved_one and disagreements == []))
+    flipped = {pid: {"readability": ("without" if v["readability"] == "with"
+                                     else "with" if v["readability"] == "without"
+                                     else v["readability"]),
+                     "meaning_loss": v["meaning_loss"]}
+               for pid, v in resolved_one.items()}
+    combined2, disagreements2 = panel_majority(
+        [resolved_one, resolved_one, flipped])
+    results.append(_case("Панель: большинство двух из трёх решает",
+                         combined2 == resolved_one))
+    results.append(_case("Панель: отклонившийся судья помечен в разнобое",
+                         sorted(disagreements2) == sorted(resolved_one)))
 
     print("")
     print("Итог: %d/%d" % (sum(results), len(results)))
@@ -840,8 +909,12 @@ def main():
     parser.add_argument("--selftest", action="store_true")
     parser.add_argument("--run", help="каталог парного прогона")
     parser.add_argument("--make-packet", help="куда положить обезличенный пакет для судьи")
-    parser.add_argument("--judgements", help="заполненные вердикты судьи")
-    parser.add_argument("--key", help="ключ обезличивания")
+    parser.add_argument("--judgements", action="append", default=[],
+                        metavar="JSON", help="заполненные вердикты судьи; "
+                        "несколько флагов — панель, сводится большинством")
+    parser.add_argument("--key", action="append", default=[],
+                        metavar="JSON", help="ключ обезличивания; по одному "
+                        "на каждый файл вердиктов")
     parser.add_argument("--out", help="куда сохранить отчёт JSON")
     parser.add_argument("--verify-results", action="store_true",
                         help="сверить run_sha256 всех results с прогонами")
@@ -886,32 +959,84 @@ def main():
         print("    Ключ: %s — судье не показывать." % key_path)
         return 0
 
-    judgements = key = None
-    if args.judgements:
+    if args.judgements and len(args.judgements) != len(args.key):
+        print("%s На каждый файл вердиктов нужен свой --key." % FAIL)
+        return 2
+    resolved_list = []
+    for pos, jpath in enumerate(args.judgements):
         try:
-            judgements = json.loads(read(args.judgements))
+            judgements_j = json.loads(read(jpath))
         except (OSError, UnicodeDecodeError, ValueError) as exc:
-            print("не удалось прочитать вердикты %s: %s" % (args.judgements, exc))
+            print("не удалось прочитать вердикты %s: %s" % (jpath, exc))
             return 2
-        key_path = args.key
-        if not key_path:
-            print("%s Для вердиктов обязателен --key; ключ хранится вне пакета." % FAIL)
-            return 2
+        key_path = args.key[pos]
         if not os.path.isfile(key_path):
             print("%s Не найден ключ обезличивания: %s" % (FAIL, key_path))
             return 2
         try:
-            key = json.loads(read(key_path))
+            key_j = json.loads(read(key_path))
         except (OSError, UnicodeDecodeError, ValueError) as exc:
             print("не удалось прочитать ключ %s: %s" % (key_path, exc))
             return 2
+        try:
+            resolved_list.append(resolve_judgements(run, judgements_j, key_j))
+        except (ValueError, RuntimeError) as exc:
+            print("%s вердикты %s: %s" % (FAIL, jpath, exc))
+            return 2
 
-    try:
-        rows, summary = aggregate(run, judgements, key)
-    except (ValueError, RuntimeError) as exc:
-        print("%s %s" % (FAIL, exc))
-        return 2
+    panel = None
+    if len(resolved_list) == 1:
+        judgements = json.loads(read(args.judgements[0]))
+        key = json.loads(read(args.key[0]))
+        try:
+            rows, summary = aggregate(run, judgements, key)
+        except (ValueError, RuntimeError) as exc:
+            print("%s %s" % (FAIL, exc))
+            return 2
+    elif resolved_list:
+        # Панель из нескольких судей: большинство по каждой паре
+        # (GOALS: 3 судьи одной семьи; пересудейство того же прогона
+        # с новой пересборкой пакета меряет позиционный шум).
+        try:
+            combined, disagreements = panel_majority(resolved_list)
+        except ValueError as exc:
+            print("%s %s" % (FAIL, exc))
+            return 2
+        rows, summary = aggregate(run)
+        wins = {"with": 0, "without": 0, "tie": 0}
+        loss = {"with": 0, "without": 0, "none": 0}
+        for labels in combined.values():
+            wins[labels["readability"]] += 1
+            loss[labels["meaning_loss"]] += 1
+        summary["readability_wins"] = wins
+        summary["meaning_loss"] = loss
+        judgements = combined
+        key = None
+        per_judge = []
+        for pos, resolved in enumerate(resolved_list, 1):
+            wj = {"with": 0, "without": 0, "tie": 0}
+            lj = {"with": 0, "without": 0, "none": 0}
+            for labels in resolved.values():
+                wj[labels["readability"]] += 1
+                lj[labels["meaning_loss"]] += 1
+            per_judge.append({"judge": pos, "readability_wins": wj,
+                              "meaning_loss": lj})
+        panel = {"judges": len(resolved_list),
+                 "rule": "большинство; без строгого большинства пара "
+                         "уходит в tie/none",
+                 "disagreement_pairs": disagreements,
+                 "per_judge": per_judge}
+    else:
+        judgements = key = None
+        rows, summary = aggregate(run)
+
     print_report(summary)
+    if panel:
+        print("")
+        print("Панель: %d судей; без единогласия пар: %d%s"
+              % (panel["judges"], len(panel["disagreement_pairs"]),
+                 (" (%s)" % ", ".join(panel["disagreement_pairs"]))
+                 if panel["disagreement_pairs"] else ""))
 
     out = args.out
     if not out:
@@ -922,6 +1047,8 @@ def main():
                "summary": summary, "pairs": rows}
     if judgements is not None:
         payload["judgements"] = judgements
+    if panel:
+        payload["panel"] = panel
     with io.open(out, "w", encoding="utf-8") as fh:
         fh.write(json.dumps(payload, ensure_ascii=False, indent=2))
     print("")
