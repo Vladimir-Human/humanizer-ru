@@ -116,7 +116,11 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
             if unexpected:
                 fails.append("%s/%s: неожиданное совпадение в raw-корпусе: %s"
                              % (d, fn, unexpected))
-            if allowed_names:
+            missing = allowed_names - actual_names
+            if missing:
+                fails.append("%s/%s: ожидаемое совпадение исчезло: %s"
+                             % (d, fn, sorted(missing)))
+            elif allowed_names:
                 seen_expected.add(key)
 
     # Boundary corpus: ровно заявленные совпадения.
@@ -132,14 +136,18 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
                              % (fn, expected, actual))
 
     if not seen_expected and all(os.path.isdir(d) for d in raw_dirs):
-        fails.append("raw-корпус: ни одного ожидаемого BOM-совпадения — проверьте corpus")
+        fails.append("raw-корпус: ни одного ожидаемого совпадения — проверьте corpus")
+    for key in sorted(RAW_EXPECTED):
+        if key not in seen_expected:
+            fails.append("raw-корпус: ожидаемое совпадение %s не найдено "
+                         "(файл удалён, переименован или маркер вычищен)" % key)
 
     if fails:
         for f in fails:
             print("[FAIL] " + f)
         print("CORPUS: регрессия — %d проблем." % len(fails))
         return 1
-    print("CORPUS: human 0 совпадений, raw только BOM, boundary совпал. ОК.")
+    print("CORPUS: human 0 совпадений, raw только ожидаемые совпадения, boundary совпал. ОК.")
     return 0
 
 
