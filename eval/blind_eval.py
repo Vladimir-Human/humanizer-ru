@@ -41,6 +41,7 @@ import secrets
 import subprocess
 import sys
 import tempfile
+from collections import Counter
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
@@ -944,6 +945,29 @@ def verify_results(results_dir, runs_dir):
                 if isinstance(ml, dict) and ml.get("none", 0) != none_cnt:
                     errors.append("%s: meaning_loss.none = %s, по вердиктам "
                                   "%s" % (name, ml.get("none"), none_cnt))
+        # Разрешённые вердикты одиночной записи (необязательное поле):
+        # если есть — сводка обязана считаться именно из них.
+        resolved = data.get("judgements_resolved")
+        if resolved is not None:
+            pair_ids = sorted(p.get("id") for p in pairs
+                              if isinstance(p.get("id"), str))
+            if (not isinstance(resolved, dict)
+                    or sorted(resolved) != pair_ids):
+                errors.append("%s: judgements_resolved обязан покрывать "
+                              "ровно пары записи" % name)
+            else:
+                rw_r = Counter(v.get("readability") for v in resolved.values())
+                ml_r = Counter(v.get("meaning_loss") for v in resolved.values())
+                if isinstance(rw, dict) and any(
+                        rw_r.get(k, 0) != rw.get(k, 0)
+                        for k in ("with", "without", "tie")):
+                    errors.append("%s: readability_wins не сходится с "
+                                  "judgements_resolved" % name)
+                if isinstance(ml, dict) and any(
+                        ml_r.get(k, 0) != ml.get(k, 0)
+                        for k in ("with", "without", "none")):
+                    errors.append("%s: meaning_loss не сходится с "
+                                  "judgements_resolved" % name)
         # Панельная запись обязана пересчитываться из собственных сырых
         # вердиктов судей: удаление panel или перепись итогов панели
         # раньше не ловились (находка rev10, R10-4).
@@ -1153,6 +1177,12 @@ def main():
                "judges": len(resolved_list) if resolved_list else 1}
     if judgements is not None:
         payload["judgements"] = judgements
+        if resolved_list and not panel:
+            # Одиночная запись с вердиктами: разрешённые метки по id пар,
+            # чтобы сравнение с панелью (например, замер позиционного шума)
+            # воспроизводилось из самого репо. Сырые теги судьи ключатся
+            # парами по-своему в каждом пакете (находка rev10, R10-1).
+            payload["judgements_resolved"] = resolved_list[0]
     if panel:
         payload["panel"] = panel
     with io.open(out, "w", encoding="utf-8") as fh:
