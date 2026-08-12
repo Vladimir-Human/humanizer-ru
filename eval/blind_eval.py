@@ -636,6 +636,34 @@ def selftest():
     results.append(_case("Панель: перемешанные теги не сливают чужие пары",
                          resolved_two == resolved_one))
 
+    # Панельные защиты verify-results (rev11, Ф1-Ф3): подделка записи
+    # ловится чистой ошибкой, а не трейзбеком.
+    here = os.path.dirname(os.path.abspath(__file__))
+    rec_path = os.path.join(here, "results", "2026-08-11-genre-modes.json")
+    if os.path.isfile(rec_path) and os.path.isdir(os.path.join(here, "runs")):
+        base_rec = json.loads(read(rec_path))
+        tmp_res = tempfile.mkdtemp()
+
+        def _verify_tampered(tamper):
+            rec = json.loads(json.dumps(base_rec))
+            tamper(rec)
+            out = os.path.join(tmp_res, "2026-08-11-genre-modes.json")
+            with open(out, "w", encoding="utf-8") as fh:
+                json.dump(rec, fh, ensure_ascii=False)
+            errs, _notes = verify_results(tmp_res, os.path.join(here, "runs"))
+            os.unlink(out)
+            return errs
+
+        errs = _verify_tampered(lambda rec: rec["panel"]["judges_verdicts"].__setitem__(1, None))
+        results.append(_case("Панель: мусор в judges_verdicts ловится без трейзбека",
+                             any("обязаны" in e for e in errs)))
+        errs = _verify_tampered(lambda rec: rec["panel"]["per_judge"][0]["readability_wins"].update({"with": 99}))
+        results.append(_case("Панель: подделка per_judge ловится",
+                             any("per_judge" in e for e in errs)))
+        errs = _verify_tampered(lambda rec: rec.__setitem__("judges", True))
+        results.append(_case("Панель: judges=true ловится",
+                             any("judges обязан быть целым" in e for e in errs)))
+
     print("")
     print("Итог: %d/%d" % (sum(results), len(results)))
     return 0 if all(results) else 1
@@ -972,7 +1000,10 @@ def verify_results(results_dir, runs_dir):
         # вердиктов судей: удаление panel или перепись итогов панели
         # раньше не ловились (находка rev10, R10-4).
         njudges = data.get("judges", 1)
-        if not isinstance(njudges, int) or njudges < 1:
+        if isinstance(njudges, bool) or not isinstance(njudges, int) \
+                or njudges < 1:
+            # bool — подкласс int: judges=true проходило старую проверку
+            # (находка rev11, Ф3).
             errors.append("%s: judges обязан быть целым >= 1" % name)
             njudges = 1
         panel = data.get("panel")
@@ -994,26 +1025,85 @@ def verify_results(results_dir, runs_dir):
                     errors.append("%s: panel.judges = %s, сырых вердиктов %s"
                                   % (name, panel.get("judges"),
                                      len(verdicts_raw)))
-                elif any(sorted(v) != pair_ids or not isinstance(v, dict)
-                         for v in verdicts_raw):
-                    errors.append("%s: сырые вердикты судей обязаны "
-                                  "покрывать ровно пары записи" % name)
+                elif (njudges != len(verdicts_raw)):
+                    errors.append("%s: judges = %s, сырых вердиктов %s"
+                                  % (name, njudges, len(verdicts_raw)))
                 else:
-                    try:
-                        exp_comb, exp_dis = panel_majority(verdicts_raw)
-                    except ValueError as exc:
-                        errors.append("%s: panel.judges_verdicts не сводится: "
-                                      "%s" % (name, exc))
+                    bad_shapes = []
+                    for pos, v in enumerate(verdicts_raw):
+                        if not isinstance(v, dict) or sorted(v) != pair_ids:
+                            bad_shapes.append(pos)
+                            continue
+                        for pid, verdict in v.items():
+                            if (not isinstance(verdict, dict)
+                                    or verdict.get("readability")
+                                    not in ("with", "without", "tie")
+                                    or verdict.get("meaning_loss")
+                                    not in ("with", "without", "none")):
+                                bad_shapes.append(pos)
+                                break
+                    if bad_shapes:
+                        errors.append("%s: сырые вердикты судей %s обязаны "
+                                      "быть словарями пар с метками "
+                                      "with/without/tie и with/without/none"
+                                      % (name, sorted(set(bad_shapes))))
                     else:
-                        if jud != exp_comb:
-                            errors.append("%s: сводные вердикты не сходятся "
-                                          "с большинством сырых" % name)
-                        if panel.get("disagreement_pairs") != exp_dis:
-                            errors.append("%s: disagreement_pairs = %s, по "
-                                          "сырым вердиктам %s"
-                                          % (name,
-                                             panel.get("disagreement_pairs"),
-                                             exp_dis))
+                        try:
+                            exp_comb, exp_dis = panel_majority(verdicts_raw)
+                        except (ValueError, TypeError, KeyError,
+                                AttributeError) as exc:
+                            errors.append("%s: panel.judges_verdicts не "
+                                          "сводится: %s" % (name, exc))
+                        else:
+                            if jud != exp_comb:
+                                errors.append("%s: сводные вердикты не "
+                                              "сходятся с большинством сырых"
+                                              % name)
+                            if panel.get("disagreement_pairs") != exp_dis:
+                                errors.append("%s: disagreement_pairs = %s, "
+                                              "по сырым вердиктам %s"
+                                              % (name,
+                                                 panel.get("disagreement_pairs"),
+                                                 exp_dis))
+                    # per_judge обязан пересчитываться из сырых вердиктов:
+                    # перестановка судей, дубль судьи с пересчитанными
+                    # итогами и подмена одиночных голосов раньше проходили
+                    # (находка rev11, Ф2).
+                    per_judge = panel.get("per_judge")
+                    if not isinstance(per_judge, list) \
+                            or len(per_judge) != len(verdicts_raw):
+                        errors.append("%s: panel.per_judge обязан быть "
+                                      "списком по числу судей" % name)
+                    elif not bad_shapes:
+                        for pos, v in enumerate(verdicts_raw):
+                            rw_r = Counter(x["readability"] for x in v.values())
+                            ml_r = Counter(x["meaning_loss"] for x in v.values())
+                            summ = per_judge[pos]
+                            if not isinstance(summ, dict):
+                                errors.append("%s: panel.per_judge[%s] не "
+                                              "объект" % (name, pos))
+                                continue
+                            if summ.get("judge") != pos + 1:
+                                errors.append("%s: panel.per_judge[%s].judge "
+                                              "= %s, ожидается %s"
+                                              % (name, pos, summ.get("judge"),
+                                                 pos + 1))
+                            rw_s, ml_s = summ.get("readability_wins"), summ.get("meaning_loss")
+                            if (not isinstance(rw_s, dict) or any(
+                                    rw_r.get(k, 0) != rw_s.get(k, 0)
+                                    for k in ("with", "without", "tie"))):
+                                errors.append("%s: panel.per_judge[%s] не "
+                                              "сходится с сырыми вердиктами "
+                                              "по читаемости" % (name, pos))
+                            if (not isinstance(ml_s, dict) or any(
+                                    ml_r.get(k, 0) != ml_s.get(k, 0)
+                                    for k in ("with", "without", "none"))):
+                                errors.append("%s: panel.per_judge[%s] не "
+                                              "сходится с сырыми вердиктами "
+                                              "по потерям смысла" % (name, pos))
+        # Граница: запись с judges=1 и без panel неотличима от честной
+        # одиночной без ключей обезличивания; число судей удостоверяет
+        # писавший запись, verify сверяет внутреннюю согласованность.
     return errors, notes
 
 
@@ -1078,14 +1168,38 @@ def main():
     if args.judgements and len(args.judgements) != len(args.key):
         print("%s На каждый файл вердиктов нужен свой --key." % FAIL)
         return 2
-    seen_j = set()
+    # Дедуп по содержимому: на Windows тот же файл под другим регистром,
+    # 8.3-именем или физической копией даёт разные abspath, но одинаковые
+    # байты; два разных судьи не могут дать побайтово одинаковые вердикты
+    # (у каждого пакета свои теги и перемешивание) (находка rev11, Ф4).
+    def _content_sig(path):
+        with open(path, "rb") as fh:
+            return hashlib.sha256(fh.read()).hexdigest()
+    seen_j = {}
     for jpath in args.judgements:
-        sig = os.path.abspath(jpath)
-        if sig in seen_j:
-            print("%s дубль файла вердиктов: %s — панель из копий одного "
-                  "судьи недопустима." % (FAIL, jpath))
+        try:
+            sig = _content_sig(jpath)
+        except OSError as exc:
+            print("%s не удалось прочитать вердикты %s: %s" % (FAIL, jpath, exc))
             return 2
-        seen_j.add(sig)
+        if sig in seen_j:
+            print("%s дубль файла вердиктов: %s совпадает по содержимому с "
+                  "%s — панель из копий одного судьи недопустима."
+                  % (FAIL, jpath, seen_j[sig]))
+            return 2
+        seen_j[sig] = jpath
+    seen_k = {}
+    for kpath in args.key:
+        try:
+            sig = _content_sig(kpath)
+        except OSError as exc:
+            print("%s не удалось прочитать ключ %s: %s" % (FAIL, kpath, exc))
+            return 2
+        if sig in seen_k:
+            print("%s дубль ключа: %s совпадает по содержимому с %s — "
+                  "судьи получили один и тот же пакет." % (FAIL, kpath, seen_k[sig]))
+            return 2
+        seen_k[sig] = kpath
     resolved_list = []
     for pos, jpath in enumerate(args.judgements):
         try:
