@@ -77,6 +77,10 @@ def _scan_file(path, compiled):
 
 def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR,
           raw_expected=RAW_EXPECTED):
+    # raw_expected переопределяется только самопроверкой на синтетике;
+    # боевой путь всегда идёт с RAW_EXPECTED. Пустой словарь не прячет
+    # существующие маркеры — они ловятся как «неожиданное совпадение»;
+    # параметр лишь отключает контроль полноты (rev12, N1).
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
     fails = []
 
