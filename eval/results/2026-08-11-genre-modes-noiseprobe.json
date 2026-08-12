@@ -260,5 +260,39 @@
       "meaning_loss": "none",
       "note": "Литературная классика. A extensively переписал синонимами ('стремится'→'тянется', 'доселе'→'прежде', 'сделаться'→'стать', нормализовал поэтический инверсий 'В гранит одетая') — ненужная переработка человеческого текста (минус), дефектов в исходнике не было. B=исходник. Смысл сохранён в обоих."
     }
+  },
+  "judgements_resolved": {
+    "ai-deepseek-krylyshki": {
+      "readability": "tie",
+      "meaning_loss": "none"
+    },
+    "ai-grok-gran": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "human-dal-predvaritelnoe": {
+      "readability": "without",
+      "meaning_loss": "without"
+    },
+    "ai-deepseek-otrava": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "human-gercen-byloe": {
+      "readability": "tie",
+      "meaning_loss": "none"
+    },
+    "ai-copilot-audit": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "ai-gemini-utopia": {
+      "readability": "with",
+      "meaning_loss": "none"
+    },
+    "human-gilyarovsky-moskva": {
+      "readability": "with",
+      "meaning_loss": "none"
+    }
   }
 }
