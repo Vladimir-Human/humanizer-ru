@@ -75,7 +75,8 @@ def _scan_file(path, compiled):
     return hits
 
 
-def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
+def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR,
+          raw_expected=RAW_EXPECTED):
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
     fails = []
 
@@ -100,29 +101,35 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
                 fails.append("%s: ложное срабатывание на human-корпусе: %s"
                              % (fn, hits[:3]))
 
-    # Raw corpus: только ожидаемые совпадения.
+    # Raw corpus: только ожидаемые совпадения. Обход рекурсивный
+    # (research/raw/**/*.txt): маркерный файл, спрятанный в подкаталоге
+    # каталога модели, раньше был невидим (находка rev11, Ф6).
     seen_expected = set()
     for d in raw_dirs:
         if not os.path.isdir(d):
             continue
-        for fn in sorted(os.listdir(d)):
-            if not fn.endswith(".txt"):
-                continue
-            hits = _scan_file(os.path.join(d, fn), compiled)
-            key = "%s/%s" % (os.path.basename(d.rstrip("/\\")), fn)
-            allowed = RAW_EXPECTED.get(key, ())
-            allowed_names = set(allowed)
-            actual_names = {h[1] for h in hits}
-            unexpected = actual_names - allowed_names
-            if unexpected:
-                fails.append("%s/%s: неожиданное совпадение в raw-корпусе: %s"
-                             % (d, fn, unexpected))
-            missing = allowed_names - actual_names
-            if missing:
-                fails.append("%s/%s: ожидаемое совпадение исчезло: %s"
-                             % (d, fn, sorted(missing)))
-            elif allowed_names:
-                seen_expected.add(key)
+        model = os.path.basename(d.rstrip("/\\"))
+        for root, _dirs, files in os.walk(d):
+            for fn in sorted(files):
+                if not fn.endswith(".txt"):
+                    continue
+                path = os.path.join(root, fn)
+                hits = _scan_file(path, compiled)
+                rel = os.path.relpath(path, d).replace("\\", "/")
+                key = "%s/%s" % (model, rel)
+                allowed = raw_expected.get(key, ())
+                allowed_names = set(allowed)
+                actual_names = {h[1] for h in hits}
+                unexpected = actual_names - allowed_names
+                if unexpected:
+                    fails.append("%s: неожиданное совпадение в raw-корпусе: %s"
+                                 % (key, sorted(unexpected)))
+                missing = allowed_names - actual_names
+                if missing:
+                    fails.append("%s: ожидаемое совпадение исчезло: %s"
+                                 % (key, sorted(missing)))
+                elif allowed_names:
+                    seen_expected.add(key)
 
     # Boundary corpus: ровно заявленные совпадения.
     if os.path.isdir(boundary_dir):
@@ -138,7 +145,7 @@ def run(human_dir=HUMAN_DIR, raw_dirs=RAW_DIRS, boundary_dir=BOUNDARY_DIR):
 
     if not seen_expected and all(os.path.isdir(d) for d in raw_dirs):
         fails.append("raw-корпус: ни одного ожидаемого совпадения — проверьте corpus")
-    for key in sorted(RAW_EXPECTED):
+    for key in sorted(raw_expected):
         if key not in seen_expected:
             fails.append("raw-корпус: ожидаемое совпадение %s не найдено "
                          "(файл удалён, переименован или маркер вычищен)" % key)
@@ -158,18 +165,38 @@ def selftest():
     human = os.path.join(tmp, "human"); os.makedirs(human)
     boundary = os.path.join(tmp, "boundary"); os.makedirs(boundary)
     raw = os.path.join(tmp, "raw", "le-chat"); os.makedirs(raw)
+    gem = os.path.join(tmp, "raw", "gemini"); os.makedirs(gem)
     with open(os.path.join(human, "01.txt"), "w", encoding="utf-8") as f:
         f.write("обычный человеческий текст без маркеров\n")
     with open(os.path.join(boundary, "emoji-zwj.txt"), "w", encoding="utf-8") as f:
         f.write("семья: \U0001F468\u200d\U0001F469\u200d\U0001F466\n")
     with open(os.path.join(raw, "01-fast-канберра.txt"), "w", encoding="utf-8") as f:
         f.write("\ufeffответ модели\n")
+    with open(os.path.join(gem, "02-valans-span.txt"), "w", encoding="utf-8") as f:
+        f.write("правка [span_1](start_span)Валанс[span_1](end_span)\n")
+    with open(os.path.join(gem, "03-eretria-span.txt"), "w", encoding="utf-8") as f:
+        f.write("правка [span_2](start_span)Эретрия[span_2](end_span)\n")
+    # Самопроверка гоняет тот же контракт полноты на синтетике: ожидаемые
+    # совпадения обязаны существовать и находиться (находка rev11, Ф5).
+    expected = {
+        "le-chat/01-fast-канберра.txt": ("zero_width",),
+        "gemini/02-valans-span.txt": ("gemini_span",),
+        "gemini/03-eretria-span.txt": ("gemini_span",),
+    }
     checks = []
-    rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
-    checks.append(("чистый human + ожиданный raw BOM + ZWJ-граница -> OK", rc == 0))
+    rc = run(human_dir=human, raw_dirs=(raw, gem), boundary_dir=boundary,
+             raw_expected=expected)
+    checks.append(("чистый human + ожидаемые raw-совпадения + ZWJ-граница -> OK", rc == 0))
+    os.unlink(os.path.join(gem, "03-eretria-span.txt"))
+    rc = run(human_dir=human, raw_dirs=(raw, gem), boundary_dir=boundary,
+             raw_expected=expected)
+    checks.append(("удаление ожидаемого raw-файла -> FAIL", rc == 1))
+    with open(os.path.join(gem, "03-eretria-span.txt"), "w", encoding="utf-8") as f:
+        f.write("правка [span_2](start_span)Эретрия[span_2](end_span)\n")
     with open(os.path.join(human, "02.txt"), "w", encoding="utf-8") as f:
         f.write("текст с turn0search0 маркером\n")
-    rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
+    rc = run(human_dir=human, raw_dirs=(raw, gem), boundary_dir=boundary,
+             raw_expected=expected)
     checks.append(("human с маркером -> FAIL", rc == 1))
     os.unlink(os.path.join(human, "02.txt"))
 
@@ -179,7 +206,8 @@ def selftest():
     extra = os.path.join(boundary, "extra.txt")
     with open(extra, "w", encoding="utf-8") as f:
         f.write("граничный файл с turn0search0 внутри\n")
-    rc = run(human_dir=human, raw_dirs=(raw,), boundary_dir=boundary)
+    rc = run(human_dir=human, raw_dirs=(raw, gem), boundary_dir=boundary,
+             raw_expected=expected)
     checks.append(("boundary с незаявленным совпадением -> FAIL", rc == 1))
     os.unlink(extra)
 
@@ -189,9 +217,19 @@ def selftest():
     os.makedirs(other_raw)
     with open(os.path.join(other_raw, "01-fast-канберра.txt"), "w", encoding="utf-8") as f:
         f.write("﻿тот же файл, но другая модель\n")
-    rc = run(human_dir=human, raw_dirs=(raw, other_raw), boundary_dir=boundary)
+    rc = run(human_dir=human, raw_dirs=(raw, gem, other_raw),
+             boundary_dir=boundary, raw_expected=expected)
     checks.append(("одноимённый файл в другом каталоге не наследует разрешение -> FAIL",
                    rc == 1))
+    os.unlink(os.path.join(other_raw, "01-fast-канберра.txt"))
+    # Рекурсивный обход: маркерный файл в подкаталоге каталога модели виден
+    # (находка rev11, Ф6).
+    sub = os.path.join(other_raw, "вложенный"); os.makedirs(sub)
+    with open(os.path.join(sub, "спрятанный.txt"), "w", encoding="utf-8") as f:
+        f.write("укрытый turn0search0 маркер\n")
+    rc = run(human_dir=human, raw_dirs=(raw, gem, other_raw),
+             boundary_dir=boundary, raw_expected=expected)
+    checks.append(("маркер в подкаталоге raw-каталога виден -> FAIL", rc == 1))
 
     # Полное отсутствие корпусов — громкий отказ инструмента (код 2).
     empty = os.path.join(tmp, "пусто")

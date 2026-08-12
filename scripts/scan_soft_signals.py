@@ -119,6 +119,33 @@ _HEADING_RX = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 _EMOJI_RX = "[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u2705\u2728\u274C\u2757\u2B50]"
 
 
+def _ws_width(ws, start_col=0):
+    """Ширина whitespace по таб-стопам CommonMark 2.1: таб дотягивает до
+    следующей кратной 4 колонки. Строка «\t```» получает отступ 4 и
+    становится indented code block с буквальными обратными кавычками,
+    а не забором — проза вокруг неё обязана оставаться видимой
+    (находка rev11, Ф7). Неразывные пробелы считаем как обычные."""
+    col = start_col
+    for ch in ws:
+        if ch == "\t":
+            col += 4 - col % 4
+        else:
+            col += 1
+    return col - start_col
+
+
+def _indent_width(line):
+    col = 0
+    for ch in line:
+        if ch == "\t":
+            col += 4 - col % 4
+        elif ch in (" ", "\u00a0"):
+            col += 1
+        else:
+            break
+    return col
+
+
 def _fenced_lines(text):
     """Номера строк внутри ЗАКРЫТЫХ блоков кода (``` и ~~~).
 
@@ -129,24 +156,29 @@ def _fenced_lines(text):
     с содержимым; забор закрывается тем же символом, которым открыт;
     отступ перед забором (включая неразрывные пробелы-артефакты)
     допускается до трёх пробелов (включая неразрывные пробелы-артефакты);
-    отступ четыре и больше — не забор по CommonMark 4.4."""
+    отступ четыре и больше — не забор по CommonMark 4.4. Табы раскрыты
+    по таб-стопам (CommonMark 2.1): «\t```» — indented code block, проза
+    вокруг него видна детекторам (находка rev11, Ф7). Остаток: табы внутри
+    пунктов списка после маркера раскрыты относительно колонки маркера, а
+    не всей вложенной структуры — крайние случаи вложенных списков с табами
+    могут недо-маскироваться (безопасно: лишь риск ложного срабатывания)."""
     inside = set()
     open_line = None
     fence_char = None
     fence_len = 0
     item_content_indent = None  # отступ содержимого текущего пункта списка
-    item_rx = re.compile(r"^(\s{0,3})([-*+]|\d{1,9}[.)])(\s+)")
+    item_rx = re.compile(r"^([ \u00a0]{0,3})([-*+]|\d{1,9}[.)])([ \t]+)")
     for n, l in enumerate(text.splitlines(), 1):
-        indent = len(l) - len(l.lstrip(" \t\u00a0"))
+        indent = _indent_width(l)
         stripped = l.lstrip()
         marker = item_rx.match(l)
         if marker:
             # Пункт списка задаёт отступ содержимого: маркер + до четырёх
             # пробелов после него (CommonMark 5.2).
             after = marker.group(3)
-            item_content_indent = (len(marker.group(1)) +
-                                   len(marker.group(2)) +
-                                   (1 if len(after) >= 5 else len(after)))
+            col = _ws_width(marker.group(1)) + len(marker.group(2))
+            after_w = _ws_width(after, col)
+            item_content_indent = col + (1 if after_w >= 5 else after_w)
         elif stripped and (item_content_indent is None
                            or indent < item_content_indent):
             item_content_indent = None
@@ -1011,6 +1043,14 @@ def selftest():
     case("отступ 4 пробела — не забор: проза внутри видна детекторам",
          any(d["id"] == "rule_of_three"
              for d in analyze(indent_fence)["findings"]))
+    tab_fence = ("\t```\n"
+                 "Будут доклады, дискуссии и нетворкинг.\n"
+                 "\t```\n"
+                 "Ждём инновации, вдохновение и инсайты. Обещают еду, "
+                 "музыку и призы.")
+    case("таб-забор — не забор: проза вокруг него видна (CommonMark 2.1)",
+         any(d["id"] == "rule_of_three"
+             for d in analyze(tab_fence)["findings"]))
     # Регрессии раунда 10: заборы внутри пунктов списка и вложенные
     # заборы разной длины (R10-5), асимметрия четвёрок (R10-6).
     list_fence = ("- пункт с кодом:\n\n"
