@@ -114,10 +114,15 @@ def inspect_markdown(text):
         if key.lower() in AI_FRONTMATTER_KEYS or AI_META_NAME_RE.search(key):
             has_ai = True
             findings.append("frontmatter-ключ: %s" % key)
-        val = line.split(":", 1)[1] if ":" in line else ""
-        if AI_META_NAME_RE.search(val):
-            has_ai = True
-            findings.append("frontmatter-значение у %s" % key)
+        # Значение проверяется только у provenance-ключей (generator/model/llm
+        # и т.п.): иначе «AI-generated» в description или «Claude.ai» в
+        # compatibility собственных файлов дают ложное срабатывание (урок
+        # самоаудита 2026-08-13 на SKILL.md).
+        if key.lower() in AI_FRONTMATTER_KEYS:
+            val = line.split(":", 1)[1] if ":" in line else ""
+            if AI_META_NAME_RE.search(val):
+                has_ai = True
+                findings.append("frontmatter-значение у %s" % key)
     c2pa = any(("c2pa" in f.lower()) or ("contentcredential" in f.lower()) or ("content_credential" in f.lower()) for f in findings)
     return c2pa, has_ai, findings, {"has_frontmatter": True, "keys": keys}
 
@@ -140,10 +145,11 @@ def clean_markdown(text):
             if key.lower() in AI_FRONTMATTER_KEYS or AI_META_NAME_RE.search(key):
                 actions.append("снят frontmatter-ключ: %s" % key)
                 continue
-            val = line.split(":", 1)[1] if ":" in line else ""
-            if AI_META_NAME_RE.search(val):
-                actions.append("снят frontmatter-ключ (значение): %s" % key)
-                continue
+            if key.lower() in AI_FRONTMATTER_KEYS:
+                val = line.split(":", 1)[1] if ":" in line else ""
+                if AI_META_NAME_RE.search(val):
+                    actions.append("снят frontmatter-ключ (значение): %s" % key)
+                    continue
         kept.append(line)
     if not actions:
         actions.append("AI-ключей во frontmatter не найдено")
