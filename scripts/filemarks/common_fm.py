@@ -33,6 +33,8 @@ def safe_write_bytes(path, data):
     dest = Path(path)
     parent = dest.parent
     parent.mkdir(parents=True, exist_ok=True)
+    # best-effort: между проверкой и os.replace цель может быть подменена
+    # симлинком (TOCTOU); os.replace заменяет сам симлинк, не следуя по нему.
     if dest.is_symlink():
         raise OSError("отказ писать через симлинк: %s" % dest)
     fd, tmp_name = tempfile.mkstemp(prefix="." + dest.name + ".", suffix=".tmp", dir=str(parent))
@@ -90,6 +92,7 @@ def which(cmd):
 
 def safe_arg(path):
     """Путь, начинающийся с '-' — не опция для exiftool/c2patool."""
+    path = str(path)
     if path.startswith("-"):
         return "./" + path
     return path

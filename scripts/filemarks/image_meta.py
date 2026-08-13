@@ -12,7 +12,7 @@ import subprocess
 import zlib
 from pathlib import Path
 
-from common_fm import preexec, safe_arg, safe_write_bytes, subprocess_rlimits, which
+from common_fm import preexec, safe_arg, safe_write_bytes, which
 
 PNG_SIG = b"\x89PNG\r\n\x1a\n"
 JPEG_SOI = b"\xff\xd8"
@@ -194,7 +194,7 @@ def strip_png(data, strip_all_text=True):
         pos = ce + 4
         name = ctype.decode("latin-1", errors="replace")
         drop = False
-        if ctype in (b"eXIf", b"caBX") or ctype.startswith(b"c2"):
+        if ctype in (b"eXIf", b"caBX", b"juMB", b"jumb") or ctype.startswith(b"c2"):
             drop = True
             actions.append("снят чанк %s" % name)
         elif ctype in (b"tEXt", b"zTXt", b"iTXt"):
