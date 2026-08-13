@@ -41,7 +41,10 @@ PY = sys.executable or "python3"
 
 def _gates(quick, tmpdir):
     """Список гейтов: (метка, argv, обязательные пути, допустимые коды)."""
-    d = os.path.basename(ROOT) or "humanizer-ru"
+    # Каноническое имя скилла, а не имя каталога клона: гейт обязан быть
+    # зелёным при любом имени каталога (SPEC_MERGED, Н-1). Сверка name из
+    # шапки SKILL.md с каноном ловит опечатки в самом имени.
+    d = "humanizer-ru"
     zip_path = os.path.join(tmpdir, "humanizer-ru.zip")
     gates = [
         ("spec: самопроверка", [PY, "scripts/check_spec.py", "--selftest"], [], {0}),
