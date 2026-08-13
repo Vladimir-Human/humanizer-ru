@@ -3,7 +3,10 @@ name: Самопроверка скилла на собственные марк
 # Скилл проверяет сам себя: все .md, .py и .yml файлы проекта
 # прогоняются через check_markers.py --scan. Совпадения внутри
 # обратных кавычек (документация выражений) пропускаются автоматически.
-# Добавлено в v2.8; кодировка исправлена в v3.3.5.
+# Добавлено в v2.8; кодировка исправлена в v3.3.5. Вендор-копия
+# eval/candidates/smixs_lint_pinned.py исключена по тому же принципу,
+# что scripts/check_markers.py и tests/fixtures: файл содержит свои
+# фикстуры и выражения с маркерами по построению.
 
 on:
   push:
@@ -42,6 +45,7 @@ jobs:
             ! -path './scripts/check_markers.py' \
             ! -path './scripts/check_fixture_sources.py' \
             ! -path './scripts/check_corpus.py' \
+            ! -path './eval/candidates/smixs_lint_pinned.py' \
             ! -path './references/test-fixtures*.md' \
             ! -path './references/false-positives.md' \
             ! -path './references/chatbot-artifacts*.md' \
