@@ -133,6 +133,8 @@ humanizer-ru/
 ├── CITATION.cff                # Карточка цитирования
 ├── LICENSE                     # MIT
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
+├── docs/
+│   └── FRAMEWORK.md            # Публичная методология проверяемости
 ├── scripts/
 │   ├── check_markers.py          # Прогон regex-маркеров, режим --scan
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
