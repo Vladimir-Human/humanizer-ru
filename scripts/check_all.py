@@ -90,7 +90,7 @@ def _gates(quick, tmpdir):
         ("perf: самопроверка", [PY, "scripts/check_perf.py", "--selftest"], [], {0}),
     ]
     if not quick:
-        gates.append(("perf: 38 выражений на 30k", [PY, "scripts/check_perf.py"], [], {0}))
+        gates.append(("perf: 39 выражений на 30k", [PY, "scripts/check_perf.py"], [], {0}))
     gates += [
         ("eval: самопроверка гарнесса", [PY, "eval/run_eval.py", "--selftest"],
          ["eval/run_eval.py"], {0}),
