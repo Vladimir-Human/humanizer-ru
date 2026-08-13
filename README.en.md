@@ -104,6 +104,8 @@ humanizer-ru/
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
+├── docs/
+│   └── FRAMEWORK.md            # Public verifiability methodology
 ├── scripts/
 │   ├── check_markers.py          # Regex test runner and text scanner
 │   ├── check_spec.py             # Agent Skills spec compliance

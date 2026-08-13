@@ -63,6 +63,7 @@ MOJIBAKE_TOKENS = ("РЎ", "Рџ", "СЂР")
 TOP_LEVEL_MANIFEST = frozenset((
  ".editorconfig", ".gitattributes", ".gitignore",
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
+ "docs",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
  "SECURITY.en.md", "SECURITY.md", "SKILL.md",
  ".github", "eval", "references", "research", "scripts", "tests",
@@ -570,7 +571,7 @@ def selftest():
  # Гейт 15: новый объект верхнего уровня обязан валить гейт, пока манифест
  # не дополнен осознанно; известный состав проходит молча.
  case("новый каталог верхнего уровня -> FAIL",
-      lambda r: _w(r, "docs/REVIEW.md", "# Регламент\n"),
+      lambda r: _w(r, "vendor/REVIEW.md", "# Регламент\n"),
       "верхнего уровня")
  case("новый файл верхнего уровня -> FAIL",
       lambda r: _w(r, "NOTES.md", "# Заметки\n"),
