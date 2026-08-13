@@ -63,7 +63,7 @@ MOJIBAKE_TOKENS = ("РЎ", "Рџ", "СЂР")
 TOP_LEVEL_MANIFEST = frozenset((
  ".editorconfig", ".gitattributes", ".gitignore",
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
- "LICENSE", "PERSONA.md", "README.en.md", "README.md",
+ "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
  "SECURITY.en.md", "SECURITY.md", "SKILL.md",
  ".github", "eval", "references", "research", "scripts", "tests",
 ))

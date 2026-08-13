@@ -126,6 +126,7 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 humanizer-ru/
 ├── SKILL.md                  # Карта, дерево решений, чек-лист
 ├── CHANGELOG.md              # Полная история версий
+├── LEADERBOARD.md            # Механические оси: прогоны детекторов
 ├── PERSONA.md                # Компактные правила живого диалога
 ├── README.md / README.en.md  # Описание проекта (рус/англ)
 ├── SECURITY.md / SECURITY.en.md
