@@ -8,7 +8,7 @@
 
 | Неделя | Установки skills.sh | Звёзды GitHub | Аудиты каталога | CI | Заявки C1 | Строк лидерборда | Примечание |
 |---|---|---|---|---|---|---|---|
-| 2026-08-12 (база) | 431 | 95 | Trust Hub Pass, Socket Pass, Snyk Fail (E005, тикет #46) | 6/6 на main | 1 (PR github/awesome-copilot#2646) | 1 (smixs) | спринт 1 + спринт 2: Н-1, Н-2, Snyk, дисклеймер, LEADERBOARD, F2-граница, F4, C1, Д1, L1, FRAMEWORK.md, разбор самопрогонов, REBALANCE-срез |
+| 2026-08-12 (база) | 431 | 95 | Trust Hub Pass, Socket Pass, Snyk Fail (E005, разбор в README) | 6/6 на main | 1 (PR github/awesome-copilot#2646) | 1 (smixs) | спринт 1 + спринт 2: Н-1, Н-2, Snyk, дисклеймер, LEADERBOARD, F2-граница, F4, C1, Д1, L1, FRAMEWORK.md, разбор самопрогонов, REBALANCE-срез |
 
 ## Ежемесячные контрольные сверки
 
