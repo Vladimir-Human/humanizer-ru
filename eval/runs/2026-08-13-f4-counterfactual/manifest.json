@@ -1,0 +1,50 @@
+{
+  "run": "2026-08-13-f4-counterfactual",
+  "model": "генератор контрфакта — deepseek-v4-pro; ветка со скиллом — экзекьюторы жанрового прогона",
+  "skill_version": "v3.9.0-89-geccb791",
+  "prompt": "F4: контрфакт «LLM без скилла»; предрегистрация research/F4-preregistration-2026-08-13.md; источники и with-ветка — из жанрового прогона 2026-08-11-genre-modes",
+  "judge": "панель не гонялась: F4 — механический прогон (Д1)",
+  "note": "SPEC_MERGED F4: скилл против нейтрального промпта перезаписи",
+  "pairs": [
+    {
+      "id": "ai-gemini-utopia",
+      "kind": "ai",
+      "provenance": "Gemini 2.5 Pro, экспериментальная вики-статья (ревизия 145078970)"
+    },
+    {
+      "id": "ai-deepseek-krylyshki",
+      "kind": "ai",
+      "provenance": "DeepSeek-V3, Хабр 877496 (рецепты)"
+    },
+    {
+      "id": "ai-grok-gran",
+      "kind": "ai",
+      "provenance": "grok-3-latest, HF vaniley/grok_answer_mail_ru"
+    },
+    {
+      "id": "ai-copilot-audit",
+      "kind": "ai",
+      "provenance": "Microsoft Copilot, issue bestdreambot/freex#11"
+    },
+    {
+      "id": "ai-deepseek-otrava",
+      "kind": "ai",
+      "provenance": "DeepSeek-V3, Хабр 877496 (галлюцинация-синонимия)"
+    },
+    {
+      "id": "human-gercen-byloe",
+      "kind": "human",
+      "provenance": "А. И. Герцен, «Былое и думы», Викитека"
+    },
+    {
+      "id": "human-gilyarovsky-moskva",
+      "kind": "human",
+      "provenance": "В. А. Гиляровский, «Москва и москвичи», Викитека"
+    },
+    {
+      "id": "human-dal-predvaritelnoe",
+      "kind": "human",
+      "provenance": "В. И. Даль, предисловие к 3-му изданию словаря, Викитека"
+    }
+  ]
+}
