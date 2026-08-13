@@ -1,0 +1,40 @@
+{
+  "run": "2026-08-13-f4-counterfactual-markers",
+  "model": "генератор контрфакта — deepseek-v4-pro; ветка со скиллом — субагенты прогона deep-markers",
+  "skill_version": "integration/all: глубокая перезапись + петля самопроверки + Grep-слой (коммит a952cd0)",
+  "prompt": "F4 прогон 2: ось снятия маркеров; предрегистрация research/F4-preregistration-2026-08-13.md (аддендум 2026-08-13); источники и with-ветка — из прогона 2026-08-10-deep-markers",
+  "judge": "панель не гонялась: F4 — механический прогон (Д1)",
+  "note": "SPEC_MERGED F4: скилл против нейтрального промпта перезаписи, маркерные источники",
+  "pairs": [
+    {
+      "id": "ai-gigachat-nebo",
+      "kind": "ai",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/02-почему-небо-голубое.txt, уже с приклеенными доменами rbc.ru/claw.ru/ya-uznayu.ru/t-j.ru) + трансплантированные маркеры: citeturn0search0, citeturn2search2, [cite_start]…[cite: 4], 【1†source】"
+    },
+    {
+      "id": "ai-gigachat-pechat",
+      "kind": "ai",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/01-слепая-печать.txt) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 2], 【2†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "id": "ai-gigachat-stolica",
+      "kind": "ai",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/03-столица-австралии.txt, уже с приклеенными доменами и строкой «Факт-контроль») + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 1], 【4†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "id": "ai-lechat-nebo",
+      "kind": "ai",
+      "provenance": "Реальный вывод Le Chat (research/raw/le-chat/03-fast-небо-голубое.txt, с чат-ботовским хвостом) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 3], 【2†source】"
+    },
+    {
+      "id": "human-constitution",
+      "kind": "human",
+      "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+    },
+    {
+      "id": "human-wikinews",
+      "kind": "human",
+      "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+    }
+  ]
+}

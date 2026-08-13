@@ -1,0 +1,160 @@
+{
+  "run": "2026-08-13-f4-counterfactual-markers",
+  "manifest": {
+    "run": "2026-08-13-f4-counterfactual-markers",
+    "model": "генератор контрфакта — deepseek-v4-pro; ветка со скиллом — субагенты прогона deep-markers",
+    "skill_version": "integration/all: глубокая перезапись + петля самопроверки + Grep-слой (коммит a952cd0)",
+    "prompt": "F4 прогон 2: ось снятия маркеров; предрегистрация research/F4-preregistration-2026-08-13.md (аддендум 2026-08-13); источники и with-ветка — из прогона 2026-08-10-deep-markers",
+    "judge": "панель не гонялась: F4 — механический прогон (Д1)",
+    "note": "SPEC_MERGED F4: скилл против нейтрального промпта перезаписи, маркерные источники",
+    "pairs": [
+      {
+        "id": "ai-gigachat-nebo",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/02-почему-небо-голубое.txt, уже с приклеенными доменами rbc.ru/claw.ru/ya-uznayu.ru/t-j.ru) + трансплантированные маркеры: citeturn0search0, citeturn2search2, [cite_start]…[cite: 4], 【1†source】"
+      },
+      {
+        "id": "ai-gigachat-pechat",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/01-слепая-печать.txt) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 2], 【2†source】, ссылка с utm_source=chatgpt.com"
+      },
+      {
+        "id": "ai-gigachat-stolica",
+        "kind": "ai",
+        "provenance": "Реальный вывод GigaChat (research/raw/gigachat/03-столица-австралии.txt, уже с приклеенными доменами и строкой «Факт-контроль») + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 1], 【4†source】, ссылка с utm_source=chatgpt.com"
+      },
+      {
+        "id": "ai-lechat-nebo",
+        "kind": "ai",
+        "provenance": "Реальный вывод Le Chat (research/raw/le-chat/03-fast-небо-голубое.txt, с чат-ботовским хвостом) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 3], 【2†source】"
+      },
+      {
+        "id": "human-constitution",
+        "kind": "human",
+        "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+      },
+      {
+        "id": "human-wikinews",
+        "kind": "human",
+        "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+      }
+    ]
+  },
+  "run_sha256": "24504057bf022540bf01855968f89e012c04a09233741ffcf1a1c07660fd953f",
+  "summary": {
+    "pairs_total": 6,
+    "pairs_ai": 4,
+    "pairs_human_control": 2,
+    "removal_with_pct": 100.0,
+    "removal_without_pct": 100.0,
+    "fact_clean_with_pct": 75.0,
+    "fact_clean_without_pct": 75.0,
+    "false_edits_with": 0,
+    "false_edits_without": 2,
+    "len_delta_with_pct": -14.7,
+    "len_delta_without_pct": -20.2
+  },
+  "pairs": [
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 2832,
+      "len_without": 2444,
+      "len_with": 2475,
+      "id": "ai-gigachat-nebo",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/02-почему-небо-голубое.txt, уже с приклеенными доменами rbc.ru/claw.ru/ya-uznayu.ru/t-j.ru) + трансплантированные маркеры: citeturn0search0, citeturn2search2, [cite_start]…[cite: 4], 【1†source】"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 3391,
+      "len_without": 2986,
+      "len_with": 3028,
+      "id": "ai-gigachat-pechat",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/01-слепая-печать.txt) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 2], 【2†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 5,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [
+        "два"
+      ],
+      "added_facts_with": [
+        "два"
+      ],
+      "len_source": 1326,
+      "len_without": 879,
+      "len_with": 980,
+      "id": "ai-gigachat-stolica",
+      "provenance": "Реальный вывод GigaChat (research/raw/gigachat/03-столица-австралии.txt, уже с приклеенными доменами и строкой «Факт-контроль») + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 1], 【4†source】, ссылка с utm_source=chatgpt.com"
+    },
+    {
+      "kind": "ai",
+      "markers_source": 4,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": 100.0,
+      "removal_with_pct": 100.0,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 1005,
+      "len_without": 687,
+      "len_with": 615,
+      "id": "ai-lechat-nebo",
+      "provenance": "Реальный вывод Le Chat (research/raw/le-chat/03-fast-небо-голубое.txt, с чат-ботовским хвостом) + трансплантированные маркеры: citeturn0search0, [cite_start]…[cite: 3], 【2†source】"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [],
+      "added_facts_with": [],
+      "len_source": 150,
+      "len_without": 110,
+      "len_with": 150,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-constitution",
+      "provenance": "Фрагмент официального юридического текста; контрольная группа, канцелярит обязателен по жанру"
+    },
+    {
+      "kind": "human",
+      "markers_source": 0,
+      "markers_without": 0,
+      "markers_with": 0,
+      "removal_without_pct": null,
+      "removal_with_pct": null,
+      "added_facts_without": [
+        "Восточного"
+      ],
+      "added_facts_with": [],
+      "len_source": 223,
+      "len_without": 215,
+      "len_with": 223,
+      "touched_without": true,
+      "touched_with": false,
+      "id": "human-wikinews",
+      "provenance": "Фрагмент новости Русских Викиновостей, написан сообществом; контрольная группа"
+    }
+  ],
+  "judges": 1
+}
