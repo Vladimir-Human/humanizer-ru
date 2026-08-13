@@ -111,6 +111,8 @@ def _gates(quick, tmpdir):
          ["eval/blind_eval.py"], {0, 2}),
         ("compile: scripts", [PY, "-m", "compileall", "-q", "scripts"], [], {0}),
         ("release: самопроверка", [PY, "scripts/check_release.py", "--selftest"], [], {0}),
+        ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",
+                                          "--selftest"], [], {0}),
     ]
     if not quick:
         gates += [

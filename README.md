@@ -149,6 +149,7 @@ humanizer-ru/
 │   ├── check_corpus.py           # Регрессия корпусов валидации
 │   ├── check_perf.py             # Скорость выражений на большом входе
 │   ├── check_release.py          # Сборка и проверка релизного архива
+│   ├── filemarks/                # Слой A/B и метаданные файлов (inspect/clean)
 │   ├── scan_soft_signals.py      # Счётчик мягких признаков
 │   └── check_all.py              # Весь релизный чек-лист одной командой
 ├── eval/
