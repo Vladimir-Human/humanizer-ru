@@ -302,6 +302,21 @@ def _selftest():
         man = zf.read("META-INF/manifest.xml").decode("utf-8")
     case("ODT: C2PA-запись manifest снята", "c2pa.json" not in man, str(rep2o["actions"]))
 
+    # самоаудит-регресс: описание скилла не помечается как AI-метаданные
+    md_self = ("---\ntitle: humanizer-ru\ndescription: Detects AI-generated Russian text\n"
+               "compatibility: Claude.ai, Claude Code\nlicense: MIT\n---\n\nТекст.\n")
+    md_self_p = tmp / "self.md"
+    md_self_p.write_bytes(md_self.encode())
+    rep = inspect_container(md_self_p)
+    case("MD: самоописание скилла не помечается", not rep["has_ai_metadata"],
+         str(rep["findings"][:3]))
+    # generator со значением Claude — помечается
+    md_gen = "---\ntitle: x\ngenerator: Claude\n---\n\nТекст.\n"
+    md_gen_p = tmp / "gen.md"
+    md_gen_p.write_bytes(md_gen.encode())
+    rep = inspect_container(md_gen_p)
+    case("MD: generator=Claude помечается", rep["has_ai_metadata"], str(rep["findings"][:2]))
+
     # 6) Текст: слой A
     txt_path = tmp / "x.txt"
     txt_path.write_text("сло\u200bво и мягкий\u00adперенос\n", encoding="utf-8")
