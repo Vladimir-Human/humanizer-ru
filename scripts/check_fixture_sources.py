@@ -62,7 +62,7 @@ REGISTERED_CASES = {
     "turn_search", "utm_chatgpt", "zero_width", "citation_n",
     "vertexaisearch", "utm_openai", "copilot_caret", "gemini_cite_start",
     "assistants_source", "cite_turn", "turn_fetch", "turn_file",
-    "sandbox_link", "think_tag",
+    "sandbox_link", "think_tag", "invisible_layout",
 }
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
@@ -350,6 +350,9 @@ def selftest():
         "assistants_source": "lo condannò a 19 anni di lavori forzati【8:16†source】",
         # Форма из живого реестра: служебный токен поиска ChatGPT в публикуемом тексте.
         "cite_turn": "responsible for filling orders. citeturn0search0",
+        # Форма из живого реестра: невидимая раскладка — мягкий перенос,
+        # наборный пробел и вариационный селектор вне эмодзи (v3.11).
+        "invisible_layout": "\u0442\u0435\u043a\u0441\u0442.\ufe0f \u043c\u044f\u0433\u043a\u0438\u0439\u00ad\u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0430\u2002\u0431",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")
@@ -364,7 +367,7 @@ def selftest():
     synth.close()
     checks = []
     err, _, cov = validate(ok, base_dir=base, repo_root=base)
-    checks.append(("полный тестовый реестр закрывает 36/36", not err and len(cov) == 36))
+    checks.append(("полный тестовый реестр закрывает %d/%d" % (len(cov), len(ok)), not err and len(cov) == len(ok)))
     err, _, _ = validate(ok[:-1], base_dir=base, repo_root=base)
     checks.append(("пропущен case -> FAIL", any("гейт не закрыт" in x for x in err)))
     _, warn, _ = validate(ok[:-1], base_dir=base, repo_root=base, allow_pending=True)
@@ -377,20 +380,20 @@ def selftest():
     checks.append(("secondary без обоснования -> FAIL", any("secondary без" in x for x in err)))
     bad[0]["secondary_justification"] = "страница цитирует ревизию X"
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == 36))
+    checks.append(("secondary с обоснованием закрывает", not err and len(cov) == len(ok)))
     bad = json.loads(json.dumps(ok)); bad[1]["evidence_class"] = "provenance"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("provenance без оговорки -> FAIL", any("provenance без" in x for x in err)))
     bad[1]["fp_caveat_documented"] = True
     err, _, cov = validate(bad, base_dir=base, repo_root=base)
-    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == 36))
+    checks.append(("provenance с оговоркой закрывает", not err and len(cov) == len(ok)))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
             e["evidence_class"] = "synthetic"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("synthetic НЕ закрывает гейт", any("гейт не закрыт" in x for x in err)
-                    and any("synthetic" in x for x in warn) and len(cov) == 35))
+                    and any("synthetic" in x for x in warn) and len(cov) == len(ok) - 1))
     bad = json.loads(json.dumps(ok))
     for e in bad:
         if e["case"] == "openai_pua_short":
@@ -413,7 +416,7 @@ def selftest():
     bad[1]["warning_disposition"] = "проверено: общий источник осознан"
     err, warn, cov = validate(bad, base_dir=base, repo_root=base)
     checks.append(("повтор URL с disposition закрывает",
-                   not err and any("повторный source_url" in x for x in warn) and len(cov) == 36))
+                   not err and any("повторный source_url" in x for x in warn) and len(cov) == len(ok)))
     bad = json.loads(json.dumps(ok)); bad[0]["evidence_note"] = "найти permalink — ЗАДАЧА"
     err, _, _ = validate(bad, base_dir=base, repo_root=base)
     checks.append(("ЗАДАЧА в подтверждённой записи -> FAIL",
@@ -463,7 +466,7 @@ def selftest():
             e["fixture_file"] = legit_rel.replace(os.sep, "/")
     err, _, cov = validate(good, base_dir=base, repo_root=base)
     checks.append(("относительный путь внутрь репозитория остаётся допустимым",
-                   not err and len(cov) == 36))
+                   not err and len(cov) == len(ok)))
 
     os.unlink(tmp.name); os.unlink(synth.name)
     fails = [n for n, p in checks if not p]

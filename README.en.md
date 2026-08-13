@@ -10,7 +10,7 @@
 
 An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
 
-It ships 38 patterns (25 base + 13 Russian-specific extensions) and 38 testable regex markers split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+It ships 38 patterns (25 base + 13 Russian-specific extensions) and 39 testable regex markers split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -36,7 +36,7 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 38 regex markers with a 36/38 evidence registry, 33 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 33 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill; its description openly claims to target what GPTZero, DivEye and RuBERT measure (perplexity and burstiness) | Detector bypass stated in its description |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
@@ -148,7 +148,7 @@ The release policy separates a stable core (genre rules, false-positive boundari
 
 ## Regex markers: classes A and B
 
-38 regular expressions catch traces of machine generation. They fall into two classes:
+39 regular expressions catch traces of machine generation. They fall into two classes:
 
 - **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
 - **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), the short-footnote form (`U+EA01`/`U+EA02` around a digit), zero-width characters, and reference names containing internal-tool identifiers (`<ref name="0searchN">`). A B marker alone is never an authorship verdict.
@@ -177,7 +177,7 @@ and its Russian counterpart
 
 A full evidence record — an immutable source URL, the date it was accessed,
 a verbatim sample, an evidence class, and a fixture in
-`research/fixtures/marker-sources.json` — currently exists for 36 of 38
+`research/fixtures/marker-sources.json` — currently exists for 37 of 39
 fast-layer markers; the rest are covered by fixtures only. The validator
 prints this honest coverage rather than rounding it to a convenient number.
 
