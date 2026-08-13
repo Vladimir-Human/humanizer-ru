@@ -113,7 +113,8 @@ def _scan_default(path, compiled):
 
 
 def _scan_candidate(path, runner):
-    proc = subprocess.run([sys.executable, runner, path], capture_output=True, text=True)
+    proc = subprocess.run([sys.executable, runner, path], capture_output=True,
+                          text=True, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         return [{"error": proc.stderr.strip()[:200]}]
     try:

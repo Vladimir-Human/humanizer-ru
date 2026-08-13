@@ -1,0 +1,62 @@
+{
+  "manifest_version": 1,
+  "candidate": "eval/candidates/smixs_runner.py",
+  "files": 25,
+  "files_missing": 0,
+  "hash_mismatches": 0,
+  "human_hits": 6,
+  "ai_hits": 67,
+  "ai_unexpected": 1,
+  "boundary_expected_ok": 1,
+  "boundary_unexpected": 1,
+  "details": [
+    {
+      "file": "research/validation/human/09-wikipedia-modern.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/11-it-notation.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 11,
+          "case": "A остаток размышлений"
+        },
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 11,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/boundary/emoji-zwj.txt",
+      "kind": "boundary",
+      "expected": 0,
+      "actual": 1,
+      "cases": [
+        "21 эмодзи"
+      ]
+    },
+    {
+      "file": "research/raw/le-chat/01-fast-канберра.txt",
+      "kind": "ai",
+      "expected": 1,
+      "actual": 1,
+      "cases": [
+        "23 длинное тире"
+      ]
+    }
+  ]
+}

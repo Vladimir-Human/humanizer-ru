@@ -29,5 +29,6 @@
 | `crossfamily-validation-2026-08-10.md`, `judge-rubric-collision-2026-08-10.md`, `marker-removal-analysis-2026-08-10.md` | анализы прогонов 2026-08-10 |
 | `protocols/` | протоколы тестов (Le Chat, persona A/B) |
 | `raw/` | сырые ответы моделей, захваченные без правок |
+| `leaderboard/` | сырые прогоны детекторов на нейтральном корпусе (механические оси) |
 | `ab/` | пилот persona A/B (закрыт как exploratory) |
 | `core-language-split.md` | проработка отделения ядра от языкового слоя |
