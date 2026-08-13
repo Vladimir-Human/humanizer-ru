@@ -119,6 +119,7 @@ humanizer-ru/
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
+│   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
 │   └── check_all.py              # Full release checklist in one command
