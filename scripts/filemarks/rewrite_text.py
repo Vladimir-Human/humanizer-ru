@@ -79,14 +79,20 @@ def main():
         if args.path.stat().st_size > MAX_INPUT_BYTES:
             eprint("отказ: файл больше %d байт" % MAX_INPUT_BYTES)
             return 2
-        text = args.path.read_text(encoding="utf-8")
+        try:
+            text = args.path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            eprint("файл не читается как UTF-8: %s" % exc)
+            return 2
     elif not sys.stdin.isatty():
-        text = sys.stdin.read(MAX_STDIN_BYTES + 1)
-        if len(text) > MAX_STDIN_BYTES:
+        raw = sys.stdin.buffer.read(MAX_STDIN_BYTES + 1)
+        if len(raw) > MAX_STDIN_BYTES:
             eprint("отказ: stdin больше %d байт" % MAX_STDIN_BYTES)
             return 2
-    out = PROMPTS[args.strength].replace("{TEXT}", text)
+        text = raw.decode("utf-8", errors="replace")
+    out = PROMPTS[args.strength]
     out = out.replace("{LANG}", args.lang).replace("{ORIGINAL_LANG}", args.original_lang)
+    out = out.replace("{TEXT}", text)
     print(out)
     return 0
 

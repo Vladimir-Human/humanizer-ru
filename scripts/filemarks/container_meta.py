@@ -23,8 +23,9 @@ AI_FRONTMATTER_KEYS = frozenset({"generator", "ai", "ai_generated", "ai-generate
                                  "генератор", "модель", "нейросеть", "ии",
                                  "сгенерировано", "автор_ии"})
 AI_META_NAME_RE = re.compile(r"generator|ai[-_ ]?generated|claude|anthropic|openai|gemini|synthid|"
-                             r"c2pa|content.?credential|provenance|digital.?source|aigc|"
-                             r"генератор|модель|нейросеть|сгенерировано|искуственный интеллект", re.I)
+                             r"c2pa|content.?credential|provenance|digital.?source|aigc|chatgpt|copilot|"
+                             r"генератор|модель|нейросеть|сгенерировано|искусственный интеллект|"
+                             r"искуственный интеллект", re.I)
 
 _FM_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 _META_TAG_RE = re.compile(r"<meta\b[^>]*>", re.I)
@@ -478,10 +479,11 @@ def clean_pdf(path, dest):
     return actions, {"mode": "copy", "degraded": True}
 
 
-def inspect_container(path):
+def inspect_container(path, force_fmt=None):
     data = Path(path).read_bytes()
-    fmt = detect_container_format(path, data)
+    fmt = force_fmt or detect_container_format(path, data)
     tools, details = {}, {}
+    layer_a = 0
     if fmt == "svg":
         has_c2pa, has_ai, findings, details = inspect_svg(data)
     elif fmt == "pdf":
@@ -497,10 +499,16 @@ def inspect_container(path):
         has_c2pa, has_ai, findings, details = inspect_markdown(data.decode("utf-8", errors="replace"))
     else:
         has_c2pa, has_ai, findings = False, False, ["неподдерживаемый контейнер: %s" % fmt]
+    if fmt in ("html", "markdown"):
+        from text_layer import clean_text_layer
+        _c, layer_a = clean_text_layer(data.decode("utf-8", errors="surrogateescape"))
+        if layer_a:
+            findings.append("слой A (невидимые): %d" % layer_a)
     if fmt in ("svg", "pdf", "docx") and not tools:
         tools = run_optional_tools(Path(path))
     return {"path": str(path), "format": fmt, "has_c2pa": has_c2pa,
-            "has_ai_metadata": has_ai, "findings": findings, "tools": tools, "details": details}
+            "has_ai_metadata": has_ai, "findings": findings, "tools": tools,
+            "details": details, "layer_a_hits": layer_a}
 
 
 def clean_container(path, dest, also_layer_a_text=True):
@@ -527,14 +535,17 @@ def clean_container(path, dest, also_layer_a_text=True):
         else:
             text, actions = clean_markdown(text)
         if also_layer_a_text:
-            from text_layer import clean_text_layer
-            text, n = clean_text_layer(text)
-            if n:
-                actions.append("снято невидимых (слой A): %d" % n)
+            from text_layer import DETECTOR_OK, clean_text_layer
+            if not DETECTOR_OK:
+                actions.append("детектор check_markers недоступен: слой A не проверялся")
+            else:
+                text, n = clean_text_layer(text)
+                if n:
+                    actions.append("снято невидимых (слой A): %d" % n)
         safe_write_text(dest, text)
     else:
         raise ValueError("неподдерживаемый формат контейнера: %s" % fmt)
-    after = inspect_container(dest)
+    after = inspect_container(dest, force_fmt=fmt)
     return {"input": str(path), "output": str(dest), "format": fmt, "actions": actions,
             "bytes_in": len(data), "bytes_out": Path(dest).stat().st_size,
             "still_has_c2pa": after["has_c2pa"], "still_has_ai_metadata": after["has_ai_metadata"],

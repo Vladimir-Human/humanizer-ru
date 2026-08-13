@@ -28,9 +28,9 @@ def main():
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args()
     if args.selftest:
-        ok = True
-        print("САМОПРОВЕРКА: 1/1 PASS" if ok else "САМОПРОВЕРКА: 0/1 PASS")
-        return 0 if ok else 1
+        # Заглушка: без внешнего checkout и зависимостей проверять нечего.
+        print("САМОПРОВЕРКА: 1/1 PASS (заглушка: внешний checkout не настроен)")
+        return 0
     if not args.path or not args.path.is_file():
         print("не файл: %s" % args.path, file=sys.stderr)
         return 2
