@@ -31,8 +31,8 @@ from common_fm import MAX_INPUT_BYTES, cleaned_path, emit_json, safe_write_bytes
 from container_meta import clean_container, inspect_container  # noqa: E402
 from image_meta import clean_image, detect_format as detect_image, inspect_image  # noqa: E402
 
-TEXT_EXTS = {".txt", ".text", ".md", ".markdown", ".mdx", ".html", ".htm",
-             ".css", ".js", ".py", ".rs", ".go", ".json", ".yaml", ".yml", ".toml", ".csv"}
+TEXT_EXTS = {".txt", ".text", ".css", ".js", ".py", ".rs", ".go",
+             ".json", ".yaml", ".yml", ".toml", ".csv"}
 IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
 CONTAINER_EXTS = {".svg", ".pdf", ".docx", ".odt", ".html", ".htm", ".md", ".markdown", ".mdx"}
 
@@ -101,8 +101,7 @@ def _run(args):
             return 2
         if args.inspect:
             cleaned, n = clean_text_layer(text)
-            rep = {"kind": "text", "path": str(args.path), "layer_a_hits": n,
-                   "sample": text[:200]}
+            rep = {"kind": "text", "path": str(args.path), "layer_a_hits": n}
         else:
             cleaned, n = clean_text_layer(text)
             safe_write_text(args.out, cleaned)
@@ -142,6 +141,9 @@ def _run(args):
     dirty = False
     if args.inspect:
         dirty = rep.get("layer_a_hits", 0) > 0 or rep.get("has_c2pa") or rep.get("has_ai_metadata")
+    else:
+        # clean: код 1, если после чистки метки остались (PDF без exiftool и т.п.)
+        dirty = bool(rep.get("still_has_c2pa") or rep.get("still_has_ai_metadata"))
     return 1 if dirty else 0
 
 

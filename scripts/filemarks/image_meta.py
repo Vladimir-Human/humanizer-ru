@@ -131,7 +131,8 @@ def run_optional_tools(path):
             r = subprocess.run([c2patool, safe_arg(str(path))], capture_output=True,
                                text=True, timeout=30, preexec_fn=preexec())
             out = ((r.stdout or "") + (r.stderr or "")).lower()
-            no_manifest = "no claim" in out or "no jumbf" in out
+            no_manifest = any(p in out for p in ("no claim", "no jumbf", "no manifest",
+                                                  "not found", "not a valid", "no c2pa"))
             tools["c2patool"] = {"available": True, "returncode": r.returncode,
                                  "snippet": out[:2000],
                                  "has_manifest": ("claim" in out or "c2pa" in out or "manifest" in out)
