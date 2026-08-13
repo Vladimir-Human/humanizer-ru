@@ -12,7 +12,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-from common_fm import preexec, safe_arg, safe_write_bytes, safe_write_text, subprocess_rlimits, which
+from common_fm import preexec, safe_arg, safe_write_bytes, safe_write_text, which
 from image_meta import AI_META_HINTS, C2PA_MARKERS, run_optional_tools
 
 AI_FRONTMATTER_KEYS = frozenset({"generator", "ai", "ai_generated", "ai-generated",
@@ -87,7 +87,7 @@ def _top_yaml_keys(block):
             continue
         if line[0] in (" ", "\t", "-"):
             continue
-        m = re.match(r"^([A-Za-z0-9_.-]+)\s*:", line)
+        m = re.match(r"^([\w.\-]+)\s*:", line)
         if m:
             rows.append((m.group(1), line, i))
     return rows
@@ -117,7 +117,7 @@ def clean_markdown(text):
     actions = []
     m = _FM_RE.match(text)
     if not m:
-        return text, ["YAML-frontmatter нет"]
+        return text, ["YAML-frontmatter отсутствует"]
     block = m.group(1)
     body = text[m.end():]
     kept = []
@@ -125,7 +125,7 @@ def clean_markdown(text):
         if not line.strip() or line.strip().startswith("#") or line[0] in (" ", "\t", "-"):
             kept.append(line)
             continue
-        km = re.match(r"^([A-Za-z0-9_.-]+)\s*:", line)
+        km = re.match(r"^([\w.\-]+)\s*:", line)
         if km:
             key = km.group(1)
             if key.lower() in AI_FRONTMATTER_KEYS or AI_META_NAME_RE.search(key):
@@ -137,7 +137,7 @@ def clean_markdown(text):
                 continue
         kept.append(line)
     if not actions:
-        actions.append("AI-ключей во frontmatter нет")
+        actions.append("AI-ключей во frontmatter не найдено")
     new_block = "\n".join(kept).strip("\n")
     if new_block:
         out = "---\n%s\n---\n%s" % (new_block, body)
@@ -147,10 +147,16 @@ def clean_markdown(text):
     return out, actions
 
 
+def _meta_has_ai(tag):
+    return (AI_META_NAME_RE.search(tag)
+            or any(h.decode("ascii", "ignore").lower() in tag.lower()
+                   for h in AI_META_HINTS[:12]))
+
+
 def inspect_html(text):
     findings, has_ai, has_c2pa = [], False, False
     for tag in _META_TAG_RE.findall(text):
-        if AI_META_NAME_RE.search(tag) or any(h.decode("ascii", "ignore").lower() in tag.lower() for h in AI_META_HINTS[:12]):
+        if _meta_has_ai(tag):
             has_ai = True
             findings.append("meta: %s" % tag[:120])
             if re.search(r"c2pa|content.?credential", tag, re.I):
@@ -162,7 +168,7 @@ def inspect_html(text):
             findings.append("json-ld provenance-блок")
             if re.search(r"c2pa|contentcredential", blob, re.I):
                 has_c2pa = True
-    for m in re.finditer(r"""\bdata-ai[\w-]*\s*=\s*["'][^"']*["']""", text, re.I):
+    for m in re.finditer(r"""(?:^|\s)data-ai[\w-]*\s*=\s*["'][^"']*["']""", text, re.I):
         has_ai = True
         findings.append("attr: %s" % m.group(0)[:80])
     return has_c2pa, has_ai, findings, {}
@@ -173,7 +179,7 @@ def clean_html(text):
 
     def _meta_sub(m):
         tag = m.group(0)
-        if AI_META_NAME_RE.search(tag) or re.search(r"generator|claude|anthropic|openai|gemini|synthid|c2pa|aigc", tag, re.I):
+        if _meta_has_ai(tag):
             actions.append("снят meta: %s" % tag[:80])
             return ""
         return tag
@@ -188,7 +194,7 @@ def clean_html(text):
         return blob
 
     out = _JSONLD_RE.sub(_jsonld_sub, out)
-    out2, n = re.subn(r"""\sdata-ai[\w-]*\s*=\s*["'][^"']*["']""", "", out, flags=re.I)
+    out2, n = re.subn(r"""(?:^|\s)data-ai[\w-]*\s*=\s*["'][^"']*["']""", " ", out, flags=re.I)
     if n:
         actions.append("сняты data-ai* атрибуты x%d" % n)
         out = out2
@@ -202,7 +208,7 @@ def inspect_svg(data):
     has_c2pa, has_ai, hits = _blob_hits(data)
     findings.extend(hits)
     try:
-        text = data.decode("utf-8", errors="replace")
+        text = data.decode("utf-8", errors="surrogateescape")
         if re.search(r"<metadata[\s>]", text, re.I):
             findings.append("svg <metadata> присутствует")
             has_ai = True
@@ -236,11 +242,10 @@ def clean_svg(data):
         return body
 
     text = re.sub(r"<!--.*?-->", _cmt, text, flags=re.DOTALL)
-    if not actions:
-        new, n = re.subn(r"""\s(inkscape:version|sodipodi:docname|generator)\s*=\s*"[^"]*" """, "", text, flags=re.I)
-        if n:
-            actions.append("сняты generator-атрибуты x%d" % n)
-            text = new
+    new, n = re.subn(r"""\s(inkscape:version|sodipodi:docname|generator)\s*=\s*"[^"]*""", "", text, flags=re.I)
+    if n:
+        actions.append("сняты generator-атрибуты x%d" % n)
+        text = new
     if not actions:
         actions.append("SVG-метаданных нет")
     return text.encode("utf-8", errors="surrogateescape"), actions
@@ -252,6 +257,17 @@ def _check_zip_budget(info, budget):
         raise ValueError("распакованный размер zip превышает лимит (%d байт)" % MAX_ZIP_DECOMPRESSED_BYTES)
 
 
+def _safe_read(zf, name, budget):
+    """Чтение части zip с контролем фактического размера: заголовку zip
+    верить нельзя (file_size из central directory подделывается)."""
+    raw = zf.read(name)
+    delta = len(raw) - zf.getinfo(name).file_size
+    budget[0] += delta
+    if budget[0] > MAX_ZIP_DECOMPRESSED_BYTES:
+        raise ValueError("фактический распакованный размер превышает лимит")
+    return raw
+
+
 def inspect_docx(data):
     findings, has_c2pa, has_ai = [], False, False
     parts = []
@@ -260,8 +276,10 @@ def inspect_docx(data):
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
             parts = zf.namelist()
             for info in zf.infolist():
+                if not (info.filename.startswith(("docProps/", "customXml/"))):
+                    continue
                 _check_zip_budget(info, budget)
-                raw = zf.read(info.filename)
+                raw = _safe_read(zf, info.filename, budget)
                 c2, ai, hits = _blob_hits(raw)
                 if c2 or ai:
                     has_c2pa = has_c2pa or c2
@@ -270,8 +288,8 @@ def inspect_docx(data):
             custom = [n for n in parts if n.startswith("customXml/")]
             if custom:
                 findings.append("customXml-частей: %d" % len(custom))
-    except zipfile.BadZipFile:
-        return False, False, ["некорректный DOCX-zip"], {}
+    except (zipfile.BadZipFile, ValueError) as exc:
+        return False, False, ["ошибка zip: %s" % exc], {}
     return has_c2pa, has_ai or has_c2pa, findings, {"parts": len(parts)}
 
 
@@ -283,7 +301,7 @@ def clean_docx(data):
         for info in zin.infolist():
             name = info.filename
             _check_zip_budget(info, budget)
-            raw = zin.read(name)
+            raw = _safe_read(zin, name, budget)
             if name.startswith("customXml/"):
                 actions.append("снята часть %s" % name)
                 continue
@@ -329,20 +347,22 @@ def inspect_odt(data):
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
             for info in zf.infolist():
+                if info.filename not in ("meta.xml", "META-INF/manifest.xml"):
+                    continue
                 _check_zip_budget(info, budget)
-                raw = zf.read(info.filename)
+                raw = _safe_read(zf, info.filename, budget)
                 c2, ai, hits = _blob_hits(raw)
                 if c2 or ai:
                     has_c2pa = has_c2pa or c2
                     has_ai = has_ai or ai
                     findings.append("%s: %s" % (info.filename, ", ".join(hits[:6])))
             if "meta.xml" in zf.namelist():
-                meta = zf.read("meta.xml").decode("utf-8", errors="replace")
+                meta = _safe_read(zf, "meta.xml", budget).decode("utf-8", errors="replace")
                 if re.search(r"generator|claude|openai|anthropic|gemini", meta, re.I):
                     has_ai = True
                     findings.append("meta.xml: generator-подобные поля")
-    except zipfile.BadZipFile:
-        return False, False, ["некорректный ODT-zip"], {}
+    except (zipfile.BadZipFile, ValueError) as exc:
+        return False, False, ["ошибка zip: %s" % exc], {}
     return has_c2pa, has_ai or has_c2pa, findings, {}
 
 
@@ -354,7 +374,7 @@ def clean_odt(data):
         for info in zin.infolist():
             name = info.filename
             _check_zip_budget(info, budget)
-            raw = zin.read(name)
+            raw = _safe_read(zin, name, budget)
             if name == "meta.xml":
                 text = raw.decode("utf-8", errors="replace")
                 new, n = re.subn(r"<meta:generator\b[^>]*>.*?</meta:generator\s*>", "", text, flags=re.I | re.DOTALL)
@@ -415,10 +435,10 @@ def clean_pdf(path, dest):
     if n:
         actions.append("сняты XMP-xpacket x%d (урезанный режим; возможны битые смещения)" % n)
         safe_write_bytes(dest, new)
-        actions.append("предупреждение: чистый stdlib-режим PDF несовершенен; поставьте exiftool")
+        actions.append("предупреждение: чистый stdlib-режим PDF снимает не все метки; поставьте exiftool")
         return actions, {"mode": "stdlib-xmp", "degraded": True}
     safe_write_bytes(dest, data)
-    actions.append("чистильщика PDF нет (поставьте exiftool); скопировано как есть")
+    actions.append("очиститель PDF не найден (поставьте exiftool); скопировано как есть")
     return actions, {"mode": "copy", "degraded": True}
 
 
@@ -470,6 +490,11 @@ def clean_container(path, dest, also_layer_a_text=True):
             text, actions = clean_html(text)
         else:
             text, actions = clean_markdown(text)
+        if also_layer_a_text:
+            from text_layer import clean_text_layer
+            text, n = clean_text_layer(text)
+            if n:
+                actions.append("снято невидимых (слой A): %d" % n)
         safe_write_text(dest, text)
     else:
         raise ValueError("неподдерживаемый формат контейнера: %s" % fmt)

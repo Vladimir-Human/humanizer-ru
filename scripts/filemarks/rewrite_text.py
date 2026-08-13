@@ -17,6 +17,7 @@ from pathlib import Path
 
 HERE = __import__("os").path.dirname(__import__("os").path.abspath(__file__))
 sys.path.insert(0, HERE)
+from common_fm import MAX_STDIN_BYTES, eprint
 
 PROMPTS = {
     "paraphrase": (
@@ -64,6 +65,8 @@ def main():
     p.add_argument("path", type=Path, nargs="?")
     p.add_argument("--strength", choices=sorted(PROMPTS), default="paraphrase")
     p.add_argument("--backend", choices=("print-prompt",), default="print-prompt")
+    p.add_argument("--lang", default="en")
+    p.add_argument("--original-lang", default="ru")
     p.add_argument("--selftest", action="store_true")
     args = p.parse_args()
     if args.selftest:
@@ -74,8 +77,13 @@ def main():
     if args.path and args.path.is_file():
         text = args.path.read_text(encoding="utf-8")
     elif not sys.stdin.isatty():
-        text = sys.stdin.read()
-    print(PROMPTS[args.strength].replace("{TEXT}", text))
+        text = sys.stdin.read(MAX_STDIN_BYTES + 1)
+        if len(text) > MAX_STDIN_BYTES:
+            eprint("отказ: stdin больше %d байт" % MAX_STDIN_BYTES)
+            return 2
+    out = PROMPTS[args.strength].replace("{TEXT}", text)
+    out = out.replace("{LANG}", args.lang).replace("{ORIGINAL_LANG}", args.original_lang)
+    print(out)
     return 0
 
 
