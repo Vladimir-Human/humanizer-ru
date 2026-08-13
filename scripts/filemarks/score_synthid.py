@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Порт из guillaumemeyer/watermarks-remover (MIT, Copyright (c) 2026 Guillaume Meyer),
 # коммит f10efaa7efc75591b4744cc1d885874a79f5f7ee. Адаптация: русский вывод, конвенции humanizer-ru, selftest.
 #!/usr/bin/env python3
@@ -32,6 +33,9 @@ def main():
         return 0 if ok else 1
     if not args.path or not args.path.is_file():
         print("не файл: %s" % args.path, file=sys.stderr)
+        return 2
+    if args.path.stat().st_size > 256 << 20:
+        print("отказ: изображение больше лимита", file=sys.stderr)
         return 2
     upstream = args.upstream_dir or (Path(os.environ["REVERSE_SYNTHID_DIR"])
                                      if os.environ.get("REVERSE_SYNTHID_DIR") else None)

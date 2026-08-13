@@ -19,9 +19,12 @@ AI_FRONTMATTER_KEYS = frozenset({"generator", "ai", "ai_generated", "ai-generate
                                  "claude", "anthropic", "openai", "gemini", "synthid",
                                  "c2pa", "content_credentials", "contentcredentials",
                                  "provenance", "digital_source_type", "digitalsourcetype",
-                                 "created_with", "createdwith", "model", "llm"})
+                                 "created_with", "createdwith", "model", "llm",
+                                 "генератор", "модель", "нейросеть", "ии",
+                                 "сгенерировано", "автор_ии"})
 AI_META_NAME_RE = re.compile(r"generator|ai[-_ ]?generated|claude|anthropic|openai|gemini|synthid|"
-                             r"c2pa|content.?credential|provenance|digital.?source|aigc", re.I)
+                             r"c2pa|content.?credential|provenance|digital.?source|aigc|"
+                             r"генератор|модель|нейросеть|сгенерировано|искуственный интеллект", re.I)
 
 _FM_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 _META_TAG_RE = re.compile(r"<meta\b[^>]*>", re.I)
@@ -67,10 +70,15 @@ def detect_container_format(path, data=None):
 def _blob_hits(blob):
     low = blob.lower()
     findings, has_c2pa, has_ai = [], False, False
+    seen_c2pa = set()
     for n in C2PA_MARKERS:
+        key = n.decode("ascii", errors="replace").lower()
+        if key in seen_c2pa:
+            continue
         if n.lower() in low:
+            seen_c2pa.add(key)
             has_c2pa = True
-            findings.append("marker:%s" % n.decode("ascii", errors="replace"))
+            findings.append("marker:%s" % key)
     for n in AI_META_HINTS:
         if n.lower() in low:
             has_ai = True
@@ -109,7 +117,7 @@ def inspect_markdown(text):
         if AI_META_NAME_RE.search(val):
             has_ai = True
             findings.append("frontmatter-значение у %s" % key)
-    c2pa = any("c2pa" in f.lower() or "content" in f.lower() for f in findings)
+    c2pa = any(("c2pa" in f.lower()) or ("contentcredential" in f.lower()) or ("content_credential" in f.lower()) for f in findings)
     return c2pa, has_ai, findings, {"has_frontmatter": True, "keys": keys}
 
 
@@ -242,7 +250,7 @@ def clean_svg(data):
         return body
 
     text = re.sub(r"<!--.*?-->", _cmt, text, flags=re.DOTALL)
-    new, n = re.subn(r"""\s(inkscape:version|sodipodi:docname|generator)\s*=\s*"[^"]*""", "", text, flags=re.I)
+    new, n = re.subn(r"""\s(inkscape:version|sodipodi:docname|generator)\s*=\s*(?:"[^"]*"|'[^']*')""", "", text, flags=re.I)
     if n:
         actions.append("сняты generator-атрибуты x%d" % n)
         text = new
@@ -281,6 +289,12 @@ def inspect_docx(data):
                 _check_zip_budget(info, budget)
                 raw = _safe_read(zf, info.filename, budget)
                 c2, ai, hits = _blob_hits(raw)
+                if info.filename.startswith("docProps/"):
+                    txt = raw.decode("utf-8", errors="replace")
+                    if AI_META_NAME_RE.search(txt) or re.search(
+                            r"claude|openai|anthropic|gemini|chatgpt|synthid|copilot", txt, re.I):
+                        ai = True
+                        hits = hits + ["ai:docProps-field"]
                 if c2 or ai:
                     has_c2pa = has_c2pa or c2
                     has_ai = has_ai or ai
@@ -297,6 +311,13 @@ def clean_docx(data):
     actions = []
     out_buf = io.BytesIO()
     budget = [0]
+    try:
+        return _clean_docx_zip(data, out_buf, budget, actions)
+    except (zipfile.BadZipFile, ValueError) as exc:
+        raise ValueError("ошибка обработки DOCX: %s" % exc)
+
+
+def _clean_docx_zip(data, out_buf, budget, actions):
     with zipfile.ZipFile(io.BytesIO(data)) as zin, zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as zout:
         for info in zin.infolist():
             name = info.filename
@@ -370,12 +391,27 @@ def clean_odt(data):
     actions = []
     out_buf = io.BytesIO()
     budget = [0]
+    try:
+        return _clean_odt_zip(data, out_buf, budget, actions)
+    except (zipfile.BadZipFile, ValueError) as exc:
+        raise ValueError("ошибка обработки ODT: %s" % exc)
+
+
+def _clean_odt_zip(data, out_buf, budget, actions):
     with zipfile.ZipFile(io.BytesIO(data)) as zin, zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as zout:
         for info in zin.infolist():
             name = info.filename
             _check_zip_budget(info, budget)
             raw = _safe_read(zin, name, budget)
-            if name == "meta.xml":
+            if name == "META-INF/manifest.xml":
+                text = raw.decode("utf-8", errors="replace")
+                new, n = re.subn(
+                    r"""<manifest:file-entry[^>]*full-path="[^"]*(?:c2pa|contentcredential)[^"]*"[^>]*/>""",
+                    "", text, flags=re.I)
+                if n:
+                    actions.append("сняты C2PA-записи manifest.xml x%d" % n)
+                    raw = new.encode("utf-8")
+            elif name == "meta.xml":
                 text = raw.decode("utf-8", errors="replace")
                 new, n = re.subn(r"<meta:generator\b[^>]*>.*?</meta:generator\s*>", "", text, flags=re.I | re.DOTALL)
                 if n:
