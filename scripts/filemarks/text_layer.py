@@ -33,6 +33,9 @@ def layer_a_rx():
     return _RX
 
 
+DETECTOR_OK = _MARKER_CASES != {}
+
+
 def clean_text_layer(text):
     rx = layer_a_rx()
     if rx is None:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Порт из guillaumemeyer/watermarks-remover (MIT, Copyright (c) 2026 Guillaume Meyer),
 # коммит f10efaa7efc75591b4744cc1d885874a79f5f7ee. Адаптация: русский вывод, конвенции humanizer-ru, selftest.
 #!/usr/bin/env python3
@@ -35,7 +36,7 @@ TEXT_EXTS = {".txt", ".text", ".md", ".markdown", ".mdx", ".html", ".htm",
 IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
 CONTAINER_EXTS = {".svg", ".pdf", ".docx", ".odt", ".html", ".htm", ".md", ".markdown", ".mdx"}
 
-from text_layer import clean_text_layer, layer_a_rx  # noqa: E402
+from text_layer import DETECTOR_OK, clean_text_layer, layer_a_rx  # noqa: E402
 
 
 def classify(path):
@@ -47,10 +48,14 @@ def classify(path):
         return "text"
     with open(path, "rb") as fh:
         head = fh.read(4096)
+        fh.seek(0, 2)
+        size = fh.tell()
+        fh.seek(max(0, size - 65536))
+        tail = fh.read(65536)
     if detect_image(head[:16] if len(head) >= 16 else head) in ("png", "jpeg"):
         return "image"
     from container_meta import detect_container_format
-    if detect_container_format(path, head if path.stat().st_size else b"") != "unknown":
+    if detect_container_format(path, head + tail if size else b"") != "unknown":
         return "container"
     return "text"
 
@@ -67,7 +72,14 @@ def main():
 
     if args.selftest:
         return _selftest()
+    try:
+        return _run(args)
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        print("ошибка обработки: %s" % exc, file=sys.stderr)
+        return 2
 
+
+def _run(args):
     if not (args.inspect ^ args.clean):
         print("нужен ровно один режим: --inspect или --clean", file=sys.stderr)
         return 2
@@ -83,6 +95,10 @@ def main():
     kind = classify(args.path)
     if kind == "text":
         text = args.path.read_text(encoding="utf-8", errors="surrogateescape")
+        if not DETECTOR_OK:
+            print("детектор check_markers недоступен: результат слоя A недействителен",
+                  file=sys.stderr)
+            return 2
         if args.inspect:
             cleaned, n = clean_text_layer(text)
             rep = {"kind": "text", "path": str(args.path), "layer_a_hits": n,
@@ -118,6 +134,8 @@ def main():
                     print("  - %s" % f)
         else:
             print("Очистка: %s -> %s" % (rep.get("input"), rep.get("output")))
+            if rep.get("kind") == "text":
+                print("Снято символов: %d" % rep.get("removed", 0))
             for a in rep.get("actions", []):
                 print("  - %s" % a)
 
@@ -253,10 +271,38 @@ def _selftest():
     case("DOCX: customXml снят", not any(n.startswith("customXml/") for n in names),
          str(rep2["actions"]))
 
+    # 4-регресс: DOCX Application=Gemini виден и чистится
+    buf2 = __import__("io").BytesIO()
+    with zipfile.ZipFile(buf2, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("word/document.xml", "<w:document/>")
+        zf.writestr("docProps/app.xml", "<Application>Gemini</Application>")
+    d2 = tmp / "g.docx"
+    d2.write_bytes(buf2.getvalue())
+    rep = inspect_container(d2)
+    case("DOCX: Application=Gemini найден", rep["has_ai_metadata"], str(rep["findings"][:2]))
+    rep2d = clean_container(d2, tmp / "g.cleaned.docx")
+    with zipfile.ZipFile(tmp / "g.cleaned.docx") as zf:
+        app = zf.read("docProps/app.xml").decode("utf-8")
+    case("DOCX: Application=Gemini вычищен", "Gemini" not in app, str(rep2d["actions"]))
+    # 3-регресс: ODT manifest с C2PA-записью
+    buf3 = __import__("io").BytesIO()
+    with zipfile.ZipFile(buf3, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("content.xml", "<content/>")
+        zf.writestr("meta.xml", "<office:meta/>")
+        zf.writestr("META-INF/manifest.xml",
+                    '<manifest:manifest xmlns:manifest="urn:oasis"><manifest:file-entry manifest:full-path="content.xml"/><manifest:file-entry manifest:full-path="c2pa.json"/></manifest:manifest>')
+    o1 = tmp / "x.odt"
+    o1.write_bytes(buf3.getvalue())
+    rep = inspect_container(o1)
+    case("ODT: C2PA-запись manifest найдена", rep["has_c2pa"], str(rep["findings"][:2]))
+    rep2o = clean_container(o1, tmp / "x.cleaned.odt")
+    with zipfile.ZipFile(tmp / "x.cleaned.odt") as zf:
+        man = zf.read("META-INF/manifest.xml").decode("utf-8")
+    case("ODT: C2PA-запись manifest снята", "c2pa.json" not in man, str(rep2o["actions"]))
+
     # 6) Текст: слой A
     txt_path = tmp / "x.txt"
     txt_path.write_text("сло\u200bво и мягкий\u00adперенос\n", encoding="utf-8")
-    import re as _re
     if layer_a_rx() is not None:
         cleaned, n = clean_text_layer(txt_path.read_text(encoding="utf-8"))
         case("TXT: слой A снят", n == 2 and "\u200b" not in cleaned and "\u00ad" not in cleaned,

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Порт из guillaumemeyer/watermarks-remover (MIT, Copyright (c) 2026 Guillaume Meyer),
 # коммит f10efaa7efc75591b4744cc1d885874a79f5f7ee. Адаптация: русский вывод, конвенции humanizer-ru, selftest.
 #!/usr/bin/env python3
@@ -17,7 +18,7 @@ from pathlib import Path
 
 HERE = __import__("os").path.dirname(__import__("os").path.abspath(__file__))
 sys.path.insert(0, HERE)
-from common_fm import MAX_STDIN_BYTES, eprint
+from common_fm import MAX_INPUT_BYTES, MAX_STDIN_BYTES, eprint
 
 PROMPTS = {
     "paraphrase": (
@@ -75,6 +76,9 @@ def main():
         return 0 if ok else 1
     text = ""
     if args.path and args.path.is_file():
+        if args.path.stat().st_size > MAX_INPUT_BYTES:
+            eprint("отказ: файл больше %d байт" % MAX_INPUT_BYTES)
+            return 2
         text = args.path.read_text(encoding="utf-8")
     elif not sys.stdin.isatty():
         text = sys.stdin.read(MAX_STDIN_BYTES + 1)
