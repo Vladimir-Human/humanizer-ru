@@ -23,13 +23,21 @@
 `warning_disposition`, а предупреждение валидатора оставлено постоянным
 напоминанием проверять общность источника.
 
+## Агентские прогоны (`agent/`)
+
+Компактные отчёты независимого goal-driven контура (август 2026):
+`P3-exp1-report.md`, `G5-exp1-report.md`, `P4-do-no-harm-report.md` — прогоны
+с предрегистрацией и слепыми панелями; `HYPOTHESES.md` — состояние
+суперпозиции S1–S6; `TERMINAL-narrowed-product.md` — принятый терминальный
+исход. Сырые артефакты (манифесты, хеши, пакеты, вердикты) — в рабочем
+пространстве агента.
+
 ## Архив прогонов и проверок
 
 | Файлы | Что это |
 |---|---|
-| `RELEASE-DRAFT-v*.md` | черновики релизных заметок; после выпуска — история |
-| `AUDIT-*.md`, `CONSILIUM-REPORT.md`, `FINAL-PREMERGE-REPORT.md` | разовые отчёты аудитов |
-| `blind-eval-*.md` | разборы слепых парных прогонов и судейских коллизий |
+| `archive/releases/RELEASE-DRAFT-v*.md`, `archive/releases/AUDIT-*.md`, `archive/releases/FINAL-PREMERGE-REPORT.md` | черновики релизных заметок и разовые отчёты аудитов; после выпуска — история |
+| `archive/experiments/` | разборы слепых парных прогонов и судейских коллизий |
 | `crossfamily-validation-2026-08-10.md`, `judge-rubric-collision-2026-08-10.md`, `marker-removal-analysis-2026-08-10.md` | анализы прогонов 2026-08-10 |
 | `protocols/` | протоколы тестов (Le Chat, persona A/B) |
 | `raw/` | сырые ответы моделей, захваченные без правок |
