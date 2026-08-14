@@ -40,7 +40,6 @@
 | `CONSILIUM-REPORT.md` | разовый отчёт консилиума (в корне: на него ссылается CI-воркфлоу self-scan) |
 | `archive/experiments/` | разборы слепых парных прогонов и судейских коллизий (`blind-eval-markers-comparison`, `crossfamily-validation`, `judge-rubric-collision`, `marker-removal-analysis`) |
 | `blind-eval-panel-analysis-2026-08-07.md` | разбор спорных пар второго прогона (в корне: на него ссылаются манифесты `eval/runs/2026-08-07-*`) |
-| `crossfamily-validation-2026-08-10.md`, `judge-rubric-collision-2026-08-10.md`, `marker-removal-analysis-2026-08-10.md` | анализы прогонов 2026-08-10 |
 | `protocols/` | протоколы тестов (Le Chat, persona A/B) |
 | `raw/` | сырые ответы моделей, захваченные без правок |
 | `leaderboard/` | сырые прогоны детекторов на нейтральном корпусе (механические оси) |

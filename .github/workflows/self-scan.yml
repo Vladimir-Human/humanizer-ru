@@ -50,9 +50,9 @@ jobs:
             ! -path './references/false-positives.md' \
             ! -path './references/chatbot-artifacts*.md' \
             ! -path './research/fixtures/*' \
-            ! -path './research/AUDIT-*' \
+            ! -path './research/archive/releases/*' \
+            ! -path './research/archive/experiments/*' \
             ! -path './research/CONSILIUM-REPORT.md' \
-            ! -path './research/RELEASE-DRAFT-*' \
             ! -path './tests/fixtures/*' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
