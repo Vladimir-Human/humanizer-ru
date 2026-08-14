@@ -77,5 +77,5 @@ Push ветки release/v3.5.0-consilium и draft PR в main — после gree
 
 1. Review и merge PR.
 2. Создать подписанный GPG-тег v3.5.0 на merge-commit.
-3. Опубликовать GitHub Release из research/RELEASE-DRAFT-v3.5.0.md.
+3. Опубликовать GitHub Release из research/archive/releases/RELEASE-DRAFT-v3.5.0.md.
 4. Проверить skills.sh переиндексацию и Trust Hub/Socket/Snyk.

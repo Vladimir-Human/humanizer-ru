@@ -76,5 +76,5 @@ python3 scripts/check_markers.py --scan research/raw/gigachat/*.txt research/raw
 python3 scripts/check_markers.py --scan research/validation/human/*.txt
 ```
 
-Результаты прогона фиксируются в `research/AUDIT-2026-07-17.md`; при любом
+Результаты прогона фиксируются в `research/archive/releases/AUDIT-2026-07-17.md`; при любом
 новом regex этот корпус нужно прогнать повторно.
