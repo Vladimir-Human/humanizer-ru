@@ -11,4 +11,4 @@
 
 Запрещённая ветка «оптимизация под детекторы» отсутствует (anti-evasion gate).
 
-Терминальный исход: **narrowed_product** — см. TERMINAL-narrowed-product.md.
+Терминальный исход: **не принят** — опубликован provisional proposal (TERMINAL-narrowed-product.md) с тремя невыполненными критериями подтверждения: скрытый holdout, вторая семья генератора, human review. Статусы веток выше отражают это состояние.
