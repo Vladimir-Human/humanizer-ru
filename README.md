@@ -145,6 +145,7 @@ humanizer-ru/
 ├── SECURITY.md / SECURITY.en.md
 ├── CITATION.cff                # Карточка цитирования
 ├── LICENSE                     # MIT
+├── dsh/                        # Бандл для DeepSeek Harness (вендор SKILL.md + references/)
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── docs/
 │   └── FRAMEWORK.md            # Публичная методология проверяемости
@@ -162,6 +163,7 @@ humanizer-ru/
 │   ├── check_corpus.py           # Регрессия корпусов валидации
 │   ├── check_perf.py             # Скорость выражений на большом входе
 │   ├── check_release.py          # Сборка и проверка релизного архива
+│   ├── check_bundle_sync.py      # Синхронность вендора бандла dsh/
 │   ├── filemarks/                # Слой A/B и метаданные файлов (inspect/clean)
 │   ├── scan_soft_signals.py      # Счётчик мягких признаков
 │   └── check_all.py              # Весь релизный чек-лист одной командой
