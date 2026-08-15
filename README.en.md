@@ -36,7 +36,7 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 33 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 36 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill; its description openly claims to target what GPTZero, DivEye and RuBERT measure (perplexity and burstiness) | Detector bypass stated in its description |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
@@ -62,6 +62,19 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 mkdir -p ~/.claude/skills
 git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
+
+### DeepSeek Harness (dsh)
+
+dsh looks for skills in its own directories. Verified with dsh 0.1.0-rc.6. This is a developer preview: breaking changes are promised, so check your own version's documentation.
+
+Global install (all projects and agents):
+
+```sh
+mkdir -p ~/.agents/skills
+git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+```
+
+dsh search precedence (nearest directory wins): `<project>/.dsh/skills`, `<project>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`. dsh never scans `~/.claude/skills`: a skill installed there via the Claude Code steps above stays invisible to dsh.
 
 ## Usage
 
@@ -103,6 +116,7 @@ humanizer-ru/
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
+├── dsh/                            # DeepSeek Harness bundle (vendored SKILL.md + references/)
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── docs/
 │   └── FRAMEWORK.md            # Public verifiability methodology
@@ -119,6 +133,7 @@ humanizer-ru/
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
+│   ├── check_bundle_sync.py      # dsh/ bundle vendor sync
 │   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner

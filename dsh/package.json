@@ -1,0 +1,7 @@
+{
+  "name": "humanizer-ru-dsh",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["cordis.patch.yml", "skills"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}

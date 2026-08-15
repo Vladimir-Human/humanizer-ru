@@ -16,6 +16,7 @@ on:
       - 'research/validation/**'
       - 'research/raw/**'
       - 'tests/fixtures/**'
+      - '.github/workflows/regex-check.yml'
   pull_request:
     paths:
       - 'scripts/**'
@@ -24,6 +25,7 @@ on:
       - 'research/validation/**'
       - 'research/raw/**'
       - 'tests/fixtures/**'
+      - '.github/workflows/regex-check.yml'
   workflow_dispatch:
 
 permissions:
