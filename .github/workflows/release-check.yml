@@ -59,6 +59,12 @@ jobs:
           python3 scripts/check_fixture_sources.py research/fixtures/marker-sources.json
           python3 scripts/count_style_markers.py --selftest
           python3 scripts/check_docs.py
+          python3 scripts/check_own_style.py
+          python3 scripts/check_reference_maps.py --selftest
+          python3 scripts/check_reference_maps.py
+          python3 scripts/check_bundle_sync.py --selftest
+          python3 scripts/check_bundle_sync.py
+          python3 scripts/scan_soft_signals.py --selftest
           python3 scripts/check_corpus.py
           python3 scripts/check_release.py --selftest
           python3 scripts/check_examples.py --selftest

@@ -1,0 +1,9 @@
+- insert:
+    - id: humanizer-ru-skill-root
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: humanizer-ru-bundle
+        includeDefaultRoots: false
+        watch: false
+        customSkillDirs:
+          - !!js "process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('humanizer-ru-dsh/package.json'), '..', 'skills')"
