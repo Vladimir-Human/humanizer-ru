@@ -38,7 +38,7 @@ PERSONA.md — другое: короткие правила живого тон
 
 | Проект | Фокус | Позиция по детекторам |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — этот проект | Редактор русского текста: 38 паттернов, 39 regex-маркеров с реестром доказательств 37/39, 33 CI-гейта, слепые парные прогоны | Детекторы не обходим и текст под них не подгоняем; цель — естественный текст, а не зелёный вердикт детектора |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — этот проект | Редактор русского текста: 38 паттернов, 39 regex-маркеров с реестром доказательств 37/39, 36 CI-гейтов, слепые парные прогоны | Детекторы не обходим и текст под них не подгоняем; цель — естественный текст, а не зелёный вердикт детектора |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | Скилл «humanizer & detector»: правка и проверка одним инструментом | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | Скилл-гуманизатор; в описании заявлена подгонка под то, что меряют GPTZero, DivEye, RuBERT (perplexity и burstiness) | Обход детекторов заявлен открыто в описании |
 | [blader/humanizer](https://github.com/blader/humanizer) | Англоязычный скилл того же жанра, опубликован на три дня раньше | — |
