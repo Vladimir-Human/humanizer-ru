@@ -112,6 +112,7 @@ humanizer-ru/
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
+├── dsh/                            # DeepSeek Harness bundle (vendored SKILL.md + references/)
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── docs/
 │   └── FRAMEWORK.md            # Public verifiability methodology
