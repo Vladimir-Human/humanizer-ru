@@ -42,7 +42,7 @@ jobs:
         run: |
           find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.yml' \) \
             ! -path './.git/*' ! -path './node_modules/*' \
-            ! -path './dsh/*' \
+            ! -path './dsh/skills/*' \
             ! -path './scripts/check_markers.py' \
             ! -path './scripts/check_fixture_sources.py' \
             ! -path './scripts/check_corpus.py' \
