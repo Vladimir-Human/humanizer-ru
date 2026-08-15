@@ -98,6 +98,19 @@ cp SKILL.md ~/.claude/skills/humanizer-ru/
 
 Если проверять каждый шаг вручную не нужно, быстрее поставить одной командой из каталога [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
 
+### 4. DeepSeek Harness (dsh)
+
+dsh сканирует собственные каталоги скиллов и **не читает** `~/.claude/skills` ни на одном уровне. Проверено с dsh 0.1.0-rc.6 (developer preview — возможны ломающие изменения; для других версий сверяйтесь с документацией вашей версии).
+
+Глобальная установка (все проекты и агенты профиля):
+
+```sh
+mkdir -p ~/.agents/skills
+git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+```
+
+Порядок поиска скилла в dsh (ближайший каталог побеждает): `<проект>/.dsh/skills`, `<проект>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`. Каталог `~/.claude/skills` dsh не сканирует: скилл, установленный туда по инструкции для Claude Code выше, в dsh не виден.
+
 ## Использование
 
 В Claude Code или другом агенте:

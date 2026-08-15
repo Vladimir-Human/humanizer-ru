@@ -59,9 +59,18 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 3. **Claude Code (local)**:
 
 ```sh
-mkdir -p ~/.claude/skills
-git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+### DeepSeek Harness (dsh)
+
+dsh scans its own skill directories and does **not** read `~/.claude/skills` at any rank. Verified with dsh 0.1.0-rc.6 (developer preview — breaking changes are likely; for other versions check that version's documentation).
+
+Global install (all projects and agents):
+
+```sh
+mkdir -p ~/.agents/skills
+git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
+
+dsh search precedence (nearest directory wins): `<project>/.dsh/skills`, `<project>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`. dsh never scans `~/.claude/skills`: a skill installed there via the Claude Code steps above stays invisible to dsh.
 
 ## Usage
 
