@@ -37,11 +37,11 @@
 
 | Семейство следов | Статус | Где проверять |
 |---|---|---|
-| Внутренние цитаты, `turn...`, `citeturn...`, `sandbox:/mnt/data/` | Автоматические формы с fixtures | `chatbot-artifacts.md` A.1-A.6 |
-| Карточки и referrer Grok | Формы и границы ложных срабатываний | `chatbot-artifacts.md` A.3-A.5 |
-| `[cite: N]`, `vertexaisearch...` | Автоматические формы с fixtures | `chatbot-artifacts.md` A.4, A.9 |
-| `</?think>` и DeepSeek line refs | Автоматические формы с fixtures | `chatbot-artifacts.md` A.7, A.12 |
-| `<ref name="0search12">` | Класс B, вторичное доказательство | `chatbot-artifacts.md` A.2 |
+| Внутренние цитаты, `turn...`, `citeturn...`, `sandbox:/mnt/data/` | Автоматические формы с fixtures | `chatbot-artifacts-links.md` A.1–A.6 |
+| Карточки и referrer Grok | Формы и границы ложных срабатываний | `chatbot-artifacts-links.md` A.3–A.5 |
+| `[cite: N]`, `vertexaisearch...` | Автоматические формы с fixtures | `chatbot-artifacts-links.md` A.4, `chatbot-artifacts-markup.md` A.9 |
+| `</?think>` и DeepSeek line refs | Автоматические формы с fixtures | `chatbot-artifacts-markup.md` A.7, A.12 |
+| `<ref name="0search12">` | Класс B, вторичное доказательство | `chatbot-artifacts-links.md` A.2 |
 
 ## Заявленная невидимая маркировка поставщиков
 
