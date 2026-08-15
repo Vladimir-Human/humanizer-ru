@@ -9,16 +9,20 @@ on:
     branches: [main]
     paths:
       - '**.md'
+      - 'dsh/**'
       - 'CITATION.cff'
       - 'scripts/check_docs.py'
+      - 'scripts/check_bundle_sync.py'
       - 'scripts/check_own_style.py'
       - 'scripts/check_reference_maps.py'
       - '.github/workflows/*.yml'
   pull_request:
     paths:
       - '**.md'
+      - 'dsh/**'
       - 'CITATION.cff'
       - 'scripts/check_docs.py'
+      - 'scripts/check_bundle_sync.py'
       - 'scripts/check_own_style.py'
       - 'scripts/check_reference_maps.py'
       - '.github/workflows/*.yml'
@@ -50,3 +54,7 @@ jobs:
         run: python3 scripts/check_reference_maps.py --selftest
       - name: Карты разбитых справочников
         run: python3 scripts/check_reference_maps.py
+      - name: Самопроверка синхронности бандла dsh/
+        run: python3 scripts/check_bundle_sync.py --selftest
+      - name: Синхронность вендора бандла dsh/
+        run: python3 scripts/check_bundle_sync.py
