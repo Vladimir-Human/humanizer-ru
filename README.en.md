@@ -59,9 +59,13 @@ The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CL
 3. **Claude Code (local)**:
 
 ```sh
+mkdir -p ~/.claude/skills
+git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+```
+
 ### DeepSeek Harness (dsh)
 
-dsh scans its own skill directories and does **not** read `~/.claude/skills` at any rank. Verified with dsh 0.1.0-rc.6 (developer preview — breaking changes are likely; for other versions check that version's documentation).
+dsh scans its own skill directories and does **not** read `~/.claude/skills` at any rank. Verified with dsh 0.1.0-rc.6. This is a developer preview: breaking changes are promised, so check your own version's documentation.
 
 Global install (all projects and agents):
 
@@ -129,6 +133,7 @@ humanizer-ru/
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
+│   ├── check_bundle_sync.py      # dsh/ bundle vendor sync
 │   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
