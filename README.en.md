@@ -65,7 +65,7 @@ git clone --branch v3.12.0 --depth 1 https://github.com/Vladimir-Human/humanizer
 
 ### DeepSeek Harness (dsh)
 
-dsh scans its own skill directories and does **not** read `~/.claude/skills` at any rank. Verified with dsh 0.1.0-rc.6. This is a developer preview: breaking changes are promised, so check your own version's documentation.
+dsh looks for skills in its own directories. Verified with dsh 0.1.0-rc.6. This is a developer preview: breaking changes are promised, so check your own version's documentation.
 
 Global install (all projects and agents):
 
