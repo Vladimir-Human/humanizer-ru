@@ -36,7 +36,7 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 33 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 36 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill; its description openly claims to target what GPTZero, DivEye and RuBERT measure (perplexity and burstiness) | Detector bypass stated in its description |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
