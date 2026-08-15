@@ -12,10 +12,12 @@ on:
     paths:
       - 'SKILL.md'
       - 'README.md'
+      - '.github/workflows/no-anglicisms.yml'
   pull_request:
     paths:
       - 'SKILL.md'
       - 'README.md'
+      - '.github/workflows/no-anglicisms.yml'
   workflow_dispatch:
 
 permissions:
@@ -77,8 +79,14 @@ jobs:
                   # извлечь номер и содержимое
                   lineno="${line%%:*}"
                   content="${line#*:}"
-                  # если в строке встречается `<phrase>` — пропускаем
-                  if echo "$content" | grep -qF "\`$phrase\`"; then
+                  # Исключение: фраза в backticks внутри changelog v2.4.1
+                  # (там она цитируется как «было → стало», это документация фикса).
+                  # Убираем все спаны в backticks и ищем фразу в остатке: строка
+                  # проблемна, если хотя бы одно вхождение осталось незакавыченным.
+                  # Проверять строку целиком нельзя — тогда одна цитата прикрывала
+                  # бы настоящую кальку в той же строке.
+                  stripped=$(printf '%s' "$content" | sed 's/`[^`]*`//g')
+                  if ! printf '%s' "$stripped" | grep -qF -- "$phrase"; then
                     continue
                   fi
                   echo "::error file=$file,line=$lineno::Англицизм '$phrase' в $file:$lineno"
