@@ -1,0 +1,114 @@
+name: Установка бандла в dsh
+
+# Бандл dsh/ ставит штатный менеджер плагинов, а не тесты проекта, поэтому
+# остальные 36 гейтов его установку не проверяют. Здесь закрыты два разных
+# отказа: правка в репозитории ломает бандл, либо новая версия dsh ломает
+# совместимость с ним. dsh - developer preview, ломающие изменения обещаны.
+#
+# Код возврата 0 сам по себе ничего не доказывает. Замер 2026-08-16: форма
+# `#v3.13.0&path:/dsh` дала exit 0, но pnpm молча отбросил `&path:/dsh`,
+# поставил репозиторий целиком обычной зависимостью, и профиль остался без
+# слоя. Поэтому гейт сверяет строку в dsh.profile.bundles и файлы на диске.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dsh/**'
+      - 'SKILL.md'
+      - 'references/**'
+      - '.github/workflows/dsh-install.yml'
+  pull_request:
+    paths:
+      - 'dsh/**'
+      - 'SKILL.md'
+      - 'references/**'
+      - '.github/workflows/dsh-install.yml'
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dsh-install-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUNDLE: humanizer-ru-dsh
+  SKILL_PATH: skills/humanizer-ru/SKILL.md
+  DSH_PINNED: 0.1.0-rc.6
+
+jobs:
+  worktree:
+    name: Бандл из рабочего дерева ставится и снимается
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: pnpm на PATH и закреплённая версия dsh
+        run: |
+          set -euo pipefail
+          npm install -g pnpm@10
+          npm install -g "@deepseek-ai/dsh@${DSH_PINNED}"
+          echo "dsh $(dsh --version), pnpm $(pnpm --version)"
+
+      - name: Установка в чистый профиль
+        run: dsh plugin --profile smoke add "${GITHUB_WORKSPACE}/dsh"
+
+      - name: Бандл стал слоем профиля, файлы на месте
+        run: |
+          set -euo pipefail
+          profile="${HOME}/.dsh/profiles/smoke"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); b=d['dsh']['profile']['bundles']; print('bundles:', b); sys.exit(0 if sys.argv[2] in b else 1)" "${profile}/package.json" "${BUNDLE}"
+          test -f "${profile}/node_modules/${BUNDLE}/cordis.patch.yml"
+          test -f "${profile}/node_modules/${BUNDLE}/${SKILL_PATH}"
+          echo "Слой на месте, вендорная копия скилла тоже."
+
+      - name: Вендорная копия совпадает с источником
+        run: python3 scripts/check_bundle_sync.py
+
+      - name: Снятие возвращает профиль в исходное состояние
+        run: |
+          set -euo pipefail
+          dsh plugin --profile smoke remove "${BUNDLE}"
+          profile="${HOME}/.dsh/profiles/smoke"
+          if grep -q "${BUNDLE}" "${profile}/package.json"; then
+            echo "После remove бандл остался в профиле."
+            exit 1
+          fi
+          echo "Профиль вернулся в исходное состояние."
+
+  published:
+    name: Команда установки из README работает
+    # Тянет код с GitHub, поэтому в обычных прогонах не нужна: на ветке
+    # проверяется рабочее дерево. Недельный прогон ловит две вещи: свежая
+    # версия dsh сломала бандл, либо опубликованная команда перестала работать.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        dsh: ['0.1.0-rc.6', 'latest']
+    steps:
+      - name: pnpm на PATH и dsh ${{ matrix.dsh }}
+        run: |
+          set -euo pipefail
+          npm install -g pnpm@10
+          npm install -g "@deepseek-ai/dsh@${{ matrix.dsh }}"
+          echo "dsh $(dsh --version), pnpm $(pnpm --version)"
+
+      - name: Установка ровно той командой, что стоит в README
+        run: dsh plugin --profile smoke add "github:Vladimir-Human/humanizer-ru#path:/dsh"
+
+      - name: Бандл стал слоем профиля, файлы на месте
+        run: |
+          set -euo pipefail
+          profile="${HOME}/.dsh/profiles/smoke"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); b=d['dsh']['profile']['bundles']; print('bundles:', b); sys.exit(0 if sys.argv[2] in b else 1)" "${profile}/package.json" "${BUNDLE}"
+          test -f "${profile}/node_modules/${BUNDLE}/${SKILL_PATH}"
+          echo "Опубликованная команда работает на dsh ${{ matrix.dsh }}."

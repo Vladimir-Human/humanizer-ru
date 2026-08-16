@@ -109,6 +109,16 @@ mkdir -p ~/.agents/skills
 git clone --branch v3.13.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
+Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль создаётся при первом обращении, `pnpm` нужен на PATH:
+
+```sh
+dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"
+```
+
+В бандле лежит копия `SKILL.md` и `references/`; гейт `check_bundle_sync.py` держит её равной источнику. Снять бандл: `dsh plugin --profile web remove humanizer-ru-dsh`.
+
+Команда берёт ветку по умолчанию. Закрепить тег и подкаталог одной строкой не выходит: `pnpm` молча отбрасывает подкаталог, ставит репозиторий целиком обычной зависимостью и возвращает 0, а профиль остаётся без слоя. Проверено на dsh 0.1.0-rc.6.
+
 Порядок поиска скилла в dsh (ближайший каталог побеждает): `<проект>/.dsh/skills`, `<проект>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`. Каталог `~/.claude/skills` dsh не сканирует: скилл, установленный туда по инструкции для Claude Code выше, в dsh не виден.
 
 ## Использование

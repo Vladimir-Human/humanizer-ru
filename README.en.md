@@ -74,6 +74,16 @@ mkdir -p ~/.agents/skills
 git clone --branch v3.13.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
+The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
+
+```sh
+dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"
+```
+
+The bundle carries a copy of `SKILL.md` and `references/`; the `check_bundle_sync.py` gate keeps it equal to the source. To remove it: `dsh plugin --profile web remove humanizer-ru-dsh`.
+
+The command tracks the default branch. Pinning a tag and a subdirectory in one spec does not work, and it fails silently: `pnpm` drops the subdirectory, installs the whole repository as a plain dependency and exits 0, leaving the profile without the layer. Verified on dsh 0.1.0-rc.6.
+
 dsh search precedence (nearest directory wins): `<project>/.dsh/skills`, `<project>/.agents/skills`, `~/.dsh/skills`, `~/.agents/skills`. dsh never scans `~/.claude/skills`: a skill installed there via the Claude Code steps above stays invisible to dsh.
 
 ## Usage
