@@ -46,6 +46,12 @@ detector-bypass tool" — see the Security section.
 
 ## Install in 30 seconds
 
+If you want a plain terminal command instead of an agent skill - install the package from PyPI:
+
+```sh
+pip install humanizer-ru
+```
+
 ```sh
 npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-ru
 ```
