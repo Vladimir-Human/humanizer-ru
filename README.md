@@ -86,7 +86,7 @@ npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.13.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.14.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -106,7 +106,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.13.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.14.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль создаётся при первом обращении, `pnpm` нужен на PATH:
@@ -164,7 +164,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.13.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.14.0
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -181,7 +181,7 @@ jobs:
 | `fail-on` | `class-a` | `class-a` — жёсткий regex-слой (`check_markers.py --scan`, любой маркер = код возврата 1); `soft-threshold` — счётчик мягких признаков (`scan_soft_signals.py --fail-at 3`). |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.13.0`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.14.0`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:

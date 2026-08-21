@@ -14,8 +14,8 @@ authors:
 repository-code: "https://github.com/Vladimir-Human/humanizer-ru"
 url: "https://github.com/Vladimir-Human/humanizer-ru"
 license: MIT
-version: 3.13.0
-date-released: "2026-08-15"
+version: 3.14.0
+date-released: "2026-08-21"
 keywords:
   - agent-skills
   - russian
