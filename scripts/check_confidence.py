@@ -131,6 +131,18 @@ def _load_leaderboard_records():
     return records
 
 
+def _corpus_counts():
+    """Число human/ai/boundary файлов из манифеста: вместо захардкоженных
+    11/12, чтобы рост корпуса не требовал правки скрипта."""
+    try:
+        with open(os.path.join(ROOT, MANIFEST), encoding="utf-8") as fh:
+            manifest = json.load(fh)
+    except (OSError, ValueError):
+        return 11, 12, 0
+    kinds = [c.get("kind") for c in manifest.get("corpus", [])]
+    return (kinds.count("human"), kinds.count("ai"), kinds.count("boundary"))
+
+
 def _boundary_total():
     try:
         with open(os.path.join(ROOT, MANIFEST), encoding="utf-8") as fh:
@@ -162,6 +174,8 @@ def _render_eval_table(total, denom):
 
 
 def _render_tables():
+    global _HUMAN_N, _AI_N
+    _HUMAN_N, _AI_N, _ = _corpus_counts()
     parts = [
         "## Доверительные интервалы Wilson 95%",
         "",
@@ -181,18 +195,18 @@ def _render_tables():
     records = _load_leaderboard_records()
     boundary_total = _boundary_total()
     if records:
-        parts.append("### Лидерборд: человеческие тексты (11 файлов)")
+        parts.append("### Лидерборд: человеческие тексты (%d файлов)" % _HUMAN_N)
         parts.append("")
         parts.append("| Кандидат | k | n | Доля | Wilson 95% CI |")
         parts.append("|---|---:|---:|---:|---:|")
         for stem in sorted(records):
             rec = records[stem]
-            low, high = wilson(rec["human_hits"], 11)
-            parts.append("| %s | %d | 11 | %.1f%% | %s |"
-                         % (rec["candidate"], rec["human_hits"],
-                            100.0 * rec["human_hits"] / 11.0, _fmt_pct(low, high)))
+            low, high = wilson(rec["human_hits"], _HUMAN_N)
+            parts.append("| %s | %d | %d | %.1f%% | %s |"
+                         %(rec["candidate"], rec["human_hits"], _HUMAN_N,
+                            100.0 * rec["human_hits"] / max(_HUMAN_N,1), _fmt_pct(low, high)))
         parts.append("")
-        parts.append("### Лидерборд: AI-выводы (12 файлов)")
+        parts.append("### Лидерборд: AI-выводы (%d файлов)" % _AI_N)
         parts.append("")
         parts.append("| Кандидат | Значение | Wilson 95% CI |")
         parts.append("|---|---:|---:|")
@@ -202,10 +216,10 @@ def _render_tables():
                 continue
             # smixs считает сумму всех правил, поэтому ai_hits у него > числа
             # файлов; долю и доверительный интервал по ней считать нельзя.
-            if rec["ai_hits"] <= 12:
-                low, high = wilson(rec["ai_hits"], 12)
-                parts.append("| %s | %d / 12 | %s |"
-                             % (rec["candidate"], rec["ai_hits"],
+            if rec["ai_hits"] <= _AI_N:
+                low, high = wilson(rec["ai_hits"], _AI_N)
+                parts.append("| %s | %d / %d | %s |"
+                             % (rec["candidate"], rec["ai_hits"], _AI_N,
                                 _fmt_pct(low, high)))
             else:
                 parts.append("| %s | %d (сумма правил, не доля файлов) | — |"
@@ -261,6 +275,8 @@ def _parse_leaderboard_rows(text):
 
 
 def _check_leaderboard():
+    global _HUMAN_N, _AI_N
+    _HUMAN_N, _AI_N, _ = _corpus_counts()
     path = os.path.join(ROOT, LEADERBOARD_MD)
     if not os.path.exists(path):
         print("нет %s" % path, file=sys.stderr)
@@ -305,7 +321,7 @@ def _check_leaderboard():
             mismatches.append("AI-выводы: LEADERBOARD=%s, JSON=%d"
                               % (ai_cell, rec["ai_hits"]))
         if ci_cell is not None:
-            expected_ci = _fmt_pct(*wilson(rec["human_hits"], 11))
+            expected_ci = _fmt_pct(*wilson(rec["human_hits"], _HUMAN_N))
             if ci_cell != expected_ci:
                 mismatches.append("человеческие тексты CI: LEADERBOARD=%s, Wilson=%s"
                                   % (ci_cell, expected_ci))
