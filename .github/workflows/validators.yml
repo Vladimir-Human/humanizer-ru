@@ -18,6 +18,7 @@ on:
       - 'research/raw/**'
       - 'CITATION.cff'
       - 'tests/fixtures/**'
+      - 'tests/**'
       - 'eval/**'
       - '.github/workflows/validators.yml'
   pull_request:
@@ -33,6 +34,7 @@ on:
       - 'research/raw/**'
       - 'CITATION.cff'
       - 'tests/fixtures/**'
+      - 'tests/**'
       - 'eval/**'
       - '.github/workflows/validators.yml'
   workflow_dispatch:
@@ -234,3 +236,12 @@ jobs:
         run: python3 scripts/check_perf.py --selftest
       - name: Ни одно выражение не дольше 0.5 с на 30 000 символов
         run: python3 scripts/check_perf.py
+
+  unit-tests:
+    name: Юнит-тесты (stdlib unittest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Все unit-тесты
+        run: python3 -m unittest discover -s tests -v

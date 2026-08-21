@@ -55,6 +55,7 @@ jobs:
             ! -path './research/archive/experiments/*' \
             ! -path './research/CONSILIUM-REPORT.md' \
             ! -path './tests/fixtures/*' \
+            ! -path './tests/*' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
             -exec python3 scripts/check_markers.py --scan {} +
