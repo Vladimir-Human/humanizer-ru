@@ -252,6 +252,36 @@ def load_registry(path):
     return data, ""
 
 
+_REDACT_KEYS = ("token", "access_token", "api_key", "apikey", "key", "sig",
+                "signature", "session", "auth", "password")
+
+
+def redact_url(url):
+    """Вырезает значения секретоподобных query-параметров: в лог и state
+    попадает имя параметра и ***, вместо значения."""
+    try:
+        parts = urllib.parse.urlsplit(url)
+    except ValueError:
+        return url
+    if not parts.query:
+        return url
+    pairs = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+    out = []
+    for k, v in pairs:
+        if any(s in k.lower() for s in _REDACT_KEYS):
+            out.append((k, "***"))
+        else:
+            out.append((k, v))
+    query = urllib.parse.urlencode(out)
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc,
+                                    parts.path, query, parts.fragment))
+
+
+def _clean_text(text):
+    """Строки для лога без контрольных символов: их место занимает
+    маркер вида <U+XX>, чтобы лог нельзя было подделать переносами."""
+    return "".join(ch if ch >= " " else "<U+%02X>" % ord(ch) for ch in text)
+
 def load_state(path):
     if not os.path.exists(path):
         return {}, True, ""
@@ -266,6 +296,10 @@ def load_state(path):
     for k, v in data["urls"].items():
         if isinstance(v, dict) and "status" in v:
             urls[k] = v
+    if not urls:
+        return None, False, ("кэш состояния пуст (файл есть, urls пуст): "
+                              "это либо ошибка заливки, либо попытка заглушить гейт; "
+                              "удалите файл или заполните первым прогоном")
     return urls, data.get("version") == STATE_VERSION, ""
 
 
@@ -416,7 +450,7 @@ def run_online(entries, state_path, sleep, timeout, method="GET"):
               "перезапустите первый прогон заново.", file=sys.stderr)
         return 2
 
-    first_run = not prev_urls
+    first_run = not os.path.exists(state_path)
     print("ОНЛАЙН-ПРОВЕРКА ЛИНК-РОТА РЕЕСТРА ДОКАЗАТЕЛЬСТВ")
     if first_run:
         print("Первый прогон: только собираю состояния, ошибок не считаю.")
@@ -455,11 +489,12 @@ def run_online(entries, state_path, sleep, timeout, method="GET"):
             label = "PASS"
         if status.startswith("ok-"):
             ok_count += 1
-        rows.append((label, e["case"], e["url"], detail))
+        rows.append((label, _clean_text(e["case"]), redact_url(e["url"]), detail))
         print("%-10s %-20s %-5s %-55s %s" %
-              (label, e["case"], (code or "---"), e["url"], detail))
+              (label, _clean_text(e["case"]), (code or "---"),
+               redact_url(e["url"]), _clean_text(detail)))
         results_for_state.append({
-            "url": e["url"],
+            "url": redact_url(e["url"]),
             "status": status,
             "code": code,
             "final_url": final_url,
