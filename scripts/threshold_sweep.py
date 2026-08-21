@@ -253,6 +253,12 @@ def render_markdown(mode, groups, rows):
     return "\n".join(out)
 
 
+def _rel(path):
+    """Путь в отчёте — относительно корня репозитория, POSIX-разделитель:
+    сырые JSON попадают в git, локальные абсолютные пути туда не нужны."""
+    return os.path.relpath(path, ROOT).replace(os.sep, "/")
+
+
 def make_report(mode, groups, rows, argv):
     return {
         "script": "scripts/threshold_sweep.py",
@@ -277,7 +283,7 @@ def make_report(mode, groups, rows, argv):
         "files": {
             "ai": [
                 {
-                    "path": r["path"],
+                    "path": _rel(r["path"]),
                     "genre": r["genre"],
                     "features_total": r["features_total"],
                     "categories_total": r["categories_total"],
@@ -288,7 +294,7 @@ def make_report(mode, groups, rows, argv):
             ],
             "human": [
                 {
-                    "path": r["path"],
+                    "path": _rel(r["path"]),
                     "genre": r["genre"],
                     "features_total": r["features_total"],
                     "categories_total": r["categories_total"],
@@ -299,7 +305,7 @@ def make_report(mode, groups, rows, argv):
             ],
             "boundary": [
                 {
-                    "path": r["path"],
+                    "path": _rel(r["path"]),
                     "genre": r["genre"],
                     "features_total": r["features_total"],
                     "categories_total": r["categories_total"],
