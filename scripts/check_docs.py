@@ -64,7 +64,7 @@ TOP_LEVEL_MANIFEST = frozenset((
  ".editorconfig", ".gitattributes", ".gitignore",
  "pyproject.toml", "src", "markers.v1.json", "action", "demo",
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
- "docs", "dsh",
+ "GOVERNANCE.md", "docs", "dsh",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
  "SECURITY.en.md", "SECURITY.md", "SKILL.md",
  ".github", "eval", "references", "research", "scripts", "tests",
