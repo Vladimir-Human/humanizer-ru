@@ -38,7 +38,7 @@ concurrency:
 env:
   BUNDLE: humanizer-ru-dsh
   SKILL_PATH: skills/humanizer-ru/SKILL.md
-  DSH_PINNED: 0.1.0-rc.6
+  DSH_PINNED: 0.1.0-rc.8
 
 jobs:
   worktree:
