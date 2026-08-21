@@ -57,7 +57,7 @@ jobs:
             ! -path './research/CONSILIUM-REPORT.md' \
             ! -path './tests/fixtures/*' \
             ! -path './tests/*' \
-            ! -path './src/humanizer_ru/check_markers.py'
+            ! -path './src/humanizer_ru/check_markers.py' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
             -exec python3 scripts/check_markers.py --scan {} +
