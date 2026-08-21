@@ -146,6 +146,7 @@ humanizer-ru/
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
 │   ├── check_bundle_sync.py      # dsh/ bundle vendor sync
+│   ├── check_pkg_sync.py         # PyPI package sync with the root scripts
 │   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
