@@ -192,6 +192,7 @@ humanizer-ru/
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
 ├── dsh/                            # DeepSeek Harness bundle (vendored SKILL.md + references/)
+├── GOVERNANCE.md              # Роли, права выпуска, dormant-политика
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── docs/
 │   └── FRAMEWORK.md            # Public verifiability methodology
