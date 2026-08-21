@@ -173,49 +173,88 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_NoRedirect)
 
 
+MAX_REDIRECT_HOPS = 3
+
+
+def _host_of(url):
+    try:
+        return (urllib.parse.urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+def _same_host(prev_url, next_url):
+    """Редирект безопасен только внутри одного хоста (с точностью до
+    префикса www.). Уход на другой хост - сигнал возможного угона:
+    обрабатывается как redirect-3xx, то есть как потенциальный рот."""
+    a, b = _host_of(prev_url), _host_of(next_url)
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    strip = lambda h: h[4:] if h.startswith("www.") else h
+    return strip(a) == strip(b)
+
+
+def _resolve_location(base, location):
+    """Абсолютный URL из Location; схемы кроме http(s) отбрасываются."""
+    if not location:
+        return None
+    nxt = urllib.parse.urljoin(base, location)
+    return nxt if urllib.parse.urlsplit(nxt).scheme in ("http", "https") else None
+
+
 def fetch_status(url, timeout=TIMEOUT_DEFAULT, method="GET"):
     """Возвращает (status, code, final_url, note).
 
-    status: ok-200/ok-2xx, http-404, http-410, http-5xx, http-XXX,
-            redirect-3xx, timeout, network-error.
-    GET запрашивается со срезом Range: 0-0 и закрытием после первого байта;
-    HEAD использует одноимённый метод и не читает тело.
+    status: ok-2xx, http-4xx/5xx, redirect-3xx, timeout, network-error.
+    Редиректы: до MAX_REDIRECT_HOPS переходов внутри того же хоста;
+    уход на другой хост или исчерпание хопов дают redirect-3xx.
+    GET читает один байт (Range: bytes=0-0), HEAD - ничего.
     """
     headers = {"User-Agent": USER_AGENT}
     if method == "GET":
         headers["Range"] = "bytes=0-0"
         headers["Accept"] = "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8"
-    req = urllib.request.Request(url, headers=headers, method=method)
-    try:
-        with _OPENER.open(req, timeout=timeout) as resp:
-            code = getattr(resp, "code", 200)
-            final = resp.url
-            try:
-                resp.read(1)
-            except Exception:
-                pass
-            label = "ok-200" if code == 200 else "ok-%03d" % code
-            return (label, code, final, "")
-    except urllib.error.HTTPError as exc:
-        code = exc.code
-        loc = exc.headers.get("Location") if exc.headers else None
-        if 300 <= code < 400:
-            return ("redirect-%03d" % code, code, loc or "", "redirect")
-        if code == 404:
-            return ("http-404", code, exc.url or "", "")
-        if code == 410:
-            return ("http-410", code, exc.url or "", "")
-        if code >= 500:
-            return ("http-%03d" % code, code, exc.url or "", "5xx")
-        return ("http-%03d" % code, code, exc.url or "", "")
-    except (TimeoutError, urllib.error.URLError) as exc:
-        reason = getattr(exc, "reason", exc)
-        low = str(reason).lower()
-        if isinstance(reason, TimeoutError) or "timed" in low or "timeout" in low:
-            return ("timeout", None, url, "")
-        return ("network-error", None, url, str(reason)[:200])
-    except Exception as exc:  # noqa: BLE001
-        return ("network-error", None, url, "%s: %s" % (type(exc).__name__, exc)[:200])
+    current = url
+    for hop in range(MAX_REDIRECT_HOPS + 1):
+        req = urllib.request.Request(current, headers=headers, method=method)
+        try:
+            with _OPENER.open(req, timeout=timeout) as resp:
+                code = getattr(resp, "code", 200)
+                final = resp.url
+                try:
+                    resp.read(1)
+                except Exception:
+                    pass
+                label = "ok-200" if code == 200 else "ok-%03d" % code
+                return (label, code, final, "")
+        except urllib.error.HTTPError as exc:
+            code = exc.code
+            loc = exc.headers.get("Location") if exc.headers else None
+            if 300 <= code < 400:
+                nxt = _resolve_location(current, loc)
+                if nxt and hop < MAX_REDIRECT_HOPS and _same_host(current, nxt):
+                    current = nxt
+                    continue
+                return ("redirect-%03d" % code, code,
+                        redact_url(loc or ""), "redirect")
+            if code == 404:
+                return ("http-404", code, exc.url or "", "")
+            if code == 410:
+                return ("http-410", code, exc.url or "", "")
+            if code >= 500:
+                return ("http-%03d" % code, code, exc.url or "", "5xx")
+            return ("http-%03d" % code, code, exc.url or "", "")
+        except (TimeoutError, urllib.error.URLError) as exc:
+            reason = getattr(exc, "reason", exc)
+            low = str(reason).lower()
+            if isinstance(reason, TimeoutError) or "timed" in low or "timeout" in low:
+                return ("timeout", None, url, "")
+            return ("network-error", None, url, str(reason)[:200])
+        except Exception as exc:  # noqa: BLE001
+            return ("network-error", None, url,
+                    "%s: %s" % (type(exc).__name__, str(exc))[:200])
 
 
 def _known_broken(status):
@@ -577,6 +616,16 @@ def selftest():
     check("восстановление отличимо от рота", v == "recovered")
     v, _ = _transition(None, "http-404")
     check("первый замер битого URL не роняет гейт", v == "new-broken")
+
+    check("same_host: точный хост", _same_host("https://a.org/x", "https://a.org/y"))
+    check("same_host: www-вариант", _same_host("https://a.org/x", "https://www.a.org/y"))
+    check("same_host: чужой хост отсечён", not _same_host("https://a.org/x", "https://b.org/y"))
+    check("same_host: пустой хост отсечён", not _same_host("https://a.org/x", "mailto:x@y"))
+    check("resolve: относительный Location пристраивается",
+          _resolve_location("https://ru.wikipedia.org/wiki/Special:Diff/1", "/w/index.php?diff=1")
+          == "https://ru.wikipedia.org/w/index.php?diff=1")
+    check("resolve: javascript: отброшен",
+          _resolve_location("https://a.org/x", "javascript:alert(1)") is None)
 
     failed = [n for n, p in cases if not p]
     for n, p in cases:
