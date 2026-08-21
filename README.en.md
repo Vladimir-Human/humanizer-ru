@@ -98,6 +98,68 @@ Or directly:
 Очеловечь этот текст: [your text]
 ```
 
+## CI gate for your own repositories
+
+The repository ships a reusable composite action in the `action/` directory.
+It runs exactly the same scripts as this project's CI on your files —
+standard-library Python, no external services, and no text leaves the
+GitHub Actions runner. It only needs `permissions: contents: read`
+(the action checks out and reads files).
+
+A minimal workflow in your repository, e.g. `.github/workflows/humanizer.yml`:
+
+```yaml
+name: humanizer-ru
+
+on:
+  push:
+    paths: ['content/**/*.md', 'docs/**/*.md']
+  pull_request:
+    paths: ['content/**/*.md', 'docs/**/*.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  humanizer:
+    name: Следы машинной генерации
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: Vladimir-Human/humanizer-ru/action@v3.13.0
+        with:
+          files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
+          genre: neutral                          # для режима soft-threshold
+          fail-on: class-a                        # или soft-threshold
+          ref: ''                                 # checkout вашего репозитория (пусто — HEAD)
+```
+
+Action inputs:
+
+| Input | Default | What it does |
+|---|---|---|
+| `files` | `**/*.md` | Files to scan: one bash glob or several separated by spaces. The action enables `globstar` and `nullglob`, so `**/*.md` recurses into subdirectories. |
+| `genre` | `neutral` | Genre for soft signals: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Used only with `fail-on: soft-threshold`. |
+| `fail-on` | `class-a` | `class-a` — hard regex layer (`check_markers.py --scan`, any marker = exit code 1); `soft-threshold` — soft-signal counter (`scan_soft_signals.py --fail-at 3`). |
+| `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
+
+The action version is pinned by the `uses` string
+`Vladimir-Human/humanizer-ru/action@v3.13.0`, not by the `ref` input.
+The `ref` input controls which state of the scanned repository is checked out.
+
+Limitations and security policy:
+
+- `permissions: contents: read`; the action publishes and comments nothing.
+- Text never leaves the runner: the scripts from `action/../scripts` run locally and do not open the network.
+- Only standard-library Python and the official `actions/checkout` (pinned by SHA) are used.
+
+Which gate to choose:
+
+- `class-a` — the pipeline minimum: catches interface artifacts and service links (`ppl-ai-file-upload`, `[citation:3]`, invisible separators, etc.). A match is a reason to remove the marker or verify provenance.
+- `soft-threshold` — linguistic signalling: `--fail-at 3` fails the gate when a text has 3 or more soft signals. One or two are not enough: the script deliberately counts patterns conservatively and never issues an authorship verdict.
+
+
 ## What it does
 
 Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Russian-specific extensions), grouped into four families:

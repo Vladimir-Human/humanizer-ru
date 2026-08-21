@@ -1,0 +1,84 @@
+# humanizer-ru CI-гейт: прекоммит-проверка русских текстов на следы
+# машинной генерации. Composite action, только стандартная библиотека
+# Python и официальный actions/checkout (pinned).
+name: 'humanizer-ru CI gate'
+description: |
+  Прогоняет humanizer-ru по файлам репозитория: жёсткие regex-маркеры
+  (check_markers.py --scan) либо мягкие признаки (scan_soft_signals.py
+  --fail-at 3). Ничего не публикует наружу; для работы достаточно
+  permissions: contents: read.
+author: 'Vladimir-Human'
+
+inputs:
+  files:
+    description: >
+      Проверяемые файлы: bash-глоб или несколько глобов через пробел
+      (например, 'content/**/*.md' или '**/*.md docs/**/*.md').
+      Расширяется bash-массивами для поддержки вложенности.
+    required: false
+    default: '**/*.md'
+  genre:
+    description: >
+      Жанр текста для мягких признаков: neutral, fiction, legal,
+      academic, marketing, chat. Используется только в режиме soft-threshold.
+    required: false
+    default: 'neutral'
+  fail-on:
+    description: >
+      Режим гейта: class-a — жёсткие regex-маркеры (check_markers.py --scan,
+      любой найденный маркер = exit 1); soft-threshold — счётчик мягких
+      признаков (scan_soft_signals.py --fail-at 3).
+    required: false
+    default: 'class-a'
+  ref:
+    description: >
+      Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
+      (для pull_request — merge-коммит действия checkout по умолчанию).
+      Версия самого экшена закрепляется в строке uses:
+      Vladimir-Human/humanizer-ru/action@v3.13.0.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout проверяемого репозитория
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        ref: ${{ inputs.ref }}
+
+    - name: Запуск humanizer-сканера
+      shell: bash
+      env:
+        FILES_INPUT: ${{ inputs.files }}
+        GENRE_INPUT: ${{ inputs.genre }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -euo pipefail
+        shopt -s globstar nullglob
+        FILES=( ${FILES_INPUT} )
+        if [ "${#FILES[@]}" -eq 0 ]; then
+          echo "::error::Нет файлов по шаблону: ${FILES_INPUT}"
+          exit 2
+        fi
+        HUMANIZER_SCRIPTS="$(cd "${{ github.action_path }}/.." && pwd)/scripts"
+
+        case "${FAIL_ON}" in
+          class-a)
+            echo "::group::humanizer-markers --scan"
+            python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan "${FILES[@]}"
+            echo "::endgroup::"
+            ;;
+          soft-threshold)
+            echo "::group::humanizer-scan --fail-at 3"
+            python3 "${HUMANIZER_SCRIPTS}/scan_soft_signals.py" \
+              "${FILES[@]}" \
+              --genre "${GENRE_INPUT}" \
+              --fail-at 3
+            echo "::endgroup::"
+            ;;
+          *)
+            echo "::error::fail-on должен быть class-a или soft-threshold, получено: ${FAIL_ON}"
+            exit 2
+            ;;
+        esac
