@@ -45,6 +45,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  json-output:
+    name: UTF-8 машиночитаемого stdout (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      # Явный сброс UTF-8-костылей Python: гейт проверяет код, а не окружение.
+      # Пустая строка и "0" оставляют на Windows стандартную кодовую страницу
+      # (cp1251/cp866), как при обычном перенаправлении stdout.
+      PYTHONIOENCODING: ""
+      PYTHONUTF8: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Самопроверка гейта UTF-8 вывода
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then PY=python; else PY=python3; fi
+          "$PY" scripts/check_json_output.py --selftest
+      - name: Все JSON-выводы парсятся как UTF-8
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then PY=python; else PY=python3; fi
+          "$PY" scripts/check_json_output.py
   spec:
     name: SKILL.md соответствует спецификации Agent Skills
     runs-on: ubuntu-latest

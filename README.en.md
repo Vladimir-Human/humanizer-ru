@@ -147,6 +147,7 @@ humanizer-ru/
 │   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
+│   ├── check_json_output.py     # UTF-8 machine-readable stdout gate
 │   └── check_all.py              # Full release checklist in one command
 ├── eval/
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
