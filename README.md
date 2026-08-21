@@ -227,6 +227,7 @@ humanizer-ru/
 │   ├── check_markers.py          # Прогон regex-маркеров, режим --scan
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
+│   ├── check_link_rot.py         # Гейт линк-рота реестра доказательств
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После

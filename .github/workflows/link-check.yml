@@ -1,0 +1,65 @@
+name: Линк-рот реестра доказательств
+
+# Отдельный гейт целостности research/fixtures/marker-sources.json.
+# Офлайн-проверка формата URL выполняется на каждом PR и пуше, как остальные
+# валидаторы: она не требует сети и потому безопасна для CI. Онлайн-проверка
+# реальных HTTP-статусов вынесена в ежемесячный scheduled-прогон и ручной
+# запуск — по образцу published-джобы dsh-install.yml: сеть в обычных
+# прогонах не нужна, а реестр проверяется по расписанию без нагружения
+# внешних источников.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'research/fixtures/marker-sources.json'
+      - 'scripts/check_link_rot.py'
+      - '.github/workflows/link-check.yml'
+  pull_request:
+    paths:
+      - 'research/fixtures/marker-sources.json'
+      - 'scripts/check_link_rot.py'
+      - '.github/workflows/link-check.yml'
+  schedule:
+    - cron: '37 4 1 * *'  # ежемесячно, 1-го числа в 04:37 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-check-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  offline-format:
+    name: Офлайн-валидация формата URL (без сети)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Самопроверка гейта (умеет падать)
+        run: python3 scripts/check_link_rot.py --selftest
+      - name: Формат всех source_url реестра
+        run: PYTHONUTF8=1 python3 scripts/check_link_rot.py --offline
+
+  online-status:
+    name: Онлайн-статусы immutable-URL (ежемесячно/вручную)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Самопроверка переходов состояний
+        run: python3 scripts/check_link_rot.py --selftest
+      - name: Онлайн-прогон реестра с паузой 10 с
+        run: PYTHONUTF8=1 python3 scripts/check_link_rot.py --sleep 10 --timeout 25
+      - name: Кэш состояний не должен отсутствовать после прогона
+        run: test -f research/fixtures/link-check-state.json
+      - name: Выгрузить кэш состояний как артефакт
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: link-check-state
+          path: research/fixtures/link-check-state.json
+          if-no-files-found: ignore
