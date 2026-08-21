@@ -135,6 +135,67 @@ dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"
 Очеловечь этот текст: [ваш текст]
 ```
 
+## CI-гейт для своих репозиториев
+
+Репозиторий поставляет переиспользуемый composite action в каталоге `action/`.
+Он гоняет по вашим файлам ровно те же скрипты, что и CI этого проекта, —
+на Python со стандартной библиотекой, без внешних сервисов и без передачи
+текста куда-либо за пределы раннера GitHub Actions. Для работы нужен только
+`permissions: contents: read` (действие выполняет checkout и читает файлы).
+
+Минимальный workflow в вашем репозитории, например `.github/workflows/humanizer.yml`:
+
+```yaml
+name: humanizer-ru
+
+on:
+  push:
+    paths: ['content/**/*.md', 'docs/**/*.md']
+  pull_request:
+    paths: ['content/**/*.md', 'docs/**/*.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  humanizer:
+    name: Следы машинной генерации
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: Vladimir-Human/humanizer-ru/action@v3.13.0
+        with:
+          files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
+          genre: neutral                          # для режима soft-threshold
+          fail-on: class-a                        # или soft-threshold
+          ref: ''                                 # checkout вашего репозитория (пусто — HEAD)
+```
+
+Входы action:
+
+| Вход | По умолчанию | Что делает |
+|---|---|---|
+| `files` | `**/*.md` | Файлы для проверки: один bash-глоб или несколько через пробел. Внутри действие включает `globstar` и `nullglob`, поэтому `**/*.md` заходит в подкаталоги. |
+| `genre` | `neutral` | Жанр для мягких признаков: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Используется только при `fail-on: soft-threshold`. |
+| `fail-on` | `class-a` | `class-a` — жёсткий regex-слой (`check_markers.py --scan`, любой маркер = код возврата 1); `soft-threshold` — счётчик мягких признаков (`scan_soft_signals.py --fail-at 3`). |
+| `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
+
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.13.0`.
+Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
+
+Ограничения и политика безопасности:
+
+- `permissions: contents: read`; действие ничего не публикует и не комментирует.
+- Текст не покидает раннер: скрипты из `action/../scripts` запускаются локально и не открывают сеть.
+- Внутри только `python3` стандартной библиотеки и официальный `actions/checkout` (закреплён по SHA).
+
+Что выбрать для гейта:
+
+- `class-a` — конвейерный минимум: ловите служебные ссылки и артефакты из интерфейсов (`ppl-ai-file-upload`, `[citation:3]`, невидимые разделители и т.п.). Совпадение — повод снять маркер или проверить происхождение.
+- `soft-threshold` — лингвистическая сигнализация: `--fail-at 3` роняет гейт, когда в тексте 3 и более мягких признаков. Одного-двух не хватает: скрипт специально считает паттерны консервативно, вердикт об авторстве не выносит.
+
+
 ## Что делает
 
 Прогоняет русский текст по 38 паттернам машинного письма (25 базовых и 13 расширений для русского) и 39 проверяемым regex-маркерам классов A и B, затем убирает следы. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
