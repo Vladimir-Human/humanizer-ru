@@ -45,7 +45,7 @@ import urllib.parse
 import urllib.request
 
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     sys.stderr.reconfigure(errors="backslashreplace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))

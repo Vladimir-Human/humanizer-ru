@@ -315,6 +315,12 @@ def self_test():
     print("self-test: OK")
 
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def main():
     if "--self-test" in sys.argv:
         return self_test()

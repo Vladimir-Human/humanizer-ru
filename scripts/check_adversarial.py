@@ -23,7 +23,7 @@ import re
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(errors="backslashreplace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     sys.stderr.reconfigure(errors="backslashreplace")
 
 WORD_RX = re.compile(r"[А-Яа-яЁёA-Za-z0-9-]+")
