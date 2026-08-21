@@ -298,6 +298,9 @@ def _check_leaderboard():
         if _parse_int(human_cell) != rec["human_hits"]:
             mismatches.append("человеческие тексты: LEADERBOARD=%s, JSON=%d"
                               % (human_cell, rec["human_hits"]))
+        if len(cells) == 4:
+            mismatches.append("%s: в строке нет колонки Wilson CI - гейт ослаблен"
+                              % cells[0])
         if rec["ai_hits"] is not None and _parse_int(ai_cell) != rec["ai_hits"]:
             mismatches.append("AI-выводы: LEADERBOARD=%s, JSON=%d"
                               % (ai_cell, rec["ai_hits"]))
