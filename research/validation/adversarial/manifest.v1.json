@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "created": "2026-08-21",
+  "description": "Adversarial false-positive корпус humanizer-ru: 12 человеческих текстов, намеренно провоцирующих мягкие паттерны #1-#25; гейт допускает не более 2 признаков на текст и 0 regex-маркеров.",
+  "corpus": [
+    {
+      "path": "research/validation/adversarial/01-oratorskaya-rech-pravilo-treh.txt",
+      "kind": "human",
+      "genre": "fiction",
+      "sha256": "b3feccaf1711180161b7230f9960c5e221e81b8fec807ad7ff86c405302de2fb"
+    },
+    {
+      "path": "research/validation/adversarial/02-dogovor-okazaniya-uslug-kantselyarit.txt",
+      "kind": "human",
+      "genre": "legal",
+      "sha256": "036663159aa4c268a4342be3a6d7a7eeac32da39fa9e00c607ab713ebdc0e248"
+    },
+    {
+      "path": "research/validation/adversarial/03-akademicheskii-referat-passiv-ogovorki.txt",
+      "kind": "human",
+      "genre": "academic",
+      "sha256": "0500dd53e213505ce47cf8fbfbca4275788ee9a97d91703627731a22e7a02bae"
+    },
+    {
+      "path": "research/validation/adversarial/04-hudozhestvennyi-fragment-dlinnye-tire.txt",
+      "kind": "human",
+      "genre": "fiction",
+      "sha256": "ff466c67081aaa1196d3100aa81bc1240af2d95c8d0f29667b37c8d1881b3787"
+    },
+    {
+      "path": "research/validation/adversarial/05-nauchpop-sterilnaya-tipografika.txt",
+      "kind": "human",
+      "genre": "neutral",
+      "sha256": "29f6cc014c25efc596d3365698d539ebaf3ebb8c4d9a3c6ea54a219c14afbdf6"
+    },
+    {
+      "path": "research/validation/adversarial/06-blog-programmista-markdown-emoji-title-case.txt",
+      "kind": "human",
+      "genre": "marketing",
+      "sha256": "3f7642d85762b0c87f5ace5d0e6006a23268a4662cff84d5d2e70828eb2d3f45"
+    },
+    {
+      "path": "research/validation/adversarial/07-esse-sinonimy-i-konstruktsii-ne-tolko-no-i.txt",
+      "kind": "human",
+      "genre": "fiction",
+      "sha256": "5738c637a5ad1d75e238b977e29c01be465cb9bd4fe69787398a7600c85f4418"
+    },
+    {
+      "path": "research/validation/adversarial/08-marketingovoe-opisanie-reklamnyi-yazyk.txt",
+      "kind": "human",
+      "genre": "marketing",
+      "sha256": "c96db5b24603522e8be816b8b1675a1139d5a0339f558772992f8bc08be6ec01"
+    },
+    {
+      "path": "research/validation/adversarial/09-kolonka-lichnaya-pozitsiya-razgovornye-svyazki.txt",
+      "kind": "human",
+      "genre": "neutral",
+      "sha256": "5caee2decdfdd1762df59ed73a62502edc0d8560ee1f095764d027d2df447f7e"
+    },
+    {
+      "path": "research/validation/adversarial/10-pismo-kollege-shablony-vezhlivosti.txt",
+      "kind": "human",
+      "genre": "chat",
+      "sha256": "e3da442a73332ecd16288d6d89412211ceda6b947494b7c2f51db17bde289685"
+    },
+    {
+      "path": "research/validation/adversarial/11-statya-pro-priznaki-ii-kavychechnaya-lovushka.txt",
+      "kind": "human",
+      "genre": "neutral",
+      "sha256": "8670db085f69db554cc51ce8a7f8d6d6c1a376fd48640e57e3b7bf37b07ccaa6"
+    },
+    {
+      "path": "research/validation/adversarial/12-perevodnoi-tekst-kalki-vysokaya-leksicheskaya-plotnost.txt",
+      "kind": "human",
+      "genre": "neutral",
+      "sha256": "c7ffff06db81c1dd78dde2c071cce8f3f3429129722d2923696a068eb364d667"
+    }
+  ]
+}

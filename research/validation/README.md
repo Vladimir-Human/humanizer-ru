@@ -69,6 +69,29 @@ Click.ru на Хабре, 2023-03-22). Файлы находятся в `researc
 | `25-ciolkovsky-grezy.txt` | научно-популярный очерк | К. Э. Циолковский, [Викитека](https://ru.wikisource.org/wiki/Грёзы_о_Земле_и_небе_(Циолковский)) |
 | `26-dal-predvaritelnoe-obyasnenie.txt` | лексикографическое предисловие, дореформенная орфография | «Толковый словарь живого великорусского языка» В. И. Даля, 3-е изд., [Викитека](https://ru.wikisource.org/wiki/ТСД3/Предварительное_объяснение) |
 
+## Adversarial-корпус
+
+Adversarial — человеческие тексты, намеренно провоцирующие мягкие паттерны
+(#1–#25); порог гейта: ≤2 мягких признака на текст, 0 regex-маркеров класса
+A/B, правки запрещены; манифест — `manifest.v1.json` с sha256. Каждый файл
+содержит один провоцируемый паттерн, но остаётся человеческим текстом без
+машинных артефактов.
+
+| Файл | Жанр | Провоцируемый паттерн |
+|---|---|---|
+| `01-oratorskaya-rech-pravilo-treh.txt` | fiction | правило трёх |
+| `02-dogovor-okazaniya-uslug-kantselyarit.txt` | legal | канцелярит |
+| `03-akademicheskii-referat-passiv-ogovorki.txt` | academic | академические клише |
+| `04-hudozhestvennyi-fragment-dlinnye-tire.txt` | fiction | длинные тире |
+| `05-nauchpop-sterilnaya-tipografika.txt` | neutral | стерильная типографика |
+| `06-blog-programmista-markdown-emoji-title-case.txt` | marketing | эмодзи + Title Case + Markdown |
+| `07-esse-sinonimy-i-konstruktsii-ne-tolko-no-i.txt` | fiction | «не только… но и» и синонимы |
+| `08-marketingovoe-opisanie-reklamnyi-yazyk.txt` | marketing | рекламный язык |
+| `09-kolonka-lichnaya-pozitsiya-razgovornye-svyazki.txt` | neutral | личная колонка |
+| `10-pismo-kollege-shablony-vezhlivosti.txt` | chat | шаблоны вежливости |
+| `11-statya-pro-priznaki-ii-kavychechnaya-lovushka.txt` | neutral | цитаты штампов в статье про ИИ |
+| `12-perevodnoi-tekst-kalki-vysokaya-leksicheskaya-plotnost.txt` | neutral | переводческие кальки |
+
 ## Команда проверки
 
 ```sh
