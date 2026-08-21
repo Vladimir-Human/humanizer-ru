@@ -17,6 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 IN = os.path.join(HERE, "markers.v1.json")
 OUT = os.path.join(HERE, "markers.js")
 BS = chr(92)
+NL = chr(10)
 
 
 def _is_hex(text):
@@ -71,7 +72,7 @@ def build_js(doc):
     data = {"schema_version": doc["schema_version"], "count": doc["count"], "rules": rules}
     return ("/* Автогенерация из markers.v1.json скриптом generate_js_rules.py. */\n"
             "const HUMANIZER_MARKERS = " +
-            json.dumps(data, ensure_ascii=False, indent=2) + ";\n")
+            json.dumps(data, ensure_ascii=False, indent=2) + ";" + NL + 'window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;' + NL)
 
 
 def main():

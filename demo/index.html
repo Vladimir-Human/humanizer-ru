@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>humanizer-ru — статическое демо regex-слоя</title>
 <script src="markers.js"></script>
@@ -44,7 +45,7 @@
   <div class="cols">
     <section>
       <h2>Текст</h2>
-      <textarea id="text" placeholder="Вставьте русский текст — например, примеры из tests/fixtures или собственный…">Образец: ссылка на https://ppl-ai-file-upload.s3.amazonaws.com/abc/file.pdf в списке литературы. А это обычное предложение.</textarea>
+      <textarea id="text" placeholder="Вставьте русский текст для проверки…">Вставьте сюда русский текст: страница проверит его по 39 правилам и подсветит служебные следы чат-ботов.</textarea>
     </section>
     <section>
       <h2>Совпадения</h2>
@@ -68,7 +69,8 @@
   const showAll = document.getElementById("showAll");
   const runBtn = document.getElementById("run");
 
-  const rules = (window.HUMANIZER_MARKERS && HUMANIZER_MARKERS.rules) || [];
+  const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
+  const rules = (DATA && DATA.rules) || [];
   const compiled = rules.map(r => ({
     id: r.id, cls: r.class, description: r.description,
     regex: new RegExp(r.source, r.flags.indexOf("g") >= 0 ? r.flags : r.flags + "g")
@@ -128,7 +130,7 @@
   function renderList(matches) {
     if (!matches.length) {
       matchesBox.innerHTML = '<p class="note">Совпадений не найдено.</p>';
-      summary.textContent = "Совпадений: 0";
+      if (!rules.length) { summary.textContent = "Правила не загрузились - проверьте markers.js"; return; } summary.textContent = "Совпадений: 0";
       return;
     }
     const byId = {};
