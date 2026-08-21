@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>humanizer-ru — статическое демо regex-слоя</title>
+<script src="markers.js"></script>
+<style>
+  :root { --a: #b3261e; --b: #8a6d00; --bg: #f6f5f2; --line: #d9d5cc; }
+  body { font: 15px/1.45 Georgia, "Times New Roman", serif; margin: 0; background: var(--bg); color: #1f1d1a; }
+  header { padding: 12px 20px; border-bottom: 1px solid var(--line); background: #fff; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+  @media (min-width: 900px) { .cols { grid-template-columns: 1fr 1fr; display: grid; gap: 20px; } }
+  textarea { width: 100%; min-height: 260px; box-sizing: border-box; padding: 10px; font: 14px/1.5 "Courier New", monospace; border: 1px solid var(--line); border-radius: 6px; }
+  #preview { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 10px; white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto; font: 14px/1.5 "Courier New", monospace; }
+  mark { border-radius: 3px; padding: 0 2px; }
+  mark.a { background: #ffd9d6; outline: 1px solid var(--a); }
+  mark.b { background: #ffedb3; outline: 1px solid var(--b); }
+  .result { background:#fff; border:1px solid var(--line); border-left: 5px solid var(--b); border-radius:6px; padding:8px 10px; margin: 8px 0; }
+  .result.a { border-left-color: var(--a); }
+  .badge { display:inline-block; min-width:2ch; text-align:center; padding:1px 6px; border-radius:10px; color:#fff; font-weight:bold; font-family:Verdana,sans-serif; font-size:12px; }
+  .badge.a { background: var(--a); }
+  .badge.b { background: var(--b); }
+  .rule { color:#555; font-family:Verdana,sans-serif; font-size:12px; }
+  .match { font-family: "Courier New", monospace; font-size:13px; color:#333; }
+  .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  button { padding:8px 14px; border:0; border-radius:6px; background:#1f6f4a; color:#fff; cursor:pointer; }
+  .note { color:#666; font-size:13px; }
+  summary { cursor:pointer; font-weight:bold; }
+</style>
+</head>
+<body>
+<header>
+  <h1>humanizer-ru · regex-слой без сервера</h1>
+  <p class="note">39 выражений загружаются из статического <code>markers.js</code> (генератор — <code>generate_js_rules.py</code> из <code>markers.v1.json</code>). Текст анализируется только в браузере и никуда не отправляется.</p>
+</header>
+<main>
+  <div class="controls">
+    <label><input type="checkbox" id="onlyA"> только класс A</label>
+    <label><input type="checkbox" id="showAll" checked> показывать полный текст с подсветкой</label>
+    <button id="run">Проверить</button>
+    <span id="summary" class="note"></span>
+  </div>
+  <div class="cols">
+    <section>
+      <h2>Текст</h2>
+      <textarea id="text" placeholder="Вставьте русский текст — например, примеры из tests/fixtures или собственный…">Образец: ссылка на https://ppl-ai-file-upload.s3.amazonaws.com/abc/file.pdf в списке литературы. А это обычное предложение.</textarea>
+    </section>
+    <section>
+      <h2>Совпадения</h2>
+      <div id="matches"></div>
+    </section>
+  </div>
+  <section id="previewSection">
+    <h2>Текст с подсветкой <span class="rule">(красный — класс A, жёлтый — класс B)</span></h2>
+    <pre id="preview"></pre>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const textarea = document.getElementById("text");
+  const matchesBox = document.getElementById("matches");
+  const preview = document.getElementById("preview");
+  const summary = document.getElementById("summary");
+  const onlyA = document.getElementById("onlyA");
+  const showAll = document.getElementById("showAll");
+  const runBtn = document.getElementById("run");
+
+  const rules = (window.HUMANIZER_MARKERS && HUMANIZER_MARKERS.rules) || [];
+  const compiled = rules.map(r => ({
+    id: r.id, cls: r.class, description: r.description,
+    regex: new RegExp(r.source, r.flags.indexOf("g") >= 0 ? r.flags : r.flags + "g")
+  }));
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  function findMatches(text) {
+    const out = [];
+    for (const rule of compiled) {
+      if (onlyA.checked && rule.cls !== "A") continue;
+      rule.regex.lastIndex = 0;
+      let m;
+      while ((m = rule.regex.exec(text)) !== null) {
+        if (m[0] === "") { rule.regex.lastIndex++; continue; }
+        out.push({ rule: rule.id, cls: rule.cls, description: rule.description, start: m.index, end: m.index + m[0].length, text: m[0] });
+        if (rule.regex.lastIndex <= m.index) rule.regex.lastIndex = m.index + 1;
+      }
+    }
+    out.sort((a, b) => (a.start - b.start) || (a.end - b.end) || (a.rule.localeCompare(b.rule)));
+    return out;
+  }
+
+  function mergedRanges(matches) {
+    if (!matches.length) return [];
+    const ranges = [];
+    let cur = null;
+    for (const m of matches) {
+      if (!cur || m.start > cur.end) {
+        if (cur) ranges.push(cur);
+        cur = { start: m.start, end: m.end, cls: m.cls };
+      } else {
+        cur.end = Math.max(cur.end, m.end);
+        if (m.cls === "A") cur.cls = "A";
+      }
+    }
+    if (cur) ranges.push(cur);
+    return ranges;
+  }
+
+  function renderPreview(text, matches) {
+    if (!showAll.checked) { preview.textContent = text; return; }
+    const ranges = mergedRanges(matches);
+    let html = "";
+    let pos = 0;
+    for (const r of ranges) {
+      html += escapeHtml(text.slice(pos, r.start));
+      html += '<mark class="' + r.cls.toLowerCase() + '">' + escapeHtml(text.slice(r.start, r.end)) + '</mark>';
+      pos = r.end;
+    }
+    html += escapeHtml(text.slice(pos));
+    preview.innerHTML = html;
+  }
+
+  function renderList(matches) {
+    if (!matches.length) {
+      matchesBox.innerHTML = '<p class="note">Совпадений не найдено.</p>';
+      summary.textContent = "Совпадений: 0";
+      return;
+    }
+    const byId = {};
+    for (const m of matches) { (byId[m.rule] = byId[m.rule] || []).push(m); }
+    matchesBox.innerHTML = "";
+    for (const [id, list] of Object.entries(byId)) {
+      const first = list[0];
+      const div = document.createElement("div");
+      div.className = "result " + first.cls.toLowerCase();
+      const snippet = escapeHtml(first.text.length > 160 ? first.text.slice(0, 160) + "…" : first.text);
+      div.innerHTML = '<span class="badge ' + first.cls.toLowerCase() + '">' + first.cls + '</span> ' +
+        '<strong>' + escapeHtml(id) + '</strong> <span class="rule">(' + list.length + ')</span><br>' +
+        '<span class="rule">' + escapeHtml(first.description) + '</span><br>' +
+        '<span class="match">…' + snippet + '…</span>';
+      matchesBox.appendChild(div);
+    }
+    summary.textContent = "Совпадений: " + matches.length + " (уникальных правил: " + Object.keys(byId).length + ")";
+  }
+
+  function run() {
+    const text = textarea.value;
+    const matches = findMatches(text);
+    renderList(matches);
+    renderPreview(text, matchedTexts(matches));
+  }
+
+  function matchedTexts(matches) { return matches; }
+
+  onlyA.addEventListener("change", run);
+  showAll.addEventListener("change", run);
+  runBtn.addEventListener("click", run);
+  textarea.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1022 @@
+{
+  "schema_version": "markers.v1",
+  "id": "humanizer-ru-markers",
+  "count": 39,
+  "class_a_count": 31,
+  "class_b_count": 8,
+  "markers": [
+    {
+      "id": "contentReference",
+      "class": "A",
+      "pattern": ":contentReference\\[oaicite:\\d+\\]\\{index=\\d+\\}",
+      "description": "Внутренняя метка ссылки в выводе ChatGPT",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&oldid=1294765751",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Согласно отчёту :contentReference[oaicite:0]{index=0}, рынок вырос на 12%.",
+          ":contentReference[oaicite:42]{index=42}"
+        ],
+        "negative": [
+          "Это просто ссылка на oaicite (упоминание термина в статье об ИИ).",
+          "Документация: содержит [oaicite:N] как пример формата."
+        ],
+        "multi": {
+          "text": ":contentReference[oaicite:0]{index=0} и :contentReference[oaicite:1]{index=1} и :contentReference[oaicite:2]{index=2}",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "oai_citation",
+      "class": "A",
+      "pattern": "oai_citation:\\d+‡",
+      "description": "Альтернативный формат внутренней ссылки",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&oldid=1296028135",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Источник oai_citation:5‡Wikipedia говорит, что…",
+          "oai_citation:0‡"
+        ],
+        "negative": [
+          "oai_citation без числа после двоеточия"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "oaicite_short",
+      "class": "A",
+      "pattern": "oaicite:\\d+",
+      "description": "Внутренняя метка ссылки в выводе ChatGPT",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&oldid=1294765751",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "усечённая ссылка oaicite:7"
+        ],
+        "negative": [
+          "oaicite без двоеточия и числа"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "turn_search",
+      "class": "A",
+      "pattern": "turn\\d+search\\d+",
+      "description": "Идентификатор результата поиска во внутренних ссылках ChatGPT",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&oldid=1274664396",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Согласно turn0search0, тема актуальна.",
+          "turn3search12 в середине предложения"
+        ],
+        "negative": [
+          "turn left and search again",
+          "turnaround search"
+        ],
+        "multi": {
+          "text": "turn0search0 turn1search1 turn2search2",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "turn_fetch",
+      "class": "A",
+      "pattern": "turn\\d+fetch\\d+",
+      "description": "Идентификатор загруженной страницы",
+      "source": {
+        "url": "https://github.com/openai/codex/blob/f1f9d0c3b5606d8da1c7f7839fc6e0cb85dd5d04/codex-rs/ext/web-search/web_run_description.md",
+        "accessed": "2026-08-10",
+        "platform": "OpenAI ChatGPT / Codex (веб-инструмент web.run)"
+      },
+      "fixtures": {
+        "positive": [
+          "[turn0fetch0] в скобках"
+        ],
+        "negative": [
+          "turn fetch the file"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "turn_file",
+      "class": "A",
+      "pattern": "turn\\d+file\\d+",
+      "description": "Идентификатор фрагмента файла из инструмента file_search; в тексте всплывает как `fileciteturn0file2` или сдвоенный `fileciteturn0file2turn0file6`",
+      "source": {
+        "url": "https://www.youtube.com/watch?v=vsdpQCvl6Zk",
+        "accessed": "2026-08-10",
+        "platform": "OpenAI ChatGPT (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Вывод обрывается метками fileciteturn0file2turn0file6 в конце.",
+          "одиночная метка turn0file11 после цитаты"
+        ],
+        "negative": [
+          "turn the file over",
+          "return file 5 to the archive"
+        ],
+        "multi": {
+          "text": "fileciteturn0file2turn0file6",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "ref_name_search",
+      "class": "B",
+      "pattern": "<ref\\b[^>]*\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
+      "description": "Имя сноски в вики-разметке: числовой префикс + имя внутреннего инструмента. Оно может остаться при копировании ответа агента с веб-поиском",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Dan_Morehead&oldid=1363966174",
+        "accessed": "2026-08-06",
+        "platform": "неустановленная модель / агент с веб-поиском"
+      },
+      "fixtures": {
+        "positive": [
+          "<ref name=\"0search12\">",
+          "<ref name=\"2file0\">",
+          "<ref name=\"1news4\" />"
+        ],
+        "negative": [
+          "<ref name=\"search12\">",
+          "<ref name=\"source12\">",
+          "<ref name=\"turn0search0\">",
+          "ref name=\"0search12\" без тега ref"
+        ],
+        "multi": {
+          "text": "<ref name=\"0search0\"> <ref name=\"0search1\"> <ref name=\"2file3\">",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "utm_chatgpt",
+      "class": "A",
+      "pattern": "[?&]utm_source=chatgpt\\.com",
+      "description": "OpenAI ChatGPT (веб и приложение)",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&oldid=1296028135",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "https://example.com/article?utm_source=chatgpt.com",
+          "https://example.com/?id=5&utm_source=chatgpt.com",
+          "?utm_source=chatgpt.com&other=1"
+        ],
+        "negative": [
+          "utm_source=chatgpt.com упомянут в статье об отслеживании",
+          "https://example.com/?utm_source=other.com"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "utm_openai",
+      "class": "A",
+      "pattern": "[?&]utm_source=openai",
+      "description": "Инструменты OpenAI (общий формат API)",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Valencia_High_School_(Santa_Clarita,_California)&oldid=1368000622",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI (атрибуция по UTM-метке)"
+      },
+      "fixtures": {
+        "positive": [
+          "https://docs.example.com/?utm_source=openai"
+        ],
+        "negative": [
+          "OpenAI utm_source без знака ? или &"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "utm_copilot",
+      "class": "A",
+      "pattern": "[?&]utm_source=copilot\\.com",
+      "description": "Microsoft Copilot",
+      "source": {
+        "url": "https://github.com/tectijuana/interfaz/blob/cdc97fc53f6b3030aa14285da456eef7a329d60a/entregas/2026a/research/Arquitecturas%20ARM%20aplicadas%20a%20sistemas%20multimedia/readme.md",
+        "accessed": "2026-08-07",
+        "platform": "Microsoft Copilot (атрибуция по UTM-метке)"
+      },
+      "fixtures": {
+        "positive": [
+          "https://example.com/?utm_source=copilot.com",
+          "https://example.com/?id=7&utm_source=copilot.com"
+        ],
+        "negative": [
+          "utm_source=copilot.com упомянут в статье об отслеживании",
+          "https://example.com/?utm_source=chatgpt.com"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "grok_referrer",
+      "class": "B",
+      "pattern": "[?&]referrer=grok\\.com",
+      "description": "xAI Grok",
+      "source": {
+        "url": "https://x.ai/grok",
+        "accessed": "2026-07-13",
+        "platform": "xAI (официальный сайт)"
+      },
+      "fixtures": {
+        "positive": [
+          "https://x.com/post?referrer=grok.com",
+          "https://example.com/?id=1&referrer=grok.com"
+        ],
+        "negative": [
+          "referrer=grok.com упомянут без URL-параметра",
+          "https://example.com/?referrer=other.com"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "provenance"
+    },
+    {
+      "id": "attached_file",
+      "class": "A",
+      "pattern": "attached_file:\\/\\/",
+      "description": "OpenAI ChatGPT при загрузке файлов",
+      "source": null,
+      "fixtures": {
+        "positive": [
+          "См. attached_file:///tmp/upload.pdf"
+        ],
+        "negative": [
+          "Файл прикреплён, см. attached file (по-русски)"
+        ],
+        "multi": null
+      },
+      "evidence_status": "fixture-only",
+      "evidence_class": null
+    },
+    {
+      "id": "grok_card",
+      "class": "A",
+      "pattern": "grok_card:\\/\\/",
+      "description": "xAI Grok при ссылке на карточку записи в X (бывший Twitter)",
+      "source": null,
+      "fixtures": {
+        "positive": [
+          "grok_card://1234567890"
+        ],
+        "negative": [
+          "карточка Grok без специфичной разметки"
+        ],
+        "multi": null
+      },
+      "evidence_status": "fixture-only",
+      "evidence_class": null
+    },
+    {
+      "id": "grok_render_json",
+      "class": "A",
+      "pattern": "grok_render_citation_card_json",
+      "description": "xAI Grok: JSON-разметка карточек цитирования вместо ссылки",
+      "source": {
+        "url": "https://www.youtube.com/watch?v=JR5m2yc1a94",
+        "accessed": "2026-07-13",
+        "platform": "Grok"
+      },
+      "fixtures": {
+        "positive": [
+          "[](grok_render_citation_card_json={\"cardIds\":[\"3bb883\"]})"
+        ],
+        "negative": [
+          "grok render citation card json обсуждают в документации"
+        ],
+        "multi": {
+          "text": "[](grok_render_citation_card_json={\"cardIds\":[\"1\"]}) [](grok_render_citation_card_json={\"cardIds\":[\"2\"]})",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "vertexaisearch",
+      "class": "A",
+      "pattern": "vertexaisearch\\.cloud\\.google\\.com/grounding-api-redirect",
+      "description": "Google Gemini, ссылки веб-поиска с привязкой к источникам",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Arda_Turan&oldid=1367547066",
+        "accessed": "2026-08-06",
+        "platform": "Google Vertex AI Search (атрибуция по ссылке)"
+      },
+      "fixtures": {
+        "positive": [
+          "ссылка vertexaisearch.cloud.google.com/grounding-api-redirect/AbCdEf в тексте"
+        ],
+        "negative": [
+          "vertexaisearch.cloud.google.com без пути",
+          "обычная страница продукта cloud.google.com/vertex-ai-search"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "attributableIndex",
+      "class": "A",
+      "pattern": "\\battributableIndex\\b",
+      "description": "Внутренние поля разметки в JSON-ответах при использовании инструментов",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&oldid=1358429496",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "{\"attributableIndex\": 0}"
+        ],
+        "negative": [
+          "слово attributable в обычном тексте о праве и атрибуции",
+          "attributableIndexes (с окончанием)"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "citation_n",
+      "class": "A",
+      "pattern": "\\[citation:\\d+\\]",
+      "description": "Стиль Perplexity и других поисковых ИИ",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Elisa_von_der_Recke&oldid=1347068054",
+        "accessed": "2026-08-06",
+        "platform": "Perplexity (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Согласно исследованию [citation:3], результаты неоднозначны."
+        ],
+        "negative": [
+          "[citation needed] (Википедийный шаблон)"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "copilot_caret",
+      "class": "A",
+      "pattern": "\\[\\^\\d+\\^\\]",
+      "description": "Microsoft Copilot и Bing: сноска-ссылка при копировании ответа",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Yunus_ibn_Habib&oldid=1234500170",
+        "accessed": "2026-08-07",
+        "platform": "Microsoft Copilot или Bing (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Рынок вырос на 12%[^1^] по данным отчёта.",
+          "[^10^]"
+        ],
+        "negative": [
+          "Обычная сноска Markdown[^1] определена ниже."
+        ],
+        "multi": {
+          "text": "[^1^][^2^][^10^]",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "assistants_source",
+      "class": "A",
+      "pattern": "【\\d+(?::\\d+)?†source】",
+      "description": "OpenAI Assistants (поиск по файлам): метка цитаты, скобки-уголки + кинжал",
+      "source": {
+        "url": "https://it.wikipedia.org/w/index.php?title=Francesco_Taddei&oldid=142988495",
+        "accessed": "2026-08-07",
+        "platform": "OpenAI Assistants (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Согласно политике【1†source】, доступ разрешён.",
+          "【4:2†source】"
+        ],
+        "negative": [
+          "Декоративные уголки 【примечание】 без кинжала."
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "cite_turn",
+      "class": "A",
+      "pattern": "citeturn\\d+[a-z]+\\d+",
+      "description": "ChatGPT: служебная метка цитаты, попавшая в текст при копировании из потока",
+      "source": {
+        "url": "https://web.archive.org/web/20260514074800/https://vibraniumaudits.com/post/1inch-resolver-hacker-returns-stolen-funds-after-negotiation-claims-bounty",
+        "accessed": "2026-08-07",
+        "platform": "OpenAI ChatGPT (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Текст citeturn0file0 со ссылкой.",
+          "citeturn2search5 в середине строки"
+        ],
+        "negative": [
+          "Прошу процитировать, затем turn to page 5."
+        ],
+        "multi": {
+          "text": "citeturn0file0 citeturn2search5",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "sandbox_link",
+      "class": "A",
+      "pattern": "\\]\\(sandbox:/mnt/data/",
+      "description": "ChatGPT (анализ данных): сломанная ссылка на скачивание файла из контейнера",
+      "source": {
+        "url": "https://github.com/danny-avila/LibreChat/blob/270c6d23506d363985d036e2ee6b7f69e84d596b/api/server/services/Threads/processMessages.spec.js",
+        "accessed": "2026-08-10",
+        "platform": "OpenAI ChatGPT (Assistants API / Advanced Data Analysis)"
+      },
+      "fixtures": {
+        "positive": [
+          "[Скачать отчёт](sandbox:/mnt/data/report.xlsx)"
+        ],
+        "negative": [
+          "Развернули окружение sandbox на /mnt/data сервера."
+        ],
+        "multi": {
+          "text": "[A](sandbox:/mnt/data/a.csv) [B](sandbox:/mnt/data/b.csv)",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "openai_pua",
+      "class": "B",
+      "pattern": "[-]",
+      "description": "OpenAI ChatGPT: служебные разделители цитат и скрытых блоков",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&oldid=1274664396",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Amazon Nova даёт ряд возможностей citeturn0search3.",
+          "скрытый блок служебная пометка в тексте"
+        ],
+        "negative": [
+          "Обычный текст без служебных символов.",
+          "Символ иконки  из шрифтового набора (другая часть PUA)"
+        ],
+        "multi": {
+          "text": "citeturn0search3",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "openai_pua_short",
+      "class": "B",
+      "pattern": "[]",
+      "description": "OpenAI ChatGPT: короткая форма сноски — только номер, ограждённый невидимыми символами",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1363998845",
+        "accessed": "2026-07-14",
+        "platform": "ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "известная по ролям в сериале.2",
+          "высокий рейтинг на агрегаторе.5 Следующее предложение."
+        ],
+        "negative": [
+          "Обычный текст без служебных символов с цифрой 2 в конце.",
+          "Символ иконки  из шрифтового набора (другая часть PUA)",
+          "Служебный разделитель  из длинной формы (своё выражение openai_pua)"
+        ],
+        "multi": {
+          "text": "Первое.2 Второе.3",
+          "expected": 4
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "think_tag",
+      "class": "A",
+      "pattern": "(?m)^\\s*</?think>|</think>\\s*$",
+      "description": "DeepSeek R1 и наследники, другие открытые модели с режимом рассуждения (через API и локальный запуск)",
+      "source": {
+        "url": "https://github.com/lobehub/lobe-ui/blob/603612abef69fe725afacd87d69a2f01c6cf19fd/src/Markdown/demos/custom/thinking/content.ts",
+        "accessed": "2026-08-10",
+        "platform": "DeepSeek-R1 через Ollama (атрибуция по фикстуре)"
+      },
+      "fixtures": {
+        "positive": [
+          "<think>Сначала разберу условия задачи…</think> Ответ: 42.",
+          "</think> Итоговый ответ ниже."
+        ],
+        "negative": [
+          "Я думаю (think), что это норма.",
+          "Тег <thinking> другого формата здесь не считается.",
+          "У некоторых моделей есть служебный тег <think> для черновика."
+        ],
+        "multi": {
+          "text": "<think>а</think>",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "source_plus_chain",
+      "class": "A",
+      "pattern": "[A-Za-zА-Яа-яЁё)]\\+\\d+(?=[A-ZА-ЯЁ][A-Za-zА-Яа-яЁё&.\\-]*(?: [A-ZА-ЯЁ][A-Za-zА-Яа-яЁё&.\\-]*){0,3}\\+\\d)",
+      "description": "OpenAI ChatGPT: ошибка отрисовки сносок",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=ISO/IEC_27017&oldid=1325099471",
+        "accessed": "2026-08-06",
+        "platform": "OpenAI ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Стандарт создан комитетом ISO. IT Governance+3ISO+3ISO+3. Он входит в семейство…",
+          "адаптирован к облачным средам. Microsoft Learn+3Google Cloud+3."
+        ],
+        "negative": [
+          "стандарт C++11 и C++14 поддерживаются",
+          "формула x+1 в каждой строке",
+          "оценка 5+ за контрольную",
+          "Wikipedia+1.",
+          "связка Excel+1С в резюме",
+          "пакет Word+2Excel для офиса",
+          "тариф Про+3Максимум на месяц",
+          "Excel+1С и формула x+1 рядом"
+        ],
+        "multi": {
+          "text": "Wikipedia+1Реестр+2Архив+3",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "gemini_cite_start",
+      "class": "A",
+      "pattern": "\\[cite_start\\]",
+      "description": "Google Gemini: внутренняя метка начала цитируемого фрагмента при анализе PDF",
+      "source": {
+        "url": "https://fr.wikipedia.org/w/index.php?title=Fili%C3%A8re_Sibiril&oldid=231476164",
+        "accessed": "2026-08-07",
+        "platform": "Google Gemini (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "[cite_start]Компания основана в 1994 году и с тех пор…",
+          "Вывод содержит [cite_start] в середине строки."
+        ],
+        "negative": [
+          "функция cite_start() в коде без скобок вокруг",
+          "[cite start] с пробелом вместо подчёркивания"
+        ],
+        "multi": {
+          "text": "[cite_start]Первое. [cite_start]Второе.",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "gemini_cite_n",
+      "class": "A",
+      "pattern": "\\[[Cc]ite:\\s?\\d+(?:,\\s?\\d+)*\\]",
+      "description": "Google Gemini: ссылка на фрагмент источника; с v3.2 выражение покрывает и перечисление нескольких фрагментов через запятую",
+      "source": {
+        "url": "https://es.wikipedia.org/w/index.php?title=Migraci%C3%B3n_de_las_400_familias&oldid=168718749",
+        "accessed": "2026-08-07",
+        "platform": "Google Gemini (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Выручка выросла на 12% [cite: 8] по итогам года.",
+          "Согласно отчёту [Cite: 12], план выполнен.",
+          "Работала с клиентами в медицине и недвижимости [cite: 19, 20, 21]."
+        ],
+        "negative": [
+          "[citation needed] (Википедийный шаблон)",
+          "[citation:3] — метка DeepSeek, у неё своё выражение",
+          "команда \\cite{ivanov2024} в LaTeX"
+        ],
+        "multi": {
+          "text": "[cite: 1][cite: 2][Cite: 3]",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "gemini_span",
+      "class": "A",
+      "pattern": "\\[span_\\d+\\][\\[(](?:start_span|end_span)[\\])]",
+      "description": "Google Gemini: внутренние span-метки границ фрагментов; всплывают при копировании ответа с подсветкой источников",
+      "source": {
+        "url": "https://en.wikipedia.org/wiki/Special:Diff/1363979466",
+        "accessed": "2026-07-21",
+        "platform": "Google Gemini"
+      },
+      "fixtures": {
+        "positive": [
+          "Альбом вышел[span_2](start_span) в августе 1986[span_2](end_span).",
+          "Форма заголовка раздела: [span_1][start_span]",
+          "Текст [span_12](start_span)фрагмент[span_12](end_span) целиком."
+        ],
+        "negative": [
+          "[span_2] без start_span/end_span",
+          "[start_span] без номера span",
+          "[span_A](start_span) — буква вместо номера"
+        ],
+        "multi": {
+          "text": "[span_3](start_span)Альбом[span_3](end_span) и [span_4](start_span)сингл[span_4](end_span)",
+          "expected": 4
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "zero_width",
+      "class": "B",
+      "pattern": "[​‌‎‏‪-‮⁠-⁤⁦-⁩﻿￹-￻]|(?<![🀀-🫿☀-➿️🇦-🇿])‍(?![🀀-🫿☀-➿️🇦-🇿])",
+      "description": "Наблюдались у ряда моделей (обзорные источники весны 2025; атрибуция конкретной версии не подтверждена); расширение класса — публичный разбор watermarks-remover, 2026-08-13",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Amu_Television&oldid=1241301672",
+        "accessed": "2026-08-06",
+        "platform": "неустановленная модель"
+      },
+      "fixtures": {
+        "positive": [
+          "Слово​разорвано пробелом нулевой ширины.",
+          "Невидимый соединитель⁠внутри текста.",
+          "Метка﻿посреди строки.",
+          "сло‍во с соединителем внутри кириллицы"
+        ],
+        "negative": [
+          "Обычный текст с обычными пробелами.",
+          "Узкий неразрывный пробел не входит в выражение (ручная проверка).",
+          "семья 👨‍👩‍👧 в подписи к фото",
+          "флаг 🏳️‍🌈 в чате",
+          "космонавт 👩‍🚀 на аватарке"
+        ],
+        "multi": {
+          "text": "а​б‌в‍г",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "writing_block",
+      "class": "A",
+      "pattern": ":::\\w+\\{variant",
+      "description": "Writing-разметка; атрибуция версии не подтверждена",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Draft:Ak7&oldid=1357217465",
+        "accessed": "2026-08-06",
+        "platform": "неустановленная модель"
+      },
+      "fixtures": {
+        "positive": [
+          ":::writing{variant=\"document\" id=\"68427\"}",
+          "Черновик письма ниже. :::writing{variant=\"email\" id=\"51724\"}",
+          ":::écriture{variante=\"document\" id=\"28471\"}"
+        ],
+        "negative": [
+          ":::note — директива Docusaurus без атрибута variant",
+          ":::tip{title=\"Совет\"} — атрибут другой",
+          "обычное троеточие в конце фразы..."
+        ],
+        "multi": {
+          "text": ":::writing{variant=\"email\" id=\"11111\"} текст ::: :::writing{variant=\"chat_message\" id=\"22222\"}",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "deepseek_line_ref",
+      "class": "A",
+      "pattern": "【\\d+†L\\d+(?:-L?\\d+)?】",
+      "description": "DeepSeek и производные модели: ссылка на строки источника",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Gillingham_High_Street&oldid=1295285879",
+        "accessed": "2026-08-07",
+        "platform": "DeepSeek (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "В 2024 году кампания выросла【85†L261-269】.",
+          "Альбом вышел【854†L119-123】 в 2024 году.",
+          "【854†L119-L123】 — форма с L после дефиса."
+        ],
+        "negative": [
+          "OpenAI Assistants метка 【1†source】 ловится другим выражением.",
+          "Декоративные уголки 【примечание】 без строк.",
+          "Обычная сноска [1] не должна срабатывать."
+        ],
+        "multi": {
+          "text": "【29†L582-589】【32†L142-149】",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "grok_card_tag",
+      "class": "A",
+      "pattern": "<grok-card\\b[^>]*\\bcitation_card\\b",
+      "description": "xAI Grok: XML-тег карточки цитирования после сноски",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Draft:Mehak_Malik&oldid=1323207968",
+        "accessed": "2026-08-07",
+        "platform": "Grok (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "<grok-card data-id=\"e8ff4f\" data-type=\"citation_card\">",
+          "Текст...<grok-card data-id=\"abc\" data-type=\"citation_card\">"
+        ],
+        "negative": [
+          "<grok-card> без атрибута citation_card",
+          "обычный XML-тег <div>"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "turn_other",
+      "class": "A",
+      "pattern": "turn\\d+(?:image|news|video|ref)\\d+",
+      "description": "Идентификаторы из других инструментов ChatGPT: изображения, новости, видео, ссылки на источники; всплывают при копировании ответов с мультимедиа",
+      "source": {
+        "url": "https://www.binance.com/en/square/post/23319467437738",
+        "accessed": "2026-07-13",
+        "platform": "ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Фото turn0image0 в тексте.",
+          "turn0news0 в середине",
+          "turn0video0",
+          "turn0ref0"
+        ],
+        "negative": [
+          "turn left and image again",
+          "turnaround news"
+        ],
+        "multi": {
+          "text": "turn0image0 turn0news0 turn0video0",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "attached_web_bracket",
+      "class": "A",
+      "pattern": "\\[(?:attached_file|web):\\d+\\]",
+      "description": "Perplexity (с осени 2025; возможно и другие поисковые ИИ): скобочная форма ссылок на прикреплённые файлы и веб-результаты в конце предложений",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Hamish_Maxwell&oldid=1316436509",
+        "accessed": "2026-08-07",
+        "platform": "Perplexity (предположительно, атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "См. [attached_file:1] в ответе.",
+          "Цитата [web:3] из поиска."
+        ],
+        "negative": [
+          "[attach:1] другой формат",
+          "обычная сноска [1]"
+        ],
+        "multi": {
+          "text": "[attached_file:1][web:2][web:3]",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "perplexity_s3",
+      "class": "A",
+      "pattern": "ppl-ai-file-upload",
+      "description": "Perplexity: ссылки на Amazon S3-bucket с этим идентификатором в адресе; всплывают при копировании ответа с привязкой к источникам",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Grand_Mosque_of_Sabilal_Muhtadin&oldid=1345574273",
+        "accessed": "2026-08-07",
+        "platform": "Perplexity (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Источник: ссылка на бакет ppl-ai-file-upload в пути (сервис s3.amazonaws)",
+          "Ссылка на бакет ppl-ai-file-upload после имени сервиса s3.amazonaws в списке литературы."
+        ],
+        "negative": [
+          "упоминание ppl ai file upload с пробелами",
+          "обычная ссылка на другой бакет other-bucket на сервисе s3.amazonaws"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "generated_ref_id",
+      "class": "A",
+      "pattern": "citegenerated-reference-identifier",
+      "description": "ChatGPT: редкая служебная метка сгенерированного идентификатора ссылки, всплывает при сбое отрисовки цитат",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&oldid=1366561867",
+        "accessed": "2026-08-07",
+        "platform": "ChatGPT"
+      },
+      "fixtures": {
+        "positive": [
+          "Текст citegenerated-reference-identifier в выводе."
+        ],
+        "negative": [
+          "generated reference identifier через пробел"
+        ],
+        "multi": null
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "secondary"
+    },
+    {
+      "id": "placeholder_url",
+      "class": "B",
+      "pattern": "\\b(?:INSERT_SOURCE_URL(?:_\\d+)?|URL_HERE|PASTE_\\w+_URL_HERE)\\b",
+      "description": "Placeholder-URL из шаблонных ответов: ИИ выдаёт структуру ссылки, которую пользователь должен заполнить, но публикует без правки",
+      "source": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Nishikant_Dubey&oldid=1367957147",
+        "accessed": "2026-08-07",
+        "platform": "разные модели (атрибуция по форме)"
+      },
+      "fixtures": {
+        "positive": [
+          "Вставьте INSERT_SOURCE_URL_30 сюда.",
+          "См. URL_HERE в шаблоне.",
+          "PASTE_SPOTIFY_TRACK_URL_HERE"
+        ],
+        "negative": [
+          "insert source url в обычной фразе",
+          "вставьте URL сюда"
+        ],
+        "multi": {
+          "text": "INSERT_SOURCE_URL URL_HERE PASTE_TRACK_URL_HERE",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "placeholder_date",
+      "class": "B",
+      "pattern": "\\b(?:19|20)\\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}\\b",
+      "description": "Placeholder-дата из шаблонных ответов: ИИ подставляет заглушку вместо неизвестной даты (чаще всего — «дата обращения» в списке литературы)",
+      "source": {
+        "url": "https://github.com/Deupaxx/EveryDay-Writer/blob/cb1e6ae33884a22348b73ed3efdc3c5c4c27fc35/core/ai_slop_commandments.md",
+        "accessed": "2026-08-07",
+        "platform": "разные модели"
+      },
+      "fixtures": {
+        "positive": [
+          "дата обращения: 2025-XX-XX.",
+          "|date=2022-11-XX |publisher=…",
+          "access-date=2025-xx-xx"
+        ],
+        "negative": [
+          "обычная дата 2025-11-30 не срабатывает",
+          "артикул 2025-XX-XXL не срабатывает",
+          "диапазон 2024-2025 без дня",
+          "код изделия 1234-56-xx",
+          "серия 3985-77-XX",
+          "невозможный месяц 2025-13-XX"
+        ],
+        "multi": {
+          "text": "2025-XX-XX и 2022-11-XX в одном списке литературы",
+          "expected": 2
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "secondary"
+    },
+    {
+      "id": "invisible_layout",
+      "class": "B",
+      "pattern": "­|[  　]|(?<![🀀-🫿☀-➿🇦-🇿])[︀-️](?![🀀-🫿☀-➿🇦-🇿])",
+      "description": "Публичный разбор классов меток watermarks-remover, 2026-08-13; классовое описание, атрибуция конкретных моделей не подтверждена",
+      "source": {
+        "url": "https://github.com/guillaumemeyer/watermarks-remover/blob/main/skills/remove-ai-marks/scripts/text_unicode.py",
+        "accessed": "2026-08-13",
+        "platform": "класс меток нескольких поставщиков (public class-level описание)"
+      },
+      "fixtures": {
+        "positive": [
+          "мягкий перенос сло­во",
+          "огхамский пробел: а б",
+          "идеографический пробел: а　б",
+          "средний математический пробел: а б",
+          "вариационный селектор вне эмодзи: текст️."
+        ],
+        "negative": [
+          "обычный неразрывный пробел внутри предложения",
+          "узкий неразрывный пробел после числа",
+          "наборный пробел: а б",
+          "тонкий пробел: а б",
+          "сердце ❤️ и солнце ☀️ в чате",
+          "светофор 🚦 без селектора"
+        ],
+        "multi": {
+          "text": "а­б и в г и д️е",
+          "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    }
+  ]
+}

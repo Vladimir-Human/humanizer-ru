@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>humanizer-ru · regex-демо</title>
+<script src="markers.js"></script>
+<style>
+ body{font:15px/1.4 Georgia,serif;background:#f6f5f2;color:#1f1d1a;margin:0}
+ main{max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:16px}
+ .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media(max-width:800px){.cols{grid-template-columns:1fr}}
+ textarea{width:100%;box-sizing:border-box;min-height:240px;padding:10px;font:14px/1.5 Consolas,monospace}
+ pre{white-space:pre-wrap;background:#fff;border:1px solid #d9d5cc;padding:10px;max-height:360px;overflow:auto;font:14px/1.5 Consolas,monospace}
+ .res{border-left:5px solid #8a6d00;background:#fff;border-top:1px solid #d9d5cc;border-right:1px solid #d9d5cc;border-bottom:1px solid #d9d5cc;border-radius:4px;padding:6px 10px;margin:6px 0}
+ .res.a{border-left-color:#b3261e}
+ .badge{display:inline-block;min-width:22px;text-align:center;color:#fff;border-radius:9px;font:bold 12px Verdana;padding:1px 6px}
+ .badge.a{background:#b3261e}.badge.b{background:#8a6d00}
+ .desc{color:#555;font:12px Verdana} mark.a{background:#ffd9d6} mark.b{background:#ffedb3}
+ button{padding:8px 14px;background:#1f6f4a;border:0;border-radius:6px;color:#fff;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <p>Текст не покидает браузер. Правила сгенерированы из `markers.v1.json` скриптом `generate_js_rules.py`.</p>
+  <div class="cols">
+    <section><h2>Текст</h2><textarea id="t" placeholder="Вставьте текст…">Образец: https://ppl-ai-file-upload.s3.amazonaws.com/a/b.pdf — артефакт Perplexity.</textarea></section>
+    <section><h2>Совпадения</h2><div id="list"></div></section>
+  </div>
+  <section><h2>Подсветка</h2><pre id="hl"></pre></section>
+</main>
+<script>
+(() => {
+  const rules = (HUMANIZER_MARKERS.rules||[]).map(r => ({...r, re:new RegExp(r.source, r.flags.includes("g")?r.flags:r.flags+"g")}));
+  const $ = id => document.getElementById(id);
+  const t = $("t"), list = $("list"), hl = $("hl");
+  const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function scan() {
+    const text = t.value, hits = [];
+    for (const r of rules) {
+      r.re.lastIndex = 0; let m;
+      while ((m = r.re.exec(text))) {
+        if (!m[0]) { r.re.lastIndex++; continue; }
+        hits.push({id:r.id, cls:r.class, desc:r.description, s:m.index, e:m.index+m[0].length, text:m[0]});
+        if (r.re.lastIndex <= m.index) r.re.lastIndex = m.index + 1;
+      }
+    }
+    hits.sort((a,b)=>(a.s-b.s)||(a.e-b.e));
+    list.innerHTML = hits.length
+      ? Object.entries(hits.reduce((g,h)=>{ (g[h.id]=g[h.id]||[]).push(h); return g; },{}))
+          .map(([id,hs])=>`<div class="res ${hs[0].cls.toLowerCase()}"><span class="badge ${hs[0].cls.toLowerCase()}">${hs[0].cls}</span> <b>${esc(id)}</b> <span class="desc">(${hs.length}) ${esc(hs[0].desc)}</span><br><code>${esc(hs[0].text.slice(0,140))}</code></div>`).join("")
+      : '<p>Совпадений нет.</p>';
+    // Слияние пересекающихся диапазонов для подсветки
+    const ranges = []; let cur = null;
+    for (const h of hits) {
+      if (!cur || h.s > cur.e) { if (cur) ranges.push(cur); cur = {s:h.s, e:h.e, cls:h.cls}; }
+      else { cur.e = Math.max(cur.e, h.e); if (h.cls === "A") cur.cls = "A"; }
+    }
+    if (cur) ranges.push(cur);
+    let out = "", p = 0;
+    for (const r of ranges) { out += esc(text.slice(p, r.s)) + `<mark class="${r.cls.toLowerCase()}">${esc(text.slice(r.s, r.e))}</mark>`; p = r.e; }
+    hl.innerHTML = out + esc(text.slice(p));
+  }
+  t.addEventListener("input", scan); scan();
+})();
+</script>
+</body>
+</html>
