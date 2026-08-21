@@ -235,6 +235,7 @@ humanizer-ru/
 │   ├── check_reference_maps.py   # Карты разбитых справочников
 │   ├── check_budget.py           # Бюджет контекста по спецификации
 │   ├── check_corpus.py           # Регрессия корпусов валидации
+│   ├── check_adversarial.py      # Гейт adversarial-FP корпуса
 │   ├── check_perf.py             # Скорость выражений на большом входе
 │   ├── check_release.py          # Сборка и проверка релизного архива
 │   ├── check_bundle_sync.py      # Синхронность вендора бандла dsh/

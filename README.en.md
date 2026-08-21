@@ -206,6 +206,7 @@ humanizer-ru/
 │   ├── check_own_style.py        # Soft-signal threshold on own prose
 │   ├── check_reference_maps.py   # Split-reference map integrity
 │   ├── check_corpus.py           # Validation corpus regression
+│   ├── check_adversarial.py      # Adversarial false-positive corpus gate
 │   ├── check_perf.py             # Expression speed on a large input
 │   ├── check_release.py          # Release archive build and verification
 │   ├── check_bundle_sync.py      # dsh/ bundle vendor sync
