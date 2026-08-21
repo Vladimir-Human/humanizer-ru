@@ -199,6 +199,7 @@ humanizer-ru/
 │   ├── check_markers.py          # Regex test runner and text scanner
 │   ├── check_spec.py             # Agent Skills spec compliance
 │   ├── check_fixture_sources.py  # Fixture source verification
+│   ├── check_link_rot.py         # Fixture source link-rot gate
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
