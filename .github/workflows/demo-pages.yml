@@ -31,9 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Настроить Pages
-        uses: actions/configure-pages@983d7746158d0b22f7e7892eb3c9a10067ecad01 # v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Собрать артефакт из demo/
-        uses: actions/upload-pages-artifact@56afc0097c07a3bbcb8d4dcdf6d4f14e26c1be43 # v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: demo
       - name: Опубликовать
