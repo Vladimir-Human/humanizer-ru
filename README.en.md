@@ -113,6 +113,8 @@ Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedi
 
 Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus the regex layer finds no matches, and the few soft-signal candidates on classical prose (literary dashes, repetitions) stay neutral under the genre exceptions; on Russian model outputs it surfaces candidates where the regex layer stays silent. Only mechanical axes are published outward — marker removal, fact cleanliness, false edits (see [LEADERBOARD.md](LEADERBOARD.md)); readability is scored by an internal judge panel and stays an internal signal: the panel is single-family, and positional noise is documented in the runs.
 
+Shares of “0 of N” are published with a confidence interval: 0 false positives on 11 human texts is an observation of 0/11, not a proven zero — Wilson 95% CI [0%; 25.9%]. scripts/check_confidence.py recomputes and cross-checks the intervals.
+
 ## Architecture
 
 ```
@@ -148,6 +150,8 @@ humanizer-ru/
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
 │   ├── check_json_output.py     # UTF-8 machine-readable stdout gate
+│   ├── check_confidence.py       # Wilson CI for leaderboard shares
+│   ├── threshold_sweep.py        # Soft-layer threshold sweep
 │   └── check_all.py              # Full release checklist in one command
 ├── eval/
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
