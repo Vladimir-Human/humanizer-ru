@@ -7,10 +7,15 @@ MIT) — smixs_lint_pinned.py рядом. Линтер возвращает
 (kind, line_no, rule, excerpt); в case идёт имя правила.
 """
 import json
-import os
 import sys
 
 import smixs_lint_pinned as lint_mod
+
+
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 def main():

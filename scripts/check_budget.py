@@ -22,8 +22,8 @@ import tempfile
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(errors="backslashreplace")
-    sys.stderr.reconfigure(errors="backslashreplace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 MAX_NAME = 64
 MAX_DESCRIPTION = 1024

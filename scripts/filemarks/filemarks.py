@@ -15,7 +15,6 @@ PDF — best-effort: без exiftool снимается только XMP-пак�
 оценка, см. score_synthid.py). Только стандартная библиотека.
 """
 import argparse
-import json
 import os
 import sys
 import tempfile
@@ -27,7 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 
-from common_fm import MAX_INPUT_BYTES, cleaned_path, emit_json, safe_write_bytes, safe_write_text  # noqa: E402
+from common_fm import MAX_INPUT_BYTES, cleaned_path, emit_json, safe_write_text  # noqa: E402
 from container_meta import clean_container, inspect_container  # noqa: E402
 from image_meta import clean_image, detect_format as detect_image, inspect_image  # noqa: E402
 
@@ -37,6 +36,12 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
 CONTAINER_EXTS = {".svg", ".pdf", ".docx", ".odt", ".html", ".htm", ".md", ".markdown", ".mdx"}
 
 from text_layer import DETECTOR_OK, clean_text_layer, layer_a_rx  # noqa: E402
+
+
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 def classify(path):

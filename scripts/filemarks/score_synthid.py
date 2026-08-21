@@ -19,6 +19,12 @@ import sys
 from pathlib import Path
 
 
+# Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("path", type=Path, nargs="?")
