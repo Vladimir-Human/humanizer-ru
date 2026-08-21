@@ -33,6 +33,7 @@
   const $ = id => document.getElementById(id);
   const t = $("t"), list = $("list"), hl = $("hl");
   const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const ck = h => h.cls === "A" ? "a" : "b";
   function scan() {
     const text = t.value, hits = [];
     for (const r of rules) {
@@ -46,7 +47,7 @@
     hits.sort((a,b)=>(a.s-b.s)||(a.e-b.e));
     list.innerHTML = hits.length
       ? Object.entries(hits.reduce((g,h)=>{ (g[h.id]=g[h.id]||[]).push(h); return g; },{}))
-          .map(([id,hs])=>`<div class="res ${hs[0].cls.toLowerCase()}"><span class="badge ${hs[0].cls.toLowerCase()}">${hs[0].cls}</span> <b>${esc(id)}</b> <span class="desc">(${hs.length}) ${esc(hs[0].desc)}</span><br><code>${esc(hs[0].text.slice(0,140))}</code></div>`).join("")
+          .map(([id,hs])=>`<div class="res ${ck(hs[0])}"><span class="badge ${ck(hs[0])}">${ck(hs[0]).toUpperCase()}</span> <b>${esc(id)}</b> <span class="desc">(${hs.length}) ${esc(hs[0].desc)}</span><br><code>${esc(hs[0].text.slice(0,140))}</code></div>`).join("")
       : '<p>Совпадений нет.</p>';
     // Слияние пересекающихся диапазонов для подсветки
     const ranges = []; let cur = null;
@@ -56,10 +57,11 @@
     }
     if (cur) ranges.push(cur);
     let out = "", p = 0;
-    for (const r of ranges) { out += esc(text.slice(p, r.s)) + `<mark class="${r.cls.toLowerCase()}">${esc(text.slice(r.s, r.e))}</mark>`; p = r.e; }
+    for (const r of ranges) { out += esc(text.slice(p, r.s)) + `<mark class="${ck(r.cls)}">${esc(text.slice(r.s, r.e))}</mark>`; p = r.e; }
     hl.innerHTML = out + esc(text.slice(p));
   }
-  t.addEventListener("input", scan); scan();
+  let _tm;
+  t.addEventListener("input", () => { clearTimeout(_tm); _tm = setTimeout(scan, 250); }); scan();
 })();
 </script>
 </body>

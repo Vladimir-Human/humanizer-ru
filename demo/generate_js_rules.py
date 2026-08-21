@@ -47,10 +47,20 @@ def py_to_js(pattern):
     return source, flags
 
 
+def _validate_source(rule_id, source):
+    """В исходнике правила не должно быть сырых контрольных символов:
+    regex пишется экранированными последовательностями, а сырой перевод строки, нулевой байт в JS-литерале ломают и файл, и подсветку."""
+    for ch in source:
+        if ord(ch) < 0x20 and ch != "	":
+            raise ValueError("маркер %s: сырой контрольный символ U+%04X"
+                             % (rule_id, ord(ch)))
+
+
 def build_js(doc):
     rules = []
     for m in doc["markers"]:
         source, flags = py_to_js(m["pattern"])
+        _validate_source(m["id"], source)
         rules.append({
             "id": m["id"],
             "class": m["class"],

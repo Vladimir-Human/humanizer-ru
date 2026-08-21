@@ -39,7 +39,7 @@
     <label><input type="checkbox" id="onlyA"> только класс A</label>
     <label><input type="checkbox" id="showAll" checked> показывать полный текст с подсветкой</label>
     <button id="run">Проверить</button>
-    <span id="summary" class="note"></span>
+    <span id="summary" class="note" aria-live="polite"></span>
   </div>
   <div class="cols">
     <section>
@@ -160,7 +160,11 @@
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);
   runBtn.addEventListener("click", run);
-  textarea.addEventListener("input", run);
+  let _timer;
+  textarea.addEventListener("input", () => {
+    clearTimeout(_timer);
+    _timer = setTimeout(run, 250);
+  });
   run();
 })();
 </script>
