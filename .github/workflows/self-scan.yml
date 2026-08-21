@@ -5,7 +5,8 @@ name: Самопроверка скилла на собственные марк
 # обратных кавычек (документация выражений) пропускаются автоматически.
 # Добавлено в v2.8; кодировка исправлена в v3.3.5. Вендор-копия
 # eval/candidates/smixs_lint_pinned.py исключена по тому же принципу,
-# что scripts/check_markers.py и tests/fixtures: файл содержит свои
+# что scripts/check_markers.py, tests/fixtures и пакетная копия
+# src/humanizer_ru/check_markers.py: файл содержит свои
 # фикстуры и выражения с маркерами по построению.
 
 on:
@@ -56,6 +57,7 @@ jobs:
             ! -path './research/CONSILIUM-REPORT.md' \
             ! -path './tests/fixtures/*' \
             ! -path './tests/*' \
+            ! -path './src/humanizer_ru/check_markers.py'
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
             -exec python3 scripts/check_markers.py --scan {} +
