@@ -159,7 +159,7 @@ Which gate to choose:
 - `class-a` — the pipeline minimum: catches interface artifacts and service links (`ppl-ai-file-upload`, `[citation:3]`, invisible separators, etc.). A match is a reason to remove the marker or verify provenance.
 - `soft-threshold` — linguistic signalling: `--fail-at 3` fails the gate when a text has 3 or more soft signals. One or two are not enough: the script deliberately counts patterns conservatively and never issues an authorship verdict.
 
-Regex-layer demo: [demo/index.html](demo/index.html) — works offline, text never leaves the browser.
+Regex-layer demo: [online](https://vladimir-human.github.io/humanizer-ru/) or [demo/index.html](demo/index.html) offline - text never leaves the browser.
 
 ## What it does
 
