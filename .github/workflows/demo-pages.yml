@@ -1,0 +1,41 @@
+# Публикация браузерного демо на GitHub Pages.
+# Источник - каталог demo/, собранный артефактом без сборки: файлы
+# статические, текст пользователя не покидает браузер.
+name: Демо на GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - '.github/workflows/demo-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Публикация статического демо
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Настроить Pages
+        uses: actions/configure-pages@983d7746158d0b22f7e7892eb3c9a10067ecad01 # v5
+      - name: Собрать артефакт из demo/
+        uses: actions/upload-pages-artifact@56afc0097c07a3bbcb8d4dcdf6d4f14e26c1be43 # v3
+        with:
+          path: demo
+      - name: Опубликовать
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
