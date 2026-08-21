@@ -62,6 +62,7 @@ MOJIBAKE_TOKENS = ("РЎ", "Рџ", "СЂР")
 # всё, что лежит в корне репозитория, должно быть известно гейту.
 TOP_LEVEL_MANIFEST = frozenset((
  ".editorconfig", ".gitattributes", ".gitignore",
+ "pyproject.toml", "src",
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
  "docs", "dsh",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",

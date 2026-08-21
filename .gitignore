@@ -13,6 +13,9 @@ Thumbs.db
 
 # release archive build output
 dist/
+build/
+src/*.egg-info/
+venv/
 
 # Слепые пакеты и ключи парных прогонов (производные от eval/runs/<прогон>/).
 # Пакет пересобирается командой --make-packet, а ключ раскрывает соответствие
