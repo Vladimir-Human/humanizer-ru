@@ -36,7 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Сканировать SKILL.md и README.md на чёрный список калек
+      - name: Сканировать прозу поставки на чёрный список калек
         run: |
           set -euo pipefail
 
@@ -62,7 +62,7 @@ jobs:
           FAIL=0
           # Проверяем только описание скилла, не references (там примеры паттернов
           # буквально содержат кальки в качестве «было/стало»).
-          FILES=(SKILL.md README.md)
+          FILES=(SKILL.md README.md GOVERNANCE.md CONTRIBUTING.md)
 
           for phrase in "${BLACKLIST[@]}"; do
             for file in "${FILES[@]}"; do
@@ -105,4 +105,4 @@ jobs:
             exit 1
           fi
 
-          echo "Чёрный список пройден — англицизмов в SKILL.md и README.md нет."
+          echo "Чёрный список пройден — англицизмов в прозе поставки нет."
