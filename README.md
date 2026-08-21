@@ -177,6 +177,8 @@ humanizer-ru/
 │   ├── check_release.py          # Сборка и проверка релизного архива
 │   ├── check_bundle_sync.py      # Синхронность вендора бандла dsh/
 │   ├── check_pkg_sync.py         # Синхронность PyPI-пакета с корневыми скриптами
+│   ├── export_markers.py         # Генератор machine-readable реестра markers.v1.json
+│   ├── check_markers_export.py   # Гейт синхронности markers.v1.json
 │   ├── filemarks/                # Слой A/B и метаданные файлов (inspect/clean)
 │   ├── scan_soft_signals.py      # Счётчик мягких признаков
 │   ├── check_json_output.py     # UTF-8 машиночитаемого stdout
