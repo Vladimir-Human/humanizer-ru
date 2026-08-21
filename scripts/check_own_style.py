@@ -44,6 +44,7 @@ SCOPE = (
     "SECURITY.md",
     "SECURITY.en.md",
     "CODE_OF_CONDUCT.md",
+    "GOVERNANCE.md",
     ".github/pull_request_template.md",
 )
 

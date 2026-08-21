@@ -220,6 +220,7 @@ humanizer-ru/
 ├── CITATION.cff                # Карточка цитирования
 ├── LICENSE                     # MIT
 ├── dsh/                        # Бандл для DeepSeek Harness (вендор SKILL.md + references/)
+├── GOVERNANCE.md              # Роли, права выпуска, dormant-политика
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
 ├── docs/
 │   └── FRAMEWORK.md            # Публичная методология проверяемости
