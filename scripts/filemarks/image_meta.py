@@ -32,7 +32,7 @@ def detect_format(data):
         return "png"
     if data.startswith(JPEG_SOI):
         return "jpeg"
-    # RIFF-контейнер с типом WEBP (аудит 2026-08-25): файл начинается
+    # RIFF-контейнер с типом WEBP: файл начинается
     # «RIFF»+размер+«WEBP», чанки внутри — FourCC+размер+данные с выравниванием.
     if data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == WEBP_SIG:
         return "webp"
@@ -360,7 +360,7 @@ def strip_webp(data):
 def reencode_png(data):
     """Lossless-переупаковка PNG: IDAT-данные распаковываются и упаковываются
     заново (zlib, уровень 9) — байтовый хэш файла меняется, пиксели нет
-    (аудит 2026-08-25, режим --reencode, opt-in). Это ломает мягкую
+    (режим --reencode, opt-in). Это ломает мягкую
     привязку C2PA по хэшу контента, но НЕ гарантирует снятие знака."""
     if not data.startswith(PNG_SIG):
         raise ValueError("не PNG")

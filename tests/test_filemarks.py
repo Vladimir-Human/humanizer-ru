@@ -283,7 +283,7 @@ class TestFilemarksDOCXODT(unittest.TestCase):
 class TestTextLayerA(unittest.TestCase):
     def test_clean_text_layer_removes_zero_width_and_soft_hyphen(self):
         if not text_layer.DETECTOR_OK:
-            self.skipTest("check_markers не импортирован")
+            self.fail("check_markers не импортирован: слой A не проверяется")
         # Строку собираем через chr(), чтобы в исходнике теста не было
         # самих невидимых символов: тогда self-scan --scan честно его не
         # замечает. В памяти получаются настоящие U+200B и U+00AD.
@@ -301,7 +301,7 @@ class TestTextLayerPUA(unittest.TestCase):
 
     def test_long_pua_removed(self):
         if not text_layer.DETECTOR_OK:
-            self.skipTest("check_markers не импортирован")
+            self.fail("check_markers не импортирован: слой A не проверяется")
         text = "блок \ue200cite\ue202x\ue201 конец"
         cleaned, n = text_layer.clean_text_layer(text)
         self.assertEqual(n, 3)
@@ -310,7 +310,7 @@ class TestTextLayerPUA(unittest.TestCase):
 
     def test_short_pua_keeps_digit(self):
         if not text_layer.DETECTOR_OK:
-            self.skipTest("check_markers не импортирован")
+            self.fail("check_markers не импортирован: слой A не проверяется")
         text = "конец предложения.\uea012\uea02"
         cleaned, n = text_layer.clean_text_layer(text)
         self.assertEqual(n, 2)

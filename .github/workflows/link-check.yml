@@ -6,7 +6,9 @@ name: Линк-рот реестра доказательств
 # реальных HTTP-статусов вынесена в ежемесячный scheduled-прогон и ручной
 # запуск — по образцу published-джобы dsh-install.yml: сеть в обычных
 # прогонах не нужна, а реестр проверяется по расписанию без нагружения
-# внешних источников.
+# внешних источников. Кэш состояний переносится между прогонами артефактом:
+# базовый прогон только фиксирует состояния, следующий сравнивает с базой
+# и потому способен поймать рот.
 
 on:
   push:
@@ -26,6 +28,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: link-check-${{ github.ref }}
@@ -50,6 +53,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Подтянуть кэш состояний прошлого прогона
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: link-check-state
+          path: research/fixtures
+          run-id: latest
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Самопроверка переходов состояний
         run: python3 scripts/check_link_rot.py --selftest
       - name: Онлайн-прогон реестра с паузой 10 с

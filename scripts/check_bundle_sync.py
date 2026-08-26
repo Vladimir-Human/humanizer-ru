@@ -37,11 +37,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
 BUNDLE_ROOT = os.path.join("dsh", "skills", "humanizer-ru")
-VENDORED = [("SKILL.md", "SKILL.md"),
-            ("references", "references"),
-            ("knowledge", "knowledge")]
-
-
 def read(path):
     """Содержимое файла с нормализованными переносами строк.
 
@@ -71,9 +66,6 @@ def check(root):
     vendor = os.path.join(root, BUNDLE_ROOT)
     if not os.path.isdir(vendor):
         return ["нет каталога бандла %s" % BUNDLE_ROOT]
-    # 3. Каталог скилла обязан зваться humanizer-ru: косвенно, но явно.
-    if not os.path.isdir(os.path.join(root, "dsh", "skills", "humanizer-ru")):
-        errors.append("каталог скилла бандла обязан называться humanizer-ru")
     files = list_vendor_files(root)
     expected = ["SKILL.md"] + sorted(
         os.path.join("references", name)
@@ -81,7 +73,7 @@ def check(root):
         if name.endswith(".md"))
     # knowledge/ — опциональный слой пользовательских правил: если каталог
     # есть в корне, вендор обязан повторять его .md-файлы побайтово
-    # (smixs/ilyautov-механизм corrections, аудит 2026-08-25).
+    # (механизм corrections smixs/ilyautov).
     knowledge_dir = os.path.join(root, "knowledge")
     if os.path.isdir(knowledge_dir):
         expected += sorted(

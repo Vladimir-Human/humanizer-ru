@@ -53,7 +53,8 @@ guard (clean-human-text-guard, quotes-trap, audit-only), ловушки
 term-preserve), плотность фактов (fact-density), краткость
 (short-form-push, brevity) и функциональные элементы (functional-elements).
 Карта метрик — сами условия в `expectations`/`forbidden`, без новых фактов.
-Прогон через судью-LLM вне этого файла и пока не подключён.
+LLM-судейство подключено: прогон панели судей 2026-08-25 — в
+`scenarios/run-2026-08-25/` (REPORT.md).
 
 ## Детектор-харнес «до/после» (`detect_eval.py` + `detectors/`)
 

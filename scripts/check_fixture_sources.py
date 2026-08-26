@@ -91,7 +91,7 @@ IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/", "/releases/tag/",
                     "Special:Permalink", "Special:Diff", "youtube.com/watch",
                     "binance.com/en/square/post", "web.archive.org/web/")
 # Строго неизменяемые формы (permalink/снимок); youtube/binance — ЖИВЫЕ
-# страницы (аудит 2026-08-25): допущены как исключение со свежестью по
+# страницы: допущены как исключение со свежестью по
 # возрасту URL, но не равны permalink-формам и на статус «неизменяемого
 # первоисточника» в одиночку не претендуют.
 STRICT_IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/",

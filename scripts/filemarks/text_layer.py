@@ -18,8 +18,10 @@ try:
     # Выражения берутся из check_markers.py — единый источник правил
     # (scripts/check_markers.py, словарь CASES).
     from check_markers import CASES as _MARKER_CASES
-except Exception:
-    pass
+except Exception as _exc:  # слой A без детектора пуст — обязан шуметь
+    import sys as _sys
+    print("ВНИМАНИЕ: check_markers не импортирован, DETECTOR_OK=False: %s"
+          % _exc, file=_sys.stderr)
 
 DETECTOR_OK = _MARKER_CASES != {}
 
