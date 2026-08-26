@@ -21,7 +21,7 @@
 | WebP: EXIF/XMP-чанки (RIFF) | файлы | `filemarks --clean` (`strip_webp`: EXIF/XMP удаляются, ICCP сохраняется) | да, детерминированно | RIFF-чанки парсятся stdlib; ICCP без изменений (цветопередача) |
 | PPTX/XLSX: docProps/customXml и вложенные медиа (ppt/media, xl/media) | контейнеры | `filemarks --clean` (`_clean_ooxml`, тот же путь, что DOCX) | да | слой A применяется к телу (presentation.xml/workbook.xml), медиа чистятся рекурсивно |
 | Мягкая привязка C2PA (пере-прикрепление манифеста по хэшу контента) | файлы | `filemarks --clean --reencode` (PNG: lossless-переупаковка IDAT — байтовый хэш меняется, пиксели нет) | best-effort (opt-in) | деструктивно: отчёт «байты изменены»; НЕ гарантирует снятие знака; JPEG — только внешним инструментом |
-| Пиксельный SynthID в изображениях | вне скоупа | `scripts/filemarks/score_synthid.py` — только ОЦЕНКА внешним скорингом; вызов из `filemarks --inspect --upstream-dir` заполняет поле `synthid` | нет | сторонний ресерч-код, некоммерческая лицензия; не официальный детектор Google; без checkout — честное `synthid: {available: false}` |
+| Пиксельный SynthID в изображениях | вне скоупа | `scripts/filemarks/score_synthid.py` — только ОЦЕНКА внешним скорингом; вызов из `filemarks --inspect --upstream-dir` заполняет поле `synthid` | нет | сторонний исследовательский код, некоммерческая лицензия; не официальный детектор Google; без checkout — честное `synthid: {available: false}` |
 | Trigger-phrase/backdoor метки | вне скоупа | — | нет | задокументировано в llm-fingerprints.md |
 | Аудио/видео метки | вне скоупа | — | нет | — |
 
