@@ -1,7 +1,7 @@
 /* Автогенерация из markers.v1.json скриптом generate_js_rules.py. */
 const HUMANIZER_MARKERS = {
   "schema_version": "markers.v1",
-  "count": 39,
+  "count": 40,
   "rules": [
     {
       "id": "contentReference",
@@ -274,6 +274,13 @@ const HUMANIZER_MARKERS = {
       "class": "B",
       "description": "Публичный разбор классов меток watermarks-remover, 2026-08-13; классовое описание, атрибуция конкретных моделей не подтверждена",
       "source": "­|[  　]|(?<![🀀-🫿☀-➿🇦-🇿])[︀-️](?![🀀-🫿☀-➿🇦-🇿])",
+      "flags": "gu"
+    },
+    {
+      "id": "unicode_tags",
+      "class": "B",
+      "description": "Стеганографические инструменты (SteganoPrompt, arXiv:2605.16336, AIES 2026): нагрузка кодируется как `chr(0xE0000 + ord(c))` и вставляется в видимый текст; модель, получившая промпт дословно, переносит метку в ответ",
+      "source": "(?<![🏴🏳️󠀀-󠁿])[󠀀-󠁿]",
       "flags": "gu"
     }
   ]

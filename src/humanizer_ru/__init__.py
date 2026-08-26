@@ -6,4 +6,4 @@
 scripts/check_pkg_sync.py.
 """
 __all__ = ["__version__"]
-__version__ = "3.14.0"
+__version__ = "3.15.0"

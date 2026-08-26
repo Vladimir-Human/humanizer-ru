@@ -54,6 +54,7 @@ except Exception:  # noqa: BLE001 — fallback, если запуск из др�
 # добавления regex без evidence chain.
 REGISTERED_CASES = {
     "utm_copilot", "grok_referrer", "grok_render_json", "grok_card_tag",
+    "unicode_tags",
     "turn_other", "attached_web_bracket", "generated_ref_id",
     "placeholder_url", "placeholder_date", "deepseek_line_ref",
     "openai_pua_short", "ref_name_search", "gemini_span", "perplexity_s3",
@@ -89,6 +90,14 @@ REQUIRED_CONFIRMED = ["source_url", "accessed", "verbatim_sample", "evidence_cla
 IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/", "/releases/tag/",
                     "Special:Permalink", "Special:Diff", "youtube.com/watch",
                     "binance.com/en/square/post", "web.archive.org/web/")
+# Строго неизменяемые формы (permalink/снимок); youtube/binance — ЖИВЫЕ
+# страницы (аудит 2026-08-25): допущены как исключение со свежестью по
+# возрасту URL, но не равны permalink-формам и на статус «неизменяемого
+# первоисточника» в одиночку не претендуют.
+STRICT_IMMUTABLE_MARKERS = ("oldid=", "diff=", "/commit/", "/blob/",
+                            "/releases/tag/", "Special:Permalink",
+                            "Special:Diff", "web.archive.org/web/")
+LIVE_URL_EXCEPTIONS = ("youtube.com/watch", "binance.com/en/square/post")
 
 
 def _is_immutable(url: str) -> bool:
@@ -353,6 +362,9 @@ def selftest():
         # Форма из живого реестра: невидимая раскладка — мягкий перенос,
         # наборный пробел и вариационный селектор вне эмодзи (v3.11).
         "invisible_layout": "\u0442\u0435\u043a\u0441\u0442.\ufe0f \u043c\u044f\u0433\u043a\u0438\u0439\u00ad\u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0430\u2002\u0431",
+        # Форма из живого реестра: скрытая ASCII-нагрузка в блоке Tags
+        # (v3.15, I.28: SteganoPrompt, arXiv:2605.16336).
+        "unicode_tags": "метка \U000E0041\U000E0049 в тексте",
     }
     tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     tmp.write("известная по ролям.\uea012\uea02\n")

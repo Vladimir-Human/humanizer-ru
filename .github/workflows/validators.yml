@@ -12,6 +12,7 @@ on:
       - 'README.en.md'
       - 'CHANGELOG.md'
       - 'scripts/**'
+      - 'src/**'
       - 'references/**'
       - 'research/fixtures/**'
       - 'research/validation/**'
@@ -28,6 +29,7 @@ on:
       - 'README.en.md'
       - 'CHANGELOG.md'
       - 'scripts/**'
+      - 'src/**'
       - 'references/**'
       - 'research/fixtures/**'
       - 'research/validation/**'
@@ -184,6 +186,17 @@ jobs:
       - name: Прогон manifest.v1.json
         run: python3 eval/run_eval.py
 
+  triggers:
+    name: Граница активации скилла
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: run_triggers (scope-фразы описания целы, near-miss держится)
+        run: python3 eval/run_triggers.py
+      - name: run_triggers --selftest (умеет падать)
+        run: python3 eval/run_triggers.py --selftest
+
   blind-eval:
     name: Гарнесс слепой оценки
     runs-on: ubuntu-latest
@@ -203,6 +216,18 @@ jobs:
             exit 1
           fi
           echo "Контролируемый отказ без данных подтверждён"
+
+  detect-eval:
+    name: Детектор-харнес «до/после» (selftest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Только selftest: реальный прогон требует живого демона Ollama, которого
+      # в CI нет. Самопроверка проверяет детерминированную логику агрегации
+      # и формат FP-блока и умеет падать.
+      - name: detect_eval --selftest (детерминированная логика, без Ollama)
+        run: python3 eval/detect_eval.py --selftest
 
   release-preflight:
     name: Самопроверка сборки архива
@@ -237,11 +262,21 @@ jobs:
       - name: Ни одно выражение не дольше 0.5 с на 30 000 символов
         run: python3 scripts/check_perf.py
 
+  filemarks:
+    name: Самопроверка файлового слоя
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: filemarks --selftest (умеет падать)
+        run: python3 scripts/filemarks/filemarks.py --selftest
   unit-tests:
     name: Юнит-тесты (stdlib unittest)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Синхронность PyPI-пакета с scripts/
+        run: python3 scripts/check_pkg_sync.py
       - name: Все unit-тесты
         run: python3 -m unittest discover -s tests -v

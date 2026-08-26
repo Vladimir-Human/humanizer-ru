@@ -66,8 +66,12 @@ TOP_LEVEL_MANIFEST = frozenset((
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
  "GOVERNANCE.md", "docs", "dsh",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
- "SECURITY.en.md", "SECURITY.md", "SKILL.md",
+ "SECURITY.en.md", "SECURITY.md", "SKILL.md", "PRIVACY_POLICY.md", "AGENTS.md",
+ "knowledge",
+ "gemini-extension.json",
  ".github", "eval", "references", "research", "scripts", "tests",
+ # C10: плагин-манифесты, агентские декларации и слэш-команды.
+ ".claude-plugin", ".codex-plugin", ".cursor-plugin", "agents", "commands",
 ))
 
 def _tracked_top_levels(root):
@@ -372,6 +376,44 @@ def check_repo(root):
  # 16. Маркеры merge-конфликта не должны быть закоммичены
  #     (урок research/GAPS.md, найденный независимой ревизией).
  errors.extend(_conflict_marker_errors(root))
+
+ # 17. I.17: вычислимые витринные числа (паттерны и число гейтов)
+ #     сверяются с фактом — число гейтов пересчитывается из _gates().
+ #     Только для полного репо: в фикстурах со скиллом без scripts/
+ #     пересчёт невозможен, и это не дефект документации.
+ if os.path.isfile(os.path.join(root, "scripts", "check_all.py")):
+  try:
+   import tempfile as _tf17
+   import importlib.util as _ilu17
+   _spec = _ilu17.spec_from_file_location(
+       "_check_all_for_docs", os.path.join(root, "scripts", "check_all.py"))
+   _ca = _ilu17.module_from_spec(_spec)
+   sys.modules[_spec.name] = _ca
+   _spec.loader.exec_module(_ca)
+   with _tf17.TemporaryDirectory(prefix="docs-gates-") as _td:
+       _n_full = len(_ca._gates(False, _td))
+       _n_quick = len(_ca._gates(True, _td))
+  except Exception as _exc:  # noqa: BLE001 — импорт _gates не должен валить доки
+   _n_full = _n_quick = None
+   errors.append("I.17: не удалось пересчитать гейты check_all: %s" % _exc)
+  if _n_full is not None:
+   _expect = {
+    "README.md": ["56 паттернам машинного письма",
+                  "%d гейт полного" % _n_full,
+                  "(%d в --quick)" % _n_quick],
+    "README.en.md": ["56 patterns",
+                     "%d gates in the full" % _n_full,
+                     "(%d in --quick)" % _n_quick],
+    "CHANGELOG.md": ["%d гейт полного check_all, %d в --quick"
+                     % (_n_full, _n_quick)],
+    ".github/workflows/release-check.yml": ["%d гейт, включая" % _n_full],
+   }
+   for _rel, _subs in _expect.items():
+       _t = text(_rel)
+       for _sub in _subs:
+           if _sub not in _t:
+               errors.append("I.17: %s не содержит «%s» (факт: %d/%d гейтов)"
+                             % (_rel, _sub, _n_full, _n_quick))
 
  return errors
 

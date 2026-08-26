@@ -39,7 +39,7 @@ eval/runs/2026-07-26-baseline/
 {
   "run": "2026-07-26-baseline",
   "model": "укажите модель и версию",
-  "skill_version": "3.6.0",
+  "skill_version": "3.15.0",
   "prompt": "дословный промпт, одинаковый для обеих веток",
   "pairs": [
     {"id": "ai-01", "kind": "ai", "provenance": "captured-2026-07-25"},

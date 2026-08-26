@@ -5,7 +5,7 @@ name: 'humanizer-ru CI gate'
 description: |
   Прогоняет humanizer-ru по файлам репозитория: жёсткие regex-маркеры
   (check_markers.py --scan) либо мягкие признаки (scan_soft_signals.py
-  --fail-at 3). Ничего не публикует наружу; для работы достаточно
+  --fail-multicat 3). Ничего не публикует наружу; для работы достаточно
   permissions: contents: read.
 author: 'Vladimir-Human'
 
@@ -25,9 +25,9 @@ inputs:
     default: 'neutral'
   fail-on:
     description: >
-      Режим гейта: class-a — жёсткие regex-маркеры (check_markers.py --scan,
-      любой найденный маркер = exit 1); soft-threshold — счётчик мягких
-      признаков (scan_soft_signals.py --fail-at 3).
+      Режим гейта: class-a — жёсткие regex-маркеры (check_markers.py --scan --class a:
+      маркер класса A = exit 1, класс B — предупреждения); soft-threshold — счётчик мягких
+      признаков (scan_soft_signals.py --fail-multicat 3).
     required: false
     default: 'class-a'
   ref:
@@ -35,7 +35,7 @@ inputs:
       Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
       (для pull_request — merge-коммит действия checkout по умолчанию).
       Версия самого экшена закрепляется в строке uses:
-      Vladimir-Human/humanizer-ru/action@v3.13.0.
+      Vladimir-Human/humanizer-ru/action@v3.15.0.
     required: false
     default: ''
 
@@ -65,16 +65,20 @@ runs:
 
         case "${FAIL_ON}" in
           class-a)
-            echo "::group::humanizer-markers --scan"
-            python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan "${FILES[@]}"
+            echo "::group::humanizer-markers --scan --class a"
+            # Только маркеры класса A роняют гейт; класс B печатается
+            # предупреждением (контекстные индикаторы по политике проекта
+            # вердикта сами по себе не дают). Любой-marker режим доступен
+            # напрямую вызовом check_markers.py --scan.
+            python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan --class a "${FILES[@]}"
             echo "::endgroup::"
             ;;
           soft-threshold)
-            echo "::group::humanizer-scan --fail-at 3"
+            echo "::group::humanizer-scan --fail-multicat 3"
             python3 "${HUMANIZER_SCRIPTS}/scan_soft_signals.py" \
               "${FILES[@]}" \
               --genre "${GENRE_INPUT}" \
-              --fail-at 3
+              --fail-multicat 3
             echo "::endgroup::"
             ;;
           *)

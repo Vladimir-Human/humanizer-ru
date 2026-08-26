@@ -10,7 +10,7 @@
 
 An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
 
-It ships 38 patterns (25 base + 13 Russian-specific extensions) and 39 testable regex markers split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+It ships 56 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -36,48 +36,49 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 38 patterns, 39 regex markers with a 37/39 evidence registry, 43 CI gates, blind pairwise runs | We do not bypass detectors and do not tune text for them; the goal is natural text, not a green detector verdict |
-| [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool | — |
-| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill; its description openly claims to target what GPTZero, DivEye and RuBERT measure (perplexity and burstiness) | Detector bypass stated in its description |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 56 patterns, 40 regex markers, blind pairwise runs | Removes labels in text and files the user owns (invisible characters, statistical markers, C2PA/EXIF/XMP; non-deterministic techniques are best-effort, pixel-level SynthID is out of scope — see the removal matrix) and reduces statistical traces of machine generation in text the user owns; label removal is the product's value. Detector bypass is not claimed as a guarantee: only relative before/after detectability deltas with false-positive control are published. Do not harm live writing and do not add facts — inviolable principles. |
+| [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool; the leaderboard runs its deterministic linter | — |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill: its tagline claims tuning for GPTZero/DivEye/RuBERT metrics; its FAQ shows a bypass technique | The bypass technique is in their FAQ |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
 
-We are not affiliated with any of them. This project's declaration: "not a
-detector-bypass tool" — see the Security section.
+We are not affiliated with any of them. This project's declaration: "label
+removal is the product's value; detector bypass is not claimed as a
+guarantee" — see the Security section.
 
 ## Install in 30 seconds
-
-If you want a plain terminal command instead of an agent skill - install the package from PyPI:
-
-```sh
-pip install humanizer-ru
-```
 
 ```sh
 npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-ru
 ```
 
-The installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CLI, OpenCode, and other environments that support the Agent Skills format. The skill itself contains plain-text instructions and does not execute code during use. The `npx` command does run the third-party Skills CLI; if you prefer to inspect every file before installing, use the [manual method](#manual-install).
+If you want a plain terminal command instead of an agent skill — the package installs from PyPI:
+
+```sh
+pip install humanizer-ru
+```
+
+The `npx skills add` installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CLI, OpenCode, and other environments that support the Agent Skills format. The repository also ships plugin manifests (`.claude-plugin/` for the Claude marketplace, `.codex-plugin/`, `.cursor-plugin/`, `agents/openai.yaml`) and the `commands/` slash-commands — `/humanize` (rewrite) and `/audit` (check for AI traces without rewriting). The skill itself contains plain-text instructions and does not execute code during use. The `npx` command does run the third-party Skills CLI; if you prefer to inspect every file before installing, use the [manual method](#manual-install).
 
 ## Manual install
 
-1. Open the **Releases** page, pick the latest release, and download the attached `humanizer-ru.zip`. That is the built skill archive: `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `LICENSE`, `references/` and `scripts/`, nothing executable at install time. `Source code (zip)`, which GitHub attaches to every release, is the full repository tree including `.github/`, `research/` and `tests/` — take it only if you intend to run the validators. Review `SKILL.md` and `references/` before installing.
+1. Open the **Releases** page, pick the latest release, and download the attached `humanizer-ru.zip`. That is the built skill archive: `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `PRIVACY_POLICY.md`, `LICENSE`, `gemini-extension.json`, the `references/`, `scripts/` and `knowledge/` directories, the plugin manifests `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `agents/`, and the `commands/` slash-commands — nothing executable at install time. `Source code (zip)`, which GitHub attaches to every release, is the full repository tree including `.github/`, `research/` and `tests/` — take it only if you intend to run the validators. Review `SKILL.md` and `references/` before installing.
 2. **Claude.ai**: Settings → Skills → Upload skill. In `humanizer-ru.zip` `SKILL.md` already sits at the archive root, so no re-zipping is needed.
 3. **Claude Code (local)**:
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.14.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ### DeepSeek Harness (dsh)
 
-dsh looks for skills in its own directories. Verified with dsh 0.1.0-rc.6. This is a developer preview: breaking changes are promised, so check your own version's documentation.
+dsh looks for skills in its own directories. Verified with dsh 0.1.0-rc.6 and 0.1.0-rc.8 (CI pins rc.8). This is a developer preview: breaking changes are promised, so check your own version's documentation.
 
 Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.14.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -86,7 +87,7 @@ The second way is the bundle in the `dsh/` subdirectory, installed by the plugin
 dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"
 ```
 
-The bundle carries a copy of `SKILL.md` and `references/`; the `check_bundle_sync.py` gate keeps it equal to the source. To remove it: `dsh plugin --profile web remove humanizer-ru-dsh`.
+The bundle carries a copy of `SKILL.md`, `references/` and `knowledge/`; the `check_bundle_sync.py` gate keeps it equal to the source. To remove it: `dsh plugin --profile web remove humanizer-ru-dsh`.
 
 The command tracks the default branch. Pinning a tag and a subdirectory in one spec does not work, and it fails silently: `pnpm` drops the subdirectory, installs the whole repository as a plain dependency and exits 0, leaving the profile without the layer. Verified on dsh 0.1.0-rc.6.
 
@@ -95,7 +96,13 @@ dsh search precedence (nearest directory wins): `<project>/.dsh/skills`, `<proje
 ## Usage
 
 ```text
-/humanizer-ru [paste your text]
+/humanize [paste your text]
+```
+
+Check without editing:
+
+```text
+/audit [paste your text]
 ```
 
 Or directly:
@@ -129,16 +136,16 @@ permissions:
 
 jobs:
   humanizer:
-    name: Следы машинной генерации
+    name: Machine-generation traces
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.14.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.15.0
         with:
-          files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
-          genre: neutral                          # для режима soft-threshold
-          fail-on: class-a                        # или soft-threshold
-          ref: ''                                 # checkout вашего репозитория (пусто — HEAD)
+          files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
+          genre: neutral                          # used in soft-threshold mode
+          fail-on: class-a                        # or soft-threshold
+          ref: ''                                 # checkout of your repo (empty — HEAD)
 ```
 
 Action inputs:
@@ -147,11 +154,11 @@ Action inputs:
 |---|---|---|
 | `files` | `**/*.md` | Files to scan: one bash glob or several separated by spaces. The action enables `globstar` and `nullglob`, so `**/*.md` recurses into subdirectories. |
 | `genre` | `neutral` | Genre for soft signals: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Used only with `fail-on: soft-threshold`. |
-| `fail-on` | `class-a` | `class-a` — hard regex layer (`check_markers.py --scan`, any marker = exit code 1); `soft-threshold` — soft-signal counter (`scan_soft_signals.py --fail-at 3`). |
+| `fail-on` | `class-a` | `class-a` — hard regex layer (`check_markers.py --scan --class a`): only class A markers fail the gate; contextual class B markers (placeholder dates, `referrer=grok.com`, zero-width chars) are printed as warnings and do not fail the build; `soft-threshold` — soft-signal counter (`scan_soft_signals.py --fail-multicat 3`). |
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.14.0`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.15.0`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:
@@ -162,14 +169,14 @@ Limitations and security policy:
 
 Which gate to choose:
 
-- `class-a` — the pipeline minimum: catches interface artifacts and service links (`ppl-ai-file-upload`, `[citation:3]`, invisible separators, etc.). A match is a reason to remove the marker or verify provenance.
-- `soft-threshold` — linguistic signalling: `--fail-at 3` fails the gate when a text has 3 or more soft signals. One or two are not enough: the script deliberately counts patterns conservatively and never issues an authorship verdict.
+- `class-a` — the pipeline minimum: catches interface artifacts and service links (`ppl-ai-file-upload`, `[citation:3]`, etc.). Only class A markers fail the gate; class B markers (soft hyphen from typesetting, placeholder dates, `referrer=grok.com`) are printed as warnings — per the project policy they never yield a verdict on their own.
+- `soft-threshold` — linguistic signalling: `--fail-multicat 3` fails the gate when a text has 3 or more soft signals spanning 2 or more categories. One or two are not enough: the script deliberately counts patterns conservatively and never issues an authorship verdict. Thresholds hold until validation on a representative corpus; the threshold sweep lives in research/soft-threshold-sweep/.
 
 Regex-layer demo: [online](https://vladimir-human.github.io/humanizer-ru/) or [demo/index.html](demo/index.html) offline - text never leaves the browser.
 
 ## What it does
 
-Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Russian-specific extensions), grouped into four families:
+Detects and fixes 56 patterns of machine-generated Russian text (25 base + 31 Russian-specific extensions), grouped into four families:
 
 | Family | Examples |
 |---|---|
@@ -180,7 +187,7 @@ Detects and fixes 38 patterns of machine-generated Russian text (25 base + 13 Ru
 
 Based on [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) and its [Russian counterpart](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
-Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. On the human control corpus the regex layer finds no matches, and the few soft-signal candidates on classical prose (literary dashes, repetitions) stay neutral under the genre exceptions; on Russian model outputs it surfaces candidates where the regex layer stays silent. Only mechanical axes are published outward — marker removal, fact cleanliness, false edits (see [LEADERBOARD.md](LEADERBOARD.md)); readability is scored by an internal judge panel and stays an internal signal: the panel is single-family, and positional noise is documented in the runs.
+Since v3.8 the soft layer has become measurable. `scripts/scan_soft_signals.py` finds candidates across the four families above, counts each pattern once per text, and applies the decision-tree thresholds; genre exceptions follow `references/false-positives.md`. It prints quotes and a recommended scope of editing and never issues an authorship verdict — per the Main Rule, the final call stays with the agent. The behaviour on the human control corpus is verifiable: across the 26 human texts no file accumulates signals in 2+ categories (the `--max-cats 1` gate); the stray dashes and triples in the classics remain within a single category and do not fail the gate. On Russian model outputs it surfaces candidates where the regex layer stays silent. Only mechanical axes are published outward — marker removal, fact cleanliness, false edits (see [LEADERBOARD.md](LEADERBOARD.md)); readability is scored by an internal judge panel and stays an internal signal: the panel is single-family, and positional noise is documented in the runs.
 
 Shares of “0 of N” are published with a confidence interval: 0 false positives on 11 human texts is an observation of 0/11, not a proven zero — Wilson 95% CI [0%; 25.9%]. scripts/check_confidence.py recomputes and cross-checks the intervals.
 
@@ -197,9 +204,18 @@ humanizer-ru/
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
-├── dsh/                            # DeepSeek Harness bundle (vendored SKILL.md + references/)
-├── GOVERNANCE.md              # Роли, права выпуска, dormant-политика
+├── dsh/                            # DeepSeek Harness bundle (vendored SKILL.md + references/ + knowledge/)
+├── GOVERNANCE.md              # Release roles and rights, dormant policy
 ├── CODE_OF_CONDUCT.md / CONTRIBUTING.md
+├── PRIVACY_POLICY.md           # Short privacy policy (text-only skill)
+├── AGENTS.md                   # Repository map for editing agents
+├── gemini-extension.json       # Gemini CLI extension manifest
+├── .claude-plugin/             # Claude plugin + marketplace manifests
+├── .codex-plugin/              # Codex plugin manifest
+├── .cursor-plugin/             # Cursor plugin manifest
+├── agents/                     # Agent declaration (openai.yaml)
+├── commands/                   # Slash-commands /humanize and /audit
+├── knowledge/                  # Owner feedback log (corrections.md)
 ├── docs/
 │   └── FRAMEWORK.md            # Public verifiability methodology
 ├── scripts/
@@ -212,6 +228,7 @@ humanizer-ru/
 │   ├── check_budget.py           # Context budget vs the official spec
 │   ├── check_readme_parity.py    # RU/EN showcase parity and honesty
 │   ├── check_own_style.py        # Soft-signal threshold on own prose
+│   ├── check_self_prose.py      # Self-application: display prose below the soft-layer threshold
 │   ├── check_reference_maps.py   # Split-reference map integrity
 │   ├── check_corpus.py           # Validation corpus regression
 │   ├── check_adversarial.py      # Adversarial false-positive corpus gate
@@ -221,6 +238,7 @@ humanizer-ru/
 │   ├── check_pkg_sync.py         # PyPI package sync with the root scripts
 │   ├── export_markers.py         # markers.v1.json machine-readable registry generator
 │   ├── check_markers_export.py   # markers.v1.json regeneration sync gate
+│   ├── check_removal_parity.py   # removal↔detector parity gate
 │   ├── filemarks/                # Layer A/B and file metadata (inspect/clean)
 │   ├── count_style_markers.py    # Style marker counter for A/B runs
 │   ├── scan_soft_signals.py      # Measurable soft-signal scanner
@@ -231,17 +249,24 @@ humanizer-ru/
 ├── eval/
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
 │   ├── blind_eval.py             # Blind paired evaluation of the skill effect
+│   ├── detect_eval.py            # Detector harness: before/after detectability delta
+│   ├── detectors/                # Local detectors (0..1 contract, graceful)
+│   ├── run_triggers.py           # Skill activation boundary gate
+│   ├── scenarios/                # Skill-level scenario evals (12 cases)
+│   ├── ainl_calibration.py       # Soft-feature calibration on AINL-Eval
 │   ├── HOW-TO-RUN.md             # Evaluation protocol and metric boundaries
 │   ├── README.md                 # Eval map and metric glossary
 │   ├── manifest.v1.json          # Neutral corpus schema
-│   ├── runs/                     # Paired runs (10 records; see runs/README.md)
+│   ├── runs/                     # Paired runs (12 records; see runs/README.md)
 │   └── results/                  # Full run reports, including metrics that
 │                                 #   do not favour the skill
-├── references/                   # Full pattern descriptions, fixtures, model fingerprints
+├── references/                   # 12 reference files (two split into parts = 17 files)
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures
 └── .github/workflows/            # CI: self-scan, regex tests, style and docs checks
 ```
+
+The full checklist runs in one command: `python scripts/check_all.py` — 53 gates in the full checklist (49 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
@@ -254,10 +279,10 @@ The release policy separates a stable core (genre rules, false-positive boundari
 
 ## Regex markers: classes A and B
 
-39 regular expressions catch traces of machine generation. They fall into two classes:
+40 regular expressions catch traces of machine generation. They fall into two classes:
 
 - **Class A — hard copy-paste artifacts** that almost certainly mean AI: ChatGPT `:contentReference[oaicite:N]` and `utm_source=chatgpt.com`, Gemini `[cite: N]` and span markers, grounding redirect links, Grok citation cards, Copilot `[^N^]`, DeepSeek reasoning-tag leftovers, Perplexity `ppl-ai-file-upload` S3 links.
-- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), the short-footnote form (`U+EA01`/`U+EA02` around a digit), zero-width characters, and reference names containing internal-tool identifiers (`<ref name="0searchN">`). A B marker alone is never an authorship verdict.
+- **Class B — contextual indicators** that need human judgement: placeholder URLs and dates, `referrer=grok.com`, invisible private-use-area citation separators (`U+E200–E204`), the short-footnote form (`U+EA01`/`U+EA02` around a digit), zero-width characters, invisible layout marks (soft hyphen, exotic spaces, variation selectors outside emoji), hidden ASCII payloads in the Unicode Tags block (`U+E0000`–`U+E007F`; steganographic watermarks per arXiv:2605.16336 — emoji flags are excluded by a guard), and reference names containing internal-tool identifiers (`<ref name="0searchN">`). A B marker alone is never an authorship verdict.
 
 Run all markers against test fixtures:
 
@@ -283,9 +308,11 @@ and its Russian counterpart
 
 A full evidence record — an immutable source URL, the date it was accessed,
 a verbatim sample, an evidence class, and a fixture in
-`research/fixtures/marker-sources.json` — currently exists for 37 of 39
-fast-layer markers; the rest are covered by fixtures only. The validator
-prints this honest coverage rather than rounding it to a convenient number.
+`research/fixtures/marker-sources.json` — currently exists for 38 of 40
+markers; the rest are covered by fixtures only. Coverage is reported as-is.
+
+- [docs/FRAMEWORK.md](docs/FRAMEWORK.md) — the public verifiability methodology
+- `research/fixtures/marker-sources.json` — the evidence registry (38 of 40 markers with an immutable source link)
 
 Citation metadata for this repository lives in [CITATION.cff](CITATION.cff).
 

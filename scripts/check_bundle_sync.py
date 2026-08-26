@@ -38,7 +38,8 @@ ROOT = os.path.dirname(HERE)
 
 BUNDLE_ROOT = os.path.join("dsh", "skills", "humanizer-ru")
 VENDORED = [("SKILL.md", "SKILL.md"),
-            ("references", "references")]
+            ("references", "references"),
+            ("knowledge", "knowledge")]
 
 
 def read(path):
@@ -78,6 +79,15 @@ def check(root):
         os.path.join("references", name)
         for name in os.listdir(os.path.join(root, "references"))
         if name.endswith(".md"))
+    # knowledge/ — опциональный слой пользовательских правил: если каталог
+    # есть в корне, вендор обязан повторять его .md-файлы побайтово
+    # (smixs/ilyautov-механизм corrections, аудит 2026-08-25).
+    knowledge_dir = os.path.join(root, "knowledge")
+    if os.path.isdir(knowledge_dir):
+        expected += sorted(
+            os.path.join("knowledge", name)
+            for name in os.listdir(knowledge_dir)
+            if name.endswith(".md"))
     # 2. Лишние файлы.
     for rel in files:
         if rel not in expected:
@@ -117,6 +127,28 @@ def selftest():
                   "w", encoding="utf-8") as fh:
             fh.write("Справочник\n")
         cases.append(("синхронный вендор без ошибок", check(td) == []))
+
+        # knowledge/: опциональный каталог — синхронен или отсутствует.
+        os.makedirs(os.path.join(td, "knowledge"))
+        with open(os.path.join(td, "knowledge", "corrections.md"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("Журнал\n")
+        errs = check(td)
+        cases.append(("knowledge в корне без вендора виден",
+                      any("в вендоре нет файла" in e
+                          and "knowledge" in e for e in errs)))
+        os.makedirs(os.path.join(td, "dsh", "skills", "humanizer-ru",
+                                 "knowledge"))
+        with open(os.path.join(td, "dsh", "skills", "humanizer-ru",
+                               "knowledge", "corrections.md"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("Журнал\n")
+        cases.append(("knowledge синхронен", check(td) == []))
+        with open(os.path.join(td, "knowledge", "corrections.md"), "a",
+                  encoding="utf-8") as fh:
+            fh.write("запись\n")
+        cases.append(("дрейф knowledge виден",
+                      any("knowledge" in e for e in check(td))))
 
         with open(os.path.join(td, "SKILL.md"), "a", encoding="utf-8") as fh:
             fh.write("дрейф\n")

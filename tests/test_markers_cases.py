@@ -8,7 +8,7 @@
 CASES можно импортировать, добавив scripts/ в sys.path, без каких-либо
 побочных эффектов.
 
-Для каждого из 39 маркеров генерируются отдельные тестовые методы:
+Для каждого из 40 маркеров генерируются отдельные тестовые методы:
   test_positive_<имя>  — все позитивные образцы обязаны сработать;
   test_negative_<имя>  — ни один негативный образец не должен сработать;
   test_multiplicity_<имя> — если задан многократный образец, re.findall
@@ -41,8 +41,8 @@ class TestMarkerCases(unittest.TestCase):
         }
 
     def test_structure(self):
-        """Таблица содержит 39 кейсов ожидаемой формы."""
-        self.assertEqual(len(check_markers.CASES), 39)
+        """Таблица содержит 40 кейсов ожидаемой формы."""
+        self.assertEqual(len(check_markers.CASES), 40)
         for name, case in check_markers.CASES.items():
             with self.subTest(name=name):
                 self.assertIsInstance(case, tuple)

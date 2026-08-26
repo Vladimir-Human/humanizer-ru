@@ -1,0 +1,171 @@
+{
+  "run": "2026-08-25-axis-12",
+  "created": "2026-08-25",
+  "manifest": "eval/manifest.v1.json",
+  "detector": {
+    "name": "llm_rubric",
+    "model": "ZHIPU/GLM-5.3",
+    "version": "dashscope2 (облачные слепые вызовы), 2026-08-25",
+    "caveat": "Детектор — относительная метрика до/после, НЕ вердикт об авторстве. Дельта сравнима только в пределах одного детектора, модели и даты."
+  },
+  "pairs": [
+    {
+      "id": "ai-01",
+      "kind": "ai",
+      "before": 0.85,
+      "after": 0.55,
+      "delta": -0.3
+    },
+    {
+      "id": "ai-02",
+      "kind": "ai",
+      "before": 0.6,
+      "after": 0.4,
+      "delta": -0.2
+    },
+    {
+      "id": "ai-03",
+      "kind": "ai",
+      "before": 0.9,
+      "after": 0.3,
+      "delta": -0.6
+    },
+    {
+      "id": "ai-04",
+      "kind": "ai",
+      "before": 0.85,
+      "after": 0.25,
+      "delta": -0.6
+    },
+    {
+      "id": "ai-05",
+      "kind": "ai",
+      "before": 0.6,
+      "after": 0.4,
+      "delta": -0.2
+    },
+    {
+      "id": "ai-06",
+      "kind": "ai",
+      "before": 0.95,
+      "after": 0.6,
+      "delta": -0.35
+    },
+    {
+      "id": "ai-07",
+      "kind": "ai",
+      "before": 0.85,
+      "after": 0.4,
+      "delta": -0.45
+    },
+    {
+      "id": "ai-08",
+      "kind": "ai",
+      "before": 0.85,
+      "after": 0.9,
+      "delta": 0.05
+    },
+    {
+      "id": "ai-09",
+      "kind": "ai",
+      "before": 0.95,
+      "after": 0.1,
+      "delta": -0.85
+    },
+    {
+      "id": "ai-10",
+      "kind": "ai",
+      "before": 0.95,
+      "after": 0.2,
+      "delta": -0.75
+    },
+    {
+      "id": "ai-11",
+      "kind": "ai",
+      "before": 0.9,
+      "after": 0.3,
+      "delta": -0.6
+    },
+    {
+      "id": "ai-12",
+      "kind": "ai",
+      "before": 0.9,
+      "after": 0.85,
+      "delta": -0.05
+    }
+  ],
+  "aggregates": {
+    "mean_before": 0.8458,
+    "mean_after": 0.4375,
+    "mean_delta": -0.4083,
+    "frac_after_lower": 0.9167
+  },
+  "fp_audit": {
+    "n": 11,
+    "false_accusations": 0,
+    "false_rate": 0.0,
+    "threshold": 0.5,
+    "details": [
+      {
+        "file": "human 01",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "human 02",
+        "score": 0.02,
+        "false_accusation": false
+      },
+      {
+        "file": "human 03",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "human 04",
+        "score": 0.05,
+        "false_accusation": false
+      },
+      {
+        "file": "human 05",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "human 06",
+        "score": 0.05,
+        "false_accusation": false
+      },
+      {
+        "file": "human 07",
+        "score": 0.02,
+        "false_accusation": false
+      },
+      {
+        "file": "human 08",
+        "score": 0.1,
+        "false_accusation": false
+      },
+      {
+        "file": "human 09",
+        "score": 0.15,
+        "false_accusation": false
+      },
+      {
+        "file": "human 10",
+        "score": 0.3,
+        "false_accusation": false
+      },
+      {
+        "file": "human 11",
+        "score": 0.1,
+        "false_accusation": false
+      }
+    ]
+  },
+  "guards": {
+    "new_facts_check": "пары — из нейтрального корпуса (12 выводов); переписывание — скиллом по SKILL.md с запретом дописывать факты",
+    "single_proxy_note": "ось публикуется двумя строками: llm_rubric (этот отчёт) и ttr_lexdiv (stdlib)",
+    "repro": "повторный прогон — серия слепых вызовов ZHIPU/GLM-5.3 по той же рубрике (текст рубрики — eval/detectors/ollama_llm.py; облачный прогон, локальная модель не используется); JSON отчёта обязателен в eval/detect-results/"
+  }
+}

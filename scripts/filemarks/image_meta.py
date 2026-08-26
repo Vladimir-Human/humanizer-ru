@@ -16,6 +16,7 @@ from common_fm import preexec, safe_arg, safe_write_bytes, which
 
 PNG_SIG = b"\x89PNG\r\n\x1a\n"
 JPEG_SOI = b"\xff\xd8"
+WEBP_SIG = b"WEBP"
 
 C2PA_MARKERS = (b"c2pa", b"C2PA", b"jumb", b"JUMB", b"c2ma", b"contentcredentials",
                 b"contentauth", b"cai:", b"http://ns.adobe.com/xmp/InstanceID/")
@@ -31,6 +32,10 @@ def detect_format(data):
         return "png"
     if data.startswith(JPEG_SOI):
         return "jpeg"
+    # RIFF-контейнер с типом WEBP (аудит 2026-08-25): файл начинается
+    # «RIFF»+размер+«WEBP», чанки внутри — FourCC+размер+данные с выравниванием.
+    if data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == WEBP_SIG:
+        return "webp"
     return "unknown"
 
 
@@ -163,8 +168,10 @@ def inspect_image(path, synthid_dir=None):
         has_c2pa, has_ai, findings = inspect_png(data)
     elif fmt == "jpeg":
         has_c2pa, has_ai, findings = inspect_jpeg(data)
+    elif fmt == "webp":
+        has_c2pa, has_ai, findings = inspect_webp(data)
     else:
-        has_c2pa, has_ai, findings = False, False, ["неподдерживаемый формат (PNG/JPEG)"]
+        has_c2pa, has_ai, findings = False, False, ["неподдерживаемый формат (PNG/JPEG/WebP)"]
     tools = run_optional_tools(Path(path))
     ct = tools.get("c2patool") or {}
     if ct.get("has_manifest"):
@@ -257,6 +264,12 @@ def strip_jpeg(data, strip_all_app=True):
             if marker == 0xEB:
                 drop = True
                 actions.append("снят APP11 (C2PA/JUMBF)")
+            elif marker == 0xE2 and payload.startswith(b"ICC_PROFILE\x00") \
+                    and not _hits(payload, C2PA_MARKERS):
+                # APP2 с ICC-профилем (цветопередача). Снятие меняет цвет
+                # изображения — нарушение «не портить живое» . Здесь
+                # ICC обязателен, поэтому чанк сохраняется даже в strip_all.
+                keep = True
             elif strip_all_app and marker != 0xE0:
                 drop = True
                 actions.append("снят APP%d" % (marker - 0xE0))
@@ -279,15 +292,127 @@ def strip_jpeg(data, strip_all_app=True):
     return bytes(out), actions
 
 
-def clean_image(path, dest, strip_all_metadata=True):
+def inspect_webp(data):
+    """Осмотр WebP: чанки EXIF/XMP с AI-подсказками или C2PA-маркерами."""
+    findings, has_c2pa, has_ai = [], False, False
+    if not (data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == WEBP_SIG):
+        return False, False, ["не WebP"]
+    pos = 12
+    while pos + 8 <= len(data):
+        ctype = data[pos:pos + 4]
+        length = struct.unpack("<I", data[pos + 4:pos + 8])[0]
+        cs = pos + 8
+        ce = cs + length
+        if ce > len(data):
+            findings.append("обрезанный чанк %r" % ctype)
+            break
+        payload = data[cs:ce]
+        name = ctype.decode("latin-1", errors="replace")
+        if ctype in (b"EXIF", b"XMP ", b"XMP\x00"):
+            h = _hits(payload, AI_META_HINTS + C2PA_MARKERS)
+            if h:
+                has_ai = True
+                if any(x.lower() in ("c2pa", "contentcredentials", "jumb") for x in h):
+                    has_c2pa = True
+                findings.append("WebP %s: %s" % (name.strip() or "XMP", ", ".join(h[:8])))
+        pos = ce + (1 if length % 2 else 0)  # выравнивание RIFF до чётности
+    whole = _hits(data, C2PA_MARKERS)
+    if whole and not has_c2pa:
+        has_c2pa = True
+        findings.append("байт-скан C2PA: %s" % ", ".join(whole[:6]))
+    return has_c2pa, has_ai or has_c2pa, findings
+
+
+def strip_webp(data):
+    """Снятие метаданных WebP: чанки EXIF и XMP удаляются целиком; ICCP
+    сохраняется всегда (цветопередача, принцип «не портить живое»)."""
+    if not (data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == WEBP_SIG):
+        raise ValueError("не WebP")
+    actions = []
+    chunks, pos = [], 12
+    while pos + 8 <= len(data):
+        ctype = data[pos:pos + 4]
+        length = struct.unpack("<I", data[pos + 4:pos + 8])[0]
+        cs = pos + 8
+        ce = cs + length
+        if ce > len(data):
+            actions.append("обрезанный хвост сохранён")
+            chunks.append(data[pos:])
+            break
+        pad = b"\x00" if length % 2 else b""
+        block = data[pos:ce] + pad
+        if ctype in (b"EXIF", b"XMP ", b"XMP\x00"):
+            actions.append("снят чанк WebP %s" % ctype.rstrip(b"\x00 ").decode("latin-1", errors="replace")
+                           or "XMP")
+        elif ctype == b"ICCP":
+            chunks.append(block)  # цветопередача: всегда сохраняем
+        else:
+            chunks.append(block)
+        pos = ce + (1 if length % 2 else 0)
+    body = b"".join(chunks)
+    size = 4 + len(body)
+    out = b"RIFF" + struct.pack("<I", size) + WEBP_SIG + body
+    if not actions:
+        actions.append("метаданных не найдено")
+    return out, actions
+
+
+def reencode_png(data):
+    """Lossless-переупаковка PNG: IDAT-данные распаковываются и упаковываются
+    заново (zlib, уровень 9) — байтовый хэш файла меняется, пиксели нет
+    (аудит 2026-08-25, режим --reencode, opt-in). Это ломает мягкую
+    привязку C2PA по хэшу контента, но НЕ гарантирует снятие знака."""
+    if not data.startswith(PNG_SIG):
+        raise ValueError("не PNG")
+    chunks, raw, pos = [], bytearray(), 8
+    actions = []
+    while pos + 8 <= len(data):
+        length = struct.unpack(">I", data[pos:pos + 4])[0]
+        ctype = data[pos + 4:pos + 8]
+        cs, ce = pos + 8, pos + 8 + length
+        if ce + 4 > len(data):
+            break
+        payload, crc = data[cs:ce], data[ce:ce + 4]
+        if ctype == b"IDAT":
+            raw.extend(payload)
+        else:
+            chunks.append(struct.pack(">I", length) + ctype + payload + crc)
+        pos = ce + 4
+    if not raw:
+        return data, ["reencode: IDAT не найден — файл не изменён"]
+    try:
+        plain = zlib.decompress(bytes(raw))
+        comp = zlib.compress(plain, 9)
+    except zlib.error as exc:
+        return data, ["reencode: не удалось переупаковать IDAT: %s" % exc]
+    out = bytearray(PNG_SIG)
+    for c in chunks:
+        out.extend(c)
+    offset = 0
+    while offset < len(comp):
+        part = comp[offset:offset + 32768]
+        offset += len(part)
+        out.extend(_png_chunk(b"IDAT", part))
+    if not chunks or chunks[-1][4:8] != b"IEND":
+        out.extend(_png_chunk(b"IEND", b""))
+    actions.append("IDAT переупакован (lossless, байты изменились)")
+    return bytes(out), actions
+
+
+def clean_image(path, dest, strip_all_metadata=True, reencode=False):
     data = Path(path).read_bytes()
     fmt = detect_format(data)
     if fmt == "png":
         cleaned, actions = strip_png(data, strip_all_text=strip_all_metadata)
     elif fmt == "jpeg":
         cleaned, actions = strip_jpeg(data, strip_all_app=strip_all_metadata)
+    elif fmt == "webp":
+        cleaned, actions = strip_webp(data)
     else:
         raise ValueError("неподдерживаемый формат: %s" % fmt)
+    if reencode and fmt == "png":
+        cleaned, reencode_actions = reencode_png(cleaned)
+        actions.extend(reencode_actions)
     safe_write_bytes(dest, cleaned)
     exiftool = which("exiftool")
     if exiftool and strip_all_metadata:

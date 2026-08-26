@@ -46,12 +46,15 @@ references/false-positives.md: художественная проза — пр�
                    (#20) считаются признаком, а не оформлением
     --json         машиночитаемый отчёт вместо текстового
     --fail-at N    код возврата 1, если признаков не меньше N (для сценариев CI)
+    --fail-multicat N  код возврата 1, если признаков не меньше N И категорий
+                   не меньше 2 (условие дерева решений; в отличие от --fail-at,
+                   который меряет только число признаков, 0 — выключено)
     --max-cats N   код возврата 1, если находки легли в больше чем N категорий
                    (для корпусных гейтов: N=0 выключает порог)
 
 Коды возврата: 0 — прогон выполнен (наличие находок не ошибка), 1 — провал
-самопроверки, порога --fail-at или --max-cats, 2 — ошибка входа. Только
-стандартная библиотека.
+самопроверки, порога --fail-at, --fail-multicat или --max-cats, 2 — ошибка
+входа. Только стандартная библиотека.
 """
 import argparse
 import json
@@ -85,7 +88,7 @@ SUPPRESS = {
     "fiction": {"rule_of_three", "emdash_bold"},
     "legal": None,  # особый случай: мягкие признаки не считаются вовсе
     "academic": {"est_avoidance", "mitigation_cascade", "link_fillers",
-                 "neg_parallel"},
+                 "neg_parallel", "paragraph_openers"},
     "marketing": set(),
     "chat": {"quotes_style", "sentence_rhythm"},
 }
@@ -588,6 +591,28 @@ def _cutoff(text, lines):
     return []
 
 
+# Неодушевлённый субъект с глаголом намерения (#6b, аудит 2026-08-25).
+# Границы: «работа показывает / данные свидетельствуют / таблица содержит /
+# результаты демонстрируют / исследование направлено» — научная норма (§11):
+# там предмет ИЗЛАГАЕТ, а не намеревается. Маркер — глаголы намерения и
+# оценки (подчёркивает важность, отражает стремление, обеспечивает рост),
+# которых у предмета быть не может.
+_INANIMATE_INTENT_RX = re.compile(
+    r"(?:[Ии]сследование|[Пп]латформа|[Дд]оговор|[Зз]дание|[Гг]ород"
+    r"|[Пп]роект|[Кк]омпания|[Бб]ренд|[Мм]одель|[Тт]еория|[Аа]лгоритм"
+    r"|[Дд]окумент|[Пп]рограмма|[Ии]нициатива|[Сс]тратегия)"
+    r"\s+(?:подч[её]ркивает|отражает|демонстрирует|свидетельствует о"
+    r"|обеспечивает|стремится|призван[оа]?|подч[её]ркнуло|продвигает)")
+
+
+def _inanimate_intent(text, lines):
+    hits = []
+    for lineno, line in enumerate(lines, 1):
+        if _INANIMATE_INTENT_RX.search(_norm(line)):
+            hits.append((lineno, line.strip()[:90]))
+    return hits
+
+
 # --------------------------------------------------------------- реестр детекторов
 
 # Поля: id, категория, паттерн (ссылка на references/), критичность,
@@ -748,8 +773,9 @@ REGISTRY = [
          pos="# Главный\n\n### Сразу третий уровень\n",
          neg="# Главный\n\n## Второй уровень\n\n### Третий\n"),
     dict(id="title_case", cat=STRUCTURE, pat="#21a Каждое Слово С Прописной",
-         crit="высокая", min_hits=1, finder=_title_case,
-         pos="## Ранняя Жизнь и Образование\n",
+         crit="высокая", min_hits=2, finder=_title_case,
+         pos=("## Ранняя Жизнь и Образование\n"
+              "## Научные Работы и Публикации\n"),
          neg="## История МГУ имени Ломоносова\n"),
     dict(id="sentence_rhythm", cat=STRUCTURE, pat="ось 1: ровный ритм",
          crit="низкая", min_hits=1, finder=_sentence_rhythm,
@@ -806,6 +832,25 @@ REGISTRY = [
          crit="средняя", min_hits=1, finder=_cutoff,
          pos="Итоги квартала обнадёживают. Кроме того, компания планирует расширить",
          neg="Итоги квартала обнадёживают. Компания планирует расширение."),
+    # --- Новое по аудиту конкурентов 2026-08-25 (аудит 2026-08-25) ---
+    dict(id="inanimate_intent", cat=CONTENT, pat="#6b неодушевлённый субъект",
+         crit="средняя", min_hits=1, finder=_inanimate_intent,
+         pos="Исследование подчёркивает важность метода. Договор отражает стремление сторон к партнёрству.",
+         neg="Работа показывает рост точности. Данные свидетельствуют об улучшении."),
+    dict(id="empty_openers", cat=CONTENT, pat="#6c пустые открытия",
+         crit="средняя", min_hits=1,
+         finder=_make_phrase_finder([
+             "в современном мире", "на сегодняшний день",
+             "не секрет, что", "каждый знает, что", "все мы понимаем"]),
+         pos="В современном мире информационные технологии играют ключевую роль.",
+         neg="Информационные технологии изменили бухгалтерию за последние пять лет."),
+    dict(id="honesty_self_marking", cat=COMMUNICATION, pat="#24b самомаркировка честности",
+         crit="средняя", min_hits=2,
+         finder=_make_phrase_finder([
+             "без воды", "скажу без прикрас", "вот честный",
+             "это не очередной", "буду откровенен", "без маркетинга"]),
+         pos="Вот честный список без воды. Скажу без прикрас: это не очередной обзор.",
+         neg="Обзор построен на собственных замерах и таблице сравнения."),
 ]
 
 _IDS = [d["id"] for d in REGISTRY]
@@ -874,8 +919,9 @@ def _recommend(features, categories):
                     "особенность: можно предложить форматную правку этой "
                     "категории, авторство не определялось")
         return "признаков мало и все из одной категории; не править"
-    if features <= 2:
-        return "0-2 признака: текст вероятно человеческий, не править"
+    if features == 2:
+        return ("навигатор: два слабых сигнала из разных категорий - стоит "
+                "проверить вручную; авто-правка не применяется")
     if features <= 5:
         return ("3-5 признаков из двух и более категорий: выборочная правка "
                 "мест с высокой критичностью по rewrite-guide.md")
@@ -940,11 +986,21 @@ def selftest():
     # 4. Пороги дерева решений.
     case("одна категория, 3+ признака -> форматная правка без вердикта",
          "авторство не определялось" in _recommend(3, 1))
-    case("0-2 признака -> не править", "не править" in _recommend(2, 2))
+    case("ровно 2 из >=2 категорий -> навигатор",
+         "навигатор" in _recommend(2, 2))
+    case("0-1 признак -> не править", "не править" in _recommend(1, 1))
     case("3-5 из >=2 категорий -> выборочная правка",
          "выборочная" in _recommend(4, 2))
     case("6+ из >=2 категорий -> переписывание",
          "переписывание" in _recommend(7, 3))
+    # Негатор вердиктных формулировок: ни один вывод дерева не содержит
+    # слов об авторстве (урок CHANGELOG 3.11.1 — «вероятно человеческий»).
+    _banned = ("человеческ", "машинн", "написан ии", "авторство ии")
+    _all_recs = [_recommend(f, c)
+                 for f in range(0, 12) for c in range(1, 5)
+                 if not (c == 1 and f > 4)]
+    case("ни один вывод _recommend не содержит вердиктных слов",
+         all(b not in r.lower() for r in _all_recs for b in _banned))
     ai_like = ("Отличный вопрос! Безусловно, крайне важно раскрыть потенциал "
                "синергии. Более того, по сути это не просто инструмент, а "
                "новый подход. Он не только быстрый, но и удобный.\n\n"
@@ -979,6 +1035,20 @@ def selftest():
     case("юридический жанр: мягкие признаки не считаются",
          legal["features_total"] == 0 and "класс" not in legal["note"]
          and "check_markers" in legal["note"])
+
+    # 5b. Академический жанр гасит однотипные зачины абзацев :
+    # «Кроме того…/Более того…» — связки, норма научного регистра
+    # (false-positives §11), в нейтральном жанре — признак.
+    openers = ("Кроме того, метод устойчив к шуму.\n\n"
+               "Более того, он даёт сходимость за конечное число шагов.\n\n"
+               "Кроме того, вычислительная сложность остаётся линейной.\n\n"
+               "Таким образом, подход применим на практике.")
+    case("нейтральный жанр: однотипные зачины дают paragraph_openers",
+         any(d["id"] == "paragraph_openers"
+             for d in analyze(openers)["findings"]))
+    case("academic: однотипные зачины не дают paragraph_openers",
+         all(d["id"] != "paragraph_openers"
+             for d in analyze(openers, genre="academic")["findings"]))
 
     # 6. Следы Markdown считаются только с --plain-text.
     md = REGISTRY[[d["id"] for d in REGISTRY].index("markdown_traces")]["pos"]
@@ -1104,8 +1174,8 @@ def selftest():
          and all(d["id"] != "emdash_bold" for d in fic["findings"]))
 
     # 8. Порог --max-cats: гейт человеческого корпуса. Две категории —
-    # уже повод для вердикта по дереву решений, одна — стилистическая
-    # особенность; 0 отключает порог.
+    # режим навигатора или правки по дереву решений (вердикта об авторстве
+    # они не дают), одна — стилистическая особенность; 0 отключает порог.
     sig_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "содержательная")
     lex_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "языковая")
     chat_pos = next(d["pos"] for d in REGISTRY if d["cat"] == "коммуникативная")
@@ -1128,6 +1198,15 @@ def selftest():
         case("--max-cats 0: порог выключен",
              main([p_two, "--max-cats", "0"]) == 0)
 
+        # 8b. --fail-multicat: условие дерева решений (признаков >= N И категорий
+        # >= 2), в отличие от --fail-at, который меряет только число признаков.
+        case("--fail-multicat 1: две категории и 2 признака валят",
+             main([p_two, "--fail-multicat", "1"]) == 1)
+        case("--fail-multicat 3: 2 признака < 3 не валят",
+             main([p_two, "--fail-multicat", "3"]) == 0)
+        case("--fail-multicat 1: одна категория проходит",
+             main([p_one, "--fail-multicat", "1"]) == 0)
+
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 
@@ -1146,6 +1225,11 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", dest="as_json")
     ap.add_argument("--fail-at", type=int, default=0, metavar="N",
                     help="код 1, если признаков не меньше N (0 — выключено)")
+    ap.add_argument("--fail-multicat", type=int, default=0, metavar="N",
+                    help="код 1, если признаков не меньше N И категорий "
+                         "не меньше 2 (0 — выключено; условие дерева решений, "
+                         "в отличие от --fail-at, который меряет только число "
+                         "признаков)")
     ap.add_argument("--max-cats", type=int, default=0, metavar="N",
                     help="код 1, если категорий мягких признаков больше N "
                          "(0 — выключено; по дереву решений одна категория — "
@@ -1160,6 +1244,7 @@ def main(argv=None):
         return 2
     worst = 0
     worst_cats = 0
+    multi_hit = False
     payload = []
     for path in args.files:
         try:
@@ -1171,6 +1256,11 @@ def main(argv=None):
         report = analyze(text, genre=args.genre, plain_text=args.plain_text)
         worst = max(worst, report["features_total"])
         worst_cats = max(worst_cats, report["categories_total"])
+        # --fail-multicat: условие дерева решений — признаки из >=2 категорий.
+        if (args.fail_multicat
+                and report["features_total"] >= args.fail_multicat
+                and report["categories_total"] >= 2):
+            multi_hit = True
         if args.as_json:
             payload.append(dict(report, file=path))
         else:
@@ -1178,6 +1268,8 @@ def main(argv=None):
     if args.as_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     if args.fail_at and worst >= args.fail_at:
+        return 1
+    if multi_hit:
         return 1
     if args.max_cats and worst_cats > args.max_cats:
         return 1

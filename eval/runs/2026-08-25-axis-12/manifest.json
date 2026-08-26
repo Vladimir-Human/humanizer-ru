@@ -1,0 +1,69 @@
+{
+  "run": "2026-08-25-axis-12",
+  "model": "серия агент-вызовов перезаписи deepseek-v4-pro-0813 через dashscope2, 2026-08-25; температура среды по умолчанию",
+  "skill_version": "3.15.0 (SKILL.md + rewrite-guide.md)",
+  "prompt": "Перед тобой русскоязычный текст. Перепиши его так, чтобы он читался как написанный человеком для человека: убери шаблонные вводные обороты, слова-подушки, канцелярит и следы машинной генерации. Сохрани смысл и все факты исходника. Не добавляй фактов, которых в исходнике нет: ни чисел, ни дат, ни имён, ни названий. Если текст и так выглядит написанным человеком, верни его без изменений. В ответе выдай только итоговый текст.",
+  "note": "Расширение оси «дельта детектируемости» с 2 до 12 AI-пар: те же 12 выводов, что в нейтральном корпусе. Правка — скиллом по SKILL.md; детекторы: llm_rubric (слепые вызовы ZHIPU/GLM-5.3) и ttr_lexdiv (stdlib). judge-scores/: слепые скоры LLM-рубрики — s-ai-* = «до» (source), w-ai-* = «после» (with), h-* = FP-контроль на 11 human-текстах eval/manifest.v1.json.",
+  "pairs": [
+    {
+      "id": "ai-01",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/alisa/01-слепая-печать.txt"
+    },
+    {
+      "id": "ai-02",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/alisa/02-почему-небо-голубое.txt"
+    },
+    {
+      "id": "ai-03",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/alisa/03-столица-австралии.txt"
+    },
+    {
+      "id": "ai-04",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/gigachat/01-слепая-печать.txt"
+    },
+    {
+      "id": "ai-05",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/gigachat/02-почему-небо-голубое.txt"
+    },
+    {
+      "id": "ai-06",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/gigachat/03-столица-австралии.txt"
+    },
+    {
+      "id": "ai-07",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/gigachat/04-гречка.txt"
+    },
+    {
+      "id": "ai-08",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/gigachat/05-подарок-коллеге.txt"
+    },
+    {
+      "id": "ai-09",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/le-chat/01-fast-канберра.txt"
+    },
+    {
+      "id": "ai-10",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/le-chat/02-think-канберра.txt"
+    },
+    {
+      "id": "ai-11",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/le-chat/03-fast-небо-голубое.txt"
+    },
+    {
+      "id": "ai-12",
+      "kind": "ai",
+      "provenance": "Захвачен ранее (см. corpus manifest): research/raw/le-chat/04-deep-research-канберра.txt"
+    }
+  ]
+}

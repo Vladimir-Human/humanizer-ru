@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Порт из guillaumemeyer/watermarks-remover (MIT, Copyright (c) 2026 Guillaume Meyer),
 # коммит f10efaa7efc75591b4744cc1d885874a79f5f7ee. Адаптация: русский вывод, конвенции humanizer-ru, selftest.
-#!/usr/bin/env python3
 """filemarks.py — единый осмотр и снятие AI-меток поставщиков из файлов.
 
 Осмотр:  filemarks.py --inspect файл [--json]
@@ -15,11 +14,13 @@ PDF — best-effort: без exiftool снимается только XMP-пак�
 оценка, см. score_synthid.py). Только стандартная библиотека.
 """
 import argparse
+import json
 import os
+import subprocess
 import sys
 import tempfile
-import zlib
 import zipfile
+import zlib
 from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,16 +33,41 @@ from image_meta import clean_image, detect_format as detect_image, inspect_image
 
 TEXT_EXTS = {".txt", ".text", ".css", ".js", ".py", ".rs", ".go",
              ".json", ".yaml", ".yml", ".toml", ".csv"}
-IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
-CONTAINER_EXTS = {".svg", ".pdf", ".docx", ".odt", ".html", ".htm", ".md", ".markdown", ".mdx"}
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+CONTAINER_EXTS = {".svg", ".pdf", ".docx", ".pptx", ".xlsx", ".odt", ".html", ".htm", ".md", ".markdown", ".mdx"}
 
-from text_layer import DETECTOR_OK, clean_text_layer, layer_a_rx  # noqa: E402
+from text_layer import (DETECTOR_OK, clean_markup, clean_text_layer,  # noqa: E402
+                        clean_tag_strip, layer_a_rx)
 
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
+def _unsupported_binary(head):
+    """I.13: известные, но неподдерживаемые бинарные форматы по magic.
+
+    Возвращает имя формата или None. Это защита от ложно-чистого отчёта:
+    прежде такой файл молча относился к «text» и сканировался как мусор.
+    WebP поддерживается с ревизии I.27 и сюда не входит.
+    """
+    if head.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if head.startswith(b"II*\x00") or head.startswith(b"MM\x00*"):
+        return "tiff"
+    # JPEG XL: codestream начинается FF 0A, контейнер — сигнатурой «JXL ».
+    if head[:2] == b"\xff\x0a" or (len(head) >= 12 and head[:4] == b"JXL "):
+        return "jxl"
+    # ISO-BMFF (HEIC/AVIF): файл начинается с 4-байтового размера бокса, затем
+    # "ftyp", затем major brand (HEIC/AVIF/…) на байтах 8–12.
+    if head[4:8] == b"ftyp":
+        brand = head[8:12].lower()
+        if brand in (b"avif", b"avis", b"mif1", b"heic", b"heix", b"hevc",
+                     b"heif", b"miaf"):
+            return "heic/avif"
+    return None
 
 
 def classify(path):
@@ -57,7 +83,10 @@ def classify(path):
         size = fh.tell()
         fh.seek(max(0, size - 65536))
         tail = fh.read(65536)
-    if detect_image(head[:16] if len(head) >= 16 else head) in ("png", "jpeg"):
+    unsupported = _unsupported_binary(head)
+    if unsupported:
+        return "unsupported:" + unsupported
+    if detect_image(head[:16] if len(head) >= 16 else head) in ("png", "jpeg", "webp"):
         return "image"
     from container_meta import detect_container_format
     if detect_container_format(path, head + tail if size else b"") != "unknown":
@@ -72,6 +101,15 @@ def main():
     p.add_argument("--clean", action="store_true", dest="clean")
     p.add_argument("-o", "--out", type=Path, default=None, dest="out")
     p.add_argument("--json", action="store_true", dest="json_out")
+    p.add_argument("--upstream-dir", type=Path, default=None, dest="upstream_dir",
+                   help="С --inspect: внешний скоринг пиксельного SynthID "
+                        "(best-effort оценка, НЕ снятие; без каталога и "
+                        "зависимостей — честный блок synthid: unavailable)")
+    p.add_argument("--reencode", action="store_true", dest="reencode",
+                   help="С --clean для PNG: lossless-переупаковка IDAT — "
+                        "байтовый хэш меняется, пиксели нет (opt-in I.31; "
+                        "ломает мягкую привязку C2PA по хэшу, но НЕ гарантирует "
+                        "снятие знака, в отчёте «байты изменены»)")
     p.add_argument("--selftest", action="store_true", dest="selftest")
     args = p.parse_args()
 
@@ -82,6 +120,33 @@ def main():
     except (OSError, ValueError, zipfile.BadZipFile) as exc:
         print("ошибка обработки: %s" % exc, file=sys.stderr)
         return 2
+
+
+def _score_synthid(path, upstream_dir):
+    """Внешний скоринг пиксельного SynthID через score_synthid.py .
+
+    Только оценка (best-effort, НЕ снятие, НЕ официальный детектор Google).
+    Без --upstream-dir поле не вызывается; при недоступности checkout или
+    зависимостей возвращается честный блок {"available": False}, а не тишина.
+    """
+    if upstream_dir is None:
+        return {"available": False, "note": "скоринг не запрошен (нет --upstream-dir)"}
+    script = os.path.join(HERE, "score_synthid.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, script, str(path), "--upstream-dir",
+             str(upstream_dir), "--json"],
+            capture_output=True, text=True, encoding="utf-8",
+            errors="replace", timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"available": False, "note": "скоринг не отработал: %s" % exc}
+    if proc.returncode == 0:
+        try:
+            return json.loads(proc.stdout)
+        except ValueError:
+            return {"available": False, "note": "скоринг вернул не-JSON"}
+    return {"available": False, "note": proc.stderr.strip()[:200]
+            or "скоринг вернул код %d" % proc.returncode}
 
 
 def _run(args):
@@ -98,6 +163,11 @@ def _run(args):
         args.out = cleaned_path(args.path)
 
     kind = classify(args.path)
+    if kind.startswith("unsupported"):
+        fmt = kind.split(":", 1)[1] if ":" in kind else kind
+        print("неподдерживаемый бинарный формат (%s): %s" % (fmt, args.path),
+              file=sys.stderr)
+        return 2
     if kind == "text":
         text = args.path.read_text(encoding="utf-8", errors="surrogateescape")
         if not DETECTOR_OK:
@@ -106,17 +176,29 @@ def _run(args):
             return 2
         if args.inspect:
             cleaned, n = clean_text_layer(text)
-            rep = {"kind": "text", "path": str(args.path), "layer_a_hits": n}
+            _c, m = clean_markup(text)
+            rep = {"kind": "text", "path": str(args.path), "layer_a_hits": n,
+                   "class_a_markers": m}
         else:
+            # Слой A (невидимые + tag-символы) -> I.10 артефакты класса A.
             cleaned, n = clean_text_layer(text)
+            cleaned, m = clean_markup(cleaned)
+            # остатки после чистки: повторный прогон должен дать 0
+            _rem, rem_a = clean_markup(cleaned)
+            _rem2, rem_tag = clean_tag_strip(_rem)
             safe_write_text(args.out, cleaned)
             rep = {"kind": "text", "input": str(args.path), "output": str(args.out),
-                   "removed": n}
+                   "removed": n, "class_a_removed": m,
+                   "class_a_remaining": rem_a, "tag_remaining": rem_tag}
     elif kind == "image":
         if args.inspect:
             rep = {"kind": "image", **inspect_image(args.path)}
+            synthid = _score_synthid(args.path, args.upstream_dir)
+            if synthid is not None:
+                rep["synthid"] = synthid
         else:
-            rep = {"kind": "image", **clean_image(args.path, args.out)}
+            rep = {"kind": "image", **clean_image(args.path, args.out,
+                                                  reencode=args.reencode)}
     else:
         if args.inspect:
             rep = {"kind": "container", **inspect_container(args.path)}
@@ -140,22 +222,52 @@ def _run(args):
             print("Очистка: %s -> %s" % (rep.get("input"), rep.get("output")))
             if rep.get("kind") == "text":
                 print("Снято символов: %d" % rep.get("removed", 0))
+                print("Снято артефактов класса A: %d" % rep.get("class_a_removed", 0))
             for a in rep.get("actions", []):
                 print("  - %s" % a)
 
     dirty = False
     if args.inspect:
-        dirty = rep.get("layer_a_hits", 0) > 0 or rep.get("has_c2pa") or rep.get("has_ai_metadata")
+        dirty = (rep.get("layer_a_hits", 0) > 0 or rep.get("class_a_markers", 0) > 0
+                 or rep.get("has_c2pa") or rep.get("has_ai_metadata"))
     else:
         # clean: код 1, если после чистки метки остались (PDF без exiftool и т.п.)
-        dirty = bool(rep.get("still_has_c2pa") or rep.get("still_has_ai_metadata"))
+        #  недоступный детектор для контейнера уже породил ValueError -> код 2;
+        # остаточные видимые/невидимые приметы учитываются отдельным флагом.
+        dirty = bool(rep.get("still_has_c2pa") or rep.get("still_has_ai_metadata")
+                     or rep.get("class_a_remaining") or rep.get("tag_remaining"))
     return 1 if dirty else 0
 
 
 def _selftest():
     import struct
+    import image_meta as _im
     tmp = Path(tempfile.mkdtemp())
     checks = []
+
+    def _png_chunk(ctype, payload):
+        crc = zlib.crc32(ctype)
+        crc = zlib.crc32(payload, crc) & 0xFFFFFFFF
+        return struct.pack(">I", len(payload)) + ctype + payload + struct.pack(">I", crc)
+
+    def _mk_png_idat(plain):
+        ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)
+        return (b"\x89PNG\r\n\x1a\n" + _png_chunk(b"IHDR", ihdr)
+                + _png_chunk(b"IDAT", zlib.compress(plain))
+                + _png_chunk(b"IEND", b""))
+
+    def _png_idat_plain(data):
+        pos, raw = 8, bytearray()
+        while pos + 8 <= len(data):
+            length = struct.unpack(">I", data[pos:pos + 4])[0]
+            ctype = data[pos + 4:pos + 8]
+            cs, ce = pos + 8, pos + 8 + length
+            if ce + 4 > len(data):
+                break
+            if ctype == b"IDAT":
+                raw.extend(data[cs:ce])
+            pos = ce + 4
+        return zlib.decompress(bytes(raw))
 
     def case(name, cond, detail=""):
         checks.append((name, bool(cond), detail))
@@ -331,6 +443,155 @@ def _selftest():
              "n=%d" % n)
     else:
         case("TXT: слой A снят", False, "check_markers не импортирован")
+
+    # 7) I.8: PUA-разделители снимаются слоем A (и длинная, и короткая форма)
+    pua1 = "блок \ue200cite\ue202x\ue201 конец"
+    c1, n1 = clean_text_layer(pua1)
+    case("PUA: длинная форма снята слоем A", n1 == 3 and "\ue200" not in c1 and "\ue201" not in c1,
+         "n=%d" % n1)
+    pua2 = "конец предложения.\uea012\uea02"
+    c2, n2 = clean_text_layer(pua2)
+    case("PUA: короткая форма снимает обёртки, цифру сохраняет",
+         n2 == 2 and "2" in c2 and "\uea01" not in c2 and "\uea02" not in c2,
+         "n=%d res=%r" % (n2, c2))
+
+    # 8) I.10: MARKUP_CASES — видимые артефакты класса A
+    markup_in = "turn0search0 и :contentReference[oaicite:0]{index=0} и [cite: 8] и【1†source】."
+    m_clean, m_n = clean_markup(markup_in)
+    case("MARKUP: артефакты класса A сняты",
+         m_n >= 4 and "turn0search0" not in m_clean and "contentReference" not in m_clean,
+         "n=%d res=%r" % (m_n, m_clean))
+    # I.10-б: utm вырезается как параметр URL, ссылка сохраняется
+    utm_in = "см. https://example.com/?id=5&utm_source=chatgpt.com далее"
+    u_clean, u_n = clean_markup(utm_in)
+    case("MARKUP: utm режется как параметр, ссылка цела",
+         u_n == 1 and "https://example.com/?id=5" in u_clean and "utm_source" not in u_clean,
+         "n=%d res=%r" % (u_n, u_clean))
+    utm_neg, u_neg = clean_markup("utm_source=openai упомянут в статье о трекинге")
+    case("MARKUP: utm вне URL не трогается", u_neg == 0 and "utm_source" in utm_neg,
+         "n=%d" % u_neg)
+    # I.10-в: think-блок удаляется вместе с содержимым
+    think_in = "Начало. <thinking>Сначала разберусь.</thinking> Ответ: 42."
+    th_clean, th_n = clean_markup(think_in)
+    case("MARKUP: think-блок удалён с содержимым",
+         th_n == 1 and "thinking" not in th_clean and "разберусь" not in th_clean,
+         "n=%d res=%r" % (th_n, th_clean))
+
+    # 9) I.28: tag-символы снимаются, эмодзи-флаг сохраняется
+    flag = "\U0001F3F4\U000E0067\U000E0062\U000E0067\U000E007F"
+    solo = "x\U000E0020y\u206Az\u034Fw"
+    tag_clean, tag_n = clean_tag_strip(flag)
+    solo_clean, solo_n = clean_tag_strip(solo)
+    case("TAG: эмодзи-флаг не тронут", tag_n == 0 and tag_clean == flag, "n=%d" % tag_n)
+    case("TAG: одиночные tag/format-символы сняты",
+         solo_n == 3 and solo_clean == "xyzw", "n=%d res=%r" % (solo_n, solo_clean))
+
+    # 10) I.12: вложенный DOCX с меченым PNG — медиа очищается, текст сохраняется
+    png_media = mk_png([(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)),
+                        (b"caBX", b"c2pa manifest data"),
+                        (b"IDAT", zlib.compress(b"\x00"))])
+    docx_media = __import__("io").BytesIO()
+    with zipfile.ZipFile(docx_media, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("word/document.xml", "<w:document><w:p>текст\u200b</w:p></w:document>")
+        zf.writestr("word/media/image1.png", png_media)
+    dm = tmp / "media.docx"
+    dm.write_bytes(docx_media.getvalue())
+    repm = clean_container(dm, tmp / "media.cleaned.docx")
+    with zipfile.ZipFile(tmp / "media.cleaned.docx") as zf:
+        media_after = zf.read("word/media/image1.png")
+        doc_after = zf.read("word/document.xml").decode("utf-8")
+    case("DOCX: вложенный PNG с C2PA очищен, текст слоя A снят",
+         b"caBX" not in media_after and "\u200b" not in doc_after,
+         str(repm["actions"]))
+    # негатив: чистый вложенный PNG не меняет полезную нагрузку
+    clean_png = mk_png([(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)),
+                        (b"IDAT", zlib.compress(b"\x00"))])
+    # 11) I.12: data-URI в HTML перекодируется чисто
+    b64 = __import__("base64").b64encode(png_media).decode("ascii")
+    html_duri = '<html><body><img src="data:image/png;base64,%s"></body></html>' % b64
+    hd = tmp / "duri.html"
+    hd.write_text(html_duri, encoding="utf-8")
+    repd = clean_container(hd, tmp / "duri.cleaned.html")
+    out_html = (tmp / "duri.cleaned.html").read_text(encoding="utf-8")
+    case("HTML: data-URI PNG с C2PA перекодирован без маркера",
+         "c2pa" not in out_html and "data:image/png;base64," in out_html,
+         str(repd["actions"]))
+
+    # 12) I.14: JPEG APP2/ICC сохраняется при strip_all
+    def mk_jpeg_icc():
+        out = bytearray(b"\xff\xd8")
+
+        def seg(marker, payload):
+            out.extend(b"\xff" + bytes([marker]))
+            out.extend(struct.pack(">H", len(payload) + 2))
+            out.extend(payload)
+        seg(0xE0, b"JFIF\x00\x01\x02\x00\x00\x01\x00\x01\x00\x00")
+        seg(0xE2, b"ICC_PROFILE\x00\x01\x01" + b"\x00" * 64)  # APP2 ICC
+        seg(0xEB, b"jumbf c2pa")
+        out.extend(b"\xff\xda")
+        return bytes(out)
+    icc_jpg = tmp / "icc.jpg"
+    icc_jpg.write_bytes(mk_jpeg_icc())
+    icc_clean, _ = _im.strip_jpeg(icc_jpg.read_bytes())
+    case("JPEG: APP2/ICC сохранён при strip_all, APP11 снят",
+         b"ICC_PROFILE" in icc_clean and b"jumbf" not in icc_clean,
+         "len %d -> %d" % (len(icc_jpg.read_bytes()), len(icc_clean)))
+    # негатив: APP2 не-ICC снимается при strip_all
+    def mk_jpeg_mpf():
+        out = bytearray(b"\xff\xd8")
+
+        def seg(marker, payload):
+            out.extend(b"\xff" + bytes([marker]))
+            out.extend(struct.pack(">H", len(payload) + 2))
+            out.extend(payload)
+        seg(0xE0, b"JFIF\x00\x01\x02\x00\x00\x01\x00\x01\x00\x00")
+        seg(0xE2, b"MPF\x00" + b"\x00" * 16)
+        out.extend(b"\xff\xda")
+        return bytes(out)
+    mpf_clean, _ = _im.strip_jpeg(mk_jpeg_mpf())
+    case("JPEG: APP2 не-ICC снимается при strip_all", b"MPF" not in mpf_clean,
+         "len %d" % len(mpf_clean))
+
+    # 13) I.13/I.27: WebP теперь ПОДДЕРЖИВАЕТСЯ (детект и снятие EXIF/XMP),
+    # остальные бинарные форматы отклоняются как раньше.
+    webp = tmp / "x.webp"
+    webp.write_bytes(b"RIFF\x10\x00\x00\x00WEBPVP8 " + b"\x00" * 32)
+    case("BIN: WebP теперь поддерживается (image)", classify(webp) == "image",
+         classify(webp))
+    webp_exif = (b"RIFF" + struct.pack("<I", 4 + (8 + 8 + 8 + 8))
+                 + b"WEBP" + b"VP8X\x0a\x00\x00\x00" + b"\x00" * 10
+                 + b"EXIF" + struct.pack("<I", 4) + b"AIGC"
+                 + b"XMP " + struct.pack("<I", 4) + b"c2pa")
+    wc, wacts = _im.strip_webp(webp_exif)
+    case("WebP: EXIF/XMP сняты",
+         b"AIGC" not in wc and b"c2pa" not in wc
+         and any("EXIF" in a or "XMP" in a for a in wacts), str(wacts))
+    # 13б) I.31: --reencode — lossless-переупаковка IDAT.
+    png_re = _mk_png_idat(b"rawrow1")
+    re_out, reacts = _im.reencode_png(png_re)
+    re_plain = _png_idat_plain(re_out)
+    case("reencode: байты изменились, IDAT-поток тот же",
+         re_out != png_re and re_plain == b"rawrow1"
+         and "байты изменились" in reacts[-1], str(reacts))
+    gif = tmp / "x.gif"
+    gif.write_bytes(b"GIF89a" + b"\x00" * 16)
+    case("BIN: GIF распознан как unsupported", classify(gif).startswith("unsupported"),
+         classify(gif))
+    tiff = tmp / "x.tiff"
+    tiff.write_bytes(b"II*\x00" + b"\x00" * 16)
+    case("BIN: TIFF распознан как unsupported", classify(tiff).startswith("unsupported"),
+         classify(tiff))
+    heic = tmp / "x.heic"
+    heic.write_bytes(b"\x00\x00\x00\x18ftypheic" + b"\x00" * 16)
+    case("BIN: HEIC распознан как unsupported", classify(heic).startswith("unsupported"),
+         classify(heic))
+    jxl = tmp / "x.jxl"
+    jxl.write_bytes(b"\xff\x0a" + b"\x00" * 16)
+    case("BIN: JXL распознан как unsupported", classify(jxl).startswith("unsupported"),
+         classify(jxl))
+    txt_ok = tmp / "ok.txt"
+    txt_ok.write_text("обычный текст\n", encoding="utf-8")
+    case("BIN: обычный текст не unsupported", classify(txt_ok) == "text", classify(txt_ok))
 
     import shutil
     shutil.rmtree(tmp, ignore_errors=True)

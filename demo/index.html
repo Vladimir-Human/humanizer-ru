@@ -33,7 +33,7 @@
 <body>
 <header>
   <h1>humanizer-ru · regex-слой без сервера</h1>
-  <p class="note">39 выражений загружаются из статического <code>markers.js</code> (генератор — <code>generate_js_rules.py</code> из <code>markers.v1.json</code>). Текст анализируется только в браузере и никуда не отправляется.</p>
+  <p class="note">40 выражений загружаются из статического <code>markers.js</code> (генератор — <code>generate_js_rules.py</code> из <code>markers.v1.json</code>). Текст анализируется только в браузере и никуда не отправляется.</p>
 </header>
 <main>
   <div class="controls">
@@ -45,7 +45,7 @@
   <div class="cols">
     <section>
       <h2>Текст</h2>
-      <textarea id="text" placeholder="Вставьте русский текст для проверки…">Вставьте сюда русский текст: страница проверит его по 39 правилам и подсветит служебные следы чат-ботов.</textarea>
+      <textarea id="text" placeholder="Вставьте русский текст для проверки…">Вставьте сюда русский текст: страница проверит его по 40 правилам и подсветит служебные следы чат-ботов.</textarea>
     </section>
     <section>
       <h2>Совпадения</h2>
@@ -130,7 +130,7 @@
   function renderList(matches) {
     if (!matches.length) {
       matchesBox.innerHTML = '<p class="note">Совпадений не найдено.</p>';
-      if (!rules.length) { summary.textContent = "Правила не загрузились - проверьте markers.js"; return; } summary.textContent = "Совпадений: 0";
+      if (!rules.length) { summary.textContent = "Правила не загрузились — проверьте markers.js"; return; } summary.textContent = "Совпадений: 0";
       return;
     }
     const byId = {};
@@ -154,10 +154,8 @@
     const text = textarea.value;
     const matches = findMatches(text);
     renderList(matches);
-    renderPreview(text, matchedTexts(matches));
+    renderPreview(text, matches);
   }
-
-  function matchedTexts(matches) { return matches; }
 
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);

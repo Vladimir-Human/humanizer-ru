@@ -1,9 +1,9 @@
 {
   "schema_version": "markers.v1",
   "id": "humanizer-ru-markers",
-  "count": 39,
+  "count": 40,
   "class_a_count": 31,
-  "class_b_count": 8,
+  "class_b_count": 9,
   "markers": [
     {
       "id": "contentReference",
@@ -1013,6 +1013,34 @@
         "multi": {
           "text": "а­б и в г и д️е",
           "expected": 3
+        }
+      },
+      "evidence_status": "confirmed",
+      "evidence_class": "primary"
+    },
+    {
+      "id": "unicode_tags",
+      "class": "B",
+      "pattern": "(?<![🏴🏳️󠀀-󠁿])[󠀀-󠁿]",
+      "description": "Стеганографические инструменты (SteganoPrompt, arXiv:2605.16336, AIES 2026): нагрузка кодируется как `chr(0xE0000 + ord(c))` и вставляется в видимый текст; модель, получившая промпт дословно, переносит метку в ответ",
+      "source": {
+        "url": "https://arxiv.org/abs/2605.16336v2",
+        "accessed": "2026-08-25",
+        "platform": "стеганографический ввод (SteganoPrompt, MIT) — метку переносит модель-пересказчик"
+      },
+      "fixtures": {
+        "positive": [
+          "скрытая метка в ответе: 󠁁󠁉 и продолжение текста",
+          "конец предложения.󠁴󠁥󠁳󠁴 следующая строка"
+        ],
+        "negative": [
+          "флаг Англии 🏴󠁧󠁢󠁥󠁮󠁧󠁿 в тексте",
+          "радужный флаг 🏳️󠁧󠁢󠁥󠁮󠁧󠁿 рядом",
+          "обычный текст без невидимых символов"
+        ],
+        "multi": {
+          "text": "метка одна 󠁁󠁂 и метка две 󠁃󠁄",
+          "expected": 2
         }
       },
       "evidence_status": "confirmed",

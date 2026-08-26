@@ -18,11 +18,13 @@ research/fixtures/marker-sources.json.
     python3 scripts/check_markers_export.py            # проверка
     python3 scripts/check_markers_export.py --selftest # самопроверка
 
-Коды: 0 — реестр синхронен; 1 — расхождение; 2 — ошибка запуска/импорта.
+Коды: 0 — реестр синхронен; 1 — расхождение или ошибка запуска/импорта.
 Только стандартная библиотека.
 """
 import importlib.util
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -34,6 +36,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
 EXPORT_MODULE = "scripts/export_markers.py"
+
+# I.22: демо-слой (demo/markers.js) обязан соответствовать регенерации из
+# demo/markers.v1.json (которая обязана быть равна корневому markers.v1.json).
+# Генератор demo/generate_js_rules.py пишет в фиксированные пути своей папки,
+# поэтому он гоняется подпроцессом во временном каталоге, а результат
+# сравнивается с закоммиченным demo/markers.js побайтово (CRLF/LF терпимо).
+DEMO_DIR = "demo"
+DEMO_IN = "markers.v1.json"
+DEMO_OUT = "markers.js"
+DEMO_GENERATOR = "generate_js_rules.py"
+DEMO_TIMEOUT_S = 60
 
 
 def _load_export_module(root):
@@ -63,6 +76,64 @@ def _file_matches(path, expected_norm_bytes):
     return ""
 
 
+def _check_demo(root, registry_filename):
+    """Синхронность demo/markers.js и demo/markers.v1.json (аудит 2026-08-25).
+
+    demo/markers.v1.json обязана побайтово равняться корневому
+    markers.v1.json; demo/markers.js обязан равняться регенерации
+    generate_js_rules.py из этой копии (прогон во временном каталоге).
+    """
+    errors = []
+    demo = os.path.join(root, DEMO_DIR)
+    gen = os.path.join(demo, DEMO_GENERATOR)
+    inp = os.path.join(demo, DEMO_IN)
+    out = os.path.join(demo, DEMO_OUT)
+    for path, label in ((inp, "demo/markers.v1.json"),
+                        (out, "demo/markers.js"),
+                        (gen, "demo/generate_js_rules.py")):
+        if not os.path.isfile(path):
+            errors.append("нет %s" % label)
+    if errors:
+        return errors
+    root_registry = os.path.join(root, registry_filename)
+    if not os.path.isfile(root_registry):
+        errors.append("нет %s" % registry_filename)
+        return errors
+    err = _file_matches(inp, _norm_bytes(
+        open(root_registry, "rb").read()))
+    if err:
+        errors.append(err)
+    with tempfile.TemporaryDirectory(prefix="demo-sync-") as td:
+        # Генератор вычисляет пути от МЕСТА СВОЕГО ФАЙЛА (HERE = свой
+        # каталог), поэтому в tempdir копируются и генератор, и входной
+        # реестр в ./demo/ — иначе он читал/писал бы реальные пути репозитория.
+        td_demo = os.path.join(td, DEMO_DIR)
+        os.makedirs(td_demo)
+        shutil.copy(inp, os.path.join(td_demo, DEMO_IN))
+        shutil.copy(gen, os.path.join(td_demo, DEMO_GENERATOR))
+        try:
+            proc = subprocess.run(
+                [sys.executable, os.path.join(td_demo, DEMO_GENERATOR)],
+                cwd=td,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                timeout=DEMO_TIMEOUT_S, encoding="utf-8", errors="replace")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            errors.append("генератор демо не отработал: %s" % exc)
+            return errors
+        if proc.returncode != 0:
+            errors.append("генератор демо вернул код %d: %s"
+                          % (proc.returncode, proc.stderr.strip()[:200]))
+            return errors
+        gen_path = os.path.join(td_demo, DEMO_OUT)
+        if not os.path.isfile(gen_path):
+            errors.append("генератор демо не создал markers.js")
+            return errors
+        err = _file_matches(out, _norm_bytes(open(gen_path, "rb").read()))
+        if err:
+            errors.append(err)
+    return errors
+
+
 def check(root):
     errors = []
     try:
@@ -84,6 +155,8 @@ def check(root):
             err = _file_matches(out_path, expected_norm)
             if err:
                 errors.append(err)
+    if not errors:
+        errors.extend(_check_demo(root, em.OUT_FILENAME))
     return errors
 
 
@@ -127,7 +200,10 @@ def serialize_document(doc):
 """)
         with open(f, "w", encoding="utf-8", newline="") as fh:
             fh.write("OK")
-        cases = [("синхронный реестр проходит", check(td) == [])]
+        cases = [("синхронный реестр проходит",
+              not any("не соответствует" in e
+                      or "нет файла markers.v1.json" in e
+                      for e in check(td)))]
         with open(f, "w", encoding="utf-8") as fh:
             fh.write("BAD")
         cases.append(("дрейф файла виден", any("не соответствует" in e for e in check(td))))
@@ -135,6 +211,49 @@ def serialize_document(doc):
         cases.append(("отсутствующий файл виден", any("нет файла" in e for e in check(td))))
         for name, ok in cases:
             case(name, ok)
+
+    # I.22: демо-синхронность (только после регистра: дерево в td уже
+    # разрушено выше, поэтому собираем отдельный tempdir).
+    with tempfile.TemporaryDirectory(prefix="demo-sync-selftest-") as td:
+        os.makedirs(os.path.join(td, "demo"))
+        os.makedirs(os.path.join(td, "scripts"))
+        fake = os.path.join(td, "scripts", "export_markers.py")
+        with open(fake, "w", encoding="utf-8") as fh:
+            fh.write("""
+SCHEMA_VERSION = "markers.v1"
+OUT_FILENAME = "markers.v1.json"
+
+def build_document(root=None):
+    return {}
+
+def validate_document(doc):
+    return []
+
+def serialize_document(doc):
+    return "OKV1"
+""")
+        with open(os.path.join(td, "markers.v1.json"), "w", encoding="utf-8") as fh:
+            fh.write("OKV1")
+        with open(os.path.join(td, "demo", "markers.v1.json"), "w", encoding="utf-8") as fh:
+            fh.write("OKV1")
+        with open(os.path.join(td, "demo", "generate_js_rules.py"), "w", encoding="utf-8") as fh:
+            fh.write('import os\n'
+                     'HERE = os.path.dirname(os.path.abspath(__file__))\n'
+                     'open(os.path.join(HERE, "markers.js"), "w",'
+                     ' encoding="utf-8").write("GENJS")\n')
+        with open(os.path.join(td, "demo", "markers.js"), "w", encoding="utf-8") as fh:
+            fh.write("GENJS")
+        case("демо синхронно с генерацией", check(td) == [])
+        with open(os.path.join(td, "demo", "markers.js"), "w", encoding="utf-8") as fh:
+            fh.write("STALE")
+        case("дрейф demo/markers.js виден",
+             any("demo" in e for e in check(td)))
+        with open(os.path.join(td, "demo", "markers.js"), "w", encoding="utf-8") as fh:
+            fh.write("GENJS")
+        with open(os.path.join(td, "demo", "markers.v1.json"), "w", encoding="utf-8") as fh:
+            fh.write("DRIFTED")
+        case("дрейф demo/markers.v1.json против корня виден",
+             any("demo" in e for e in check(td)))
 
     print("Самопроверка: %d/%d" % (passed, passed + failed))
     return 0 if failed == 0 else 1

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -25,9 +26,25 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT_FILES = {
     "SKILL.md", "README.md", "README.en.md", "CHANGELOG.md", "PERSONA.md",
     "SECURITY.md", "SECURITY.en.md", "LICENSE",
+    # C10: плагин-манифесты и политика конфиденциальности в корне архива.
+    "PRIVACY_POLICY.md", "gemini-extension.json",
 }
-ROOT_DIRS = {"references", "scripts"}
-TEXT_SUFFIXES = {".md", ".py", ".yml", ".yaml", ".json", ".txt"}
+# C10: каталоги плагин-манифестов, агентских деклараций и слэш-команд
+# попадают в релизный архив вместе со скиллом.
+ROOT_DIRS = {
+    "references", "scripts", "knowledge",
+    ".claude-plugin", ".codex-plugin", ".cursor-plugin", "agents", "commands",
+}
+# Манифесты, чья version обязана совпадать с version из metadata SKILL.md (C10).
+MANIFEST_JSON = [
+    ".claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    "gemini-extension.json",
+]
+MANIFEST_YAML = ["agents/openai.yaml"]
+TEXT_SUFFIXES = {".md", ".py", ".yml", ".yaml", ".json", ".txt", ".sh"}
 FORBIDDEN_PARTS = {
     ".git", ".github", ".venv", "venv", "node_modules", "__pycache__",
     ".pytest_cache", ".mypy_cache", "dist", "build", ".idea", ".vscode",
@@ -84,6 +101,13 @@ def _validate_text(name: str, data: bytes) -> None:
         data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ReleaseError(f"текстовый файл не в UTF-8: {name}: {exc}") from exc
+    # I.21: чистота переносов — единый LF в отслеживаемых текстовых файлах.
+    # CRLF-дрейф у Windows-клонов делал грязным дерево замороженных JSON
+    # лидерборда; архив обязан нести канонические переводы.
+    if b"\r" in data and name.endswith((".md", ".py", ".yml", ".yaml",
+                                        ".json", ".txt", ".sh", ".cff")):
+        raise ReleaseError(f"CRLF/CR в текстовом файле архива: {name} "
+                           "(переносы должны быть LF)")
 
 def _validate_ascii_urls(name: str, data: bytes) -> None:
     for match in URL_RE.finditer(data):
@@ -92,6 +116,42 @@ def _validate_ascii_urls(name: str, data: bytes) -> None:
             shown = url.decode("utf-8", "replace")
             raise ReleaseError(
                 f"не-ASCII адрес (риск гомоглифа) в {name}: {shown}")
+
+# ---- C10: гейт паритета версий манифестов ----------------------------------
+
+def _skill_version(data: bytes) -> str | None:
+    """Версия из metadata SKILL.md (форма X.Y.Z)."""
+    text = data.decode("utf-8")
+    m = re.search(r'version:\s*"?(\d+\.\d+\.\d+)"?', text)
+    return m.group(1) if m else None
+
+def _manifest_version(rel: str, data: bytes) -> str | None:
+    """Top-level поле version манифеста: JSON — через json, YAML — строкой."""
+    text = data.decode("utf-8")
+    if rel.endswith(".json"):
+        try:
+            return json.loads(text).get("version")
+        except ValueError as exc:
+            raise ReleaseError(f"невалидный JSON в манифесте {rel}: {exc}") from exc
+    # Плоский YAML: version на верхнем уровне без отступа.
+    m = re.match(r'^\s*version:\s*[\'"]?([^\'"\s]+)[\'"]?\s*$', text, re.M)
+    return m.group(1) if m else None
+
+def _check_manifest_parity(rel_bytes: dict[str, bytes]) -> None:
+    """Все присутствующие манифесты несут version, равную version SKILL.md."""
+    skill_bytes = rel_bytes.get("SKILL.md", b"")
+    skill_ver = _skill_version(skill_bytes)
+    if skill_ver is None:
+        # Без версии скилла сравнивать не с чем; самого SKILL.md ловит collect.
+        return
+    for rel in MANIFEST_JSON + MANIFEST_YAML:
+        data = rel_bytes.get(rel)
+        if data is None:
+            continue  # манифеста нет в этом дереве/архиве — нечего сверять
+        ver = _manifest_version(rel, data)
+        if ver != skill_ver:
+            raise ReleaseError(
+                f"манифест {rel}: version {ver!r} != версии скилла {skill_ver}")
 
 def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
     root = root.resolve()
@@ -126,6 +186,7 @@ def collect(root: Path) -> list[tuple[PurePosixPath, bytes]]:
         raise ReleaseError("SKILL.md отсутствует среди собранных файлов")
     if not any(name.startswith("references/") for name in names):
         raise ReleaseError("в references/ должен быть хотя бы один файл")
+    _check_manifest_parity({str(p): data for p, data in found})
     return found
 
 def build(root: Path, output: Path) -> str:
@@ -148,6 +209,7 @@ def verify(archive: Path) -> str:
     if not archive.is_file():
         raise ReleaseError(f"архив не найден: {archive}")
     seen: set[str] = set()
+    rel_bytes: dict[str, bytes] = {}
     with zipfile.ZipFile(archive, "r") as zf:
         bad = zf.testzip()
         if bad:
@@ -167,18 +229,21 @@ def verify(archive: Path) -> str:
             if p.suffix.lower() in TEXT_SUFFIXES or p.name in ROOT_FILES:
                 _validate_text(info.filename, data)
                 _validate_ascii_urls(info.filename, data)
+            if info.filename == "SKILL.md" or info.filename in MANIFEST_JSON or info.filename in MANIFEST_YAML:
+                rel_bytes[info.filename] = data
         if "SKILL.md" not in seen:
             raise ReleaseError("SKILL.md не в корне ZIP")
         if not any(name.startswith("references/") for name in seen):
             raise ReleaseError("references/ отсутствует в ZIP")
+        _check_manifest_parity(rel_bytes)
     return sha256(archive)
 
 def _minimal(root: Path) -> None:
     (root / "references").mkdir(parents=True)
     (root / "scripts").mkdir(parents=True)
-    (root / "SKILL.md").write_text("---\nname: humanizer-ru\ndescription: Test.\n---\n", encoding="utf-8")
-    (root / "references" / "test.md").write_text("Тест \uea01 1 \uea02\n", encoding="utf-8")
-    (root / "scripts" / "noop.py").write_text("print('ok')\n", encoding="utf-8")
+    (root / "SKILL.md").write_text("---\nname: humanizer-ru\ndescription: Test.\n---\n", encoding="utf-8", newline="\n")
+    (root / "references" / "test.md").write_text("Тест \uea01 1 \uea02\n", encoding="utf-8", newline="\n")
+    (root / "scripts" / "noop.py").write_text("print('ok')\n", encoding="utf-8", newline="\n")
 
 def selftest() -> None:
     passed = 0
@@ -203,12 +268,12 @@ def selftest() -> None:
         total += 3
 
         missing = base / "missing"; missing.mkdir(); (missing / "references").mkdir()
-        (missing / "references" / "x.md").write_text("x", encoding="utf-8")
+        (missing / "references" / "x.md").write_text("x", encoding="utf-8", newline="\n")
         expect_fail(lambda: collect(missing), "missing SKILL.md")
 
         nested = base / "nested"; (nested / "humanizer-ru" / "references").mkdir(parents=True)
-        (nested / "humanizer-ru" / "SKILL.md").write_text("x", encoding="utf-8")
-        (nested / "humanizer-ru" / "references" / "x.md").write_text("x", encoding="utf-8")
+        (nested / "humanizer-ru" / "SKILL.md").write_text("x", encoding="utf-8", newline="\n")
+        (nested / "humanizer-ru" / "references" / "x.md").write_text("x", encoding="utf-8", newline="\n")
         expect_fail(lambda: collect(nested), "nested skill root")
 
         forbidden = base / "forbidden.zip"
@@ -251,8 +316,8 @@ def selftest() -> None:
         # 6.5: исключённые скрипты. Сборка их не берёт...
         excluded = base / "excluded"; excluded.mkdir(); _minimal(excluded)
         scripts_dir = excluded / "scripts"; scripts_dir.mkdir(exist_ok=True)
-        (scripts_dir / "check_corpus.py").write_text("# заглушка\n", encoding="utf-8")
-        (scripts_dir / "check_markers.py").write_text("# заглушка\n", encoding="utf-8")
+        (scripts_dir / "check_corpus.py").write_text("# заглушка\n", encoding="utf-8", newline="\n")
+        (scripts_dir / "check_markers.py").write_text("# заглушка\n", encoding="utf-8", newline="\n")
         excluded_zip = base / "excluded.zip"; build(excluded, excluded_zip)
         with zipfile.ZipFile(excluded_zip) as zf:
             members = zf.namelist()
@@ -274,14 +339,13 @@ def selftest() -> None:
         # собственную проверку (в исходнике нет готового не-ASCII URL).
         homograph = base / "homograph"; homograph.mkdir(); _minimal(homograph)
         (homograph / "references" / "homograph.md").write_text(
-            "Ссылка: https://" + "пример.рф/страница\n", encoding="utf-8")
+            "Ссылка: https://" + "пример.рф/страница\n", encoding="utf-8", newline="\n")
         expect_fail(lambda: collect(homograph), "non-ASCII address")
 
         # ...процентная нотация для кириллицы законна...
         encoded = base / "encoded"; encoded.mkdir(); _minimal(encoded)
         (encoded / "references" / "encoded.md").write_text(
-            "https://ru.wikipedia.org/wiki/%D0%A2%D0%B5%D1%81%D1%82\n",
-            encoding="utf-8")
+            "https://ru.wikipedia.org/wiki/%D0%A2%D0%B5%D1%81%D1%82\n", encoding="utf-8", newline="\n")
         build(encoded, base / "encoded.zip")
         passed += 1
         total += 1
@@ -292,6 +356,48 @@ def selftest() -> None:
             zf.writestr("SKILL.md", "x")
             zf.writestr("references/x.md", "https://" + "пример.рф/")
         expect_fail(lambda: verify(sneaked_url), "non-ASCII address inside archive")
+
+        # C10: гейт паритета версий манифестов.
+        def _parity_ok(root: Path) -> None:
+            (root / "references").mkdir(exist_ok=True)
+            (root / "references" / "test.md").write_text("Тест\n", encoding="utf-8", newline="\n")
+            (root / "SKILL.md").write_text(
+                "---\nname: humanizer-ru\ndescription: Test.\n"
+                "metadata:\n  version: \"3.15.0\"\n---\n", encoding="utf-8", newline="\n")
+            (root / ".claude-plugin").mkdir(exist_ok=True)
+            (root / ".claude-plugin" / "plugin.json").write_text(
+                '{"name": "humanizer-ru", "version": "3.15.0"}\n', encoding="utf-8", newline="\n")
+            (root / "agents").mkdir(exist_ok=True)
+            (root / "agents" / "openai.yaml").write_text(
+                'version: "3.15.0"\n', encoding="utf-8", newline="\n")
+
+        # Совпадающие версии во всех манифестах — сборка зелёная.
+        parity_ok = base / "parity-ok"; parity_ok.mkdir(); _parity_ok(parity_ok)
+        build(parity_ok, base / "parity-ok.zip")
+        passed += 1
+        total += 1
+
+        # Рассинхрон версии (plugin.json != SKILL.md) обязан валить гейт.
+        parity_bad = base / "parity-bad"; parity_bad.mkdir(); _parity_ok(parity_bad)
+        (parity_bad / ".claude-plugin" / "plugin.json").write_text(
+            '{"name": "humanizer-ru", "version": "9.9.9"}\n', encoding="utf-8", newline="\n")
+        expect_fail(lambda: collect(parity_bad), "manifest version mismatch")
+
+        # Нечётный YAML с чужой версией тоже обязан падать.
+        parity_yaml = base / "parity-yaml"; parity_yaml.mkdir(); _parity_ok(parity_yaml)
+        (parity_yaml / "agents" / "openai.yaml").write_text(
+            'version: "0.0.1"\n', encoding="utf-8", newline="\n")
+        expect_fail(lambda: collect(parity_yaml), "openai.yaml version mismatch")
+
+        # Подсунутый в архив рассинхроненный манифест отвергается верификацией.
+        parity_sneak = base / "parity-sneak.zip"
+        with zipfile.ZipFile(parity_sneak, "w") as zf:
+            zf.writestr("SKILL.md",
+                        "---\nmetadata:\n  version: \"3.15.0\"\n---\n")
+            zf.writestr("references/x.md", "x")
+            zf.writestr(".claude-plugin/plugin.json",
+                        '{"name": "humanizer-ru", "version": "2.0.0"}\n')
+        expect_fail(lambda: verify(parity_sneak), "archive manifest version mismatch")
     print(f"САМОПРОВЕРКА релизного префлайта: {passed}/{total} PASS")
 
 def main(argv: list[str] | None = None) -> int:
