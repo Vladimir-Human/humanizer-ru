@@ -79,8 +79,13 @@ jobs:
         with:
           name: link-check-state
           path: research/fixtures
+          # merge-multiple: иначе файл распакуется в подкаталог с именем
+          # артефакта, а скрипт ждёт его ровно в research/fixtures/.
+          merge-multiple: true
           run-id: ${{ steps.source.outputs.run_id }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # в v7 вход называется github-token (в v4 был repo-token);
+          # без него поиск идёт только внутри текущего запуска.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Самопроверка переходов состояний
         run: python3 scripts/check_link_rot.py --selftest
       - name: Онлайн-прогон реестра с паузой 10 с
