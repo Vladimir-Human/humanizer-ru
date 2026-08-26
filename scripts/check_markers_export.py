@@ -77,7 +77,7 @@ def _file_matches(path, expected_norm_bytes):
 
 
 def _check_demo(root, registry_filename):
-    """Синхронность demo/markers.js и demo/markers.v1.json (аудит 2026-08-25).
+    """Синхронность demo/markers.js и demo/markers.v1.json.
 
     demo/markers.v1.json обязана побайтово равняться корневому
     markers.v1.json; demo/markers.js обязан равняться регенерации

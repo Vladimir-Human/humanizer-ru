@@ -133,12 +133,14 @@ def _load_leaderboard_records():
 
 def _corpus_counts():
     """Число human/ai/boundary файлов из манифеста: вместо захардкоженных
-    11/12, чтобы рост корпуса не требовал правки скрипта."""
+    11/12, чтобы рост корпуса не требовал правки скрипта. Нечитаемый
+    манифест возвращает None: без знаменателя Уилсона числа нечестны."""
     try:
         with open(os.path.join(ROOT, MANIFEST), encoding="utf-8") as fh:
             manifest = json.load(fh)
-    except (OSError, ValueError):
-        return 11, 12, 0
+    except (OSError, ValueError) as exc:
+        print("не читается %s: %s" % (MANIFEST, exc), file=sys.stderr)
+        return None
     kinds = [c.get("kind") for c in manifest.get("corpus", [])]
     return (kinds.count("human"), kinds.count("ai"), kinds.count("boundary"))
 
@@ -175,7 +177,10 @@ def _render_eval_table(total, denom):
 
 def _render_tables():
     global _HUMAN_N, _AI_N
-    _HUMAN_N, _AI_N, _ = _corpus_counts()
+    counts = _corpus_counts()
+    if counts is None:
+        return None
+    _HUMAN_N, _AI_N, _ = counts
     parts = [
         "## Доверительные интервалы Wilson 95%",
         "",
@@ -373,7 +378,10 @@ def _norm_read(path):
 
 def _check_leaderboard():
     global _HUMAN_N, _AI_N
-    _HUMAN_N, _AI_N, _ = _corpus_counts()
+    counts = _corpus_counts()
+    if counts is None:
+        return None
+    _HUMAN_N, _AI_N, _ = counts
     path = os.path.join(ROOT, LEADERBOARD_MD)
     if not os.path.exists(path):
         print("нет %s" % path, file=sys.stderr)
@@ -477,8 +485,12 @@ def main(argv=None):
     if args.selftest:
         return selftest()
     if args.check:
-        mismatches = _check_leaderboard() or []
-        mismatches += _detect_row_mismatches()
+        mismatches = _check_leaderboard()
+        if mismatches is None:
+            print("ОТКАЗ: лидерборд не сверялся: нет файла, JSON или таблицы "
+                  "(сообщение выше в stderr).", file=sys.stderr)
+            return 2
+        mismatches = mismatches + _detect_row_mismatches()
         if mismatches:
             for m in mismatches:
                 print("[FAIL] " + m)
@@ -488,6 +500,8 @@ def main(argv=None):
               "детектируемости).")
         return 0
     output = _render_tables()
+    if output is None:
+        return 2
     print(output)
     return 0
 

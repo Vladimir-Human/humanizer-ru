@@ -257,10 +257,6 @@ def fetch_status(url, timeout=TIMEOUT_DEFAULT, method="GET"):
                     "%s: %s" % (type(exc).__name__, str(exc))[:200])
 
 
-def _known_broken(status):
-    return status.startswith(("http-4", "http-5", "redirect-", "timeout", "network-error"))
-
-
 def _transition(prev_status, curr_status):
     """Пара prev -> curr: что это значит для гейта."""
     curr_ok = curr_status.startswith("ok-")
@@ -509,7 +505,7 @@ def run_online(entries, state_path, sleep, timeout, method="GET"):
         t_req = time.time()
         status, code, final_url, note = fetch_status(e["url"], timeout=timeout,
                                                      method=method)
-        prev_status = prev_urls.get(e["url"], {}).get("status")
+        prev_status = prev_urls.get(redact_url(e["url"]), {}).get("status")
         verdict, rule = _transition(prev_status, status)
         detail = describe_status(status, code, final_url, note, timeout=timeout)
         if verdict == "rot":

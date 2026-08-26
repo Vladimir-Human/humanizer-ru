@@ -10,7 +10,8 @@ Design guarantees:
 
 - **No code execution while the skill is in use.** Installing the skill manually only copies text files. The verification script runs in this repository's CI or when a developer starts it manually; an agent does not need it.
 - **No network access.** The skill does not require an agent to download data, open links, or call external services.
-- **No filesystem access.** The skill does not read or write user files.
+- **No unprompted filesystem access.** The skill never opens files on its own;
+  a file is read only when the user explicitly asks to process that file.
 - **No data collection.** There is no telemetry, analytics, or transfer of user text to third parties.
 
 **Legal framing of label removal.** The removal layer (`scripts/filemarks/`,

@@ -254,6 +254,7 @@ humanizer-ru/
 │   ├── run_triggers.py           # Skill activation boundary gate
 │   ├── scenarios/                # Skill-level scenario evals (12 cases)
 │   ├── ainl_calibration.py       # Soft-feature calibration on AINL-Eval
+│   ├── detect-results/           # JSON of detector runs for the axis
 │   ├── HOW-TO-RUN.md             # Evaluation protocol and metric boundaries
 │   ├── README.md                 # Eval map and metric glossary
 │   ├── manifest.v1.json          # Neutral corpus schema
@@ -263,10 +264,11 @@ humanizer-ru/
 ├── references/                   # 12 reference files (two split into parts = 17 files)
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures
-└── .github/workflows/            # CI: self-scan, regex tests, style and docs checks
+└── .github/workflows/            # CI: 9 pipelines (regex, self-scan, link-rot,
+                                  #     validators, docs, style, release, install, demo)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 53 gates in the full checklist (49 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 55 gates in the full checklist (51 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
