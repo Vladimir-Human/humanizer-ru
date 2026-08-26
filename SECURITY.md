@@ -41,7 +41,7 @@ Humanizer-ru — текстовый скилл для ИИ-агентов. Он 
 
 ## Как сообщить об уязвимости
 
-Не публикуйте чувствительные подробности в открытом issue. Приватные сообщения об уязвимостях принимаются через GitHub Private Vulnerability Reporting (вкладка Security этого репозитория) — предпочтительный канал. Альтернатива — контакт из [профиля Vladimir-Human](https://github.com/Vladimir-Human). Для вопросов без чувствительных данных откройте issue: <https://github.com/Vladimir-Human/humanizer-ru/issues>.
+Не публикуйте конфиденциальные подробности в открытом issue. Приватные сообщения об уязвимостях принимаются через GitHub Private Vulnerability Reporting (вкладка Security этого репозитория) — предпочтительный канал. Альтернатива — контакт из [профиля Vladimir-Human](https://github.com/Vladimir-Human). Для вопросов без чувствительных данных откройте issue: <https://github.com/Vladimir-Human/humanizer-ru/issues>.
 
 Укажите версию скилла, затронутый файл и минимальный образец, воспроизводящий проблему.
 

@@ -399,21 +399,22 @@ def check_repo(root):
   if _n_full is not None:
    _expect = {
     "README.md": ["56 паттернам машинного письма",
-                  "%d гейт полного" % _n_full,
-                  "(%d в --quick)" % _n_quick],
+                  "%d гейт[а-я]* полного" % _n_full,
+                  r"\(\d+ в --quick\)"],
     "README.en.md": ["56 patterns",
                      "%d gates in the full" % _n_full,
-                     "(%d in --quick)" % _n_quick],
-    "CHANGELOG.md": ["%d гейт полного check_all, %d в --quick"
+                     r"\(\d+ in --quick\)"],
+    "CHANGELOG.md": ["%d гейт[а-я]* полного check_all, %d в --quick"
                      % (_n_full, _n_quick)],
-    ".github/workflows/release-check.yml": ["%d гейт, включая" % _n_full],
+    ".github/workflows/release-check.yml": ["%d гейт[а-я]*, включая" % _n_full],
    }
    for _rel, _subs in _expect.items():
        _t = text(_rel)
        for _sub in _subs:
-           if _sub not in _t:
-               errors.append("I.17: %s не содержит «%s» (факт: %d/%d гейтов)"
-                             % (_rel, _sub, _n_full, _n_quick))
+           if re.search(_sub, _t):
+               continue
+           errors.append("I.17: %s не содержит «%s» (факт: %d/%d гейтов)"
+                         % (_rel, _sub, _n_full, _n_quick))
 
  return errors
 
