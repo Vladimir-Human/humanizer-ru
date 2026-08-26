@@ -31,6 +31,14 @@ Design guarantees:
 
 Each release has a `vX.Y.Z` tag and release notes. For the highest assurance, install a tagged release and compare its contents with the file list in the README's pre-installation checklist.
 
+**Legal framing of label removal.** The removal layer (scripts/filemarks/,
+
+eferences/removal-matrix.md) works on content the user owns; responsibility
+for how the result is used stays with the user. The project is not positioned
+as a tool for submitting work where AI is prohibited, and it does not promise
+that a detector will report 「not AI」. Publication covers only relative
+before/after detectability deltas with a mandated false-positive audit.
+
 ## Reporting a vulnerability
 
 Do not publish sensitive details in a public issue. Private vulnerability reports are accepted via GitHub Private Vulnerability Reporting (the Security tab of this repository) — the preferred channel. Alternatively, use the contact method shown on the [Vladimir-Human GitHub profile](https://github.com/Vladimir-Human). For non-sensitive security questions, open an issue at <https://github.com/Vladimir-Human/humanizer-ru/issues>.
