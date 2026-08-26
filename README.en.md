@@ -43,7 +43,7 @@ with this project. Their stances differ:
 
 We are not affiliated with any of them. This project's declaration: "label
 removal is an open product capability; detector bypass is not claimed as a
-guarantee" — see the Security section.
+guarantee". The frame is described in docs/FRAMEWORK.md; the limits of removal techniques — in references/removal-matrix.md.
 
 ## Install in 30 seconds
 

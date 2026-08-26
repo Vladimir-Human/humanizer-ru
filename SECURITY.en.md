@@ -13,6 +13,14 @@ Design guarantees:
 - **No filesystem access.** The skill does not read or write user files.
 - **No data collection.** There is no telemetry, analytics, or transfer of user text to third parties.
 
+**Legal framing of label removal.** The removal layer (`scripts/filemarks/`,
+`references/removal-matrix.md`) works on content the user owns; responsibility
+for how the result is used rests with the user. The project is not positioned
+as a tool for submitting work where AI is prohibited, and it does not promise
+detector bypass: only relative before/after detectability deltas are
+published, without absolute percentages. Plagiarism checks are out of scope:
+rewriting does not remove matches against a database of borrowings.
+
 > The optional `npx skills add ...` installation command runs the third-party Skills CLI. Review that tool separately, or use the manual installation method in the README if you want installation to consist only of inspected file copies.
 
 ## Threat model and mitigations
@@ -30,14 +38,6 @@ Design guarantees:
 ## Release integrity
 
 Each release has a `vX.Y.Z` tag and release notes. For the highest assurance, install a tagged release and compare its contents with the file list in the README's pre-installation checklist.
-
-**Legal framing of label removal.** The removal layer (scripts/filemarks/,
-
-eferences/removal-matrix.md) works on content the user owns; responsibility
-for how the result is used stays with the user. The project is not positioned
-as a tool for submitting work where AI is prohibited, and it does not promise
-that a detector will report 「not AI」. Publication covers only relative
-before/after detectability deltas with a mandated false-positive audit.
 
 ## Reporting a vulnerability
 
