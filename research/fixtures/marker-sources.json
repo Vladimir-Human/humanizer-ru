@@ -380,8 +380,8 @@
   "case": "invisible_layout",
   "status": "confirmed",
   "evidence_class": "primary",
-  "source_url": "https://github.com/guillaumemeyer/watermarks-remover/blob/main/skills/remove-ai-marks/scripts/text_unicode.py",
-  "accessed": "2026-08-13",
+  "source_url": "https://github.com/guillaumemeyer/watermarks-remover/blob/f10efaa7efc75591b4744cc1d885874a79f5f7ee/skills/remove-ai-marks/scripts/text_unicode.py",
+  "accessed": "2026-08-26",
   "platform": "класс меток нескольких поставщиков (public class-level описание)",
   "verbatim_sample": "­",
   "evidence_note": "Классовое описание невидимых меток (Layer A) из публичного репозитория watermarks-remover (MIT): мягкий перенос, наборные пробелы-гомоглифы, вариационные селекторы; источник документирует класс шестнадцатеричными литералами (0x00AD soft hyphen, 0x2000–0x200A spaces, 0xFE00–0xFE0F variation selectors), поэтому дословный образец в реестре — сам символ класса (U+00AD), чтобы образец ловился выражением. Принято с оговорками русской типографики: NBSP (U+00A0) и узкий NBSP (U+202F) исключены — это норма набора; VS16 в эмодзи легален (пропуск по правилу ZWJ из A.7); латинские конфьюзаблы (кириллические омоглифы) не приняты — кириллица и есть русский алфавит. Маркер класса B: самостоятельным вердиктом не является."
