@@ -58,7 +58,7 @@
     }
     if (cur) ranges.push(cur);
     let out = "", p = 0;
-    for (const r of ranges) { out += esc(text.slice(p, r.s)) + `<mark class="${ck(r.cls)}">${esc(text.slice(r.s, r.e))}</mark>`; p = r.e; }
+    for (const r of ranges) { out += esc(text.slice(p, r.s)) + `<mark class="${ck(r)}">${esc(text.slice(r.s, r.e))}</mark>`; p = r.e; }
     hl.innerHTML = out + esc(text.slice(p));
   }
   let _tm;
