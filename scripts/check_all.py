@@ -140,6 +140,10 @@ def _gates(quick, tmpdir):
         # гейт запускает детерминированную самопроверку агрегации и FP-блока.
         ("detect-eval: самопроверка", [PY, "eval/detect_eval.py", "--selftest"],
          ["eval/detect_eval.py"], {0}),
+        ("triggers: самопроверка", [PY, "eval/run_triggers.py", "--selftest"],
+         ["eval/run_triggers.py"], {0}),
+        ("triggers: граница активации", [PY, "eval/run_triggers.py"],
+         ["eval/run_triggers.py"], {0}),
         ("compile: scripts", [PY, "-m", "compileall", "-q", "scripts"], [], {0}),
         ("release: самопроверка", [PY, "scripts/check_release.py", "--selftest"], [], {0}),
         ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",

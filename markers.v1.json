@@ -990,8 +990,8 @@
       "pattern": "­|[  　]|(?<![🀀-🫿☀-➿🇦-🇿])[︀-️](?![🀀-🫿☀-➿🇦-🇿])",
       "description": "Публичный разбор классов меток watermarks-remover, 2026-08-13; классовое описание, атрибуция конкретных моделей не подтверждена",
       "source": {
-        "url": "https://github.com/guillaumemeyer/watermarks-remover/blob/main/skills/remove-ai-marks/scripts/text_unicode.py",
-        "accessed": "2026-08-13",
+        "url": "https://github.com/guillaumemeyer/watermarks-remover/blob/f10efaa7efc75591b4744cc1d885874a79f5f7ee/skills/remove-ai-marks/scripts/text_unicode.py",
+        "accessed": "2026-08-26",
         "platform": "класс меток нескольких поставщиков (public class-level описание)"
       },
       "fixtures": {
