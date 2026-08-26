@@ -64,6 +64,8 @@ def _gates(quick, tmpdir):
         ("style: самопроверка", [PY, "scripts/count_style_markers.py", "--selftest"], [], {0}),
         ("style: самопроверка порога", [PY, "scripts/check_own_style.py", "--selftest"], [], {0}),
         ("style: порог на собственные файлы", [PY, "scripts/check_own_style.py"], [], {0}),
+        ("self-prose: самопроверка", [PY, "scripts/check_self_prose.py", "--selftest"], [], {0}),
+        ("self-prose: витринная проза", [PY, "scripts/check_self_prose.py"], [], {0}),
         ("soft-signals: самопроверка", [PY, "scripts/scan_soft_signals.py", "--selftest"], [], {0}),
         ("confidence: самопроверка", [PY, "scripts/check_confidence.py", "--selftest"], [], {0}),
         ("confidence: сверка лидерборда", [PY, "scripts/check_confidence.py", "--check"],
@@ -80,11 +82,16 @@ def _gates(quick, tmpdir):
         ("bundle-sync: вендор бандла dsh/", [PY, "scripts/check_bundle_sync.py"],
          ["dsh/package.json", "dsh/cordis.patch.yml"], {0}),
         ("pkg-sync: самопроверка", [PY, "scripts/check_pkg_sync.py", "--selftest"], [], {0}),
+        ("pkg-sync: синхронность пакета", [PY, "scripts/check_pkg_sync.py"],
+         ["src/humanizer_ru"], {0}),
         ("registry: самопроверка", [PY, "scripts/check_fixture_sources.py", "--selftest"], [], {0}),
         ("registry: реестр доказательств", [PY, "scripts/check_fixture_sources.py",
                                             "research/fixtures/marker-sources.json"],
          ["research/fixtures/marker-sources.json"], {0}),
         ("markers-export: гейт синхронности", [PY, "scripts/check_markers_export.py"], [], {0}),
+        ("removal-parity: самопроверка", [PY, "scripts/check_removal_parity.py", "--selftest"], [], {0}),
+        ("removal-parity: снятие↔детектор", [PY, "scripts/check_removal_parity.py"],
+         ["scripts/filemarks/text_layer.py"], {0}),
         ("link-rot: offline формат URL", [PY, "scripts/check_link_rot.py", "--offline"], [], {0}),
         ("corpus: регрессия корпусов", [PY, "scripts/check_corpus.py"],
          ["research/validation/human"], {0}),
@@ -101,7 +108,7 @@ def _gates(quick, tmpdir):
         ("perf: самопроверка", [PY, "scripts/check_perf.py", "--selftest"], [], {0}),
     ]
     if not quick:
-        gates.append(("perf: 39 выражений на 30k", [PY, "scripts/check_perf.py"], [], {0}))
+        gates.append(("perf: все выражения CASES на 30k", [PY, "scripts/check_perf.py"], [], {0}))
     gates += [
         ("eval: самопроверка гарнесса", [PY, "eval/run_eval.py", "--selftest"],
          ["eval/run_eval.py"], {0}),
@@ -120,10 +127,21 @@ def _gates(quick, tmpdir):
         # при собранных данных законен и код 0 — оба исхода не ошибка.
         ("blind-eval: отказ без данных", [PY, "eval/blind_eval.py"],
          ["eval/blind_eval.py"], {0, 2}),
+        # Детектор-харнес «до/после». В CI — только selftest:
+        # реальный прогон требует живого демона Ollama (его в CI нет), поэтому
+        # гейт запускает детерминированную самопроверку агрегации и FP-блока.
+        ("detect-eval: самопроверка", [PY, "eval/detect_eval.py", "--selftest"],
+         ["eval/detect_eval.py"], {0}),
         ("compile: scripts", [PY, "-m", "compileall", "-q", "scripts"], [], {0}),
         ("release: самопроверка", [PY, "scripts/check_release.py", "--selftest"], [], {0}),
         ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",
                                           "--selftest"], [], {0}),
+        ("rhythm: самопроверка", [PY, "scripts/filemarks/rhythm.py", "--selftest"], [], {0}),
+        ("rewrite-text: самопроверка", [PY, "scripts/filemarks/rewrite_text.py", "--selftest"], [], {0}),
+        ("rewrite-delta: самопроверка",
+         [PY, "scripts/filemarks/check_rewrite_delta.py", "--selftest"], [], {0}),
+        ("score-synthid: самопроверка",
+         [PY, "scripts/filemarks/score_synthid.py", "--selftest"], [], {0}),
     ]
     if not quick:
         gates += [

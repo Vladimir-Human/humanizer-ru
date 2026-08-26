@@ -6,6 +6,7 @@
 (frontmatter-ключи, meta/json-ld, XMP, customXml, docProps, meta:generator),
 русский вывод. PDF — best-effort: предпочтителен exiftool.
 """
+import base64
 import io
 import re
 import subprocess
@@ -13,7 +14,9 @@ import zipfile
 from pathlib import Path
 
 from common_fm import preexec, safe_arg, safe_write_bytes, safe_write_text, which
-from image_meta import AI_META_HINTS, C2PA_MARKERS, run_optional_tools
+from image_meta import (AI_META_HINTS, C2PA_MARKERS, detect_format as _detect_image,
+                        run_optional_tools, strip_jpeg as _strip_jpeg,
+                        strip_png as _strip_png)
 
 AI_FRONTMATTER_KEYS = frozenset({"generator", "ai", "ai_generated", "ai-generated",
                                  "claude", "anthropic", "openai", "gemini", "synthid",
@@ -36,6 +39,55 @@ MAX_ZIP_DECOMPRESSED_BYTES = 128 * 1024 * 1024
 DOCX_META_PARTS = ("docProps/core.xml", "docProps/app.xml", "docProps/custom.xml")
 
 
+# I.12: вложенные PNG/JPEG — data:image/(png|jpeg);base64 в текстовых
+# контейнерах (HTML/MD/SVG). Знак может оказаться внутри медиа-части даже у
+# «вычищенного» контейнера, поэтому его декодируем, чистим и перекодируем.
+_NESTED_IMAGE_RE = re.compile(r"""data:image/(png|jpeg);base64,([A-Za-z0-9+/=]+)""",
+                              re.I)
+
+
+def _clean_nested_media_buf(raw):
+    """Очистка вложенного PNG/JPEG в памяти. -> (байты, изменилось)."""
+    try:
+        fmt = _detect_image(raw)
+    except Exception:
+        return raw, False
+    if fmt == "png":
+        cleaned, _ = _strip_png(raw)
+        return cleaned, cleaned != raw
+    if fmt == "jpeg":
+        cleaned, _ = _strip_jpeg(raw)
+        return cleaned, cleaned != raw
+    return raw, False
+
+
+def _clean_data_uris(text, actions):
+    """I.12: data:image/(png|jpeg);base64 декодировать, почистить, перекодировать."""
+    def _sub(m):
+        kind, b64 = m.group(1), m.group(2)
+        try:
+            raw = base64.b64decode(b64, validate=True)
+        except Exception:
+            return m.group(0)
+        cleaned, changed = _clean_nested_media_buf(raw)
+        if changed:
+            actions.append("перекодирован data:image/%s" % kind)
+            return "data:image/%s;base64,%s" % (kind, base64.b64encode(cleaned).decode("ascii"))
+        return m.group(0)
+    return _NESTED_IMAGE_RE.sub(_sub, text)
+
+
+def _clean_zip_nested_media(raw, name, actions):
+    """I.12: вложенный PNG/JPEG в zip (word/media/*, Pictures/*) — снятие в памяти."""
+    if not (name.startswith("word/media/") or name.startswith("Pictures/")):
+        return raw
+    cleaned, changed = _clean_nested_media_buf(raw)
+    if changed:
+        actions.append("вложенный носитель очищен (%s)" % name)
+        return cleaned
+    return raw
+
+
 def detect_container_format(path, data=None):
     ext = Path(path).suffix.lower()
     if ext == ".svg":
@@ -44,6 +96,10 @@ def detect_container_format(path, data=None):
         return "pdf"
     if ext == ".docx":
         return "docx"
+    if ext == ".pptx":
+        return "pptx"
+    if ext == ".xlsx":
+        return "xlsx"
     if ext == ".odt":
         return "odt"
     if ext in (".html", ".htm"):
@@ -61,6 +117,10 @@ def detect_container_format(path, data=None):
                     names = set(zf.namelist())
                     if "word/document.xml" in names:
                         return "docx"
+                    if "ppt/presentation.xml" in names:
+                        return "pptx"
+                    if "xl/workbook.xml" in names:
+                        return "xlsx"
                     if "content.xml" in names and "meta.xml" in names:
                         return "odt"
             except zipfile.BadZipFile:
@@ -213,6 +273,16 @@ def clean_html(text):
     if n:
         actions.append("сняты data-ai* атрибуты x%d" % n)
         out = out2
+    # I.32: HTML-комментарии с AI-маркерами (C2PA/provenance) снимаются тем же
+    # приёмом, что в clean_svg; незатронутые комментарии сохраняются.
+    def _cmt(m):
+        body = m.group(0)
+        if AI_META_NAME_RE.search(body) or re.search(r"c2pa|jumbf|contentcredentials", body, re.I):
+            actions.append("снят HTML-комментарий с AI-маркерами")
+            return ""
+        return body
+
+    out = re.sub(r"<!--.*?-->", _cmt, out, flags=re.DOTALL)
     if not actions:
         actions.append("AI-meta в HTML нет")
     return out, actions
@@ -261,6 +331,14 @@ def clean_svg(data):
     if n:
         actions.append("сняты generator-атрибуты x%d" % n)
         text = new
+    # I.12: вложенное изображение <image href="data:image/..."> чистится рекурсивно.
+    text = _clean_data_uris(text, actions)
+    # I.11: невидимые символы в текстовых узлах SVG безопасны для снятия — прогон
+    # layer A по декодированному XML (в текстовых узлах они не портят разметку).
+    from text_layer import clean_text_layer
+    text, n = clean_text_layer(text)
+    if n:
+        actions.append("снято невидимых (слой A) в SVG: %d" % n)
     if not actions:
         actions.append("SVG-метаданных нет")
     return text.encode("utf-8", errors="surrogateescape"), actions
@@ -283,7 +361,9 @@ def _safe_read(zf, name, budget):
     return raw
 
 
-def inspect_docx(data):
+def _inspect_ooxml(data, media_prefix, label):
+    """Общий осмотр OOXML (docx/pptx/xlsx): docProps/customXml и вложенные
+    медиа; пути различаются только приставкой каталога медиа."""
     findings, has_c2pa, has_ai = [], False, False
     parts = []
     budget = [0]
@@ -309,22 +389,58 @@ def inspect_docx(data):
             custom = [n for n in parts if n.startswith("customXml/")]
             if custom:
                 findings.append("customXml-частей: %d" % len(custom))
+            for info in zf.infolist():
+                if not info.filename.startswith(media_prefix):
+                    continue
+                if _detect_image(_safe_read(zf, info.filename, budget)) not in ("png", "jpeg", "webp"):
+                    continue
+                _check_zip_budget(info, budget)
+                c2, ai, hits = _blob_hits(zf.read(info.filename))
+                if c2 or ai:
+                    has_c2pa = has_c2pa or c2
+                    has_ai = has_ai or ai
+                    findings.append("вложенный носитель %s: %s" % (info.filename, ", ".join(hits[:6])))
     except (zipfile.BadZipFile, ValueError) as exc:
-        return False, False, ["ошибка zip: %s" % exc], {}
+        return False, False, ["ошибка zip (%s): %s" % (label, exc)], {}
     return has_c2pa, has_ai or has_c2pa, findings, {"parts": len(parts)}
 
 
+def inspect_docx(data):
+    return _inspect_ooxml(data, "word/media/", "DOCX")
+
+
+def inspect_pptx(data):
+    return _inspect_ooxml(data, "ppt/media/", "PPTX")
+
+
+def inspect_xlsx(data):
+    return _inspect_ooxml(data, "xl/media/", "XLSX")
+
+
 def clean_docx(data):
+    return _clean_ooxml(data, "word/document.xml", "word/media/", "DOCX")
+
+
+def clean_pptx(data):
+    return _clean_ooxml(data, "ppt/presentation.xml", "ppt/media/", "PPTX")
+
+
+def clean_xlsx(data):
+    return _clean_ooxml(data, "xl/workbook.xml", "xl/media/", "XLSX")
+
+
+def _clean_ooxml(data, body_path, media_prefix, label):
     actions = []
     out_buf = io.BytesIO()
     budget = [0]
     try:
-        return _clean_docx_zip(data, out_buf, budget, actions)
+        return _clean_ooxml_zip(data, out_buf, budget, actions,
+                                body_path, media_prefix, label)
     except (zipfile.BadZipFile, ValueError) as exc:
-        raise ValueError("ошибка обработки DOCX: %s" % exc)
+        raise ValueError("ошибка обработки %s: %s" % (label, exc))
 
 
-def _clean_docx_zip(data, out_buf, budget, actions):
+def _clean_ooxml_zip(data, out_buf, budget, actions, body_path, media_prefix, label):
     with zipfile.ZipFile(io.BytesIO(data)) as zin, zipfile.ZipFile(out_buf, "w", compression=zipfile.ZIP_DEFLATED) as zout:
         for info in zin.infolist():
             name = info.filename
@@ -363,9 +479,20 @@ def _clean_docx_zip(data, out_buf, budget, actions):
                 if n:
                     actions.append("сняты Content_Types customXml-override x%d" % n)
                     raw = new.encode("utf-8")
+            if name == body_path:
+                # I.11: слой A в теле документа — невидимые символы из скопированного текста.
+                from text_layer import clean_text_layer
+                text = raw.decode("utf-8", errors="surrogateescape")
+                new, n = clean_text_layer(text)
+                if n:
+                    actions.append("слой A в %s: %d" % (body_path, n))
+                    raw = new.encode("utf-8", errors="surrogateescape")
+            elif name.startswith(media_prefix):
+                # I.12: вложенный PNG/JPEG/WebP чистится рекурсивно, zip-запись переупаковывается.
+                raw = _clean_zip_nested_media(raw, name, actions)
             zout.writestr(info, raw)
     if not actions:
-        actions.append("DOCX-метаданных нет")
+        actions.append("%s-метаданных нет" % label)
     return out_buf.getvalue(), actions
 
 
@@ -389,6 +516,18 @@ def inspect_odt(data):
                 if re.search(r"generator|claude|openai|anthropic|gemini", meta, re.I):
                     has_ai = True
                     findings.append("meta.xml: generator-подобные поля")
+            # I.12: осмотр вложенных изображений ODT.
+            for info in zf.infolist():
+                if not info.filename.startswith("Pictures/"):
+                    continue
+                if _detect_image(_safe_read(zf, info.filename, budget)) not in ("png", "jpeg"):
+                    continue
+                _check_zip_budget(info, budget)
+                c2, ai, hits = _blob_hits(zf.read(info.filename))
+                if c2 or ai:
+                    has_c2pa = has_c2pa or c2
+                    has_ai = has_ai or ai
+                    findings.append("вложенный носитель %s: %s" % (info.filename, ", ".join(hits[:6])))
     except (zipfile.BadZipFile, ValueError) as exc:
         return False, False, ["ошибка zip: %s" % exc], {}
     return has_c2pa, has_ai or has_c2pa, findings, {}
@@ -433,6 +572,17 @@ def _clean_odt_zip(data, out_buf, budget, actions):
 
                 text = re.sub(r"<dc:creator\b[^>]*>.*?</dc:creator\s*>", _creator, text, flags=re.I | re.DOTALL)
                 raw = text.encode("utf-8")
+            elif name == "content.xml":
+                # I.11: слой A в теле ODT — невидимые символы из скопированного текста.
+                from text_layer import clean_text_layer
+                text = raw.decode("utf-8", errors="surrogateescape")
+                new, n = clean_text_layer(text)
+                if n:
+                    actions.append("слой A в content.xml: %d" % n)
+                    raw = new.encode("utf-8", errors="surrogateescape")
+            elif name.startswith("Pictures/"):
+                # I.12: вложенный PNG/JPEG чистится рекурсивно.
+                raw = _clean_zip_nested_media(raw, name, actions)
             else:
                 c2, ai, _ = _blob_hits(raw)
                 if (c2 or ai) and name not in ("content.xml", "styles.xml", "mimetype", "META-INF/manifest.xml"):
@@ -451,6 +601,13 @@ def inspect_pdf(path, data):
     if b"<x:xmpmeta" in data or b"application/rdf+xml" in data:
         findings.append("XMP-пакет присутствует")
         has_ai = has_ai or bool(re.search(rb"digitalSourceType|trainedAlgorithmicMedia|SoftwareAgent|c2pa", data, re.I))
+    # I.29: AssociatedFiles/вложенные файлы (в т.ч. C2PA-манифесты) — только осмотр.
+    if re.search(rb"/\s*AssociatedFiles\b", data) or b"/AssociatedFiles" in data:
+        findings.append("AssociatedFiles-вложения присутствуют")
+        if re.search(rb"c2pa|jumbf|contentcredential", data, re.I):
+            has_c2pa = True
+    if re.search(rb"\bC2PA\b|/C2PA\b", data):
+        findings.append("имя C2PA в структуре PDF")
     tools = run_optional_tools(Path(path))
     ct = tools.get("c2patool") or {}
     if ct.get("has_manifest"):
@@ -497,6 +654,10 @@ def inspect_container(path, force_fmt=None):
         tools = details.pop("tools", {})
     elif fmt == "docx":
         has_c2pa, has_ai, findings, details = inspect_docx(data)
+    elif fmt == "pptx":
+        has_c2pa, has_ai, findings, details = inspect_pptx(data)
+    elif fmt == "xlsx":
+        has_c2pa, has_ai, findings, details = inspect_xlsx(data)
     elif fmt == "odt":
         has_c2pa, has_ai, findings, details = inspect_odt(data)
     elif fmt == "html":
@@ -522,6 +683,14 @@ def clean_container(path, dest, also_layer_a_text=True):
     fmt = detect_container_format(path, data)
     actions = []
     meta = {"format": fmt}
+    # I.15: fail-closed контейнеров. Слой A (невидимые символы) применяется к
+    # svg/docx/odt/html/md; без детектора результат нельзя признать чистым —
+    # тот же код 2, что и для текста. PDF вне данного гейта: слой A к нему
+    # не применяется (только XMP через exiftool).
+    if fmt in ("svg", "docx", "pptx", "xlsx", "odt", "html", "markdown"):
+        from text_layer import DETECTOR_OK
+        if also_layer_a_text and not DETECTOR_OK:
+            raise ValueError("детектор check_markers недоступен: слой A к %s не применён" % fmt)
     if fmt == "svg":
         cleaned, actions = clean_svg(data)
         safe_write_bytes(dest, cleaned)
@@ -530,6 +699,12 @@ def clean_container(path, dest, also_layer_a_text=True):
         meta.update(meta_extra)
     elif fmt == "docx":
         cleaned, actions = clean_docx(data)
+        safe_write_bytes(dest, cleaned)
+    elif fmt == "pptx":
+        cleaned, actions = clean_pptx(data)
+        safe_write_bytes(dest, cleaned)
+    elif fmt == "xlsx":
+        cleaned, actions = clean_xlsx(data)
         safe_write_bytes(dest, cleaned)
     elif fmt == "odt":
         cleaned, actions = clean_odt(data)
@@ -540,14 +715,13 @@ def clean_container(path, dest, also_layer_a_text=True):
             text, actions = clean_html(text)
         else:
             text, actions = clean_markdown(text)
+        # I.12: data:image/... в тексте контейнера — декодировать, чистить, перекодировать.
+        text = _clean_data_uris(text, actions)
         if also_layer_a_text:
-            from text_layer import DETECTOR_OK, clean_text_layer
-            if not DETECTOR_OK:
-                actions.append("детектор check_markers недоступен: слой A не проверялся")
-            else:
-                text, n = clean_text_layer(text)
-                if n:
-                    actions.append("снято невидимых (слой A): %d" % n)
+            from text_layer import clean_text_layer
+            text, n = clean_text_layer(text)
+            if n:
+                actions.append("снято невидимых (слой A): %d" % n)
         safe_write_text(dest, text)
     else:
         raise ValueError("неподдерживаемый формат контейнера: %s" % fmt)

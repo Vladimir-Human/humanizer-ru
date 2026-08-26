@@ -1,0 +1,202 @@
+{
+  "run": "2026-08-25-axis-12",
+  "created": "2026-08-25",
+  "manifest": "eval/manifest.v1.json",
+  "detector": {
+    "name": "ttr_lexdiv",
+    "model": "stdlib-ttr-v1",
+    "version": "calibrated-2026-08-25"
+  },
+  "pairs": [
+    {
+      "id": "ai-01",
+      "kind": "ai",
+      "len_before": 1537,
+      "len_after": 1019,
+      "length_flag": null,
+      "before": 0.5087585681645088,
+      "after": 0.3413775766716941,
+      "delta": -0.1673809914928147
+    },
+    {
+      "id": "ai-02",
+      "kind": "ai",
+      "len_before": 1188,
+      "len_after": 1124,
+      "length_flag": null,
+      "before": 0.3996247654784239,
+      "after": 0.3189612934835862,
+      "delta": -0.0806634719948377
+    },
+    {
+      "id": "ai-03",
+      "kind": "ai",
+      "len_before": 115,
+      "len_after": 114,
+      "length_flag": null,
+      "before": null,
+      "after": null,
+      "delta": null
+    },
+    {
+      "id": "ai-04",
+      "kind": "ai",
+      "len_before": 3282,
+      "len_after": 2567,
+      "length_flag": null,
+      "before": 0.30314761824608655,
+      "after": 0.35147299509001645,
+      "delta": 0.0483253768439299,
+      "regression": true
+    },
+    {
+      "id": "ai-05",
+      "kind": "ai",
+      "len_before": 2766,
+      "len_after": 2495,
+      "length_flag": null,
+      "before": 0.6664738770001929,
+      "after": 0.6833829154271144,
+      "delta": 0.016909038426921486,
+      "regression": true
+    },
+    {
+      "id": "ai-06",
+      "kind": "ai",
+      "len_before": 1203,
+      "len_after": 762,
+      "length_flag": null,
+      "before": 0.032258064516129156,
+      "after": 0.0,
+      "delta": -0.032258064516129156
+    },
+    {
+      "id": "ai-07",
+      "kind": "ai",
+      "len_before": 1084,
+      "len_after": 673,
+      "length_flag": null,
+      "before": 0.6853146853146854,
+      "after": 0.4049346879535556,
+      "delta": -0.28037999736112984
+    },
+    {
+      "id": "ai-08",
+      "kind": "ai",
+      "len_before": 1007,
+      "len_after": 924,
+      "length_flag": null,
+      "before": 0.2639734366353072,
+      "after": 0.3423370522607165,
+      "delta": 0.07836361562540928,
+      "regression": true
+    },
+    {
+      "id": "ai-09",
+      "kind": "ai",
+      "len_before": 164,
+      "len_after": 29,
+      "length_flag": null,
+      "before": 0.297658862876254,
+      "after": null,
+      "delta": null
+    },
+    {
+      "id": "ai-10",
+      "kind": "ai",
+      "len_before": 158,
+      "len_after": 29,
+      "length_flag": null,
+      "before": 0.297658862876254,
+      "after": null,
+      "delta": null
+    },
+    {
+      "id": "ai-11",
+      "kind": "ai",
+      "len_before": 956,
+      "len_after": 618,
+      "length_flag": null,
+      "before": 0.25339366515837114,
+      "after": 0.09502262443438897,
+      "delta": -0.15837104072398217
+    },
+    {
+      "id": "ai-12",
+      "kind": "ai",
+      "len_before": 1162,
+      "len_after": 559,
+      "length_flag": null,
+      "before": 0.6086369770580298,
+      "after": 0.24116424116424126,
+      "delta": -0.3674727358937885
+    }
+  ],
+  "aggregates": {
+    "mean_before": 0.4135,
+    "mean_after": 0.3087,
+    "mean_delta": -0.1048,
+    "frac_after_lower": 0.6667,
+    "note": "агрегаты по 9 валидным AI-парам (из 12); 3 пары короче 20 токенов — скор None (guard)"
+  },
+  "fp_audit": {
+    "n": 11,
+    "false_accusations": 0,
+    "false_rate": 0.0,
+    "threshold": 0.5,
+    "details": [
+      {
+        "file": "research/validation/human/01-turgenev-mumu.txt",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/02-gogol-shinel.txt",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/03-dostoevsky-white-nights.txt",
+        "score": null
+      },
+      {
+        "file": "research/validation/human/04-tolstoy-anna-karenina.txt",
+        "score": null
+      },
+      {
+        "file": "research/validation/human/05-pushkin-monument.txt",
+        "score": null
+      },
+      {
+        "file": "research/validation/human/06-lermontov-hero.txt",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/07-chekhov-letter.txt",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/08-constitution.txt",
+        "score": 0.011,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/09-wikipedia-modern.txt",
+        "score": 0.0,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/10-wikinews.txt",
+        "score": 0.011,
+        "false_accusation": false
+      },
+      {
+        "file": "research/validation/human/11-it-notation.txt",
+        "score": 0.4112,
+        "false_accusation": false
+      }
+    ]
+  }
+}

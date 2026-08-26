@@ -411,6 +411,76 @@ CASES = {
          "светофор 🚦 без селектора"],
         ("а\u00adб и в\u1680г и д\ufe0fе", 3),
     ),
+    # I.28: скрытая ASCII-нагрузка в блоке Unicode Tags (U+E0000–U+E007F).
+    # Источник уровня P: arXiv:2605.16336v2 (AIES 2026, SteganoPrompt) —
+    # печатная ASCII-строка кодируется как chr(0xE0000 + ord(c)) и
+    # переживает копипаст; модель-пересказчик переносит метку в ответ.
+    # Класс B: легитимный источник — флаги-эмодзи (U+1F3F4 или
+    # U+1F3F3+FE0F + теги + отмена U+E007F); guard повторяет TAG_STRIP_RX
+    # из filemarks/text_layer.py: тег, которому предшествует флаг или другой
+    # тег (внутри последовательности), не считается.
+    "unicode_tags": (
+        "(?<![\U0001F3F4\U0001F3F3\ufe0f\U000E0000-\U000E007F])"
+        "[\U000E0000-\U000E007F]",
+        ["скрытая метка в ответе: \U000E0041\U000E0049 и продолжение текста",
+         "конец предложения.\U000E0074\U000E0065\U000E0073\U000E0074 следующая строка"],
+        ["флаг Англии \U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F в тексте",
+         "радужный флаг \U0001F3F3\ufe0f\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F рядом",
+         "обычный текст без невидимых символов"],
+        ("метка одна \U000E0041\U000E0042 и метка две \U000E0043\U000E0044", 2),
+    ),
+}
+
+# Класс кейса: "A" — даёт вердикт «машинный текст» сам по себе,
+# "B" — контекстный маркер, который сам по себе вердикта не даёт
+# (предупреждение, не падает под гейт --scan --class a).
+# Источник классов: references/chatbot-artifacts*.md (пометки «(класс B)»)
+# и markers.v1.json (генерируется scripts/export_markers.py). Маркер без
+# пометки класса — класс A. Класс должен совпадать с ФАКТИЧЕСКИМ выводом
+# export_markers.py; целостность проверяется в main().
+CLASS_OF = {
+    # --- Класс B: контекстные маркеры (не дают вердикта сами по себе) ---
+    "ref_name_search": "B",
+    "grok_referrer": "B",
+    "openai_pua": "B",
+    "openai_pua_short": "B",
+    "zero_width": "B",
+    "placeholder_url": "B",
+    "placeholder_date": "B",
+    "invisible_layout": "B",
+    "unicode_tags": "B",
+    # --- Класс A: все остальные 31 кейс ---
+    "contentReference": "A",
+    "oai_citation": "A",
+    "oaicite_short": "A",
+    "turn_search": "A",
+    "turn_fetch": "A",
+    "turn_file": "A",
+    "utm_chatgpt": "A",
+    "utm_openai": "A",
+    "utm_copilot": "A",
+    "attached_file": "A",
+    "grok_card": "A",
+    "grok_render_json": "A",
+    "vertexaisearch": "A",
+    "attributableIndex": "A",
+    "citation_n": "A",
+    "copilot_caret": "A",
+    "assistants_source": "A",
+    "cite_turn": "A",
+    "sandbox_link": "A",
+    "think_tag": "A",
+    "source_plus_chain": "A",
+    "gemini_cite_start": "A",
+    "gemini_cite_n": "A",
+    "gemini_span": "A",
+    "writing_block": "A",
+    "deepseek_line_ref": "A",
+    "grok_card_tag": "A",
+    "turn_other": "A",
+    "attached_web_bracket": "A",
+    "perplexity_s3": "A",
+    "generated_ref_id": "A",
 }
 
 
@@ -450,29 +520,98 @@ def _console_text(text: str, encoding=None) -> str:
     return text.encode(encoding, errors="backslashreplace").decode(encoding)
 
 
+def _fenced_lines(lines: list) -> set:
+    """Номера строк внутри ЗАКРЫТЫХ блоков кода (``` и ~~~).
+
+    Документация маркеров в справочниках живёт в fenced-блоках; раньше
+    --scan видел однострочные бэктики, но не блочные, и <think>…</think>
+    внутри примера кода давал ложные срабатывания think_tag
+    (аудит 2026-08-25). Незакрытый забор не маскирует остаток файла:
+    содержимое после него продолжает проверяться (как в
+    scan_soft_signals._fenced_lines). Отступ до трёх пробелов допускается.
+    """
+    inside = set()
+    fence_char = None
+    fence_len = 0
+    open_line = None
+    for n, line in enumerate(lines, 1):
+        stripped = line.lstrip()
+        if len(line) - len(stripped) > 3:
+            continue
+        if fence_char is None:
+            if stripped.startswith("```"):
+                fence_char, open_line = "`", n
+                fence_len = len(stripped) - len(stripped.lstrip("`"))
+            elif stripped.startswith("~~~"):
+                fence_char, open_line = "~", n
+                fence_len = len(stripped) - len(stripped.lstrip("~"))
+            continue
+        close_len = len(stripped) - len(stripped.lstrip(fence_char))
+        if (close_len >= fence_len
+                and stripped.rstrip() == fence_char * close_len):
+            for k in range(open_line, n + 1):
+                inside.add(k)
+            fence_char, open_line, fence_len = None, None, 0
+    return inside
+
+
 def scan(paths: list) -> int:
     """Прогон всех выражений по произвольным файлам.
 
     Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
+             python3 scripts/check_markers.py --scan --class a файл1 …
+             python3 scripts/check_markers.py --scan файл1 --class a …
     Печатает каждое совпадение в формате «файл:строка [имя] фрагмент».
     Совпадения внутри обратных кавычек пропускаются (документация выражений),
     вложенные дубли одного артефакта схлопываются (см. _line_matches).
     Код возврата 0 — чисто, 1 — найдены маркеры, 2 — файл не читается.
+
+    Флаг --class {a|all} (по умолчанию all — обратная совместимость):
+      all — текущее поведение: любые совпадения дают код возврата 1.
+      a   — код возврата определяется только совпадениями класса A.
+            Совпадения класса B печатаются строкой «[B, предупреждение] …»
+            и на код возврата не влияют; в итоге раздельно считаются
+            «маркеров класса A» и «предупреждений класса B».
+    Ограничение (аудит 2026-08-25): файлы читаются строго как UTF-8;
+    файл в cp1251/другой кодировке даёт код 2 с явным сообщением, а не
+    молчаливый пропуск или мусорные совпадения.
     """
+    class_filter = "all"
+    remaining = list(paths)
+    if "--class" in remaining:
+        idx = remaining.index("--class")
+        if idx + 1 >= len(remaining) or remaining[idx + 1] not in ("a", "all"):
+            print("--class ожидает значение 'a' или 'all'", file=sys.stderr)
+            return 2
+        class_filter = remaining[idx + 1]
+        del remaining[idx:idx + 2]
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
     found = 0
-    for path in paths:
+    class_b_warnings = 0
+    for path in remaining:
         try:
             with open(path, encoding="utf-8") as fh:
                 lines = fh.read().splitlines()
         except (OSError, UnicodeDecodeError) as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
             return 2
+        blocked = _fenced_lines(lines)
         for lineno, line in enumerate(lines, 1):
+            if lineno in blocked:
+                continue
             for _start, _end, name in _line_matches(line, compiled):
+                cls = CLASS_OF.get(name, "A")
+                if class_filter == "a" and cls == "B":
+                    class_b_warnings += 1
+                    fragment = _console_text(line.strip()[:90])
+                    print(f"[B, предупреждение] {path}:{lineno} [{name}] {fragment}")
+                    continue
                 found += 1
                 fragment = _console_text(line.strip()[:90])
                 print(f"{path}:{lineno} [{name}] {fragment}")
+    if class_filter == "a":
+        print(f"\nМаркеров класса A: {found}; предупреждений класса B: {class_b_warnings}.")
+        return 1 if found else 0
     if found:
         print(f"\nНайдено маркеров: {found}.")
         return 1
@@ -482,6 +621,21 @@ def scan(paths: list) -> int:
 
 def main() -> int:
     fails = 0
+    # Целостность CLASS_OF ↔ CASES: для каждого кейса есть класс, и в
+    # CLASS_OF нет лишних ключей. Рассинхрон — явный ПРОВАЛ гейта.
+    missing_class = [name for name in CASES if name not in CLASS_OF]
+    extra_class = [name for name in CLASS_OF if name not in CASES]
+    bad_value = [name for name, cls in CLASS_OF.items()
+                 if name in CASES and cls not in ("A", "B")]
+    for name in missing_class:
+        print(f"ПРОВАЛ CLASS_OF: нет класса для кейса {name}")
+        fails += 1
+    for name in extra_class:
+        print(f"ПРОВАЛ CLASS_OF: лишний ключ {name} (нет в CASES)")
+        fails += 1
+    for name in bad_value:
+        print(f"ПРОВАЛ CLASS_OF: кейс {name} имеет недопустимый класс {CLASS_OF[name]!r}")
+        fails += 1
     for name, (pattern, positives, negatives, multi) in CASES.items():
         rx = re.compile(pattern)
         for s in positives:
@@ -609,6 +763,7 @@ def parity(*md_paths: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--scan":
+        # scan() разбирает --class {a|all} сам, поэтому передаём весь хвост.
         sys.exit(scan(sys.argv[2:]))
     if len(sys.argv) > 1 and sys.argv[1] == "--parity":
         sys.exit(parity(*sys.argv[2:]))

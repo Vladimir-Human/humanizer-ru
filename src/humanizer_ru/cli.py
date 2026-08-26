@@ -28,7 +28,7 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
 
     Поддерживается как форма `humanizer-markers --scan файл1 [...]`, так и
     сокращённая `humanizer-markers файл1 [...]` (--scan подразумевается).
-    Без файлов запускается самопроверка 39 выражений, как и в оригинальном
+    Без файлов запускается самопроверка 40 выражений, как и в оригинальном
     check_markers.py без аргументов.
     """
     args = list(sys.argv[1:] if argv is None else argv)

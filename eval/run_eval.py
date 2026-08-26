@@ -113,15 +113,27 @@ def _scan_default(path, compiled):
 
 
 def _scan_candidate(path, runner):
+    """Скан файла внешним runner'ом: (hits, runner_error).
+
+    hits — список совпадений; runner_error — None либо строка описания сбоя
+    раннера (ненулевой код, не-JSON, не-список). Ошибка раннера НЕ превращается
+    в находку: иначе падение раннера на одном файле ложно засчитывалось бы как
+    совпадение . Сбой фиксирует вызывающий в details и решает по доле
+    ошибок, валить ли прогон кодом 2 или продолжить с пометкой.
+    """
     proc = subprocess.run([sys.executable, runner, path], capture_output=True,
                           text=True, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
-        return [{"error": proc.stderr.strip()[:200]}]
+        msg = proc.stderr.strip() or "(stdout пуст)"
+        return [], ("runner завершился с кодом %d: %s"
+                    % (proc.returncode, msg[:200]))
     try:
         data = json.loads(proc.stdout)
-        return data if isinstance(data, list) else [{"error": "runner returned non-list"}]
-    except json.JSONDecodeError:
-        return [{"error": "runner returned non-JSON"}]
+    except json.JSONDecodeError as exc:
+        return [], "runner вернул не-JSON: %s" % exc
+    if not isinstance(data, list):
+        return [], "runner вернул не список, а %s" % type(data).__name__
+    return data, None
 
 
 def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
@@ -145,6 +157,7 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
     summary = {"manifest_version": manifest.get("version", "?"),
                "candidate": "check_markers.py (reference)" if not candidate else candidate,
                "files": 0, "files_missing": 0, "hash_mismatches": 0,
+               "runner_errors": 0, "runner_failed": False,
                "human_hits": 0, "ai_hits": 0, "ai_unexpected": 0,
                "boundary_expected_ok": 0,
                "boundary_unexpected": 0, "details": []}
@@ -179,7 +192,16 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
                                         "expected": entry["sha256"], "actual": actual})
             continue
         if candidate:
-            hits = _scan_candidate(path, candidate)
+            hits, runner_error = _scan_candidate(path, candidate)
+            if runner_error is not None:
+                # Сбой раннера — отказ инструмента, а не находка: не считаем
+                # hits и не сверяем ожидания, фиксируем в details. Если доля
+                # ошибок выше трети корпуса, прогон валится кодом 2 (как отказ
+                # инструмента), иначе продолжается с пометкой .
+                summary["runner_errors"] += 1
+                summary["details"].append({"file": rel, "kind": entry.get("kind"),
+                                           "runner_error": runner_error})
+                continue
         else:
             hits = _scan_default(path, compiled)
         kind = entry.get("kind")
@@ -210,6 +232,11 @@ def run(manifest_path=MANIFEST, candidate=None, root=ROOT):
                     summary["details"].append({"file": rel, "kind": "boundary",
                                                "expected": expected, "actual": len(hits),
                                                "cases": list(actual_names)})
+    # Больше трети записей корпуса, для которых раннер упал, — гейт не может
+    # доверять результатам: прогон валится кодом 2 (отказ инструмента), как
+    # ManifestError. Меньшая доля — пометка в details, прогон продолжается.
+    if summary["runner_errors"] > len(manifest["corpus"]) // 3:
+        summary["runner_failed"] = True
     return summary
 
 
@@ -338,7 +365,50 @@ def selftest():
         except Exception as exc:  # noqa: BLE001 — любой иной сбой считаем провалом
             print("FAIL: %s (вместо отказа %s)" % (name, type(exc).__name__))
 
-    total = len(cases) + _BOUNDARY_TOTAL + len(input_cases)
+    # Сбой раннера-кандидата: ошибка раннера не считается находкой .
+    # Корпус из четырёх human-файлов: одна ошибка (<= трети) — пометка в
+    # details и продолжение, все четыре (>= > трети) — runner_failed (код 2).
+    _RUNNER_CASES = 2
+    with tempfile.TemporaryDirectory() as rr:
+        runner = os.path.join(rr, "candidate.py")
+        files = {"h1.txt": _SELFTEST_HUMAN, "h2.txt": _SELFTEST_HUMAN,
+                 "h3.txt": _SELFTEST_HUMAN, "h4.txt": _SELFTEST_HUMAN}
+        corpus = []
+        for name, body in files.items():
+            p = os.path.join(rr, name)
+            with open(p, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(body)
+            corpus.append({"path": name, "sha256": _sha256(p), "kind": "human"})
+        mp = os.path.join(rr, "manifest.json")
+        with open(mp, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump({"version": "selftest", "corpus": corpus}, fh)
+
+        # Раннер падает только на h2.txt: одна ошибка из четырёх (<= трети).
+        with open(runner, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(
+                "import sys\n"
+                "if sys.argv[1].endswith('h2.txt'):\n"
+                "    sys.exit(2)\n"
+                "print('[]')\n")
+        s = run(mp, runner, rr)
+        _ok = (s["runner_errors"] == 1 and not s["runner_failed"]
+               and s["human_hits"] == 0
+               and any("runner_error" in d for d in s["details"]))
+        print(("PASS: " if _ok else "FAIL: ") +
+              "сбой раннера <= трети: пометка в details, прогон продолжается")
+        passed += 1 if _ok else 0
+
+        # Все четыре файла падают: доля ошибок выше трети -> runner_failed.
+        with open(runner, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("import sys\nsys.exit(7)\n")
+        s = run(mp, runner, rr)
+        _ok = (s["runner_errors"] == 4 and s["runner_failed"]
+               and s["human_hits"] == 0)
+        print(("PASS: " if _ok else "FAIL: ") +
+              "сбой раннера > трети: runner_failed, находок нет")
+        passed += 1 if _ok else 0
+
+    total = (len(cases) + _RUNNER_CASES + _BOUNDARY_TOTAL + len(input_cases))
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, total))
     return 0 if passed == total else 1
 
@@ -455,6 +525,12 @@ def main():
         print("ОТКАЗ: %s" % exc, file=sys.stderr)
         return 2
     print(json.dumps(summary, ensure_ascii=False, indent=2))
+    if summary.get("runner_failed"):
+        # Доля сбоев раннера выше трети корпуса — отказ инструмента (код 2),
+        # как ManifestError, а не регрессия корпуса (код 1).
+        print("ОТКАЗ: сбоев раннера %d — результаты недостоверны"
+              % summary.get("runner_errors", 0), file=sys.stderr)
+        return 2
     return 1 if _problems(summary) else 0
 
 

@@ -9,7 +9,7 @@
 ## Что здесь лежит
 
 - `reference-2026-08-12.json` — прогон собственного regex-слоя
-  (`check_markers.py`, 38 выражений классов A/B) через
+  (`check_markers.py`, все выражения классов A/B) через
   `python3 eval/run_eval.py`.
 - `smixs-2026-08-12.json` — прогон линтера smixs/humanizer-ru
   (приколотая копия: `eval/candidates/smixs_lint_pinned.py`, коммит

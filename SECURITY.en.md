@@ -4,7 +4,7 @@
 
 ## What this project does — and does not do
 
-Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`) and fifteen CI verification scripts (`scripts/`, Python standard library only, no dependencies). Fourteen of them ship in the release archive: `check_corpus.py` stays in the repository because it only runs against the `research/` directory, which the archive does not include.
+Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), twenty-six top-level CI verification scripts (`scripts/`, Python standard library only, no dependencies) and the file-layer package `scripts/filemarks/`. Everything ships in the release archive except `check_corpus.py` (it only runs against the `research/` directory, which the archive does not include). Additionally distributed: the `humanizer-ru` PyPI package, a reusable GitHub Action (`action/`), a DeepSeek Harness bundle (`dsh/`), and a browser demo (`demo/`).
 
 Design guarantees:
 
@@ -23,7 +23,7 @@ Design guarantees:
 | Metadata poisoning or unwanted activation | The `description` is neutral and the skill activates only after an explicit user request |
 | Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release (`scripts/check_release.py` rejects non-ASCII URLs at archive build and verification) |
 | Installation-time content substitution | The manual process uses tagged releases and asks users to inspect files before installing |
-| Regression against the project's own rules | Six CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, and release checks |
+| Regression against the project's own rules | Nine CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, release checks, registry link-rot, dsh bundle install, and demo publishing |
 | Path traversal via data | Paths the validators take from data are confined to the repository root: corpus entries in `eval/manifest.v1.json` and the `fixture_file` field of the source registry. Absolute paths, drive letters, `..` escapes and symlinks pointing outside the root are rejected; the refusal is distinguishable from a corpus regression by exit code 2 |
 | Path given as a command-line argument | Deliberately NOT restricted. The validators in `scripts/` and `eval/` are local developer tools: a path named by the operator carries the operator's own authority. Scanning an arbitrary file (`check_markers.py --scan file.md`) is a documented capability, not a hole. Static analysers flag this as path traversal because they treat `argv` as untrusted by default — true for services, not for command-line utilities |
 
@@ -33,7 +33,7 @@ Each release has a `vX.Y.Z` tag and release notes. For the highest assurance, in
 
 ## Reporting a vulnerability
 
-Do not publish sensitive details in a public issue. Contact the maintainer privately using the contact method shown on the [Vladimir-Human GitHub profile](https://github.com/Vladimir-Human). For non-sensitive security questions, open an issue at <https://github.com/Vladimir-Human/humanizer-ru/issues>.
+Do not publish sensitive details in a public issue. Private vulnerability reports are accepted via GitHub Private Vulnerability Reporting (the Security tab of this repository) — the preferred channel. Alternatively, use the contact method shown on the [Vladimir-Human GitHub profile](https://github.com/Vladimir-Human). For non-sensitive security questions, open an issue at <https://github.com/Vladimir-Human/humanizer-ru/issues>.
 
 Include the skill version, affected file, and the smallest sample that reproduces the problem.
 

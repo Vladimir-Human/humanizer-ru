@@ -184,10 +184,34 @@ def check_circles(name, text):
     return errors
 
 
+def check_marker_table_rows(ru_text):
+    from check_markers import CASES as _CASES
+    """Строк данных в таблице маркеров README ровно столько, сколько CASES.
+
+    Дубли и потеря строки — источники рассинхрона «40 маркеров» с витриной;
+    обратная сверка каждой строки с CASES — в check_markers --parity
+    (references/*.md), здесь — счётчик строк."""
+    start = ru_text.find(u"| Маркер | Источник | Регулярное выражение |")
+    if start == -1:
+        return []  # фикстуры selftest без таблицы — не ошибка
+    end = ru_text.find(u"Полный список с дословными образцами", start)
+    block = ru_text[start:end]
+    rows = [ln for ln in block.splitlines()
+            if ln.strip().startswith("|") and not ln.strip().startswith("|---")]
+    data_rows = [ln for ln in rows
+                 if len([c for c in ln.strip("|").split("|") if c.strip()]) >= 3
+                 and u"Маркер |" not in ln]
+    if len(data_rows) != len(_CASES):
+        return [u"README.md: строк данных в таблице маркеров %d, в CASES %d"
+                % (len(data_rows), len(_CASES))]
+    return []
+
+
 def check_all(texts, expected=None):
     errors = check_numbers(texts[RU], texts[EN], expected)
     errors += check_sections(texts[RU], texts[EN])
     errors += check_tree(texts)
+    errors += check_marker_table_rows(texts[RU])
     for name in SHOWCASE:
         errors += check_circles(name, texts[name])
     return errors

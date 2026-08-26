@@ -274,6 +274,103 @@ def _parse_leaderboard_rows(text):
     return rows
 
 
+DETECT_RESULTS_DIR = os.path.join("eval", "detect-results")
+
+
+def _detect_row_mismatches():
+    """Сверка ВСЕХ строк оси «дельта детектируемости» LEADERBOARD с их JSON.
+
+    В LEADERBOARD ищутся строки таблицы оси (первая ячейка — имя детектора);
+    для каждой в eval/detect-results/ берётся JSON с тем же detector.name
+    (ссылки на JSON перечислены в тексте LEADERBOARD); средние и дельта по
+    AI-парам пересчитываются из пар заново и сверяются с ячейками (3 знака).
+    """
+    lb = os.path.join(ROOT, LEADERBOARD_MD)
+    if not os.path.isfile(lb):
+        return ["нет %s" % LEADERBOARD_MD]
+    lb_text = open(lb, encoding="utf-8").read()
+
+    def _num_cell(cell):
+        try:
+            return float(cell.replace("−", "-").replace("–", "-").strip())
+        except (TypeError, ValueError):
+            return None
+
+    refs = [r.replace("\\", "/") for r in
+            re.findall(r"eval[/\\]detect-results[/\\][\w.\-]+\.json", lb_text)]
+    if not refs:
+        return ["в LEADERBOARD нет ссылок на JSON оси eval/detect-results/"]
+    docs = {}
+    for ref in refs:
+        path = os.path.join(ROOT, ref)
+        if not os.path.isfile(path):
+            return ["нет JSON оси: %s" % ref]
+        try:
+            doc = json.loads(_norm_read(path))
+        except (OSError, ValueError) as exc:
+            return ["JSON оси не читается/не валиден (%s): %s" % (ref, exc)]
+        name = (doc.get("detector") or {}).get("name")
+        if not name:
+            return ["JSON оси без detector.name: %s" % ref]
+        docs[name] = (ref, doc)
+
+    rows = [ln for ln in lb_text.splitlines()
+            if ln.strip().startswith("|") and
+            any(k in ln for k in ("llm_rubric", "ttr_lexdiv"))]
+    if not rows:
+        return ["в LEADERBOARD нет строк оси (llm_rubric/ttr_lexdiv)"]
+    if len(rows) < 2:
+        return ["в LEADERBOARD только %d строк(а) оси — H6 требует два прокси" % len(rows)]
+
+    mismatches = []
+    for row in rows:
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        if len(cells) < 7:
+            mismatches.append("строка оси с %d колонками — ожидалось 7" % len(cells))
+            continue
+        det_name = "llm_rubric" if "llm_rubric" in cells[0] else "ttr_lexdiv"
+        if det_name not in docs:
+            mismatches.append("%s: нет JSON с detector.name=%s" % (cells[0], det_name))
+            continue
+        ref, doc = docs[det_name]
+        pairs = [p for p in doc.get("pairs", []) if p.get("kind") == "ai"
+                 and p.get("before") is not None and p.get("after") is not None]
+        if not pairs:
+            mismatches.append("%s: JSON %s без ai-пар" % (det_name, ref))
+            continue
+        before = [float(p["before"]) for p in pairs]
+        after = [float(p["after"]) for p in pairs]
+        raw_mean = sum(before) / len(before)
+        after_mean = sum(after) / len(after)
+        delta = after_mean - raw_mean
+        below = sum(1 for b, a in zip(before, after) if a < b)
+        fp = int(doc.get("fp_audit", {}).get("false_accusations", -1))
+        shown_raw, shown_after, shown_delta, shown_below, shown_fp = (
+            cells[1], cells[2], cells[3], cells[4], cells[5])
+        shown_fp_num = _parse_int(shown_fp)
+        if _num_cell(shown_raw) != round(raw_mean, 3):
+            mismatches.append("%s ось raw: LEADERBOARD=%s, JSON=%.3f"
+                              % (det_name, shown_raw, raw_mean))
+        if _num_cell(shown_after) != round(after_mean, 3):
+            mismatches.append("%s ось after: LEADERBOARD=%s, JSON=%.3f"
+                              % (det_name, shown_after, after_mean))
+        if _num_cell(shown_delta) != round(delta, 3):
+            mismatches.append("%s ось дельта: LEADERBOARD=%s, JSON=%.3f"
+                              % (det_name, shown_delta, delta))
+        if _parse_int(shown_below) != below:
+            mismatches.append("%s ось пары ниже: LEADERBOARD=%s, JSON=%d"
+                              % (det_name, shown_below, below))
+        if shown_fp_num != fp:
+            mismatches.append("%s ось FP: LEADERBOARD=%s, JSON=%d"
+                              % (det_name, shown_fp, fp))
+    return mismatches
+
+
+def _norm_read(path):
+    with open(path, "rb") as fh:
+        return fh.read().decode("utf-8")
+
+
 def _check_leaderboard():
     global _HUMAN_N, _AI_N
     _HUMAN_N, _AI_N, _ = _corpus_counts()
@@ -380,15 +477,15 @@ def main(argv=None):
     if args.selftest:
         return selftest()
     if args.check:
-        mismatches = _check_leaderboard()
-        if mismatches is None:
-            return 2
+        mismatches = _check_leaderboard() or []
+        mismatches += _detect_row_mismatches()
         if mismatches:
             for m in mismatches:
                 print("[FAIL] " + m)
             print("ЛИДЕРБОРД: расхождений с пересчётом — %d." % len(mismatches))
             return 1
-        print("ЛИДЕРБОРД: все числа соответствуют сырым JSON.")
+        print("ЛИДЕРБОРД: все числа соответствуют сырым JSON (включая ось "
+              "детектируемости).")
         return 0
     output = _render_tables()
     print(output)
