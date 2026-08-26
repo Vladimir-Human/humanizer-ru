@@ -36,13 +36,13 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 56 patterns, 40 regex markers, blind pairwise runs | Removes labels in text and files the user owns (invisible characters, statistical markers, C2PA/EXIF/XMP; non-deterministic techniques are best-effort, pixel-level SynthID is out of scope — see the removal matrix) and reduces statistical traces of machine generation in text the user owns; label removal is the product's value. Detector bypass is not claimed as a guarantee: only relative before/after detectability deltas with false-positive control are published. Do not harm live writing and do not add facts — inviolable principles. |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 56 patterns, 40 regex markers, blind pairwise runs | Removes labels in text and files the user owns (invisible characters, statistical markers, C2PA/EXIF/XMP; non-deterministic techniques are best-effort, pixel-level SynthID is out of scope — see the removal matrix) and reduces statistical traces of machine generation in text the user owns; label removal is an open product capability. Detector bypass is not claimed as a guarantee: only relative before/after detectability deltas with false-positive control are published. Do not harm live writing and do not add facts — inviolable principles. |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool; the leaderboard runs its deterministic linter | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill: its tagline claims tuning for GPTZero/DivEye/RuBERT metrics; its FAQ shows a bypass technique | The bypass technique is in their FAQ |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
 
 We are not affiliated with any of them. This project's declaration: "label
-removal is the product's value; detector bypass is not claimed as a
+removal is an open product capability; detector bypass is not claimed as a
 guarantee" — see the Security section.
 
 ## Install in 30 seconds
