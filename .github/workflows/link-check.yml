@@ -59,11 +59,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUR: ${{ github.run_id }}
         run: |
-          ids=$(gh api "repos/${{ github.repository }}/actions/workflows/link-check.yml/runs?branch=main&status=success&per_page=10" \
-            --jq '.workflow_runs[].id')
-          rid=$(printf '%s\n' "$ids" | grep -vx "$CUR" | head -n1)
+          rid=""
+          for id in $(gh api "repos/${{ github.repository }}/actions/workflows/link-check.yml/runs?branch=main&status=success&per_page=15" \
+              --jq '.workflow_runs[].id' | grep -vx "$CUR"); do
+            # Годится только прогон, реально выгрузивший кэш: у push-запусков
+            # онлайн-джоба пропущена и артефакта нет.
+            if gh api "repos/${{ github.repository }}/actions/runs/$id/artifacts" \
+                --jq '.artifacts[].name' | grep -qx link-check-state; then
+              rid=$id
+              break
+            fi
+          done
           echo "run_id=${rid}" >> "$GITHUB_OUTPUT"
-          test -n "$rid" || echo "Прошлых успешных прогонов нет — первый прогон легитимен."
+          test -n "$rid" || echo "Прошлых прогонов с кэшем нет — первый прогон легитимен."
       - name: Подтянуть кэш состояний прошлого прогона
         if: steps.source.outputs.run_id != ''
         continue-on-error: true
