@@ -63,7 +63,10 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 1. Open the **Releases** page, pick the latest release, and download the attached `humanizer-ru.zip`. That is the built skill archive: `SKILL.md`, `README.md`, `README.en.md`, `SECURITY.md`, `SECURITY.en.md`, `CHANGELOG.md`, `PERSONA.md`, `PRIVACY_POLICY.md`, `LICENSE`, `gemini-extension.json`, the `references/`, `scripts/` and `knowledge/` directories, the plugin manifests `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `agents/`, and the `commands/` slash-commands — nothing executable at install time. `Source code (zip)`, which GitHub attaches to every release, is the full repository tree including `.github/`, `research/` and `tests/` — take it only if you intend to run the validators. Review `SKILL.md` and `references/` before installing.
 2. **Claude.ai**: Settings → Skills → Upload skill. In `humanizer-ru.zip` `SKILL.md` already sits at the archive root, so no re-zipping is needed.
-3. **Claude Code (local)**:
+3. **Organizations (Enterprise & Team)**: the administrator verifies the release
+   (step 1 covers the review) and uploads it to the shared library — the skill
+   becomes available to the whole team.
+4. **Claude Code (local)**:
 
 ```sh
 mkdir -p ~/.claude/skills
@@ -268,7 +271,7 @@ humanizer-ru/
                                   #     validators, docs, style, release, install, demo)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 55 gates in the full checklist (51 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 57 gates in the full checklist (53 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
