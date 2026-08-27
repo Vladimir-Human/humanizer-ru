@@ -33,8 +33,9 @@
 CLI: python3 scripts/check_docs.py [--repo ПУТЬ] [--selftest]
 Exit 0 — все проверки пройдены, 1 — есть ошибки.
 """
-import json
 import argparse
+import io
+import json
 import os
 import re
 import subprocess
@@ -217,6 +218,23 @@ def check_repo(root):
     elif bver != version:
      errors.append("dsh/package.json: version %r != версии скилла %s"
                    % (bver, version))
+
+ # 2c. Число маркеров в description SKILL.md совпадает с фактом (markers.v1.json).
+ # Description — витрина каталога skills.sh и роутера агентов; разъехавшееся число
+ # обманывает покупателя. Гейт ловит дрейф в обе стороны.
+ if version:
+  dm = re.search(r'description:\s*".*?(\d+) regex-маркер', skill)
+  if dm:
+   declared = int(dm.group(1))
+   mvj = os.path.join(root, "markers.v1.json")
+   if os.path.isfile(mvj):
+    try:
+     actual = json.load(io.open(mvj, encoding="utf-8"))["count"]
+    except (ValueError, KeyError, OSError):
+     actual = None
+    if actual is not None and declared != actual:
+     errors.append("SKILL.md description: %d regex-маркеров, в markers.v1.json — %d"
+                   % (declared, actual))
 
  for rel in ("README.md", "README.en.md"):
   t = text(rel)
@@ -610,6 +628,11 @@ def selftest():
       lambda r: _w(r, "dsh/package.json",
                    '{"name": "humanizer-ru-dsh", "version": "9.9.9"}'),
       "dsh/package.json")
+ case("description заявляет неверное число маркеров -> FAIL",
+      lambda r: (_w(r, "markers.v1.json", '{"count": 99, "markers": []}'),
+                 _w(r, "SKILL.md",
+                    "---\nname: humanizer-ru\ndescription: \"Проверяет текст (40 regex-маркеров). \"\nversion: " + "9.9.9" + "\n---\n\n# humanizer-ru (v" + "9.9.9" + ")\n")),
+      "regex-маркеров")
  case("dsh/package.json не JSON-объект -> FAIL",
       lambda r: _w(r, "dsh/package.json", "[1, 2, 3]"),
       "не читается JSON-объект")
