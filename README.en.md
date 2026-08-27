@@ -70,7 +70,7 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.15.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ### DeepSeek Harness (dsh)
@@ -81,7 +81,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.15.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.15.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.15.1
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -161,7 +161,7 @@ Action inputs:
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.15.0`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.15.1`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:

@@ -94,7 +94,7 @@ pip install humanizer-ru
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.15.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -114,7 +114,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.15.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.15.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль появляется при первом запуске, `pnpm` нужен на PATH:
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.15.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.15.1
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -195,7 +195,7 @@ jobs:
 | `fail-on` | `class-a` | `class-a` — жёсткий regex-слой (`check_markers.py --scan --class a`: падает только класс A; контекстные маркеры класса B печатаются предупреждениями и вердикта не дают); `soft-threshold` — счётчик мягких признаков (`scan_soft_signals.py --fail-multicat 3`). |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.15.0`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.15.1`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:
