@@ -55,9 +55,9 @@ If you want a plain terminal command instead of an agent skill — the package i
 
 ```sh
 pip install humanizer-ru
-\\n
-Try before installing: the [regex-layer online demo](https://vladimir-human.github.io/humanizer-ru/) runs entirely in your browser — the text never leaves your machine. The demo covers the deterministic layer only (artifact detection); rewriting is done by the agent with the skill, not by the browser.
 ```
+
+Try before installing: the [regex-layer online demo](https://vladimir-human.github.io/humanizer-ru/) runs entirely in your browser — the text never leaves your machine. The demo covers the deterministic layer only (artifact detection); rewriting is done by the agent with the skill, not by the browser.
 
 The `npx skills add` installer lets you pick target agents: Claude Code, Codex, Cursor, Gemini CLI, OpenCode, and other environments that support the Agent Skills format. The repository also ships plugin manifests (`.claude-plugin/` for the Claude marketplace, `.codex-plugin/`, `.cursor-plugin/`, `agents/openai.yaml`) and the `commands/` slash-commands — `/humanize` (rewrite) and `/audit` (check for AI traces without rewriting). The skill itself contains plain-text instructions and does not execute code during use. The `npx` command does run the third-party Skills CLI; if you prefer to inspect every file before installing, use the [manual method](#manual-install).
 
