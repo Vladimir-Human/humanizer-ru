@@ -227,6 +227,10 @@ humanizer-ru/
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_link_rot.py         # Fixture source link-rot gate
 │   ├── check_outward.py          # Outward-draft validator (issues, PRs)
+│   ├── check_fixture_refs.py     # Fixture reference integrity gate
+│   ├── check_version_literals.py # Hardcoded version literals gate
+│   ├── check_git_depth.py        # Shallow-clone detection gate
+│   ├── apply_patch.py            # Exact-match patches from patch.json
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
