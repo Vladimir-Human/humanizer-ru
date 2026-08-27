@@ -254,7 +254,7 @@ def check_repo(root):
  for rel in ("README.md", "README.en.md", "SKILL.md"):
   body = text(rel)
   if body:
-   n_fences = sum(1 for ln in body.split("\n") if ln.strip().startswith("\`\`\`"))
+   n_fences = sum(1 for ln in body.split("\n") if ln.strip().startswith("```"))
    if n_fences % 2 != 0:
     errors.append("%s: %d строк-фенсов (нечёт) — блок не закрыт" % (rel, n_fences))
 
@@ -661,7 +661,7 @@ def selftest():
                  _w(r, "SKILL.md",
                     "---\nname: humanizer-ru\ndescription: \"Проверяет текст.\"\nversion: 3.15.1\n---\n\n# humanizer-ru (v3.15.1)\n"),
                  _w(r, "README.md",
-                    "# R\n\n[CHANGELOG.md](CHANGELOG.md)\n\n\`\`\`sh\ngit clone --branch v3.15.1 --depth 1 x\n\`\`\`\n"),
+                    "# R\n\n[CHANGELOG.md](CHANGELOG.md)\n\n```sh\ngit clone --branch v3.15.1 --depth 1 x\n```\n"),
                  _w(r, "CHANGELOG.md",
                     "# История версий humanizer-ru\n\n## 3.15.1\n\nИсправления.\n"),
                  _w(r, "CITATION.cff",
@@ -670,7 +670,7 @@ def selftest():
       "не указано")
  case("README с нечётным числом фенсов -> FAIL",
       lambda r: _w(r, "README.md",
-                    "# R\n\n[CHANGELOG.md](CHANGELOG.md) PERSONA.md\n\n\`\`\`sh\ngit clone --branch v3.15.1 --depth 1 x\n\nОткрытый блок без закрытия\n"),
+                    "# R\n\n[CHANGELOG.md](CHANGELOG.md) PERSONA.md\n\n```sh\ngit clone --branch v3.15.1 --depth 1 x\n\nОткрытый блок без закрытия\n"),
       "фенсов")
  case("dsh/package.json не JSON-объект -> FAIL",
       lambda r: _w(r, "dsh/package.json", "[1, 2, 3]"),

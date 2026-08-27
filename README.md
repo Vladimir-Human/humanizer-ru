@@ -303,7 +303,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 58 гейтов полного чек-листа (54 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 64 гейтов полного чек-листа (60 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
