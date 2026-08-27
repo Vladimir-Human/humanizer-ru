@@ -254,6 +254,7 @@ humanizer-ru/
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
 │   ├── check_link_rot.py         # Гейт линк-рота реестра доказательств
+│   ├── check_outward.py          # Черновики исходящих текстов на вынос
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
@@ -298,7 +299,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 57 гейтов полного чек-листа (53 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 58 гейтов полного чек-листа (54 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

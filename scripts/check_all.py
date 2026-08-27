@@ -78,6 +78,8 @@ def _gates(quick, tmpdir):
          ["README.md", "README.en.md"], {0}),
         ("json-output: самопроверка", [PY, "scripts/check_json_output.py",
                                      "--selftest"], [], {0}),
+        ("outward: самопроверка", [PY, "scripts/check_outward.py", "--selftest"],
+         [], {0}),
         ("json-output: UTF-8 stdout CLI",
          [PY, "scripts/check_json_output.py"], [], {0}),
         ("maps: самопроверка", [PY, "scripts/check_reference_maps.py", "--selftest"], [], {0}),
