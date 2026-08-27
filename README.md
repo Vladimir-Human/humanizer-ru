@@ -255,6 +255,10 @@ humanizer-ru/
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
 │   ├── check_link_rot.py         # Гейт линк-рота реестра доказательств
 │   ├── check_outward.py          # Валидатор черновиков исходящих текстов
+│   ├── check_fixture_refs.py     # Целостность ссылок на фикстуры
+│   ├── check_version_literals.py # Зашитые версии вне положенных мест
+│   ├── check_git_depth.py        # Гейт shallow-клона
+│   ├── apply_patch.py            # Точечные правки из patch.json
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
