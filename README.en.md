@@ -226,6 +226,7 @@ humanizer-ru/
 │   ├── check_spec.py             # Agent Skills spec compliance
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_link_rot.py         # Fixture source link-rot gate
+│   ├── check_outward.py          # Outward-draft validator (issues, PRs)
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
@@ -271,7 +272,7 @@ humanizer-ru/
                                   #     validators, docs, style, release, install, demo)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 57 gates in the full checklist (53 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 58 gates in the full checklist (54 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
