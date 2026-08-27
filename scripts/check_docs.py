@@ -221,20 +221,42 @@ def check_repo(root):
 
  # 2c. Число маркеров в description SKILL.md совпадает с фактом (markers.v1.json).
  # Description — витрина каталога skills.sh и роутера агентов; разъехавшееся число
- # обманывает покупателя. Гейт ловит дрейф в обе стороны.
+ # обманывает покупателя. Отсутствие числа — тоже ошибка: тихое отключение гейта
+ # равносильно снятому обещанию.
  if version:
-  dm = re.search(r'description:\s*".*?(\d+) regex-маркер', skill)
-  if dm:
-   declared = int(dm.group(1))
-   mvj = os.path.join(root, "markers.v1.json")
-   if os.path.isfile(mvj):
-    try:
-     actual = json.load(io.open(mvj, encoding="utf-8"))["count"]
-    except (ValueError, KeyError, OSError):
-     actual = None
-    if actual is not None and declared != actual:
+  dm = re.search(r'description:\s*".*?(\d+) regex-маркер', skill, re.S)
+  mvj = os.path.join(root, "markers.v1.json")
+  actual = None
+  if os.path.isfile(mvj):
+   try:
+    parsed_mv = json.load(io.open(mvj, encoding="utf-8"))
+    if isinstance(parsed_mv, dict):
+     c = parsed_mv.get("count")
+     if isinstance(c, int):
+      actual = c
+     else:
+      errors.append("markers.v1.json: count не целое число: %r" % (c,))
+    else:
+     errors.append("markers.v1.json: не JSON-объект")
+   except ValueError:
+    errors.append("markers.v1.json: не читается JSON")
+  if actual is not None:
+   if dm:
+    declared = int(dm.group(1))
+    if declared != actual:
      errors.append("SKILL.md description: %d regex-маркеров, в markers.v1.json — %d"
                    % (declared, actual))
+   else:
+    errors.append("SKILL.md description: число regex-маркеров не указано — гейт 2c не может сверить")
+
+ # 2d. Фенсы markdown сбалансированы в README и SKILL: нечётное число ``` строк
+ # означает незакрытый блок — GitHub отрендерит половину файла как код.
+ for rel in ("README.md", "README.en.md", "SKILL.md"):
+  body = text(rel)
+  if body:
+   n_fences = sum(1 for ln in body.split("\n") if ln.strip().startswith("\`\`\`"))
+   if n_fences % 2 != 0:
+    errors.append("%s: %d строк-фенсов (нечёт) — блок не закрыт" % (rel, n_fences))
 
  for rel in ("README.md", "README.en.md"):
   t = text(rel)
@@ -633,6 +655,23 @@ def selftest():
                  _w(r, "SKILL.md",
                     "---\nname: humanizer-ru\ndescription: \"Проверяет текст (40 regex-маркеров). \"\nversion: " + "9.9.9" + "\n---\n\n# humanizer-ru (v" + "9.9.9" + ")\n")),
       "regex-маркеров")
+ case("description без числа маркеров -> FAIL",
+      lambda r: (_w(r, "markers.v1.json",
+                    '{"count": 40, "markers": []}\n'),
+                 _w(r, "SKILL.md",
+                    "---\nname: humanizer-ru\ndescription: \"Проверяет текст.\"\nversion: 3.15.1\n---\n\n# humanizer-ru (v3.15.1)\n"),
+                 _w(r, "README.md",
+                    "# R\n\n[CHANGELOG.md](CHANGELOG.md)\n\n\`\`\`sh\ngit clone --branch v3.15.1 --depth 1 x\n\`\`\`\n"),
+                 _w(r, "CHANGELOG.md",
+                    "# История версий humanizer-ru\n\n## 3.15.1\n\nИсправления.\n"),
+                 _w(r, "CITATION.cff",
+                    'cff-version: 1.2.0\nmessage: "Ссылайтесь так."\ntitle: "humanizer-ru"\n'
+                    'authors:\n  - name: "Vladimir-Human"\nversion: 3.15.1\ndate-released: "2026-08-27"\n')),
+      "не указано")
+ case("README с нечётным числом фенсов -> FAIL",
+      lambda r: _w(r, "README.md",
+                    "# R\n\n[CHANGELOG.md](CHANGELOG.md) PERSONA.md\n\n\`\`\`sh\ngit clone --branch v3.15.1 --depth 1 x\n\nОткрытый блок без закрытия\n"),
+      "фенсов")
  case("dsh/package.json не JSON-объект -> FAIL",
       lambda r: _w(r, "dsh/package.json", "[1, 2, 3]"),
       "не читается JSON-объект")
