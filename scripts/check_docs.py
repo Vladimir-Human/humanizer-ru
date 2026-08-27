@@ -33,6 +33,7 @@
 CLI: python3 scripts/check_docs.py [--repo ПУТЬ] [--selftest]
 Exit 0 — все проверки пройдены, 1 — есть ошибки.
 """
+import json
 import argparse
 import os
 import re
@@ -197,6 +198,20 @@ def check_repo(root):
   changelog = text("CHANGELOG.md")
   if changelog and not re.search(r"^##\s+%s\b" % re.escape(version), changelog, re.M):
    errors.append("CHANGELOG.md: нет записи ## %s для текущей версии" % version)
+ # 2b. Версия бандла dsh/package.json не отстаёт от версии скилла: бандл
+ # живёт только в дереве репозитория, в релизный архив не входит, и
+ # archive-side паритет (check_release) его не видит.
+ if version:
+  btxt = text(os.path.join("dsh", "package.json"))
+  if btxt:
+   try:
+    bver = json.loads(btxt).get("version")
+   except ValueError:
+    errors.append("dsh/package.json: не читается JSON")
+    bver = None
+   if bver is not None and bver != version:
+    errors.append("dsh/package.json: version %r != версии скилла %s"
+                  % (bver, version))
 
  for rel in ("README.md", "README.en.md"):
   t = text(rel)
@@ -586,6 +601,10 @@ def selftest():
       lambda r: _w(r, WORKFLOWS_DIR + "/self-scan.yml",
                    b"\xef\xbb\xbfname: x\non: push\n", binary=True),
       "BOM")
+ case("dsh/package.json с версией, отстающей от скилла -> FAIL",
+      lambda r: _w(r, "dsh/package.json",
+                   '{"name": "humanizer-ru-dsh", "version": "9.9.9"}'),
+      "dsh/package.json")
  # Гейт 16. Проверка должна падать на устаревшем имени каталога и молчать на
  # совпадающем, иначе она бесполезна: имя папки устаревает каждый выпуск.
  case("устаревшее имя каталога humanizer-ru-X.Y.Z -> FAIL",
