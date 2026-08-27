@@ -198,20 +198,25 @@ def check_repo(root):
   changelog = text("CHANGELOG.md")
   if changelog and not re.search(r"^##\s+%s\b" % re.escape(version), changelog, re.M):
    errors.append("CHANGELOG.md: нет записи ## %s для текущей версии" % version)
- # 2b. Версия бандла dsh/package.json не отстаёт от версии скилла: бандл
+ # 2b. Версия бандла dsh/package.json совпадает с версией скилла: бандл
  # живёт только в дереве репозитория, в релизный архив не входит, и
  # archive-side паритет (check_release) его не видит.
  if version:
   btxt = text(os.path.join("dsh", "package.json"))
   if btxt:
    try:
-    bver = json.loads(btxt).get("version")
+    parsed = json.loads(btxt)
    except ValueError:
-    errors.append("dsh/package.json: не читается JSON")
-    bver = None
-   if bver is not None and bver != version:
-    errors.append("dsh/package.json: version %r != версии скилла %s"
-                  % (bver, version))
+    parsed = None
+   if not isinstance(parsed, dict):
+    errors.append("dsh/package.json: не читается JSON-объект")
+   else:
+    bver = parsed.get("version")
+    if not bver:
+     errors.append("dsh/package.json: нет version")
+    elif bver != version:
+     errors.append("dsh/package.json: version %r != версии скилла %s"
+                   % (bver, version))
 
  for rel in ("README.md", "README.en.md"):
   t = text(rel)
@@ -601,10 +606,13 @@ def selftest():
       lambda r: _w(r, WORKFLOWS_DIR + "/self-scan.yml",
                    b"\xef\xbb\xbfname: x\non: push\n", binary=True),
       "BOM")
- case("dsh/package.json с версией, отстающей от скилла -> FAIL",
+ case("dsh/package.json с версией, не совпадающей со скиллом -> FAIL",
       lambda r: _w(r, "dsh/package.json",
                    '{"name": "humanizer-ru-dsh", "version": "9.9.9"}'),
       "dsh/package.json")
+ case("dsh/package.json не JSON-объект -> FAIL",
+      lambda r: _w(r, "dsh/package.json", "[1, 2, 3]"),
+      "не читается JSON-объект")
  # Гейт 16. Проверка должна падать на устаревшем имени каталога и молчать на
  # совпадающем, иначе она бесполезна: имя папки устаревает каждый выпуск.
  case("устаревшее имя каталога humanizer-ru-X.Y.Z -> FAIL",

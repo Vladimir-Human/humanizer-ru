@@ -254,7 +254,7 @@ humanizer-ru/
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
 │   ├── check_link_rot.py         # Гейт линк-рота реестра доказательств
-│   ├── check_outward.py          # Черновики исходящих текстов на вынос
+│   ├── check_outward.py          # Валидатор черновиков исходящих текстов
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
