@@ -1,6 +1,15 @@
 {
   "name": "humanizer-ru-dsh",
-  "version": "0.1.0",
+  "version": "3.15.0",
+  "description": "Agent Skill: finds traces of machine generation in Russian text and, on explicit request, rewrites it to sound natural. Offline, text-only; 40 regex markers with an evidence registry.",
+  "license": "MIT",
+  "author": "Vladimir-Human",
+  "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vladimir-Human/humanizer-ru.git"
+  },
+  "keywords": ["dsh-bundle", "agent-skill", "russian", "humanizer"],
   "type": "module",
   "files": ["cordis.patch.yml", "skills"],
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
