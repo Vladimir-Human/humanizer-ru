@@ -1,0 +1,43 @@
+{
+  "P1": {
+    "axes_count": 4,
+    "axes": [
+      "## Ось 1. Разброс длины предложений",
+      "## Ось 2. Плотность длинных тире",
+      "## Ось 3. Однотипные зачины абзацев",
+      "## Ось 4. Доля списков"
+    ],
+    "has_manual_procedures": true,
+    "no_corpus_check_claim": true
+  },
+  "P2": {
+    "audit_paths": [
+      "commands\\audit.md",
+      "eval\\runs\\2026-08-11-genre-modes\\source\\ai-copilot-audit.txt",
+      "eval\\runs\\2026-08-11-genre-modes\\with\\ai-copilot-audit.txt",
+      "eval\\runs\\2026-08-11-genre-modes\\without\\ai-copilot-audit.txt",
+      "eval\\runs\\2026-08-13-f4-counterfactual\\source\\ai-copilot-audit.txt",
+      "eval\\runs\\2026-08-13-f4-counterfactual\\with\\ai-copilot-audit.txt",
+      "eval\\runs\\2026-08-13-f4-counterfactual\\without\\ai-copilot-audit.txt",
+      "eval\\scenarios\\run-2026-08-25\\v2\\audit-only.txt",
+      "research\\archive\\releases\\AUDIT-2026-07-17.md",
+      "research\\archive\\releases\\AUDIT-2026-07-21.md",
+      "research\\raw\\copilot\\01-freex-audit.txt",
+      "research\\superposition\\2026-08-28-q5-claude-mark\\evidence\\audit.json"
+    ],
+    "audit_count": 13,
+    "audit_references_doc_level": false
+  },
+  "P3": {
+    "ai_files": 24,
+    "human_files": 26,
+    "auc": {
+      "rhythm_std": 0.5994,
+      "emdash_per_1k": 0.5849,
+      "opener_top_frac": 0.2444,
+      "list_frac": 0.7804
+    },
+    "max_auc": 0.7804,
+    "aucs_above_coin": 3
+  }
+}

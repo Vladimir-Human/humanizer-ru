@@ -1,0 +1,43 @@
+{
+  "P1": {
+    "axes_count": 4,
+    "axes": [
+      "## Ось 1. Разброс длины предложений",
+      "## Ось 2. Плотность длинных тире",
+      "## Ось 3. Однотипные зачины абзацев",
+      "## Ось 4. Доля списков"
+    ],
+    "has_manual_procedures": true,
+    "no_corpus_check_claim": false
+  },
+  "P2": {
+    "audit_paths": [
+      "..\\..\\..",
+      "AGENTS.md",
+      "AGENTS.md",
+      "AGENTS.md",
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "CHANGELOG.md",
+      "CHANGELOG.md",
+      "CHANGELOG.md",
+      "CITATION.cff",
+      "CITATION.cff",
+      "CITATION.cff"
+    ],
+    "audit_count": 125,
+    "audit_references_doc_level": true
+  },
+  "P3": {
+    "ai_files": 24,
+    "human_files": 26,
+    "auc": {
+      "rhythm_std": 0.5994,
+      "emdash_per_1k": 0.5849,
+      "opener_top_frac": 0.2444,
+      "list_frac": 0.7804
+    },
+    "max_auc": 0.7804,
+    "aucs_above_coin": 3
+  }
+}
