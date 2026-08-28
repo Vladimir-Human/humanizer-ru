@@ -457,11 +457,21 @@ def check_repo(root):
    _n_full = _n_quick = None
    errors.append("I.17: не удалось пересчитать гейты check_all: %s" % _exc)
   if _n_full is not None:
+   # Число паттернов пересчитывается из references/*-patterns.md
+   # (нумерованные заголовки «## 22.» / «### 23a.»), как гейты из _gates():
+   # литерал устаревал молча при удалении паттерна.
+   import glob as _g17
+   _pat_n = 0
+   for _pf in _g17.glob(os.path.join(root, "references", "*-patterns.md")):
+    _pat_n += len(re.findall(r"(?m)^#{2,3} \d+[a-z]?\.", text(
+        os.path.relpath(_pf, root).replace(os.sep, "/"))))
+   if not _pat_n:
+    errors.append("I.17: пересчёт паттернов дал 0 — сломан подсчёт")
    _expect = {
-    "README.md": ["56 паттернам машинного письма",
+    "README.md": ["%d паттернам машинного письма" % _pat_n,
                   "%d гейт[а-я]* полного" % _n_full,
                   r"\(\d+ в --quick\)"],
-    "README.en.md": ["56 patterns",
+    "README.en.md": ["%d patterns" % _pat_n,
                      "%d gates in the full" % _n_full,
                      r"\(\d+ in --quick\)"],
     "CHANGELOG.md": ["%d гейт[а-я]* полного check_all, %d в --quick"

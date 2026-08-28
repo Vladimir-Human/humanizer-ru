@@ -49,7 +49,7 @@ const HUMANIZER_MARKERS = {
       "id": "ref_name_search",
       "class": "B",
       "description": "Имя сноски в вики-разметке: числовой префикс + имя внутреннего инструмента. Оно может остаться при копировании ответа агента с веб-поиском",
-      "source": "<ref\\b[^>]*\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
+      "source": "<ref\\b[^>]{0,500}\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
       "flags": "g"
     },
     {

@@ -156,7 +156,7 @@
     {
       "id": "ref_name_search",
       "class": "B",
-      "pattern": "<ref\\b[^>]*\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
+      "pattern": "<ref\\b[^>]{0,500}\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
       "description": "Имя сноски в вики-разметке: числовой префикс + имя внутреннего инструмента. Оно может остаться при копировании ответа агента с веб-поиском",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Dan_Morehead&oldid=1363966174",

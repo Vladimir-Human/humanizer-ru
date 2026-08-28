@@ -69,7 +69,7 @@ CASES = {
         ("fileciteturn0file2turn0file6", 2),
     ),
     "ref_name_search": (
-        r"<ref\b[^>]*\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
+        r"<ref\b[^>]{0,500}\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
         [
             '<ref name="0search12">',
             '<ref name="2file0">',
@@ -503,9 +503,40 @@ CLASS_OF = {
 }
 
 
-def _inside_backticks(line: str, start: int, end: int) -> bool:
+# Теневой набор невидимых/форматных символов слоя A: zero-width, биди-
+# контролы, невидимые операторы, межстрочные аннотации, мягкий перенос,
+# экзотические пробелы, монгольские гласные, арабский знак, tag-символы и
+# вариационные селекторы. Вставка любого из них внутрь маркера класса A
+# раньше разбивала совпадение: «turn0<U+200B>search0» давал лишь класс B
+# (zero_width), и гейт --class a проходил (аудит 2026-08-28). Теневая копия
+# строки без этих символов сканируется теми же выражениями; совпадение в
+# тени считается находкой. Класс A не расширяется — реестр не раздувается.
+_SHADOW_INVISIBLES = re.compile(
+    "[\u00ad\u061c\u034f\u1680\u180b-\u180e\u200b-\u200f"
+    "\u202a-\u202e\u205f\u2060-\u2069\u206a-\u206f\u3000"
+    "\ufe00-\ufe0f\ufeff\ufff9-\ufffb\U000e0000-\U000e007f]")
+
+
+def _backtick_prefix(line: str) -> list:
+    """Префиксные количества `обратных кавычек` — один проход на строку.
+
+    Возвращает (prefix, total): prefix[i] — число бэктиков в line[:i];
+    проверка «совпадение внутри кавычек» сводится к двум чтениям массива
+    вместо пересчёта срезов на каждое совпадение (раньше — квадратично
+    на минифицированных однострочниках из десятков тысяч совпадений).
+    """
+    prefix = [0] * (len(line) + 1)
+    count = 0
+    for i, ch in enumerate(line):
+        if ch == "`":
+            count += 1
+        prefix[i + 1] = count
+    return prefix, count
+
+
+def _inside_backticks(prefix: list, total: int, start: int, end: int) -> bool:
     """Совпадение внутри `обратных кавычек` — это документация, не артефакт."""
-    return line[:start].count("`") % 2 == 1 and line[end:].count("`") >= 1
+    return prefix[start] % 2 == 1 and (total - prefix[end]) >= 1
 
 
 def _line_matches(line: str, compiled: dict) -> list:
@@ -519,16 +550,29 @@ def _line_matches(line: str, compiled: dict) -> list:
     выражения, отбрасывается; пересечения без вложенности (PUA-разделители
     вокруг turn-метки) сохраняются. На вердикт это не влияло — любое
     совпадение класса A достаточно, — но счёт в отчёте был завышен.
+    Дедупликация линейная: сортировка по (началу, длине) и однопроходное
+    слияние — квадратичный вариант на 100-КБ строке из невидимых
+    символов работал минутами (независимый аудит 2026-08-28).
     """
+    prefix, total_bt = _backtick_prefix(line)
     found = []
     for name, rx in compiled.items():
         for m in rx.finditer(line):
-            if _inside_backticks(line, m.start(), m.end()):
+            if _inside_backticks(prefix, total_bt, m.start(), m.end()):
                 continue
             found.append((m.start(), m.end(), name))
-    kept = [(s, e, name) for s, e, name in found
-            if not any(s2 <= s and e <= e2 and (e - s) < (e2 - s2)
-                       for s2, e2, _n in found)]
+    # Сортировка по началу, при равном начале — более длинное первым:
+    # контейнер совпадения всегда встречается раньше содержимого.
+    found.sort(key=lambda item: (item[0], -(item[1] - item[0])))
+    kept = []
+    cover_start = cover_end = -1
+    for start, end, name in found:
+        if (cover_start <= start and end <= cover_end
+                and (end - start) < (cover_end - cover_start)):
+            continue
+        kept.append((start, end, name))
+        if end > cover_end:
+            cover_start, cover_end = start, end
     kept.sort()
     return kept
 
@@ -618,7 +662,8 @@ def scan(paths: list) -> int:
         for lineno, line in enumerate(lines, 1):
             if lineno in blocked:
                 continue
-            for _start, _end, name in _line_matches(line, compiled):
+            direct = _line_matches(line, compiled)
+            for _start, _end, name in direct:
                 cls = CLASS_OF.get(name, "A")
                 if class_filter == "a" and cls == "B":
                     class_b_warnings += 1
@@ -628,6 +673,24 @@ def scan(paths: list) -> int:
                 found += 1
                 fragment = _console_text(line.strip()[:90])
                 print(f"{path}:{lineno} [{name}] {fragment}")
+            # Теневой проход: те же выражения по строке без невидимых
+            # символов — ловит маркер, разбитый вставкой (turn0<U+200B>…).
+            # Находки, уже пойманные напрямую, повторно не печатаются.
+            shadow = _SHADOW_INVISIBLES.sub("", line)
+            if shadow != line:
+                direct_names = {n for _s, _e, n in direct}
+                for _start, _end, name in _line_matches(shadow, compiled):
+                    if name in direct_names:
+                        continue
+                    cls = CLASS_OF.get(name, "A")
+                    fragment = _console_text(shadow.strip()[:90])
+                    if class_filter == "a" and cls == "B":
+                        class_b_warnings += 1
+                        print(f"[B, предупреждение] {path}:{lineno} [{name}] "
+                              f"(теневой) {fragment}")
+                        continue
+                    found += 1
+                    print(f"{path}:{lineno} [{name}] (теневой) {fragment}")
     if class_filter == "a":
         print(f"\nМаркеров класса A: {found}; предупреждений класса B: {class_b_warnings}.")
         return 1 if found else 0
@@ -693,6 +756,23 @@ def main() -> int:
         if got != expected:
             print("ПРОВАЛ scan-дедупликация: ожидалось %d, найдено %d для %r"
                   % (expected, got, _console_text(text[:40])))
+            fails += 1
+
+    # Теневой скан: маркер класса A, разбитый невидимым символом, ловится
+    # в тени; легальные эмодзи (ZWJ/VS16) ложных теневых находок не дают.
+    for text, should_find in (
+        ("turn0\u200bsearch0", True),
+        ("link?utm_source=chat\u200bgpt.com", True),
+        ("Клавиатура \u2328\ufe0f и радуга \U0001f3f3\ufe0f\u200d\U0001f308", False),
+        ("обычный текст без маркеров и без невидимых", False),
+    ):
+        shadow = _SHADOW_INVISIBLES.sub("", text)
+        names = {n for _s, _e, n in _line_matches(shadow, compiled_all)}
+        direct_names = {n for _s, _e, n in _line_matches(text, compiled_all)}
+        shadow_only = bool(names - direct_names)
+        if shadow_only != should_find:
+            print("ПРОВАЛ теневой скан: %r — теневых находок %s, ожидалось %s"
+                  % (_console_text(text[:40]), shadow_only, should_find))
             fails += 1
 
     total = len(CASES)
