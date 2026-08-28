@@ -6,8 +6,8 @@ allowed-tools: "Read Grep Glob"
 compatibility: DeepSeek Harness (dsh), Claude.ai, Claude Code, opencode и другие агенты, поддерживающие спецификацию agentskills.io. Только текст, без выполнения кода и доступа к сети; читает только собственные файлы разметки.
 metadata:
   author: Vladimir-Human
-  version: "3.16.3"
-  last_reviewed: "2026-08-28"
+  version: "3.16.4"
+  last_reviewed: "2026-08-29"
   next_review_due: "2026-11-12"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
@@ -16,7 +16,7 @@ metadata:
   sources: "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing; https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0; https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup"
 ---
 
-# Humanizer-ru — очеловечивание текста (v3.16.3)
+# Humanizer-ru — очеловечивание текста (v3.16.4)
 
 Скилл для редактирования русскоязычного текста со следами работы ИИ. Цель — сделать текст естественным, не искажая смысла. Опирается на Wikipedia:Signs of AI writing, WikiProject AI Cleanup и русскую страницу «Википедия:Признаки сгенерированности текста».
 

@@ -96,7 +96,7 @@ pip install humanizer-ru
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.3 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -116,7 +116,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.3 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль появляется при первом запуске, `pnpm` нужен на PATH:
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.3
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.4
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -198,7 +198,7 @@ jobs:
 | `fix` | `false` | Автофикс (только с `fail-on: class-a`): файлы с маркером класса A чистятся текстовым путём filemarks (Layer A + MARKUP, прямой вызов `scripts/action_fix.py`); файлы без маркеров не перезаписываются вовсе. Изменения остаются в рабочем каталоге — закоммитить их должен вызывающий workflow. После чистки идёт повторный скан: остаточные маркеры роняют гейт. Измеренные границы: нейтральность чистки подтверждена на 49 файлах эталонного корпуса (0 изменённых байт); чистка помеченного файла нормализует переводы строк к LF. |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.3`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.4`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:
@@ -260,6 +260,9 @@ humanizer-ru/
 │   ├── check_version_literals.py # Зашитые версии вне положенных мест
 │   ├── check_git_depth.py        # Гейт shallow-клона
 │   ├── check_superposition.py    # Целостность прогонов суперпозиции
+│   ├── check_action_yaml.py     # action.yml парсится как YAML
+│   ├── check_version_sync.py   # __version__ == SKILL.md
+│   ├── check_skill_reviewed.py # last_reviewed не старее коммита
 │   ├── apply_patch.py            # Точечные правки из patch.json
 │   ├── action_fix.py             # Текстовый автофикс маркеров класса A для CI-экшена
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
@@ -306,7 +309,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 66 гейтов полного чек-листа (62 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 72 гейтов полного чек-листа (68 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

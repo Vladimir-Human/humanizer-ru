@@ -40,6 +40,9 @@ VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
 ALLOWED_FILES = frozenset((
     "scripts/check_docs.py",
     "scripts/check_version_literals.py",
+    "scripts/check_version_sync.py",
+    "scripts/check_skill_reviewed.py",
+    "scripts/check_action_yaml.py",
     "scripts/check_release.py",
     "scripts/check_outward.py",
     "scripts/check_fixture_sources.py",
