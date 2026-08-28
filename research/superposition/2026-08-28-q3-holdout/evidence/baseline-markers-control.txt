@@ -1,0 +1,18 @@
+КОНТРОЛЬ (пост-правило, 2026-08-28, после обнаружения срабатывания invisible_layout на пробе):
+маркеры классов A/B на корпусе первой серии (24 файла, research/raw):
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\02-valans-span.txt:8 [gemini_span] В марте 2026 года Французский национальный институт превентивных археологических исследова
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\02-valans-span.txt:8 [gemini_span] В марте 2026 года Французский национальный институт превентивных археологических исследова
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\02-valans-span.txt:8 [gemini_span] В марте 2026 года Французский национальный институт превентивных археологических исследова
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\gemini\03-eretria-span.txt:42 [gemini_span] В августе 2024 года в ходе раскопок, проводимых Министерством культуры Греции в древней Эр
+C:\Users\vovap\humanizer-ru-study\research\raw\le-chat\01-fast-канберра.txt:1 [zero_width] ﻿Режим: Fast (Vibe)
+
+Найдено маркеров: 11.
+
+Снять контроль мотивировало срабатывание invisible_layout на файле пробы kimi-02-pechat.txt;
+условие правила коллапса 'хотя бы одно срабатывание маркера A/B' не проверялось на базлайне до заморозки правила — упущение капитана, зафиксировано в RUNLOG.
