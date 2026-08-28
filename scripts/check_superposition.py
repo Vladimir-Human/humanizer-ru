@@ -14,10 +14,13 @@
    обязательных слота: H0 («slot: null») и H-инверсия («slot: inversion»).
 3. Если есть decision.md (коллапс оформлен):
    - в нём цитируется правило коллапса (раздел «Правило коллапса»);
-   - предрегистрация не моложе НИ ОДНОГО замерного файла: mtime
-     preregistration.md <= mtime каждого файла, лежащего в evidence/
-     НЕПОСРЕДСТВЕННО (анти-HARKing: правило записано до данных; артефакты
-     ранних фаз в подкаталогах evidence/ — входы генерации, не замер);
+   - предрегистрация не моложе НИ ОДНОГО замерного файла: хронология
+     берётся из git (дата первого коммита файла; в свежем клоне все
+     mtime равны времени checkout и не различают файлы), fallback для
+     файлов вне git — mtime. preregistration.md не старше каждого
+     файла, лежащего в evidence/ НЕПОСРЕДСТВЕННО (анти-HARKing:
+     правило записано до данных; артефакты ранних фаз в подкаталогах
+     evidence/ — входы генерации, не замер);
    - есть раздел «Отколлапсированные ветки», и каждый его пункт несёт
      условие воскрешения («воскреш…»/«воскрес…»/«переоткрывать»).
 4. Пустой evidence/ при оформленном decision.md — ошибка: коллапс без
@@ -146,6 +149,10 @@ def check_run_dir(run_dir):
                             % (rel, first_line[:60]))
 
         # Анти-HARKing: правило не моложе замерных данных.
+        # Хронология берётся из git (первый коммит файла): mtime в свежем
+        # клоне равно времени checkout для всех файлов, и сравнение mtime
+        # даёт ложные срабатывания. Для файлов вне git (нераспределённый
+        # рабочий каталог, selftest) — fallback на mtime.
         if os.path.isdir(evidence):
             data_files = [os.path.join(evidence, name)
                           for name in sorted(os.listdir(evidence))
@@ -154,14 +161,41 @@ def check_run_dir(run_dir):
                 errors.append("%s: evidence/ пуст при оформленном decision.md — "
                               "коллапс без данных" % rel)
             elif os.path.isfile(prereg):
-                rule_time = os.path.getmtime(prereg)
+                rule_time = _file_epoch(prereg)
                 for path in data_files:
-                    if os.path.getmtime(path) < rule_time:
+                    if _file_epoch(path) < rule_time:
                         errors.append(
                             "%s: правило коллапса (preregistration.md) моложе "
                             "замерного файла evidence/%s"
                             % (rel, os.path.basename(path)))
     return errors
+
+
+def _git_first_epoch(path):
+    """Unix-time первого коммита файла или None (файл вне git).
+
+    Только чтение истории: git log --follow не нужен — прогоны лежат
+    неподвижно; достаточно первой записи, касающейся пути от корня репо.
+    """
+    try:
+        import subprocess
+        proc = subprocess.run(
+            ["git", "log", "--format=%at", "--diff-filter=A", "--", path],
+            cwd=ROOT, capture_output=True, text=True, timeout=15)
+        if proc.returncode != 0:
+            return None
+        stamps = [int(s) for s in proc.stdout.split() if s.strip().isdigit()]
+        return min(stamps) if stamps else None
+    except Exception:
+        return None
+
+
+def _file_epoch(path):
+    """Хронология файла: git-первокоммит, fallback mtime (вне git)."""
+    stamp = _git_first_epoch(path)
+    if stamp is not None:
+        return stamp
+    return int(os.path.getmtime(path))
 
 
 def check_all():
