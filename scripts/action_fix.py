@@ -37,6 +37,7 @@ if hasattr(sys.stdout, "reconfigure"):
 def fix_file(path):
     """Чистит файл текстовым путём. Возвращает (status, info)."""
     from text_layer import clean_text_layer, clean_markup  # noqa: E402
+    from common_fm import safe_write_text  # noqa: E402
     with open(path, encoding="utf-8", errors="surrogateescape") as fh:
         text = fh.read()
     cleaned, n = clean_text_layer(text)
@@ -47,9 +48,9 @@ def fix_file(path):
         # Текст изменился без снятия маркеров (не должно происходить) —
         # считаем непочищаемым, чтобы вызывающий код решил.
         return ("UNFIXED", (n, m))
-    with open(path, "w", encoding="utf-8", errors="surrogateescape",
-              newline="") as fh:
-        fh.write(cleaned)
+    # Запись через safe_write_text (common_fm): атомарность и защита от
+    # симлинков — как у filemarks, не голым open().
+    safe_write_text(path, cleaned)
     return ("CHANGED", (n, m))
 
 
