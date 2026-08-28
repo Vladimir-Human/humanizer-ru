@@ -96,7 +96,7 @@ pip install humanizer-ru
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -116,7 +116,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль появляется при первом запуске, `pnpm` нужен на PATH:
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.1
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -195,10 +195,10 @@ jobs:
 | `files` | `**/*.md` | Файлы для проверки: один bash-глоб или несколько через пробел. Внутри действие включает `globstar` и `nullglob`, поэтому `**/*.md` заходит в подкаталоги. |
 | `genre` | `neutral` | Жанр для мягких признаков: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Используется только при `fail-on: soft-threshold`. |
 | `fail-on` | `class-a` | `class-a` — жёсткий regex-слой (`check_markers.py --scan --class a`: падает только класс A; контекстные маркеры класса B печатаются предупреждениями и вердикта не дают); `soft-threshold` — счётчик мягких признаков (`scan_soft_signals.py --fail-multicat 3`). |
-| `fix` | `false` | Автофикс (только с `fail-on: class-a`): файлы с маркером класса A чистятся детерминированным слоем `filemarks.py --clean`; файлы без маркеров не перезаписываются вовсе. Изменения остаются в рабочем каталоге — закоммитить их должен вызывающий workflow. После чистки идёт повторный скан: остаточные маркеры роняют гейт. Измеренные границы: нейтральность чистки подтверждена на 49 файлах эталонного корпуса (0 изменённых байт); чистка помеченного файла нормализует переводы строк к LF. |
+| `fix` | `false` | Автофикс (только с `fail-on: class-a`): файлы с маркером класса A чистятся текстовым путём filemarks (Layer A + MARKUP, прямой вызов `scripts/action_fix.py`); файлы без маркеров не перезаписываются вовсе. Изменения остаются в рабочем каталоге — закоммитить их должен вызывающий workflow. После чистки идёт повторный скан: остаточные маркеры роняют гейт. Измеренные границы: нейтральность чистки подтверждена на 49 файлах эталонного корпуса (0 изменённых байт); чистка помеченного файла нормализует переводы строк к LF. |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.0`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.1`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:
@@ -261,6 +261,7 @@ humanizer-ru/
 │   ├── check_git_depth.py        # Гейт shallow-клона
 │   ├── check_superposition.py    # Целостность прогонов суперпозиции
 │   ├── apply_patch.py            # Точечные правки из patch.json
+│   ├── action_fix.py             # Текстовый автофикс маркеров класса A для CI-экшена
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
