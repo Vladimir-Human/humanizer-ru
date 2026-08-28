@@ -1,12 +1,14 @@
 # humanizer-ru CI-гейт: прекоммит-проверка русских текстов на следы
-# машинной генерации. Composite action, только стандартная библиотека
+# машинной генерации. Composite action, только стандартная библиотия
 # Python и официальный actions/checkout (pinned).
 name: 'humanizer-ru CI gate'
 description: |
   Прогоняет humanizer-ru по файлам репозитория: жёсткие regex-маркеры
   (check_markers.py --scan) либо мягкие признаки (scan_soft_signals.py
   --fail-multicat 3). Ничего не публикует наружу; для работы достаточно
-  permissions: contents: read.
+  permissions: contents: read. С fix: true — дополнительно чистит
+  помеченные файлы (filemarks.py --clean): изменения остаются в рабочем
+  каталоге, коммитит вызывающий workflow.
 author: 'Vladimir-Human'
 
 inputs:
@@ -30,6 +32,15 @@ inputs:
       признаков (scan_soft_signals.py --fail-multicat 3).
     required: false
     default: 'class-a'
+  fix:
+    description: >
+      Автофикс (только с fail-on: class-a): файлы с маркерами класса A
+      чистятся детерминированным слоем filemarks.py --clean; файлы без
+      маркеров не перезаписываются. Изменения остаются в рабочем каталоге —
+      закоммитить их должен вызывающий workflow. После чистки выполняется
+      повторный скан: остаточные маркеры роняют гейт.
+    required: false
+    default: 'false'
   ref:
     description: >
       Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
@@ -53,6 +64,7 @@ runs:
         FILES_INPUT: ${{ inputs.files }}
         GENRE_INPUT: ${{ inputs.genre }}
         FAIL_ON: ${{ inputs.fail-on }}
+        FIX_INPUT: ${{ inputs.fix }}
       run: |
         set -euo pipefail
         shopt -s globstar nullglob
@@ -62,6 +74,56 @@ runs:
           exit 2
         fi
         HUMANIZER_SCRIPTS="$(cd "${{ github.action_path }}/.." && pwd)/scripts"
+        FILEMARKS="${HUMANIZER_SCRIPTS}/filemarks/filemarks.py"
+
+        if [ "${FAIL_ON}" = "class-a" ] && [ "${FIX_INPUT}" = "true" ]; then
+          # Автофикс: файлы с маркером класса A чистятся текстовым путём
+          # filemarks (text_layer: Layer A + MARKUP — путь, валидированный
+          # на эталонном корпусе), файлы без маркеров не трогаются вовсе.
+          # Прямой вызов text_layer, а не filemarks --clean: CLI файлmarks
+          # маршрутизирует .md в контейнерный путь (метаданные frontmatter),
+          # который не снимает текстовые маркеры. После чистки — повторный
+          # скан всех файлов: остаточные маркеры роняют гейт.
+          export HUMANIZER_SCRIPTS
+          MARKED=0
+          for f in "${FILES[@]}"; do
+            if python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
+                 --scan --class a "$f" >/dev/null 2>&1; then
+              continue  # маркеров класса A нет — файл не трогаем
+            fi
+            echo "автофикс: ${f}"
+            python3 - "$f" <<'PY'
+import os
+import sys
+
+scripts = os.environ["HUMANIZER_SCRIPTS"]
+sys.path.insert(0, scripts)
+sys.path.insert(0, os.path.join(scripts, "filemarks"))
+from text_layer import clean_text_layer, clean_markup  # noqa: E402
+
+path = sys.argv[1]
+with open(path, encoding="utf-8", errors="surrogateescape") as fh:
+    text = fh.read()
+cleaned, n = clean_text_layer(text)
+cleaned, m = clean_markup(cleaned)
+if cleaned != text:
+    with open(path, "w", encoding="utf-8", errors="surrogateescape",
+              newline="") as fh:
+        fh.write(cleaned)
+    print("  снято: layer_a=%d, markup=%d" % (n, m))
+else:
+    print("  изменений нет (маркер вне текстового пути)", file=sys.stderr)
+    sys.exit(1)
+PY
+            MARKED=$((MARKED + 1))
+          done
+          echo "::group::humanizer-перепроверка после автофикса"
+          python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
+            --scan --class a "${FILES[@]}"
+          echo "::endgroup::"
+          echo "автофикс: почищено файлов ${MARKED}; изменения в рабочем каталоге — закоммитить их должен вызывающий workflow"
+          exit 0
+        fi
 
         case "${FAIL_ON}" in
           class-a)
