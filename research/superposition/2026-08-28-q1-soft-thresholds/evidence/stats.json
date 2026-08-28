@@ -1,0 +1,190 @@
+{
+  "script": "research\\superposition\\2026-08-28-q1-soft-thresholds\\measure.py",
+  "corpus_counts": {
+    "ai": 24,
+    "human": 26,
+    "boundary": 2
+  },
+  "integrity": {
+    "perfile_mismatches": [],
+    "neutral_mismatches": []
+  },
+  "criticality_gate": {
+    "per_file": {
+      "ai": 6,
+      "human": 0,
+      "boundary": 0
+    },
+    "neutral": {
+      "ai": 6,
+      "human": 4,
+      "boundary": 0
+    }
+  },
+  "detector_histogram": {
+    "fired_detectors": 6,
+    "registry_size": 33,
+    "fires_per_detector": {
+      "list_share": 7,
+      "mid_cutoff": 7,
+      "rule_of_three": 4,
+      "quotes_style": 2,
+      "emdash_bold": 1,
+      "emoji_lists": 1
+    },
+    "top2_share": 0.6364,
+    "category_fires": {
+      "структурная": 11,
+      "языковая": 4,
+      "коммуникативная": 7
+    },
+    "total_fires": 22
+  },
+  "aggregation": {
+    "sum_count": 71,
+    "sum_features": 22,
+    "ratio": 3.227
+  },
+  "subthreshold_losses": [
+    {
+      "file": "research\\raw\\deepseek\\02-v3-volchya-otrava.txt",
+      "detector": "est_avoidance",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\deepseek\\03-v3-svinye-krylyshki.txt",
+      "detector": "rule_of_three",
+      "hits": 2,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\gemini\\01-25pro-utopia.txt",
+      "detector": "est_avoidance",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\gemini\\01-25pro-utopia.txt",
+      "detector": "rule_of_three",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\gigachat\\03-столица-австралии.txt",
+      "detector": "est_avoidance",
+      "hits": 2,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\gigachat\\05-подарок-коллеге.txt",
+      "detector": "rule_of_three",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\grok\\01-grok2-sunduki.txt",
+      "detector": "rule_of_three",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\grok\\03-grok3-gran-buduschego.txt",
+      "detector": "est_avoidance",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\grok\\03-grok3-gran-buduschego.txt",
+      "detector": "rule_of_three",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\le-chat\\04-deep-research-канберра.txt",
+      "detector": "rule_of_three",
+      "hits": 1,
+      "min_hits": 3
+    },
+    {
+      "file": "research\\raw\\le-chat\\04-deep-research-канберра.txt",
+      "detector": "quotes_style",
+      "hits": 1,
+      "min_hits": 3
+    }
+  ],
+  "prenorm": {
+    "files_changed": 2,
+    "feature_delta": 2
+  },
+  "auc": {
+    "features_auc": 0.8125,
+    "rhythm_variance_auc": 0.5897
+  },
+  "race": {
+    "per_file": {
+      "T1_K1": {
+        "tp": 15,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.625
+      },
+      "T1_K2": {
+        "tp": 5,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2083
+      },
+      "T2_K1": {
+        "tp": 7,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2917
+      },
+      "T2_K2": {
+        "tp": 5,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2083
+      },
+      "T3_K2": {
+        "tp": 0,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.0
+      }
+    },
+    "neutral": {
+      "T1_K1": {
+        "tp": 15,
+        "fp": 4,
+        "boundary": 0,
+        "recall": 0.625
+      },
+      "T1_K2": {
+        "tp": 5,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2083
+      },
+      "T2_K1": {
+        "tp": 7,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2917
+      },
+      "T2_K2": {
+        "tp": 5,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.2083
+      },
+      "T3_K2": {
+        "tp": 0,
+        "fp": 0,
+        "boundary": 0,
+        "recall": 0.0
+      }
+    }
+  }
+}
