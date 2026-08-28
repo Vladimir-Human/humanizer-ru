@@ -258,6 +258,7 @@ humanizer-ru/
 │   ├── check_fixture_refs.py     # Целостность ссылок на фикстуры
 │   ├── check_version_literals.py # Зашитые версии вне положенных мест
 │   ├── check_git_depth.py        # Гейт shallow-клона
+│   ├── check_superposition.py    # Целостность прогонов суперпозиции
 │   ├── apply_patch.py            # Точечные правки из patch.json
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
@@ -303,7 +304,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 64 гейтов полного чек-листа (60 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 66 гейтов полного чек-листа (62 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
