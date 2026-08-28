@@ -1,0 +1,239 @@
+{
+  "script": "research\\superposition\\2026-08-28-q3-holdout\\measure_q3.py",
+  "power": {
+    "kstar_for_n12": 10,
+    "alpha_at_kstar_n12": 0.01929,
+    "power_n12": {
+      "p=0.60": 0.0834,
+      "p=0.70": 0.2528,
+      "p=0.80": 0.5583,
+      "p=0.85": 0.7358,
+      "p=0.87": 0.8023,
+      "p=0.90": 0.8891
+    },
+    "n_required_p07_power80": 37,
+    "ci_lower_bounds": {
+      "9/9": {
+        "clopper_pearson_lb_2sided": 0.6637,
+        "wilson_lb_2sided": 0.7009
+      },
+      "14/14": {
+        "clopper_pearson_lb_2sided": 0.7684,
+        "wilson_lb_2sided": 0.7847
+      },
+      "19/19": {
+        "clopper_pearson_lb_2sided": 0.8235,
+        "wilson_lb_2sided": 0.8318
+      }
+    },
+    "published_pvalues_reproduced": {
+      "9/9": 0.0039062,
+      "14/14": 0.0001221,
+      "19/19": 3.8e-06
+    }
+  },
+  "register_audit": {
+    "total": 26,
+    "classic_prose": 21,
+    "classic_share": 0.8077,
+    "nonfiction_files": [
+      "08-constitution.txt",
+      "09-wikipedia-modern.txt",
+      "10-wikinews.txt",
+      "11-it-notation.txt",
+      "26-dal-predvaritelnoe-obyasnenie.txt"
+    ]
+  },
+  "registry_audit": {
+    "marker_families": {
+      "Copilot/Bing": [
+        "copilot_caret",
+        "utm_copilot"
+      ],
+      "DeepSeek": [
+        "deepseek_line_ref",
+        "think_tag"
+      ],
+      "Gemini": [
+        "gemini_cite_n",
+        "gemini_cite_start",
+        "gemini_span"
+      ],
+      "Grok/xAI": [
+        "grok_card_tag",
+        "grok_referrer",
+        "grok_render_json"
+      ],
+      "OpenAI": [
+        "assistants_source",
+        "attributableIndex",
+        "cite_turn",
+        "contentReference",
+        "generated_ref_id",
+        "oai_citation",
+        "oaicite_short",
+        "openai_pua",
+        "openai_pua_short",
+        "sandbox_link",
+        "source_plus_chain",
+        "turn_fetch",
+        "turn_file",
+        "turn_other",
+        "turn_search",
+        "utm_chatgpt",
+        "utm_openai"
+      ],
+      "Perplexity": [
+        "attached_web_bracket",
+        "citation_n",
+        "perplexity_s3"
+      ],
+      "Vertex AI": [
+        "vertexaisearch"
+      ],
+      "прочие/неатрибутированные": [
+        "invisible_layout",
+        "placeholder_date",
+        "placeholder_url",
+        "ref_name_search",
+        "unicode_tags",
+        "writing_block",
+        "zero_width"
+      ]
+    },
+    "corpus_families": [
+      "Copilot/Bing",
+      "DeepSeek",
+      "Gemini",
+      "GigaChat",
+      "Grok/xAI",
+      "Le Chat/Mistral",
+      "YandexGPT/Alisa"
+    ],
+    "families_without_corpus": [
+      "OpenAI",
+      "Perplexity",
+      "Vertex AI",
+      "прочие/неатрибутированные"
+    ],
+    "families_without_corpus_count": 4
+  },
+  "probe_scan": {
+    "files": [
+      {
+        "file": "evidence/probe/glm-01-nebo.txt",
+        "features_total": 0,
+        "categories_total": 0,
+        "findings": []
+      },
+      {
+        "file": "evidence/probe/glm-02-pechat.txt",
+        "features_total": 2,
+        "categories_total": 1,
+        "findings": [
+          {
+            "id": "emdash_bold",
+            "category": "структурная",
+            "criticality": "высокая",
+            "count": 3
+          },
+          {
+            "id": "list_share",
+            "category": "структурная",
+            "criticality": "низкая",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "file": "evidence/probe/glm-03-avstraliya.txt",
+        "features_total": 0,
+        "categories_total": 0,
+        "findings": []
+      },
+      {
+        "file": "evidence/probe/kimi-01-nebo.txt",
+        "features_total": 0,
+        "categories_total": 0,
+        "findings": []
+      },
+      {
+        "file": "evidence/probe/kimi-02-pechat.txt",
+        "features_total": 2,
+        "categories_total": 1,
+        "findings": [
+          {
+            "id": "emdash_bold",
+            "category": "структурная",
+            "criticality": "высокая",
+            "count": 2
+          },
+          {
+            "id": "list_share",
+            "category": "структурная",
+            "criticality": "низкая",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "file": "evidence/probe/kimi-03-avstraliya.txt",
+        "features_total": 0,
+        "categories_total": 0,
+        "findings": []
+      },
+      {
+        "file": "evidence/probe/qwen-01-nebo.txt",
+        "features_total": 2,
+        "categories_total": 1,
+        "findings": [
+          {
+            "id": "emdash_bold",
+            "category": "структурная",
+            "criticality": "высокая",
+            "count": 1
+          },
+          {
+            "id": "list_share",
+            "category": "структурная",
+            "criticality": "низкая",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "file": "evidence/probe/qwen-02-pechat.txt",
+        "features_total": 2,
+        "categories_total": 1,
+        "findings": [
+          {
+            "id": "emdash_bold",
+            "category": "структурная",
+            "criticality": "высокая",
+            "count": 1
+          },
+          {
+            "id": "list_share",
+            "category": "структурная",
+            "criticality": "низкая",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "file": "evidence/probe/qwen-03-avstraliya.txt",
+        "features_total": 0,
+        "categories_total": 0,
+        "findings": []
+      }
+    ],
+    "max_features": 2,
+    "max_categories": 1,
+    "markers_scan_exit": 1,
+    "markers_scan_output_tail": [
+      "C:\\Users\\vovap\\humanizer-ru-study\\research\\superposition\\2026-08-28-q3-holdout\\evidence\\probe\\kimi-02-pechat.txt:34 [invisible_layout] **Минимальный план:** keybr.com по 20 минут в день + вся повседневная печать вслепую. Чере",
+      "",
+      "Найдено маркеров: 1."
+    ]
+  }
+}

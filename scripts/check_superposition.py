@@ -50,6 +50,8 @@ TARGET = os.path.join(ROOT, "research", "superposition")
 HYPOTHESIS_RX = re.compile(r"^- id: \S+", re.M)
 SLOT_RX = re.compile(r"^\s+slot: (\S+)", re.M)
 RESURRECTION_RX = re.compile(r"воскреш|воскрес|переоткрыв", re.I)
+REFUSAL_RX = re.compile(r"коллапс не состоялся|отказ(е)? от коллапса|"
+                        r"КОЛЛАПС НЕ СОСТОЯЛСЯ", re.I)
 
 
 def _read(path):
@@ -128,13 +130,20 @@ def check_run_dir(run_dir):
             if current is not None:
                 blocks.append(current)
             if not blocks:
-                errors.append("%s: раздел «Отколлапсированные ветки» пуст" % rel)
-            for block in blocks:
-                first_line = block.splitlines()[0]
-                if not RESURRECTION_RX.search(block):
-                    errors.append(
-                        "%s: отколлапсированная ветка без условия воскрешения: %s"
-                        % (rel, first_line[:60]))
+                # Пустой раздел легитимен только для отказа от коллапса:
+                # спек допускает decision = «коллапс ИЛИ обоснованный
+                # отказ»; при отказе отколлапсированных веток нет.
+                if not REFUSAL_RX.search(dec):
+                    errors.append("%s: раздел «Отколлапсированные ветки» пуст, "
+                                  "а отказа от коллапса нет" % rel)
+            else:
+                # Есть перечисленные ветки — у каждой условие воскрешения.
+                for block in blocks:
+                    first_line = block.splitlines()[0]
+                    if not RESURRECTION_RX.search(block):
+                        errors.append(
+                            "%s: отколлапсированная ветка без условия воскрешения: %s"
+                            % (rel, first_line[:60]))
 
         # Анти-HARKing: правило не моложе замерных данных.
         if os.path.isdir(evidence):
@@ -195,7 +204,7 @@ def selftest():
                  with_decision=False, empty_evidence=False,
                  rule_newer_than_data=False, with_resurrection=True,
                  with_rule_section=True, with_branches_section=True,
-                 multiline_bullet=False):
+                 multiline_bullet=False, refusal=False, empty_branches=False):
         run = os.path.join(root, name)
         os.makedirs(run, exist_ok=True)
         # `hypotheses` — суммарное число записей «- id:»: сначала H0, затем
@@ -237,12 +246,21 @@ def selftest():
                     fh.write("{}\n")
         if with_decision:
             body = ["# решение"]
+            if refusal:
+                body.append("## Исход: КОЛЛАПС НЕ СОСТОЯЛСЯ")
+                body.append("Консилиум не согласован; вопрос возвращается в "
+                            "суперпозицию.")
             if with_rule_section:
                 body.append("## Правило коллапса (дословно)")
                 body.append("текст правила")
             if with_branches_section:
                 body.append("## Отколлапсированные ветки")
-                if with_resurrection and multiline_bullet:
+                if empty_branches:
+                    pass  # заголовок без буллетов: отказ не заявлен
+                elif refusal:
+                    body.append("Нет: коллапс не состоялся, все гипотезы "
+                                "остаются alive.")
+                elif with_resurrection and multiline_bullet:
                     # Условие воскрешения на строке-продолжении буллета.
                     body.append("- H0 — убита фальсификатором «другая гипотеза "
                                 "даёт recall>0»")
@@ -367,6 +385,20 @@ def selftest():
                      with_out_of_frame=True, with_rule_section=False)
             case("decision.md без цитаты «Правило коллапса» -> FAIL",
                  any("правило коллапса" in e and "norule" in e
+                     for e in gate.check_all()))
+
+            # 16. Отказ от коллапса: пустой раздел веток легитимен.
+            make_run(gate.TARGET, "2026-01-16-refusal", with_decision=True,
+                     with_out_of_frame=True, refusal=True)
+            case("отказ от коллапса с пустым разделом веток -> нет ошибки",
+                 not any("refusal" in e for e in gate.check_all()))
+
+            # 17. Пустой раздел веток без маркера отказа — коллапс есть,
+            #     а проигравших не перечислили.
+            make_run(gate.TARGET, "2026-01-17-fake-empty", with_decision=True,
+                     with_out_of_frame=True, empty_branches=True)
+            case("пустой раздел веток без отказа от коллапса -> FAIL",
+                 any("пуст" in e and "fake-empty" in e
                      for e in gate.check_all()))
 
             # 11. Нет TARGET — fail-closed.
