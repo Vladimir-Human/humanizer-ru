@@ -7,7 +7,7 @@ description: |
   (check_markers.py --scan) либо мягкие признаки (scan_soft_signals.py
   --fail-multicat 3). Ничего не публикует наружу; для работы достаточно
   permissions: contents: read. С fix: true — дополнительно чистит
-  помеченные файлы (filemarks.py --clean): изменения остаются в рабочем
+  помеченные файлы текстовым путём filemarks (scripts/action_fix.py): изменения остаются в рабочем
   каталоге, коммитит вызывающий workflow.
 author: 'Vladimir-Human'
 
@@ -35,7 +35,7 @@ inputs:
   fix:
     description: >
       Автофикс (только с fail-on: class-a): файлы с маркерами класса A
-      чистятся детерминированным слоем filemarks.py --clean; файлы без
+      чистятся текстовым путём filemarks (Layer A + MARKUP, scripts/action_fix.py); файлы без
       маркеров не перезаписываются. Изменения остаются в рабочем каталоге —
       закоммитить их должен вызывающий workflow. После чистки выполняется
       повторный скан: остаточные маркеры роняют гейт.
@@ -46,7 +46,7 @@ inputs:
       Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
       (для pull_request — merge-коммит действия checkout по умолчанию).
       Версия самого экшена закрепляется в строке uses:
-      Vladimir-Human/humanizer-ru/action@v3.16.1.
+      Vladimir-Human/humanizer-ru/action@v3.16.2.
     required: false
     default: ''
 
