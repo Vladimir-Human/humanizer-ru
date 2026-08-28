@@ -6,8 +6,8 @@ allowed-tools: "Read Grep Glob"
 compatibility: DeepSeek Harness (dsh), Claude.ai, Claude Code, opencode и другие агенты, поддерживающие спецификацию agentskills.io. Только текст, без выполнения кода и доступа к сети; читает только собственные файлы разметки.
 metadata:
   author: Vladimir-Human
-  version: "3.16.1"
-  last_reviewed: "2026-08-13"
+  version: "3.16.2"
+  last_reviewed: "2026-08-28"
   next_review_due: "2026-11-12"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
@@ -16,7 +16,7 @@ metadata:
   sources: "https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing; https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0; https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup"
 ---
 
-# Humanizer-ru — очеловечивание текста (v3.16.1)
+# Humanizer-ru — очеловечивание текста (v3.16.2)
 
 Скилл для редактирования русскоязычного текста со следами работы ИИ. Цель — сделать текст естественным, не искажая смысла. Опирается на Wikipedia:Signs of AI writing, WikiProject AI Cleanup и русскую страницу «Википедия:Признаки сгенерированности текста».
 
@@ -117,7 +117,7 @@ metadata:
 | `references/chatbot-artifacts.md` | Маркеры классов A и B с регулярными выражениями: следы OpenAI, Grok, Gemini, Perplexity и DeepSeek, placeholder-поля, невидимые символы. Части: `references/chatbot-artifacts-links.md` (A.1–A.6), `references/chatbot-artifacts-markup.md` (A.7–A.13), `references/chatbot-artifacts-legacy.md` (Раздел II, C, D) | При подозрении на копирование из чата |
 | `research/fixtures/marker-sources.json` | Реестр доказательств для маркеров: immutable URL, дата доступа, дословный образец, класс доказательства и fixture | При добавлении или пересмотре regex-маркера |
 | `references/source-fabrication.md` | Проверка ссылок в двух режимах: без сети — формат DOI, книга без страниц, неиспользуемая сноска; с разрешения пользователя — 404, чужая статья по DOI, несуществующий ISBN | Всегда, если есть ссылки на источники |
-| `references/quantitative-heuristics.md` | Четыре оси ручного подсчёта: ритм, тире, зачины, списки. Слабые сигналы, первичная проверка AUC 0.58–0.78 | Когда мягких признаков мало, а сомнение осталось |
+| `references/quantitative-heuristics.md` | Четыре оси ручного подсчёта: ритм, тире, зачины, списки. Слабые сигналы, проверка: 3 оси выше монеты (AUC 0.58–0.78), зачины анти-ориентированы | Когда мягких признаков мало, а сомнение осталось |
 | `references/rewrite-guide.md` | Процедура выборочной правки: порядок по критичности, сохранение голоса и жанра, запрет на дописывание фактов, глубокая перезапись, жанровые режимы, петля самопроверки | Когда правка запрошена явно |
 | `references/false-positives.md` | Что не считается признаком ИИ: длинное тире в художке, автозамена кавычек, правило трёх, канцелярит в юридическом тексте; здесь же разбор Главного правила | Перед вынесением вердикта о машинном происхождении |
 | `references/removal-matrix.md` | Матрица удаления: какой слой (A/B/файлы) снимает какую метку поставщика и что вне покрытия | Когда пользователь просит снять метки с файла |
