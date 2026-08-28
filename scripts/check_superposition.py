@@ -48,6 +48,7 @@ ROOT = os.path.dirname(HERE)
 TARGET = os.path.join(ROOT, "research", "superposition")
 
 HYPOTHESIS_RX = re.compile(r"^- id: \S+", re.M)
+SLOT_RX = re.compile(r"^\s+slot: (\S+)", re.M)
 RESURRECTION_RX = re.compile(r"воскреш|воскрес|переоткрыв", re.I)
 
 
@@ -78,10 +79,24 @@ def check_run_dir(run_dir):
     if len(hypotheses) < 3:
         errors.append("%s: гипотез в реестре %d (нужно >= 3)"
                       % (rel, len(hypotheses)))
-    if "slot: null" not in text:
+    # Слоты разбираются по записям, не подстрочным поиском: строка слота
+    # валидна только внутри записи «- id: …» и только с каноническим
+    # значением (null | mechanistic | inversion | out-of-frame).
+    slots = SLOT_RX.findall(text)
+    if "null" not in slots:
         errors.append("%s: пуст слот H0 (slot: null)" % rel)
-    if "slot: inversion" not in text:
+    if "inversion" not in slots:
         errors.append("%s: пуст слот H-инверсия (slot: inversion)" % rel)
+    if "out-of-frame" not in slots:
+        errors.append("%s: пуст слот H-вне рамки (slot: out-of-frame)" % rel)
+    if slots.count("mechanistic") < 2:
+        errors.append("%s: механистических гипотез %d (нужно >= 2, слот mechanistic)"
+                      % (rel, slots.count("mechanistic")))
+    unknown = [s for s in slots if s not in ("null", "mechanistic",
+                                             "inversion", "out-of-frame")]
+    if unknown:
+        errors.append("%s: неизвестные слоты в реестре: %s"
+                      % (rel, ", ".join(sorted(set(unknown)))))
 
     if os.path.isfile(decision):
         dec = _read(decision)
@@ -175,30 +190,39 @@ def selftest():
         print(("PASS: " if ok else "FAIL: ") + name)
         passed, failed = passed + (1 if ok else 0), failed + (0 if ok else 1)
 
-    def make_run(root, name, hypotheses=3, with_null=True, with_inversion=True,
-                 with_prereg=True, with_evidence=True, with_decision=False,
+    def make_run(root, name, hypotheses=5, with_null=True, with_inversion=True,
+                 with_out_of_frame=True, with_prereg=True, with_evidence=True,
+                 with_decision=False, empty_evidence=False,
                  rule_newer_than_data=False, with_resurrection=True,
                  with_rule_section=True, with_branches_section=True,
                  multiline_bullet=False):
         run = os.path.join(root, name)
         os.makedirs(run, exist_ok=True)
-        # `hyptheses` — суммарное число записей «- id:»: сначала H0, затем
-        # механистические, инверсия — последней, чтобы счёт был точным.
+        # `hypotheses` — суммарное число записей «- id:»: сначала H0, затем
+        # механистические (минимум 2 в полном наборе), вне-рамочная и
+        # инверсия — в конце; счёт записей точный.
         lines = []
         remaining = hypotheses
         if with_null and remaining > 0:
             lines.append("- id: H0")
             lines.append("  slot: null")
             remaining -= 1
+        tail = []
+        if with_out_of_frame and remaining > 0:
+            tail.append("- id: HF")
+            tail.append("  slot: out-of-frame")
+            remaining -= 1
+        if with_inversion and remaining > 0:
+            tail.append("- id: HX")
+            tail.append("  slot: inversion")
+            remaining -= 1
         idx = 1
-        while remaining > (1 if with_inversion else 0):
+        while remaining > 0:
             lines.append("- id: H%d" % idx)
             lines.append("  slot: mechanistic")
             idx += 1
             remaining -= 1
-        if with_inversion and remaining > 0:
-            lines.append("- id: HX")
-            lines.append("  slot: inversion")
+        lines.extend(tail)
         with open(os.path.join(run, "registry.md"), "w", encoding="utf-8") as fh:
             fh.write("\n".join(lines) + "\n")
         if with_prereg:
@@ -207,9 +231,10 @@ def selftest():
                 fh.write("# предрегистрация\n\n## Правило коллапса\n\nтекст правила\n")
         if with_evidence:
             os.makedirs(os.path.join(run, "evidence"), exist_ok=True)
-            with open(os.path.join(run, "evidence", "stats.json"), "w",
-                      encoding="utf-8") as fh:
-                fh.write("{}\n")
+            if not empty_evidence:
+                with open(os.path.join(run, "evidence", "stats.json"), "w",
+                          encoding="utf-8") as fh:
+                    fh.write("{}\n")
         if with_decision:
             body = ["# решение"]
             if with_rule_section:
@@ -228,7 +253,7 @@ def selftest():
                     body.append("- H0 — убита фальсификатором")
             with open(os.path.join(run, "decision.md"), "w", encoding="utf-8") as fh:
                 fh.write("\n".join(body) + "\n")
-        if with_evidence and with_prereg:
+        if with_evidence and with_prereg and not empty_evidence:
             ev = os.path.join(run, "evidence", "stats.json")
             if rule_newer_than_data:
                 # Данные «старше» правила: правило писалось после замера.
@@ -251,12 +276,13 @@ def selftest():
 
             # 1. Валидный прогон без decision (суперпозиция собрана, коллапса нет).
             os.makedirs(gate.TARGET)
-            make_run(gate.TARGET, "2026-01-01-ok")
+            make_run(gate.TARGET, "2026-01-01-ok", with_out_of_frame=True)
             case("валидная суперпозиция без коллапса -> нет ошибок",
                  gate.check_all() == [])
 
             # 2. Валидный прогон с decision.
-            make_run(gate.TARGET, "2026-01-02-ok-decision", with_decision=True)
+            make_run(gate.TARGET, "2026-01-02-ok-decision", with_decision=True,
+                     with_out_of_frame=True)
             case("валидный прогон с decision.md -> нет ошибок",
                  gate.check_all() == [])
 
@@ -313,9 +339,35 @@ def selftest():
 
             # 10a. Условие воскрешения на строке-продолжении буллета.
             make_run(gate.TARGET, "2026-01-10-multiline", with_decision=True,
-                     multiline_bullet=True)
+                     with_out_of_frame=True, multiline_bullet=True)
             case("условие воскрешения на строке-продолжении -> нет ошибки",
                  not any("multiline" in e for e in gate.check_all()))
+
+            # 12. Нет слота H-вне рамки.
+            make_run(gate.TARGET, "2026-01-12-nooof", with_out_of_frame=False)
+            case("пустой слот H-вне рамки -> FAIL",
+                 any("out-of-frame" in e and "nooof" in e
+                     for e in gate.check_all()))
+
+            # 13. Одна механистическая гипотеза.
+            make_run(gate.TARGET, "2026-01-13-onemech", hypotheses=3,
+                     with_out_of_frame=True)
+            case("меньше двух механистических гипотез -> FAIL",
+                 any("механистических" in e and "onemech" in e
+                     for e in gate.check_all()))
+
+            # 14. Пустой evidence при оформленном decision.
+            make_run(gate.TARGET, "2026-01-14-emptyev", with_decision=True,
+                     with_out_of_frame=True, empty_evidence=True)
+            case("пустой evidence/ при decision.md -> FAIL",
+                 any("пуст" in e and "emptyev" in e for e in gate.check_all()))
+
+            # 15. Decision без цитаты правила коллапса.
+            make_run(gate.TARGET, "2026-01-15-norule", with_decision=True,
+                     with_out_of_frame=True, with_rule_section=False)
+            case("decision.md без цитаты «Правило коллапса» -> FAIL",
+                 any("правило коллапса" in e and "norule" in e
+                     for e in gate.check_all()))
 
             # 11. Нет TARGET — fail-closed.
             gate.TARGET = os.path.join(td, "нет_такого")

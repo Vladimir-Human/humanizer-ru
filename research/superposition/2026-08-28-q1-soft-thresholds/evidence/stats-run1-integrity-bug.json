@@ -8,99 +8,99 @@
   "integrity": {
     "perfile_mismatches": [
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\01-слепая-печать.txt",
+        "path": "research/raw\\alisa\\01-слепая-печать.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\02-почему-небо-голубое.txt",
+        "path": "research/raw\\alisa\\02-почему-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\03-столица-австралии.txt",
+        "path": "research/raw\\alisa\\03-столица-австралии.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\copilot\\01-freex-audit.txt",
+        "path": "research/raw\\copilot\\01-freex-audit.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\copilot\\02-bing-creative-neiroseti.txt",
+        "path": "research/raw\\copilot\\02-bing-creative-neiroseti.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\01-v3-privet.txt",
+        "path": "research/raw\\deepseek\\01-v3-privet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\02-v3-volchya-otrava.txt",
+        "path": "research/raw\\deepseek\\02-v3-volchya-otrava.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\03-v3-svinye-krylyshki.txt",
+        "path": "research/raw\\deepseek\\03-v3-svinye-krylyshki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\04-r1-privet.txt",
+        "path": "research/raw\\deepseek\\04-r1-privet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\01-25pro-utopia.txt",
+        "path": "research/raw\\gemini\\01-25pro-utopia.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\02-valans-span.txt",
+        "path": "research/raw\\gemini\\02-valans-span.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\03-eretria-span.txt",
+        "path": "research/raw\\gemini\\03-eretria-span.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\01-слепая-печать.txt",
+        "path": "research/raw\\gigachat\\01-слепая-печать.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\02-почему-небо-голубое.txt",
+        "path": "research/raw\\gigachat\\02-почему-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\03-столица-австралии.txt",
+        "path": "research/raw\\gigachat\\03-столица-австралии.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\04-гречка.txt",
+        "path": "research/raw\\gigachat\\04-гречка.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\05-подарок-коллеге.txt",
+        "path": "research/raw\\gigachat\\05-подарок-коллеге.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\01-grok2-sunduki.txt",
+        "path": "research/raw\\grok\\01-grok2-sunduki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\02-grok2-yabloki.txt",
+        "path": "research/raw\\grok\\02-grok2-yabloki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\03-grok3-gran-buduschego.txt",
+        "path": "research/raw\\grok\\03-grok3-gran-buduschego.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\01-fast-канберра.txt",
+        "path": "research/raw\\le-chat\\01-fast-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\02-think-канберра.txt",
+        "path": "research/raw\\le-chat\\02-think-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\03-fast-небо-голубое.txt",
+        "path": "research/raw\\le-chat\\03-fast-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\04-deep-research-канберра.txt",
+        "path": "research/raw\\le-chat\\04-deep-research-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
@@ -200,107 +200,107 @@
         "reason": "нет в свежем прогоне"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\01-turgenev-mumu.txt",
+        "path": "research/validation/human\\01-turgenev-mumu.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\02-gogol-shinel.txt",
+        "path": "research/validation/human\\02-gogol-shinel.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\03-dostoevsky-white-nights.txt",
+        "path": "research/validation/human\\03-dostoevsky-white-nights.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\04-tolstoy-anna-karenina.txt",
+        "path": "research/validation/human\\04-tolstoy-anna-karenina.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\05-pushkin-monument.txt",
+        "path": "research/validation/human\\05-pushkin-monument.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\06-lermontov-hero.txt",
+        "path": "research/validation/human\\06-lermontov-hero.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\07-chekhov-letter.txt",
+        "path": "research/validation/human\\07-chekhov-letter.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\08-constitution.txt",
+        "path": "research/validation/human\\08-constitution.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\09-wikipedia-modern.txt",
+        "path": "research/validation/human\\09-wikipedia-modern.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\10-wikinews.txt",
+        "path": "research/validation/human\\10-wikinews.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\11-it-notation.txt",
+        "path": "research/validation/human\\11-it-notation.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\12-ostrovsky-groza.txt",
+        "path": "research/validation/human\\12-ostrovsky-groza.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\13-krylov-kvartet.txt",
+        "path": "research/validation/human\\13-krylov-kvartet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\14-afanasyev-finist.txt",
+        "path": "research/validation/human\\14-afanasyev-finist.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\15-perelman-zavtrak.txt",
+        "path": "research/validation/human\\15-perelman-zavtrak.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\16-chekhov-smert-chinovnika.txt",
+        "path": "research/validation/human\\16-chekhov-smert-chinovnika.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\17-saltykov-shchedrin-dva-generala.txt",
+        "path": "research/validation/human\\17-saltykov-shchedrin-dva-generala.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\18-goncharov-oblomov.txt",
+        "path": "research/validation/human\\18-goncharov-oblomov.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\19-gilyarovsky-moskvich.txt",
+        "path": "research/validation/human\\19-gilyarovsky-moskvich.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\20-chekhov-sakhalin-glava1.txt",
+        "path": "research/validation/human\\20-chekhov-sakhalin-glava1.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\21-leskov-levsha.txt",
+        "path": "research/validation/human\\21-leskov-levsha.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\22-griboedov-gore-ot-uma.txt",
+        "path": "research/validation/human\\22-griboedov-gore-ot-uma.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\23-ershov-konek-predislovie.txt",
+        "path": "research/validation/human\\23-ershov-konek-predislovie.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\24-gercen-byloe-i-dumy.txt",
+        "path": "research/validation/human\\24-gercen-byloe-i-dumy.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\25-ciolkovsky-grezy.txt",
+        "path": "research/validation/human\\25-ciolkovsky-grezy.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\26-dal-predvaritelnoe-obyasnenie.txt",
+        "path": "research/validation/human\\26-dal-predvaritelnoe-obyasnenie.txt",
         "reason": "нет в приорном JSON"
       },
       {
@@ -410,99 +410,99 @@
     ],
     "neutral_mismatches": [
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\01-слепая-печать.txt",
+        "path": "research/raw\\alisa\\01-слепая-печать.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\02-почему-небо-голубое.txt",
+        "path": "research/raw\\alisa\\02-почему-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\alisa\\03-столица-австралии.txt",
+        "path": "research/raw\\alisa\\03-столица-австралии.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\copilot\\01-freex-audit.txt",
+        "path": "research/raw\\copilot\\01-freex-audit.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\copilot\\02-bing-creative-neiroseti.txt",
+        "path": "research/raw\\copilot\\02-bing-creative-neiroseti.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\01-v3-privet.txt",
+        "path": "research/raw\\deepseek\\01-v3-privet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\02-v3-volchya-otrava.txt",
+        "path": "research/raw\\deepseek\\02-v3-volchya-otrava.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\03-v3-svinye-krylyshki.txt",
+        "path": "research/raw\\deepseek\\03-v3-svinye-krylyshki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\deepseek\\04-r1-privet.txt",
+        "path": "research/raw\\deepseek\\04-r1-privet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\01-25pro-utopia.txt",
+        "path": "research/raw\\gemini\\01-25pro-utopia.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\02-valans-span.txt",
+        "path": "research/raw\\gemini\\02-valans-span.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gemini\\03-eretria-span.txt",
+        "path": "research/raw\\gemini\\03-eretria-span.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\01-слепая-печать.txt",
+        "path": "research/raw\\gigachat\\01-слепая-печать.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\02-почему-небо-голубое.txt",
+        "path": "research/raw\\gigachat\\02-почему-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\03-столица-австралии.txt",
+        "path": "research/raw\\gigachat\\03-столица-австралии.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\04-гречка.txt",
+        "path": "research/raw\\gigachat\\04-гречка.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\gigachat\\05-подарок-коллеге.txt",
+        "path": "research/raw\\gigachat\\05-подарок-коллеге.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\01-grok2-sunduki.txt",
+        "path": "research/raw\\grok\\01-grok2-sunduki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\02-grok2-yabloki.txt",
+        "path": "research/raw\\grok\\02-grok2-yabloki.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\grok\\03-grok3-gran-buduschego.txt",
+        "path": "research/raw\\grok\\03-grok3-gran-buduschego.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\01-fast-канберра.txt",
+        "path": "research/raw\\le-chat\\01-fast-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\02-think-канберра.txt",
+        "path": "research/raw\\le-chat\\02-think-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\03-fast-небо-голубое.txt",
+        "path": "research/raw\\le-chat\\03-fast-небо-голубое.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/raw\\le-chat\\04-deep-research-канберра.txt",
+        "path": "research/raw\\le-chat\\04-deep-research-канберра.txt",
         "reason": "нет в приорном JSON"
       },
       {
@@ -602,107 +602,107 @@
         "reason": "нет в свежем прогоне"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\01-turgenev-mumu.txt",
+        "path": "research/validation/human\\01-turgenev-mumu.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\02-gogol-shinel.txt",
+        "path": "research/validation/human\\02-gogol-shinel.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\03-dostoevsky-white-nights.txt",
+        "path": "research/validation/human\\03-dostoevsky-white-nights.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\04-tolstoy-anna-karenina.txt",
+        "path": "research/validation/human\\04-tolstoy-anna-karenina.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\05-pushkin-monument.txt",
+        "path": "research/validation/human\\05-pushkin-monument.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\06-lermontov-hero.txt",
+        "path": "research/validation/human\\06-lermontov-hero.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\07-chekhov-letter.txt",
+        "path": "research/validation/human\\07-chekhov-letter.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\08-constitution.txt",
+        "path": "research/validation/human\\08-constitution.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\09-wikipedia-modern.txt",
+        "path": "research/validation/human\\09-wikipedia-modern.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\10-wikinews.txt",
+        "path": "research/validation/human\\10-wikinews.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\11-it-notation.txt",
+        "path": "research/validation/human\\11-it-notation.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\12-ostrovsky-groza.txt",
+        "path": "research/validation/human\\12-ostrovsky-groza.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\13-krylov-kvartet.txt",
+        "path": "research/validation/human\\13-krylov-kvartet.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\14-afanasyev-finist.txt",
+        "path": "research/validation/human\\14-afanasyev-finist.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\15-perelman-zavtrak.txt",
+        "path": "research/validation/human\\15-perelman-zavtrak.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\16-chekhov-smert-chinovnika.txt",
+        "path": "research/validation/human\\16-chekhov-smert-chinovnika.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\17-saltykov-shchedrin-dva-generala.txt",
+        "path": "research/validation/human\\17-saltykov-shchedrin-dva-generala.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\18-goncharov-oblomov.txt",
+        "path": "research/validation/human\\18-goncharov-oblomov.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\19-gilyarovsky-moskvich.txt",
+        "path": "research/validation/human\\19-gilyarovsky-moskvich.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\20-chekhov-sakhalin-glava1.txt",
+        "path": "research/validation/human\\20-chekhov-sakhalin-glava1.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\21-leskov-levsha.txt",
+        "path": "research/validation/human\\21-leskov-levsha.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\22-griboedov-gore-ot-uma.txt",
+        "path": "research/validation/human\\22-griboedov-gore-ot-uma.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\23-ershov-konek-predislovie.txt",
+        "path": "research/validation/human\\23-ershov-konek-predislovie.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\24-gercen-byloe-i-dumy.txt",
+        "path": "research/validation/human\\24-gercen-byloe-i-dumy.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\25-ciolkovsky-grezy.txt",
+        "path": "research/validation/human\\25-ciolkovsky-grezy.txt",
         "reason": "нет в приорном JSON"
       },
       {
-        "path": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/human\\26-dal-predvaritelnoe-obyasnenie.txt",
+        "path": "research/validation/human\\26-dal-predvaritelnoe-obyasnenie.txt",
         "reason": "нет в приорном JSON"
       },
       {
