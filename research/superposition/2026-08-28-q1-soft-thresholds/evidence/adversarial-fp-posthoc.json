@@ -1,0 +1,175 @@
+{
+  "repo": "C:\\Users\\vovap\\humanizer-ru-study",
+  "manifest": "C:\\Users\\vovap\\humanizer-ru-study\\research/validation/adversarial/manifest.v1.json",
+  "passed": true,
+  "limits": {
+    "max_features": 2,
+    "max_cats": 0,
+    "min_words": 150,
+    "max_words": 400,
+    "max_markers": 0
+  },
+  "files": [
+    {
+      "file": "research/validation/adversarial/01-oratorskaya-rech-pravilo-treh.txt",
+      "genre": "fiction",
+      "words": 225,
+      "features": 1,
+      "categories": 1,
+      "findings": [
+        [
+          "neg_parallel",
+          "#12 отрицательные параллелизмы",
+          2
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/02-dogovor-okazaniya-uslug-kantselyarit.txt",
+      "genre": "legal",
+      "words": 320,
+      "features": 0,
+      "categories": 0,
+      "findings": [],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/03-akademicheskii-referat-passiv-ogovorki.txt",
+      "genre": "academic",
+      "words": 181,
+      "features": 1,
+      "categories": 1,
+      "findings": [
+        [
+          "academic_cliche",
+          "#9a академические клише",
+          2
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/04-hudozhestvennyi-fragment-dlinnye-tire.txt",
+      "genre": "fiction",
+      "words": 222,
+      "features": 0,
+      "categories": 0,
+      "findings": [],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/05-nauchpop-sterilnaya-tipografika.txt",
+      "genre": "neutral",
+      "words": 219,
+      "features": 0,
+      "categories": 0,
+      "findings": [],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/06-blog-programmista-markdown-emoji-title-case.txt",
+      "genre": "marketing",
+      "words": 215,
+      "features": 2,
+      "categories": 1,
+      "findings": [
+        [
+          "emoji_lists",
+          "#17 эмодзи-списки",
+          2
+        ],
+        [
+          "title_case",
+          "#21a Каждое Слово С Прописной",
+          3
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/07-esse-sinonimy-i-konstruktsii-ne-tolko-no-i.txt",
+      "genre": "fiction",
+      "words": 222,
+      "features": 0,
+      "categories": 0,
+      "findings": [],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/08-marketingovoe-opisanie-reklamnyi-yazyk.txt",
+      "genre": "marketing",
+      "words": 223,
+      "features": 1,
+      "categories": 1,
+      "findings": [
+        [
+          "promo",
+          "#5 рекламный язык",
+          2
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/09-kolonka-lichnaya-pozitsiya-razgovornye-svyazki.txt",
+      "genre": "neutral",
+      "words": 238,
+      "features": 0,
+      "categories": 0,
+      "findings": [],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/10-pismo-kollege-shablony-vezhlivosti.txt",
+      "genre": "chat",
+      "words": 187,
+      "features": 1,
+      "categories": 1,
+      "findings": [
+        [
+          "chat_remnants",
+          "#22 остатки реплик",
+          2
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/11-statya-pro-priznaki-ii-kavychechnaya-lovushka.txt",
+      "genre": "neutral",
+      "words": 234,
+      "features": 2,
+      "categories": 2,
+      "findings": [
+        [
+          "vague_experts",
+          "#6 размытые атрибуции",
+          2
+        ],
+        [
+          "ai_lexicon",
+          "#10 машинная лексика",
+          5
+        ]
+      ],
+      "markers": []
+    },
+    {
+      "file": "research/validation/adversarial/12-perevodnoi-tekst-kalki-vysokaya-leksicheskaya-plotnost.txt",
+      "genre": "neutral",
+      "words": 226,
+      "features": 1,
+      "categories": 1,
+      "findings": [
+        [
+          "anglicism_shift",
+          "#15e сдвиг через английское поле",
+          1
+        ]
+      ],
+      "markers": []
+    }
+  ],
+  "fails": []
+}

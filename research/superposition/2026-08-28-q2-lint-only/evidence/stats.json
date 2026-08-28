@@ -1,0 +1,293 @@
+{
+  "script": "research\\superposition\\2026-08-28-q2-lint-only\\measure_q2.py",
+  "neutrality_controls": {
+    "files_total": 40,
+    "files_changed": 0,
+    "changed": []
+  },
+  "neutrality_probe": {
+    "files_total": 9,
+    "files_changed": 0,
+    "changed": []
+  },
+  "census": {
+    "files": [
+      {
+        "file": "research/raw/alisa/01-слепая-печать.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/alisa/02-почему-небо-голубое.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/alisa/03-столица-австралии.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/copilot/01-freex-audit.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/copilot/02-bing-creative-neiroseti.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/deepseek/01-v3-privet.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 2,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/deepseek/02-v3-volchya-otrava.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 2,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/deepseek/03-v3-svinye-krylyshki.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 2,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/deepseek/04-r1-privet.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gemini/01-25pro-utopia.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gemini/02-valans-span.txt",
+        "markers": true,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gemini/03-eretria-span.txt",
+        "markers": true,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gigachat/01-слепая-печать.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gigachat/02-почему-небо-голубое.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 2,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gigachat/03-столица-австралии.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gigachat/04-гречка.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/gigachat/05-подарок-коллеге.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/grok/01-grok2-sunduki.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/grok/02-grok2-yabloki.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/grok/03-grok3-gran-buduschego.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 2,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/le-chat/01-fast-канберра.txt",
+        "markers": true,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/le-chat/02-think-канберра.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/le-chat/03-fast-небо-голубое.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/raw/le-chat/04-deep-research-канберра.txt",
+        "markers": false,
+        "features": 1,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-01-nebo.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-02-pechat.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-03-avstraliya.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-01-nebo.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-02-pechat.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-03-avstraliya.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-01-nebo.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-02-pechat.txt",
+        "markers": false,
+        "features": 2,
+        "categories": 1,
+        "soft_action": false
+      },
+      {
+        "file": "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-03-avstraliya.txt",
+        "markers": false,
+        "features": 0,
+        "categories": 0,
+        "soft_action": false
+      }
+    ],
+    "segments": {
+      "markers_only": 3,
+      "soft_only": 0,
+      "both": 0,
+      "neither": 30
+    },
+    "total": 33,
+    "marker_files": 3,
+    "marker_hits": 11,
+    "marker_detail": {
+      "research/raw/gemini/02-valans-span.txt": [
+        "gemini_span",
+        "gemini_span",
+        "gemini_span"
+      ],
+      "research/raw/gemini/03-eretria-span.txt": [
+        "gemini_span",
+        "gemini_span",
+        "gemini_span",
+        "gemini_span",
+        "gemini_span",
+        "gemini_span",
+        "gemini_span"
+      ],
+      "research/raw/le-chat/01-fast-канберра.txt": [
+        "zero_width"
+      ]
+    }
+  },
+  "removal_completeness": {
+    "files": [
+      {
+        "file": "research/raw/gemini/02-valans-span.txt",
+        "residual_markers": 0
+      },
+      {
+        "file": "research/raw/gemini/03-eretria-span.txt",
+        "residual_markers": 0
+      },
+      {
+        "file": "research/raw/le-chat/01-fast-канберра.txt",
+        "residual_markers": 0
+      }
+    ],
+    "all_clean": true
+  }
+}

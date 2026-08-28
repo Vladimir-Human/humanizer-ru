@@ -160,6 +160,7 @@ Action inputs:
 | `files` | `**/*.md` | Files to scan: one bash glob or several separated by spaces. The action enables `globstar` and `nullglob`, so `**/*.md` recurses into subdirectories. |
 | `genre` | `neutral` | Genre for soft signals: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Used only with `fail-on: soft-threshold`. |
 | `fail-on` | `class-a` | `class-a` — hard regex layer (`check_markers.py --scan --class a`): only class A markers fail the gate; contextual class B markers (placeholder dates, `referrer=grok.com`, zero-width chars) are printed as warnings and do not fail the build; `soft-threshold` — soft-signal counter (`scan_soft_signals.py --fail-multicat 3`). |
+| `fix` | `false` | Autofix (only with `fail-on: class-a`): files carrying class A markers are cleaned by the deterministic `filemarks.py --clean` layer; files without markers are not rewritten at all. Changes stay in the working directory — the calling workflow commits them. A re-scan follows the cleanup: residual markers fail the gate. Measured boundaries: cleanup neutrality is confirmed on 49 reference-corpus files (0 bytes changed); cleaning a marked file normalizes line endings to LF. |
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
