@@ -1,0 +1,5 @@
+{
+  "command": "python scripts/filemarks/check_rewrite_delta.py evidence/samples/claude-01-nebo.txt evidence/rewrite/claude-01-nebo-rewritten.txt",
+  "note": "Архивировано после требования консилиума (оба ревизора: delta не входила в замороженные артефакты). Совещательная метрика, не вердикт.",
+  "output": "{\"n_gram_overlap\": 0.1852, \"words_before\": 289, \"words_after\": 309, \"len_ratio\": 1.069, \"risk\": \"низкий\", \"note\": \"совещательная метрика, НЕ вердикт «знак снят»; верификатора статистических меток не существует\"}"
+}

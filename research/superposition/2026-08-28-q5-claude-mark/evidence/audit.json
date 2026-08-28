@@ -1,0 +1,408 @@
+{
+  "samples": {
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-01-nebo.txt": {
+      "invisible": [],
+      "invisible_count": 0,
+      "legit": {}
+    },
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-02-pechat.txt": {
+      "invisible": [],
+      "invisible_count": 0,
+      "legit": {}
+    },
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-03-avstraliya.txt": {
+      "invisible": [],
+      "invisible_count": 0,
+      "legit": {}
+    }
+  },
+  "background": {
+    "series1": {
+      "research/raw/alisa/01-слепая-печать.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/alisa/02-почему-небо-голубое.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/alisa/03-столица-австралии.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/copilot/01-freex-audit.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/copilot/02-bing-creative-neiroseti.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/deepseek/01-v3-privet.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/deepseek/02-v3-volchya-otrava.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/deepseek/03-v3-svinye-krylyshki.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/deepseek/04-r1-privet.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gemini/01-25pro-utopia.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gemini/02-valans-span.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {
+          "U+00A0 (NBSP)": 4
+        }
+      },
+      "research/raw/gemini/03-eretria-span.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {
+          "U+00A0 (NBSP)": 1
+        }
+      },
+      "research/raw/gigachat/01-слепая-печать.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gigachat/02-почему-небо-голубое.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gigachat/03-столица-австралии.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gigachat/04-гречка.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/gigachat/05-подарок-коллеге.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/grok/01-grok2-sunduki.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/grok/02-grok2-yabloki.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/grok/03-grok3-gran-buduschego.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/le-chat/01-fast-канберра.txt": {
+        "invisible": [
+          {
+            "cp": "U+FEFF",
+            "pos": 0,
+            "class": "U+FEFF (BOM/ZWNBSP)"
+          }
+        ],
+        "invisible_count": 1,
+        "legit": {}
+      },
+      "research/raw/le-chat/02-think-канберра.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/le-chat/03-fast-небо-голубое.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/raw/le-chat/04-deep-research-канберра.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      }
+    },
+    "probe_q3": {
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-01-nebo.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-02-pechat.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/glm-03-avstraliya.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-01-nebo.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-02-pechat.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/kimi-03-avstraliya.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-01-nebo.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-02-pechat.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/superposition/2026-08-28-q3-holdout/evidence/probe/qwen-03-avstraliya.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      }
+    },
+    "human": {
+      "research/validation/human/01-turgenev-mumu.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/02-gogol-shinel.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/03-dostoevsky-white-nights.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/04-tolstoy-anna-karenina.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/05-pushkin-monument.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/06-lermontov-hero.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/07-chekhov-letter.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/08-constitution.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/09-wikipedia-modern.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/10-wikinews.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/11-it-notation.txt": {
+        "invisible": [
+          {
+            "cp": "U+200D",
+            "pos": 1810,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          },
+          {
+            "cp": "U+200D",
+            "pos": 1812,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          }
+        ],
+        "invisible_count": 2,
+        "legit": {}
+      },
+      "research/validation/human/12-ostrovsky-groza.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/13-krylov-kvartet.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/14-afanasyev-finist.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/15-perelman-zavtrak.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {
+          "U+00A0 (NBSP)": 18,
+          "U+202F (узкий NBSP)": 1,
+          "U+2000-200A (наборные)": 1
+        }
+      },
+      "research/validation/human/16-chekhov-smert-chinovnika.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/17-saltykov-shchedrin-dva-generala.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/18-goncharov-oblomov.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/19-gilyarovsky-moskvich.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/20-chekhov-sakhalin-glava1.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/21-leskov-levsha.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/22-griboedov-gore-ot-uma.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/23-ershov-konek-predislovie.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/24-gercen-byloe-i-dumy.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/25-ciolkovsky-grezy.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/human/26-dal-predvaritelnoe-obyasnenie.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      }
+    },
+    "boundary": {
+      "research/validation/boundary/benign-wiki-ref.txt": {
+        "invisible": [],
+        "invisible_count": 0,
+        "legit": {}
+      },
+      "research/validation/boundary/emoji-zwj.txt": {
+        "invisible": [
+          {
+            "cp": "U+200D",
+            "pos": 8,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          },
+          {
+            "cp": "U+200D",
+            "pos": 10,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          },
+          {
+            "cp": "U+200D",
+            "pos": 34,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          },
+          {
+            "cp": "U+200D",
+            "pos": 48,
+            "class": "U+200B-200F (ZWNJ..RLM)"
+          }
+        ],
+        "invisible_count": 4,
+        "legit": {}
+      }
+    }
+  },
+  "background_invisible_summary": {
+    "U+FEFF": 1,
+    "U+200D": 6
+  },
+  "sample_invisible_summary": {},
+  "marker_scan": {
+    "exit": 0,
+    "tail": [
+      "Маркеров не найдено."
+    ]
+  },
+  "layer_a": {
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-01-nebo.txt": {
+      "layer_a_removed": 0,
+      "markup_removed": 0,
+      "changed": false
+    },
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-02-pechat.txt": {
+      "layer_a_removed": 0,
+      "markup_removed": 0,
+      "changed": false
+    },
+    "research/superposition/2026-08-28-q5-claude-mark/evidence/samples/claude-03-avstraliya.txt": {
+      "layer_a_removed": 0,
+      "markup_removed": 0,
+      "changed": false
+    }
+  }
+}
