@@ -1,5 +1,5 @@
 # humanizer-ru CI-гейт: прекоммит-проверка русских текстов на следы
-# машинной генерации. Composite action, только стандартная библиотия
+# машинной генерации. Composite action, только стандартная библиотека
 # Python и официальный actions/checkout (pinned).
 name: 'humanizer-ru CI gate'
 description: |
@@ -46,7 +46,7 @@ inputs:
       Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
       (для pull_request — merge-коммит действия checkout по умолчанию).
       Версия самого экшена закрепляется в строке uses:
-      Vladimir-Human/humanizer-ru/action@v3.16.0.
+      Vladimir-Human/humanizer-ru/action@v3.16.1.
     required: false
     default: ''
 
@@ -74,16 +74,17 @@ runs:
           exit 2
         fi
         HUMANIZER_SCRIPTS="$(cd "${{ github.action_path }}/.." && pwd)/scripts"
-        FILEMARKS="${HUMANIZER_SCRIPTS}/filemarks/filemarks.py"
 
         if [ "${FAIL_ON}" = "class-a" ] && [ "${FIX_INPUT}" = "true" ]; then
           # Автофикс: файлы с маркером класса A чистятся текстовым путём
           # filemarks (text_layer: Layer A + MARKUP — путь, валидированный
           # на эталонном корпусе), файлы без маркеров не трогаются вовсе.
-          # Прямой вызов text_layer, а не filemarks --clean: CLI файлmarks
-          # маршрутизирует .md в контейнерный путь (метаданные frontmatter),
-          # который не снимает текстовые маркеры. После чистки — повторный
-          # скан всех файлов: остаточные маркеры роняют гейт.
+          # Прямой вызов text_layer (scripts/action_fix.py), а не
+          # filemarks --clean: CLI filemarks маршрутизирует .md в
+          # контейнерный путь (метаданные frontmatter), который не снимает
+          # текстовые маркеры. Маркеры вне текстового пути (sandbox_link,
+          # grok_card_tag) чисткой не снимаются — их перечисляет повторный
+          # скан, и они роняют гейт на полном отчёте, а не на первом файле.
           export HUMANIZER_SCRIPTS
           MARKED=0
           for f in "${FILES[@]}"; do
@@ -92,36 +93,21 @@ runs:
               continue  # маркеров класса A нет — файл не трогаем
             fi
             echo "автофикс: ${f}"
-            python3 - "$f" <<'PY'
-import os
-import sys
-
-scripts = os.environ["HUMANIZER_SCRIPTS"]
-sys.path.insert(0, scripts)
-sys.path.insert(0, os.path.join(scripts, "filemarks"))
-from text_layer import clean_text_layer, clean_markup  # noqa: E402
-
-path = sys.argv[1]
-with open(path, encoding="utf-8", errors="surrogateescape") as fh:
-    text = fh.read()
-cleaned, n = clean_text_layer(text)
-cleaned, m = clean_markup(cleaned)
-if cleaned != text:
-    with open(path, "w", encoding="utf-8", errors="surrogateescape",
-              newline="") as fh:
-        fh.write(cleaned)
-    print("  снято: layer_a=%d, markup=%d" % (n, m))
-else:
-    print("  изменений нет (маркер вне текстового пути)", file=sys.stderr)
-    sys.exit(1)
-PY
+            python3 "${HUMANIZER_SCRIPTS}/action_fix.py" "$f" || true
             MARKED=$((MARKED + 1))
           done
           echo "::group::humanizer-перепроверка после автофикса"
-          python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
-            --scan --class a "${FILES[@]}"
+          RESIDUAL=0
+          if ! python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
+               --scan --class a "${FILES[@]}"; then
+            RESIDUAL=1
+          fi
           echo "::endgroup::"
           echo "автофикс: почищено файлов ${MARKED}; изменения в рабочем каталоге — закоммитить их должен вызывающий workflow"
+          if [ "${RESIDUAL}" -ne 0 ]; then
+            echo "::error::остаточные маркеры класса A после автофикса (см. скан выше)"
+            exit 1
+          fi
           exit 0
         fi
 
@@ -130,7 +116,7 @@ PY
             echo "::group::humanizer-markers --scan --class a"
             # Только маркеры класса A роняют гейт; класс B печатается
             # предупреждением (контекстные индикаторы по политике проекта
-            # вердикта сами по себе не дают). Любой-marker режим доступен
+            # вердикта сами по себе не дают). Режим любых маркеров доступен
             # напрямую вызовом check_markers.py --scan.
             python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan --class a "${FILES[@]}"
             echo "::endgroup::"

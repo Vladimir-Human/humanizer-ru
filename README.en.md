@@ -72,7 +72,7 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 ### DeepSeek Harness (dsh)
@@ -83,7 +83,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.0
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.1
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -160,11 +160,11 @@ Action inputs:
 | `files` | `**/*.md` | Files to scan: one bash glob or several separated by spaces. The action enables `globstar` and `nullglob`, so `**/*.md` recurses into subdirectories. |
 | `genre` | `neutral` | Genre for soft signals: `neutral`, `fiction`, `legal`, `academic`, `marketing`, `chat`. Used only with `fail-on: soft-threshold`. |
 | `fail-on` | `class-a` | `class-a` — hard regex layer (`check_markers.py --scan --class a`): only class A markers fail the gate; contextual class B markers (placeholder dates, `referrer=grok.com`, zero-width chars) are printed as warnings and do not fail the build; `soft-threshold` — soft-signal counter (`scan_soft_signals.py --fail-multicat 3`). |
-| `fix` | `false` | Autofix (only with `fail-on: class-a`): files carrying class A markers are cleaned by the deterministic `filemarks.py --clean` layer; files without markers are not rewritten at all. Changes stay in the working directory — the calling workflow commits them. A re-scan follows the cleanup: residual markers fail the gate. Measured boundaries: cleanup neutrality is confirmed on 49 reference-corpus files (0 bytes changed); cleaning a marked file normalizes line endings to LF. |
+| `fix` | `false` | Autofix (only with `fail-on: class-a`): files carrying class A markers are cleaned by the filemarks text path (Layer A + MARKUP, direct `scripts/action_fix.py` call); files without markers are not rewritten at all. Changes stay in the working directory — the calling workflow commits them. A re-scan follows the cleanup: residual markers fail the gate. Measured boundaries: cleanup neutrality is confirmed on 49 reference-corpus files (0 bytes changed); cleaning a marked file normalizes line endings to LF. |
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.16.0`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.16.1`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:
@@ -233,6 +233,7 @@ humanizer-ru/
 │   ├── check_git_depth.py        # Shallow-clone detection gate
 │   ├── check_superposition.py    # Superposition run integrity gate
 │   ├── apply_patch.py            # Exact-match patches from patch.json
+│   ├── action_fix.py             # Text-path autofix for class-A markers (CI action)
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
