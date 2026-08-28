@@ -1,0 +1,339 @@
+{
+  "script": "research\\superposition\\2026-08-28-q1r-soft-thresholds-full\\measure_q1r.py",
+  "corpus": {
+    "ai": 24,
+    "human": 26,
+    "adversarial": 12,
+    "boundary": 2
+  },
+  "max_features": {
+    "ai": 2,
+    "human": 0,
+    "adversarial": 2,
+    "boundary": 0
+  },
+  "grid": {
+    "T1_K1": {
+      "tp": 15,
+      "recall": 0.625,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 4,
+      "fp_adversarial_perfile": 7,
+      "fp_adversarial_neutral": 10,
+      "boundary_signals": 0,
+      "gate_pass": false
+    },
+    "T1_K2": {
+      "tp": 5,
+      "recall": 0.2083,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 1,
+      "fp_adversarial_neutral": 1,
+      "boundary_signals": 0,
+      "gate_pass": false
+    },
+    "T1_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T1_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T2_K1": {
+      "tp": 7,
+      "recall": 0.2917,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 2,
+      "fp_adversarial_neutral": 3,
+      "boundary_signals": 0,
+      "gate_pass": false
+    },
+    "T2_K2": {
+      "tp": 5,
+      "recall": 0.2083,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 1,
+      "fp_adversarial_neutral": 1,
+      "boundary_signals": 0,
+      "gate_pass": false
+    },
+    "T2_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T2_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T3_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T3_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T3_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T3_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T4_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T4_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T4_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T4_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T5_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T5_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T5_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T5_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T6_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T6_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T6_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T6_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T7_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T7_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T7_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T7_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T8_K1": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T8_K2": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T8_K3": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    },
+    "T8_K4": {
+      "tp": 0,
+      "recall": 0.0,
+      "fp_human_perfile": 0,
+      "fp_human_neutral": 0,
+      "fp_adversarial_perfile": 0,
+      "fp_adversarial_neutral": 0,
+      "boundary_signals": 0,
+      "gate_pass": true
+    }
+  },
+  "passing_with_recall": [],
+  "best_passing_recall": 0.0
+}
