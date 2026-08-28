@@ -1,0 +1,132 @@
+{
+  "runs": {
+    "2026-07-26-baseline": {
+      "judge_raw": "LLM (claude-fable-5), не человек",
+      "judge_family": "Claude",
+      "generator_family": "Claude",
+      "mechanical": false,
+      "pending": false
+    },
+    "2026-08-07-markers-after": {
+      "judge_raw": "ожидается: та же судейская конфигурация, что у прогона 2026-08-07-markers (сравнение корректно только при одинаковом судействе)",
+      "judge_family": null,
+      "generator_family": "Qwen",
+      "mechanical": false,
+      "pending": true
+    },
+    "2026-08-07-markers": {
+      "judge_raw": "ожидается: LLM-панель из трёх слепых судей (как в 2026-08-07-second) либо человек",
+      "judge_family": null,
+      "generator_family": "Qwen",
+      "mechanical": false,
+      "pending": true
+    },
+    "2026-08-07-second": {
+      "judge_raw": "человек (ожидается); механическая часть считается blind_eval.py",
+      "judge_family": null,
+      "generator_family": "Qwen",
+      "mechanical": true,
+      "pending": true
+    },
+    "2026-08-10-deep-markers": {
+      "judge_raw": "ожидается: панель GLM-5.2 по рубрике-2",
+      "judge_family": "GLM",
+      "generator_family": null,
+      "mechanical": false,
+      "pending": true
+    },
+    "2026-08-10-deep-rewrite": {
+      "judge_raw": "ожидается: слепая панель из трёх субагентов по рубрике-2 (обёрки и списки)",
+      "judge_family": null,
+      "generator_family": null,
+      "mechanical": false,
+      "pending": true
+    },
+    "2026-08-10-genres": {
+      "judge_raw": "Слепая панель из трёх LLM-судей (субагенты Prime Agent), большинство голосов; вердикты расшифрованы ключом прогона. Инструкция — та, что в пакете этого прогона.",
+      "judge_family": null,
+      "generator_family": null,
+      "mechanical": false,
+      "pending": false
+    },
+    "2026-08-10-markers-removal": {
+      "judge_raw": "механические метрики: снятие маркеров, дописанные факты, ложные правки",
+      "judge_family": null,
+      "generator_family": null,
+      "mechanical": true,
+      "pending": false
+    },
+    "2026-08-11-genre-modes": {
+      "judge_raw": "панель 3 судьи GLM-5.2, большинство; плюс пересудейство для замера позиционного шума",
+      "judge_family": "GLM",
+      "generator_family": "GLM",
+      "mechanical": false,
+      "pending": false
+    },
+    "2026-08-11-invisible": {
+      "judge_raw": "ожидается: панель GLM-5.2 по рубрике-2",
+      "judge_family": "GLM",
+      "generator_family": null,
+      "mechanical": false,
+      "pending": true
+    },
+    "2026-08-13-f4-counterfactual-markers": {
+      "judge_raw": "панель не гонялась: F4 — механический прогон (Д1)",
+      "judge_family": null,
+      "generator_family": "DeepSeek",
+      "mechanical": true,
+      "pending": false
+    },
+    "2026-08-13-f4-counterfactual": {
+      "judge_raw": "панель не гонялась: F4 — механический прогон (Д1)",
+      "judge_family": null,
+      "generator_family": "DeepSeek",
+      "mechanical": true,
+      "pending": false
+    },
+    "2026-08-25-axis-12": {
+      "judge_raw": "",
+      "judge_family": null,
+      "generator_family": "DeepSeek",
+      "mechanical": false,
+      "pending": false
+    }
+  },
+  "judge_families_used": [
+    "Claude",
+    "GLM"
+  ],
+  "families_count": 2,
+  "leaderboard": {
+    "panel_mentions": [
+      "человеческих текстов, 2 boundary-контроля). Ось «человеческое звучание»",
+      "меняет победителя по читаемости на 5 парах из 8 — такие числа остаются в"
+    ],
+    "has_panel_column": false,
+    "verdict": "панельные оси не публикуются"
+  },
+  "quality_reports": {
+    "P3-exp1-report.md": {
+      "families_mentioned": [
+        "Qwen"
+      ],
+      "mentions_two_families": false,
+      "snippet": "**Вопрос.** Даёт ли перезапись по скиллу текст, который слепой судья"
+    },
+    "G5-exp1-report.md": {
+      "families_mentioned": [
+        "Qwen",
+        "GLM"
+      ],
+      "mentions_two_families": true,
+      "snippet": "+ 11 human-канареек; sha256 и скрипт D заморожены до генерации. Судьи:"
+    },
+    "G6-exp1-report.md": {
+      "families_mentioned": [
+        "Qwen"
+      ],
+      "mentions_two_families": false,
+      "snippet": "Судьи: 3×Qwen3.7-max + зонд."
+    }
+  }
+}
