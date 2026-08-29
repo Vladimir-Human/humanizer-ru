@@ -4,13 +4,13 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Version](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=version&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[Русская версия → README.md](README.md)**
 
 An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
 
-It ships 56 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) reports passing audits by Gen Agent Trust Hub and Socket; the red Snyk badge is explained under Security.
+It ships 56 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. The [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) catalog runs security audits on the skill; the history of the Snyk E005 finding — and why the marker that triggers it cannot be removed — is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -68,11 +68,21 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 3. **Organizations (Enterprise & Team)**: the administrator verifies the release
    (step 1 covers the review) and uploads it to the shared library — the skill
    becomes available to the whole team.
-4. **Claude Code (local)**:
+4. **API and local agents (Claude Code)**: when working through the API
+   (`/v1/messages` or similar endpoints), pass the skill via the
+   `container.skills` parameter — details in your client's documentation.
+   Local install pinned to a release tag for the exact reviewed state:
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+```
+
+Or minimal — the skill map only (no `references/`; shallower checks):
+
+```sh
+mkdir -p ~/.claude/skills/humanizer-ru
+cp SKILL.md ~/.claude/skills/humanizer-ru/
 ```
 
 ### DeepSeek Harness (dsh)
@@ -83,7 +93,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -145,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.4
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.5
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -164,7 +174,7 @@ Action inputs:
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.16.4`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.16.5`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:
@@ -278,8 +288,9 @@ humanizer-ru/
 ├── references/                   # 12 reference files (two split into parts = 17 files)
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures
-└── .github/workflows/            # CI: 9 pipelines (regex, self-scan, link-rot,
-                                  #     validators, docs, style, release, install, demo)
+└── .github/workflows/            # CI: 9 pipelines (regex-check, self-scan,
+                                  #     link-check, no-anglicisms, validators,
+                                  #     docs-check, release-check, dsh-install, demo-pages)
 ```
 
 The full checklist runs in one command: `python scripts/check_all.py` — 72 gates in the full checklist (68 in --quick). Unit tests: `python -m unittest discover -s tests`.
@@ -291,7 +302,7 @@ The release policy separates a stable core (genre rules, false-positive boundari
 - Text-only skill: no code execution during use, no network or filesystem access, no data collection. The validators in `scripts/` (`check_markers.py`, `check_docs.py` and others) run only in the repository's CI or manually by the developer.
 - Input text is treated as data: instructions hidden inside the text being checked are not executed.
 - Threat model and vulnerability reporting: [SECURITY.en.md](SECURITY.en.md) · [Русская версия](SECURITY.md).
-- **On the red Snyk badge in the skills.sh catalogue.** The automated audit flags this skill with E005, "suspicious download URL". The finding is a false positive: the scanner sees the Perplexity S3 bucket identifier `ppl-ai-file-upload` — a documented Class A marker this skill uses to recognise machine-generated text — and reads the description of a marker as an instruction to download a file. The skill downloads nothing: following links from the text under review is forbidden by the safety-boundaries section of `SKILL.md` («Границы безопасности», the file is in Russian). This is the same class of false positive familiar from YARA rule sets and the EICAR test string: a tool that looks for an indicator has to contain that indicator. The catalogue's two other auditors return PASS. We will not drop the marker to satisfy a verdict — that would be a hole in the detector.
+- **On the Snyk audit in the skills.sh catalogue.** The skill contains the Perplexity S3 bucket identifier `ppl-ai-file-upload` — a documented Class A marker it uses to recognise machine-generated text. The catalogue scanner once read the description of that marker as an instruction to download a file and flagged the skill with E005, "suspicious download URL" (verdict of 2026-08-12: Fail). The finding was a false positive: the skill downloads nothing; following links from the text under review is forbidden by the safety-boundaries section of `SKILL.md` («Границы безопасности», the file is in Russian). This is the same class of false positive familiar from YARA rule sets and the EICAR test string: a tool that looks for an indicator has to contain that indicator. We will not drop the marker to satisfy a verdict — that would be a hole in the detector. The verdict has changed over time: as of 2026-08-29 the catalogue audit returns Pass; the current state is published on the skill page whenever it is available. If the flag returns, its cause is described above.
 
 ## Regex markers: classes A and B
 
