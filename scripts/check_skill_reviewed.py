@@ -84,14 +84,16 @@ def _selftest():
     # позитив: reviewed сегодня
     today = datetime.date.today().isoformat()
     open(SKILL, "w", encoding="utf-8").write(
-        '---\nversion: "3.16.3"\nlast_reviewed: "%s"\n---\n' % today)
+        '---\nname: x\nmetadata:\n  version: "9.9.9"\n'
+        '  last_reviewed: "%s"\n---\n' % today)
     fails = 0
     if run() != 0:
         print("ПРОВАЛ selftest positive")
         fails += 1
     # негатив: reviewed в прошлом году
     open(SKILL, "w", encoding="utf-8").write(
-        '---\nversion: "3.16.3"\nlast_reviewed: "2024-01-01"\n---\n')
+        '---\nname: x\nmetadata:\n  version: "9.9.9"\n'
+        '  last_reviewed: "2024-01-01"\n---\n')
     if run() == 0:
         print("ПРОВАЛ selftest negative: старая дата не поймана")
         fails += 1

@@ -35,18 +35,32 @@ if hasattr(sys.stdout, "reconfigure"):
 
 
 def fix_file(path):
-    """Чистит файл текстовым путём. Возвращает (status, info)."""
+    """Чистит файл текстовым путём. Возвращает (status, info).
+
+    Статусы: CHANGED (сняты маркеры текстового пути), CLEAN (маркеров
+    класса A не было или вход чист), UNFIXED (есть маркеры класса A,
+    которые текстовый путь не снимает — sandbox_link, grok_card_tag;
+    они перечисляются повторным сканом вызывающего кода).
+    """
     from text_layer import clean_text_layer, clean_markup  # noqa: E402
     from common_fm import safe_write_text  # noqa: E402
+    import check_markers as cm  # noqa: E402
     with open(path, encoding="utf-8", errors="surrogateescape") as fh:
         text = fh.read()
+    # Маркеры класса A вне текстового пути: фиксируем до чистки,
+    # чтобы UNFIXED честно называл такой файл.
+    has_class_a = False
+    compiled = {name: __import__("re").compile(case[0])
+                for name, case in cm.CASES.items()}
+    for line in text.splitlines():
+        if cm._line_matches(line, compiled):
+            has_class_a = True
+            break
     cleaned, n = clean_text_layer(text)
     cleaned, m = clean_markup(cleaned)
     if cleaned == text:
-        return ("CLEAN", (0, 0))
+        return ("UNFIXED" if has_class_a else "CLEAN", (0, 0))
     if n + m == 0:
-        # Текст изменился без снятия маркеров (не должно происходить) —
-        # считаем непочищаемым, чтобы вызывающий код решил.
         return ("UNFIXED", (n, m))
     # Запись через safe_write_text (common_fm): атомарность и защита от
     # симлинков — как у filemarks, не голым open().
