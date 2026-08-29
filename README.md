@@ -4,13 +4,13 @@
 [![GitHub stars](https://badgen.net/github/stars/Vladimir-Human/humanizer-ru)](https://github.com/Vladimir-Human/humanizer-ru/stargazers)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 
 **[English version → README.en.md](README.en.md)**
 
 Скилл для ИИ-агентов: находит и убирает следы машинной генерации в русскоязычном тексте. Переписывает «гпт-шный» текст по-человечески, не искажая смысла, и не трогает живое: ложное срабатывание здесь дороже пропуска.
 
-Здесь 56 паттернов (25 базовых и 31 расширение) и 40 проверяемых regex-маркеров классов A и B; у 38 из них полная запись доказательств в реестре. Проверки гоняет CI. Каталог [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) сообщает об успешных проверках Gen Agent Trust Hub и Socket; про красную плашку Snyk — в разделе «Безопасность».
+Здесь 56 паттернов (25 базовых и 31 расширение) и 40 проверяемых regex-маркеров классов A и B; у 38 из них полная запись доказательств в реестре. Проверки гоняет CI. Каталог [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) аудитурует скилл; про историю срабатывания Snyk E005 и почему примету, которая его вызывает, нельзя убрать — в разделе «Безопасность».
 
 **До:**
 
@@ -51,7 +51,7 @@ references/removal-matrix.md.
 ## Установка за 30 секунд
 
 ```sh
-npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-ru
+npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-ru
 ```
 
 Если нужен не скилл для агента, а обычная команда в терминале — пакет ставится из PyPI:
@@ -96,7 +96,7 @@ pip install humanizer-ru
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже):
@@ -106,7 +106,7 @@ mkdir -p ~/.claude/skills/humanizer-ru
 cp SKILL.md ~/.claude/skills/humanizer-ru/
 ```
 
-Если проверять каждый шаг вручную не нужно, быстрее поставить одной командой из каталога [skills.sh](https://skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
+Если проверять каждый шаг вручную не нужно, быстрее поставить одной командой из каталога [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) — см. «Установка за 30 секунд» выше.
 
 ### 4. DeepSeek Harness (dsh)
 
@@ -116,7 +116,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.4 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль появляется при первом запуске, `pnpm` нужен на PATH:
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.4
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.5
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -198,7 +198,7 @@ jobs:
 | `fix` | `false` | Автофикс (только с `fail-on: class-a`): файлы с маркером класса A чистятся текстовым путём filemarks (Layer A + MARKUP, прямой вызов `scripts/action_fix.py`); файлы без маркеров не перезаписываются вовсе. Изменения остаются в рабочем каталоге — закоммитить их должен вызывающий workflow. После чистки идёт повторный скан: остаточные маркеры роняют гейт. Измеренные границы: нейтральность чистки подтверждена на 49 файлах эталонного корпуса (0 изменённых байт); чистка помеченного файла нормализует переводы строк к LF. |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.4`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.5`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:
@@ -401,7 +401,7 @@ humanizer-ru/
 - Скилл только текстовый: не выполняет код, не обращается к сети и файловой системе, ничего с машины не собирает. `scripts/check_markers.py` запускается лишь в CI и вручную разработчиком.
 - Текст пользователя скилл читает как ввод: команды, спрятанные внутри, он не выполняет (раздел «Границы безопасности» в `SKILL.md`).
 - Модель угроз, гарантии и порядок сообщения об уязвимостях — в [SECURITY.md](SECURITY.md).
-- **Про красную плашку Snyk на витрине skills.sh.** Автоматический аудит помечает скилл кодом E005 «подозрительная ссылка на скачивание». Срабатывание ложное: сканер видит идентификатор S3-бакета Perplexity `ppl-ai-file-upload` (документированная примета класса A, по которой скилл распознаёт машинную генерацию) и принимает описание приметы за инструкцию скачать файл. Скилл ничего не скачивает: переход по ссылкам из проверяемого текста запрещён разделом «Границы безопасности» в `SKILL.md`. Тот же класс ложных срабатываний известен по наборам правил YARA и по тестовой строке EICAR: инструмент, который ищет признак, обязан этот признак содержать. Два других аудитора каталога дают PASS. Убрать примету ради вердикта мы не будем — это дыра в детекторе.
+- **Про аудит Snyk в каталоге skills.sh.** Скилл содержит идентификатор S3-бакета Perplexity `ppl-ai-file-upload`: документированную примету класса A, по которой он распознаёт машинную генерацию. Сканер каталога однажды принял описание приметы за инструкцию скачать файл и пометил скилл кодом E005 «подозрительная ссылка на скачивание» (вердикт от 2026-08-12: Fail). Срабатывание ложное: скилл ничего не скачивает, переход по ссылкам из проверяемого текста запрещён разделом «Границы безопасности» в `SKILL.md`. Тот же класс ложных срабатываний известен по наборам правил YARA и тестовой строке EICAR: инструмент, который ищет признак, обязан этот признак содержать. Убрать примету ради вердикта мы не будем: это дыра в детекторе. Вердикт менялся: на 2026-08-29 аудит каталога даёт Pass; текущее состояние публикуется на странице скилла, когда она доступна. Если пометка вернётся, её причина описана выше.
 
 ### Regex-маркеры: классы A и B
 

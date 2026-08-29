@@ -4,7 +4,7 @@
 
 ## What this project does — and does not do
 
-Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), twenty-six top-level CI verification scripts (`scripts/`, Python standard library only, no dependencies) and the file-layer package `scripts/filemarks/`. Everything ships in the release archive except `check_corpus.py` (it only runs against the `research/` directory, which the archive does not include). Additionally distributed: the `humanizer-ru` PyPI package, a reusable GitHub Action (`action/`), a DeepSeek Harness bundle (`dsh/`), and a browser demo (`demo/`).
+Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), top-level CI verification scripts (`scripts/`, Python standard library only, no dependencies; count with `ls scripts/*.py | wc -l`) and the file-layer package `scripts/filemarks/`. Everything ships in the release archive except `check_corpus.py` (it only runs against the `research/` directory, which the archive does not include). Additionally distributed: the `humanizer-ru` PyPI package, a reusable GitHub Action (`action/`), a DeepSeek Harness bundle (`dsh/`), and a browser demo (`demo/`).
 
 Design guarantees:
 
