@@ -70,7 +70,8 @@ def _selftest():
     open(os.path.join(d, "src", "humanizer_ru", "__init__.py"),
          "w", encoding="utf-8").write('__version__ = "9.9.9"\n')
     open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8").write(
-        '---\nversion: "9.9.9"\nlast_reviewed: "x"\n---\n')
+        '---\nname: x\nmetadata:\n  version: "9.9.9"\n'
+        '  last_reviewed: "x"\n---\n')
     # подменяем пути через monkeypatch
     global INIT, SKILL
     old_init, old_skill = INIT, SKILL

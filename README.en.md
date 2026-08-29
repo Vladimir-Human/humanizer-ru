@@ -48,7 +48,7 @@ guarantee". The frame is described in docs/FRAMEWORK.md; the limits of removal t
 ## Install in 30 seconds
 
 ```sh
-npx skills add https://github.com/vladimir-human/humanizer-ru --skill humanizer-ru
+npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-ru
 ```
 
 If you want a plain terminal command instead of an agent skill — the package installs from PyPI:
@@ -75,10 +75,10 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.6 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
-Or minimal — the skill map only (no `references/`; shallower checks):
+Or minimal — the skill map only (no `references/`; shallower checks). From the unpacked archive or clone directory:
 
 ```sh
 mkdir -p ~/.claude/skills/humanizer-ru
@@ -93,7 +93,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.5 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.6 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.5
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.6
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -174,7 +174,7 @@ Action inputs:
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.16.5`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.16.6`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:

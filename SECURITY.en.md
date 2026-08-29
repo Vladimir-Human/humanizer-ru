@@ -4,7 +4,7 @@
 
 ## What this project does — and does not do
 
-Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), top-level CI verification scripts (`scripts/`, Python standard library only, no dependencies; count with `ls scripts/*.py | wc -l`) and the file-layer package `scripts/filemarks/`. Everything ships in the release archive except `check_corpus.py` (it only runs against the `research/` directory, which the archive does not include). Additionally distributed: the `humanizer-ru` PyPI package, a reusable GitHub Action (`action/`), a DeepSeek Harness bundle (`dsh/`), and a browser demo (`demo/`).
+Humanizer-ru is a text-based skill for AI agents. It consists of Markdown files (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), top-level CI verification scripts (`scripts/`, Python standard library only, no dependencies; count with `ls scripts/*.py | wc -l`, or `(Get-ChildItem scripts\*.py).Count` on Windows) and the file-layer package `scripts/filemarks/`. Everything ships in the release archive except `check_corpus.py` (it only runs against the `research/` directory, which the archive does not include). Additionally distributed: the `humanizer-ru` PyPI package, a reusable GitHub Action (`action/`), a DeepSeek Harness bundle (`dsh/`), and a browser demo (`demo/`).
 
 Design guarantees:
 
@@ -29,7 +29,7 @@ rewriting does not remove matches against a database of borrowings.
 | Threat | Mitigation |
 | --- | --- |
 | Prompt injection inside text being reviewed | `SKILL.md` treats input text as data; instructions found inside it are not executed, and the agent warns the user about attempted injection |
-| Metadata poisoning or unwanted activation | The `description` is neutral and the skill activates only after an explicit user request |
+| Metadata poisoning or unwanted activation | The `description` is neutral and free of directives; the skill activates only after an explicit user request |
 | Homograph substitution in addresses | Project addresses use ASCII; non-ASCII paths are percent-encoded and checked before release (`scripts/check_release.py` rejects non-ASCII URLs at archive build and verification) |
 | Installation-time content substitution | The manual process uses tagged releases and asks users to inspect files before installing |
 | Regression against the project's own rules | Nine CI workflows cover regex fixtures, self-scanning, Russian calques, spec/source validation, documentation consistency, release checks, registry link-rot, dsh bundle install, and demo publishing |

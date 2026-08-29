@@ -4,7 +4,7 @@
 
 ## Что этот проект делает и чего не делает
 
-Humanizer-ru — текстовый скилл для ИИ-агентов. Он состоит из файлов разметки (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), проверочных скриптов верхнего уровня для CI (`scripts/`, стандартная библиотека Python, без зависимостей; счёт — `ls scripts/*.py | wc -l`) и пакета файлового слоя `scripts/filemarks/`. В релизный архив входит всё, кроме `check_corpus.py` (работает только по каталогу `research/`, которого в архиве нет). Дополнительно поставляются: PyPI-пакет `humanizer-ru`, переиспользуемый GitHub Action (`action/`), бандл DeepSeek Harness (`dsh/`) и браузерное демо (`demo/`).
+Humanizer-ru — текстовый скилл для ИИ-агентов. Он состоит из файлов разметки (`SKILL.md`, `references/*.md`, `knowledge/corrections.md`), проверочных скриптов верхнего уровня для CI (`scripts/`, стандартная библиотека Python, без зависимостей; счёт — `ls scripts/*.py | wc -l` либо `(Get-ChildItem scripts\*.py).Count` на Windows) и пакета файлового слоя `scripts/filemarks/`. В релизный архив входит всё, кроме `check_corpus.py` (работает только по каталогу `research/`, которого в архиве нет). Дополнительно поставляются: PyPI-пакет `humanizer-ru`, переиспользуемый GitHub Action (`action/`), бандл DeepSeek Harness (`dsh/`) и браузерное демо (`demo/`).
 
 По устройству скилла:
 

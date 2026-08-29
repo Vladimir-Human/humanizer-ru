@@ -51,7 +51,7 @@ def _check_literal_indent(path):
     errs = []
     i = 0
     while i < len(lines):
-        if re.match(r"\s*run:\s*\|", lines[i]):
+        if re.match(r"\s*(?:-\s+)?run:\s*\|", lines[i]):
             block_indent = None
             i += 1
             while i < len(lines):

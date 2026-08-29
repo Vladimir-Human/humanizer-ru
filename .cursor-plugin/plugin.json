@@ -1,7 +1,7 @@
 {
   "name": "humanizer-ru",
   "displayName": "Humanizer RU",
-  "version": "3.16.5",
+  "version": "3.16.6",
   "description": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком. | Reads Russian text, finds traces of machine generation and, on explicit request, rewrites it to sound natural.",
   "author": "Vladimir-Human",
   "license": "MIT",
