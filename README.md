@@ -96,7 +96,7 @@ pip install humanizer-ru
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.8 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Или минимально — только карта скилла (без справочников `references/`; глубина проверки будет ниже). Из каталога распакованного архива или клона:
@@ -116,7 +116,7 @@ dsh ищет скиллы в собственных каталогах. Пров
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.8 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 Второй способ — бандл из подкаталога `dsh/`. Его ставит менеджер плагинов, профиль появляется при первом запуске, `pnpm` нужен на PATH:
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.7
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.8
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash-глоб(ы)
           genre: neutral                          # для режима soft-threshold
@@ -198,7 +198,7 @@ jobs:
 | `fix` | `false` | Автофикс (только с `fail-on: class-a`): файлы с маркером класса A чистятся текстовым путём filemarks (Layer A + MARKUP, прямой вызов `scripts/action_fix.py`); файлы без маркеров не перезаписываются вовсе. Изменения остаются в рабочем каталоге — закоммитить их должен вызывающий workflow. После чистки идёт повторный скан: остаточные маркеры роняют гейт. Измеренные границы: нейтральность чистки подтверждена на 49 файлах эталонного корпуса (0 изменённых байт); чистка помеченного файла нормализует переводы строк к LF. |
 | `ref` | пусто | Ref вашего репозитория для checkout. Пусто — текущий HEAD (для pull_request — merge-коммит по умолчанию). |
 
-Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.7`.
+Версия action закрепляется не входом `ref`, а строкой `uses: Vladimir-Human/humanizer-ru/action@v3.16.8`.
 Вход `ref` управляет тем, какое состояние **проверяемого** репозитория сканируется.
 
 Ограничения и политика безопасности:
@@ -214,7 +214,7 @@ jobs:
 
 ## Что делает
 
-Прогоняет русский текст по 58 паттернам машинного письма (25 базовых и 31 расширение для русского) и 40 проверяемым regex-маркерам классов A и B, затем убирает следы. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
+Прогоняет русский текст по 58 паттернам машинного письма (25 базовых и 33 расширения для русского) и 40 проверяемым regex-маркерам классов A и B, затем убирает следы. Опирается на [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
 С версии 2.3 SKILL.md — это карта с деревом решений. Полное описание паттернов и проверок лежит в подключаемых файлах `references/`.
 
@@ -301,15 +301,15 @@ humanizer-ru/
 │   ├── runs/                     # Парные прогоны (12 записей; см. runs/README.md)
 │   └── results/                  # Отчёты прогонов целиком, включая
 │                                 #   метрики не в пользу скилла
-├── .github/workflows/        # CI: 9 конвейеров — regex-check, self-scan,
+├── .github/workflows/        # CI: 10 конвейеров — regex-check, self-scan,
 │                             #     link-check, no-anglicisms, validators,
 │                             #     docs-check, release-check, dsh-install, demo-pages
-├── references/               # 12 справочников; два разбиты на части (17 файлов)
+├── references/               # 13 справочников; два разбиты на части (18 файлов)
 ├── research/                 # Протоколы, реестр, аудит и BACKLOG.md
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 72 гейтов полного чек-листа (68 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 73 гейта полного чек-листа (69 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
@@ -372,6 +372,8 @@ humanizer-ru/
 | 21b | Раздел-пересказ в конце текста — «Вкратце», «Подводя итоги», дублирование уже сказанного | средняя |
 | 21c | Заголовок-пересказ в первой строке — первая фраза повторяет заголовок | средняя |
 | 21d | Стопка абзацев без связок — три абзаца подряд с нового тезиса без связей | средняя |
+| 21e | Первые предложения абзацев как чистое резюме (outline test) — 4+ абзаца подряд, чей скелет совпадает с пересказом | средняя |
+| 21f | Линейное интервью и хвост рефлексии — абзацы по предсказуемому вопроснику без хода в сторону, финальный блок рефлексии без фактов | средняя |
 
 ### Коммуникативные паттерны
 

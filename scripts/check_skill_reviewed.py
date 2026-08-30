@@ -57,17 +57,27 @@ def run():
         print("[FAIL] SKILL.md: last_reviewed не найден в frontmatter")
         return 1
     reviewed = m.group(1)
-    git_date = _git_date(SKILL)
-    if git_date is None:
-        # вне git — fallback на mtime
-        git_date = datetime.date.fromtimestamp(
-            os.path.getmtime(SKILL)).isoformat()
-    if reviewed < git_date:
-        print("[FAIL] last_reviewed=%s старее даты коммита SKILL.md=%s"
-              % (reviewed, git_date))
+    # Дата последнего изменения по SKILL.md и всем references/*.md
+    # (докстринг обещает обе зоны; основной объём скилла — справочники,
+    # и last_reviewed, моложе их правки, обязан ронять гейт).
+    import glob as _g
+    watched = [SKILL] + sorted(_g.glob(
+        os.path.join(ROOT, "references", "*.md")))
+    latest = None
+    latest_path = None
+    for path in watched:
+        d = _git_date(path)
+        if d is None:
+            d = datetime.date.fromtimestamp(os.path.getmtime(path)).isoformat()
+        if latest is None or d > latest:
+            latest = d
+            latest_path = path
+    if reviewed < latest:
+        print("[FAIL] last_reviewed=%s старее даты коммита %s=%s"
+              % (reviewed, os.path.relpath(latest_path, ROOT), latest))
         return 1
     print("OK skill-reviewed: last_reviewed=%s >= коммит=%s"
-          % (reviewed, git_date))
+          % (reviewed, latest))
     return 0
 
 

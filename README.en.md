@@ -10,7 +10,7 @@
 
 An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
 
-It ships 58 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. The [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) catalog runs security audits on the skill; the history of the Snyk E005 finding — and why the marker that triggers it cannot be removed — is explained under Security.
+It ships 58 patterns (25 base + 33 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. The [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) catalog runs security audits on the skill; the history of the Snyk E005 finding — and why the marker that triggers it cannot be removed — is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -75,7 +75,7 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.8 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Or minimal — the skill map only (no `references/`; shallower checks). From the unpacked archive or clone directory:
@@ -93,7 +93,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.8 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.7
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.8
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -174,7 +174,7 @@ Action inputs:
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.16.7`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.16.8`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:
@@ -190,7 +190,7 @@ Which gate to choose:
 
 ## What it does
 
-Detects and fixes 58 patterns of machine-generated Russian text (25 base + 31 Russian-specific extensions), grouped into four families:
+Detects and fixes 58 patterns of machine-generated Russian text (25 base + 33 Russian-specific extensions), grouped into four families:
 
 | Family | Examples |
 |---|---|
@@ -285,15 +285,15 @@ humanizer-ru/
 │   ├── runs/                     # Paired runs (12 records; see runs/README.md)
 │   └── results/                  # Full run reports, including metrics that
 │                                 #   do not favour the skill
-├── references/                   # 12 reference files (two split into parts = 17 files)
+├── references/                   # 13 reference files (two split into parts = 18 files)
 ├── research/                     # Protocols, raw model outputs, pilot results
 ├── tests/fixtures/               # Marker test fixtures
-└── .github/workflows/            # CI: 9 pipelines (regex-check, self-scan,
+└── .github/workflows/            # CI: 10 pipelines (regex-check, self-scan,
                                   #     link-check, no-anglicisms, validators,
-                                  #     docs-check, release-check, dsh-install, demo-pages)
+                                  #     docs-check, release-check, dsh-install, demo-pages, action-smoke)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 72 gates in the full checklist (68 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 73 gates in the full checklist (69 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
