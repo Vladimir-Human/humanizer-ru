@@ -37,6 +37,19 @@ def safe_write_bytes(path, data):
     # симлинком (TOCTOU); os.replace заменяет сам симлинк, не следуя по нему.
     if dest.is_symlink():
         raise OSError("отказ писать через симлинк: %s" % dest)
+    # Родительские симлинки: dest.parent через симлинк переносит запись в
+    # другой каталог — отказ (аудит 2026-08-30: parent-symlink обходил гард).
+    for comp in dest.resolve().parents:
+        if comp == comp.parent:
+            break
+    probe = dest
+    while True:
+        if probe.is_symlink():
+            raise OSError("отказ писать через симлинк в цепочке: %s" % probe)
+        parent_of = probe.parent
+        if parent_of == probe:
+            break
+        probe = parent_of
     fd, tmp_name = tempfile.mkstemp(prefix="." + dest.name + ".", suffix=".tmp", dir=str(parent))
     try:
         try:

@@ -49,6 +49,8 @@ jobs:
             ! -path './scripts/check_corpus.py' \
             ! -path './scripts/filemarks/text_layer.py' \
             ! -path './scripts/filemarks/filemarks.py' \
+            ! -path './scripts/action_fix.py' \
+            ! -path './.github/workflows/action-smoke.yml' \
             ! -path './eval/candidates/smixs_lint_pinned.py' \
             ! -path './references/test-fixtures*.md' \
             ! -path './references/false-positives.md' \

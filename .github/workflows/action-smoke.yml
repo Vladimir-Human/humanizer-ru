@@ -1,0 +1,66 @@
+# Smoke-прогон CI-экшена (композитного) внутри репозитория: проверяет,
+# что action/action.yml загружается, fix-режим чистит маркер класса A и
+# честно перечисляет неснимаемый маркер (повторный скан роняет гейт).
+name: Smoke CI-экшена
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  action-fix-smoke:
+    name: Экшен в fix-режиме чистит и перечисляет остаток
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Подготовка фикстур (маркер класса A + неснимаемый маркер)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p smoke
+          printf 'Альбом вышел[span_2](start_span) в августе 1986[span_2](end_span).\n' > smoke/marked.md
+          printf 'Файл [документ](sandbox:/mnt/data/doc.pdf) внутри.\n' > smoke/unfixable.md
+          printf 'Чистый текст без маркеров.\n' > smoke/clean.md
+
+      - name: Экшен в fix-режиме (ожидаемый провал на остатке)
+        id: fix
+        continue-on-error: true
+        uses: ./action
+        with:
+          files: 'smoke/*.md'
+          fail-on: class-a
+          fix: 'true'
+
+      - name: Проверка исхода
+        shell: bash
+        run: |
+          set -euo pipefail
+          # маркер gemini_span снят
+          if grep -q "start_span" smoke/marked.md; then
+            echo "::error::маркер gemini_span не снят из smoke/marked.md"
+            exit 1
+          fi
+          grep -q "вышел в августе 1986" smoke/marked.md
+          # неснимаемый маркер остался (text path не снимает sandbox_link)
+          grep -q "sandbox:/mnt/data/doc.pdf" smoke/unfixable.md
+          # чистый файл не тронут
+          grep -q "Чистый текст без маркеров" smoke/clean.md
+          # шаг экшена завершился красным (остаточный маркер роняет гейт)
+          if [ "${{ steps.fix.outcome }}" != "failure" ]; then
+            echo "::error::экшен не упал на остаточном маркере (outcome=${{ steps.fix.outcome }})"
+            exit 1
+          fi
+          echo "smoke: маркер снят, остаток перечислен, гейт упал на остатке — как задумано"
+
+      - name: Экшен в режиме только детекции (чистый корпус — зелёный)
+        uses: ./action
+        with:
+          files: 'smoke/clean.md'
+          fail-on: class-a
