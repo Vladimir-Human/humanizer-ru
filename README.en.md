@@ -10,7 +10,7 @@
 
 An agent skill that finds and removes traces of machine generation from Russian-language text. It rewrites AI-sounding prose into human prose without distorting the meaning, and it leaves live human writing alone: a false positive costs more than a miss.
 
-It ships 56 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. The [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) catalog runs security audits on the skill; the history of the Snyk E005 finding — and why the marker that triggers it cannot be removed — is explained under Security.
+It ships 58 patterns (25 base + 31 Russian-specific extensions) and 40 testable regex markers (38 with a full evidence record) split into hard copy-paste artifacts and contextual indicators; all checks run automatically in CI. The [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru) catalog runs security audits on the skill; the history of the Snyk E005 finding — and why the marker that triggers it cannot be removed — is explained under Security.
 
 **Before** — typical AI-generated Russian copy: vague superlatives, forced triads, "experts believe":
 
@@ -36,7 +36,7 @@ with this project. Their stances differ:
 
 | Project | Focus | Stance on detectors |
 |---|---|---|
-| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 56 patterns, 40 regex markers, blind pairwise runs | Removes labels in text and files the user owns (invisible characters, statistical markers, C2PA/EXIF/XMP; non-deterministic techniques are best-effort, pixel-level SynthID is out of scope — see the removal matrix) and reduces statistical traces of machine generation in text the user owns; label removal is an open product capability. Detector bypass is not claimed as a guarantee: only relative before/after detectability deltas with false-positive control are published. Do not harm live writing and do not add facts — inviolable principles. |
+| [Vladimir-Human/humanizer-ru](https://github.com/Vladimir-Human/humanizer-ru) — this project | A Russian-language editing skill: 58 patterns, 40 regex markers, blind pairwise runs | Removes labels in text and files the user owns (invisible characters, statistical markers, C2PA/EXIF/XMP; non-deterministic techniques are best-effort, pixel-level SynthID is out of scope — see the removal matrix) and reduces statistical traces of machine generation in text the user owns; label removal is an open product capability. Detector bypass is not claimed as a guarantee: only relative before/after detectability deltas with false-positive control are published. Do not harm live writing and do not add facts — inviolable principles. |
 | [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) | A "humanizer & detector" skill: rewriting and detection in one tool; the leaderboard runs its deterministic linter | — |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | A humanizer skill: its tagline claims tuning for GPTZero/DivEye/RuBERT metrics; its FAQ shows a bypass technique | The bypass technique is in their FAQ |
 | [blader/humanizer](https://github.com/blader/humanizer) | An English-language skill of the same kind, published three days earlier | — |
@@ -75,7 +75,7 @@ The `npx skills add` installer lets you pick target agents: Claude Code, Codex, 
 
 ```sh
 mkdir -p ~/.claude/skills
-git clone --branch v3.16.6 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Or minimal — the skill map only (no `references/`; shallower checks). From the unpacked archive or clone directory:
@@ -93,7 +93,7 @@ Global install (all projects and agents):
 
 ```sh
 mkdir -p ~/.agents/skills
-git clone --branch v3.16.6 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
+git clone --branch v3.16.7 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.agents/skills/humanizer-ru
 ```
 
 The second way is the bundle in the `dsh/` subdirectory, installed by the plugin manager. The profile is created on first use, and `pnpm` must be on PATH:
@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: Vladimir-Human/humanizer-ru/action@v3.16.6
+      - uses: Vladimir-Human/humanizer-ru/action@v3.16.7
         with:
           files: 'content/**/*.md docs/**/*.md'   # bash glob(s)
           genre: neutral                          # used in soft-threshold mode
@@ -174,7 +174,7 @@ Action inputs:
 | `ref` | empty | Ref of your repository for checkout. Empty — current HEAD (for pull_request — the default merge commit). |
 
 The action version is pinned by the `uses` string
-`Vladimir-Human/humanizer-ru/action@v3.16.6`, not by the `ref` input.
+`Vladimir-Human/humanizer-ru/action@v3.16.7`, not by the `ref` input.
 The `ref` input controls which state of the scanned repository is checked out.
 
 Limitations and security policy:
@@ -190,7 +190,7 @@ Which gate to choose:
 
 ## What it does
 
-Detects and fixes 56 patterns of machine-generated Russian text (25 base + 31 Russian-specific extensions), grouped into four families:
+Detects and fixes 58 patterns of machine-generated Russian text (25 base + 31 Russian-specific extensions), grouped into four families:
 
 | Family | Examples |
 |---|---|

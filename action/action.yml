@@ -46,7 +46,7 @@ inputs:
       Ref проверяемого репозитория для checkout. Пусто — текущий HEAD
       (для pull_request — merge-коммит действия checkout по умолчанию).
       Версия самого экшена закрепляется в строке uses:
-      Vladimir-Human/humanizer-ru/action@v3.16.6.
+      Vladimir-Human/humanizer-ru/action@v3.16.7.
     required: false
     default: ''
 
