@@ -3,13 +3,13 @@
   "name": "humanizer-ru",
   "owner": "Vladimir-Human",
   "description": "Install Humanizer RU as a Claude plugin. | Установка Humanizer RU как плагина Claude.",
-  "version": "3.16.6",
+  "version": "3.16.7",
   "plugins": [
     {
       "name": "humanizer-ru",
       "source": "./",
       "description": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком. | Reads Russian text, finds traces of machine generation and, on explicit request, rewrites it to sound natural.",
-      "version": "3.16.6",
+      "version": "3.16.7",
       "license": "MIT",
       "keywords": [
         "humanizer",
