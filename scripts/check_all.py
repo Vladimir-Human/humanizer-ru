@@ -174,6 +174,15 @@ def _gates(quick, tmpdir):
         # гейт запускает детерминированную самопроверку агрегации и FP-блока.
         ("detect-eval: самопроверка", [PY, "eval/detect_eval.py", "--selftest"],
          ["eval/detect_eval.py"], {0}),
+        # REPRODUCE-кит оси «дельта детектируемости»: пересчёт опубликованного
+        # числа из открытых данных репо. Самопроверка — негативные кейсы;
+        # второй гейт сверяет флагманский отчёт llm_rubric с пересчётом
+        # (витринное число = гейт: падает, если число разошлось с данными).
+        ("reproduce: самопроверка", [PY, "eval/reproduce.py", "--selftest"],
+         ["eval/reproduce.py"], {0}),
+        ("reproduce: флагманский отчёт оси", [PY, "eval/reproduce.py"],
+         ["eval/reproduce.py",
+          "eval/detect-results/2026-08-25-detect-axis-12-glm53.json"], {0}),
         ("triggers: самопроверка", [PY, "eval/run_triggers.py", "--selftest"],
          ["eval/run_triggers.py"], {0}),
         ("triggers: граница активации", [PY, "eval/run_triggers.py"],
