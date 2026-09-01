@@ -1,0 +1,144 @@
+{
+  "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
+  "schema": "facts.schema.v1.json",
+  "updated": "2026-09-01",
+  "entries": [
+    {
+      "fact_id": "fp-zero-snap-2026-08-25",
+      "claim": "ноль ложных обвинений на 11 человеческих текстах: датированный снимок прогона 2026-08-25, а не свойство детектора",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["0/11"],
+      "value_note": "0/11, Wilson 95% CI [0%; 25.9%]",
+      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+      "reproduce": "python3 scripts/check_confidence.py --check",
+      "date": "2026-08-25",
+      "note": "без даты ни одна величина не цитируется (ERRATA.md)"
+    },
+    {
+      "fact_id": "fp-repl-2026-08-31",
+      "claim": "реплика той же линии судьи 2026-08-31: два человеческих текста из 11 превысили порог обвинения",
+      "status": "limited",
+      "publication_approved": false,
+      "tokens": ["2/11"],
+      "value_note": "2/11, Wilson 95% CI [5.1%; 47.7%]",
+      "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
+      "date": "2026-08-31",
+      "note": "обе поверхности датированы; ни одна не даёт права писать «FP = 0» без даты"
+    },
+    {
+      "fact_id": "fp-repl-scores-2026-08-31",
+      "claim": "скоры двух человеческих текстов в реплике 2026-08-31 выше порога 0.5",
+      "status": "limited",
+      "publication_approved": false,
+      "tokens": ["0.65"],
+      "value_note": "два скора 0.65 при пороге обвинения 0.5",
+      "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
+      "date": "2026-08-31"
+    },
+    {
+      "fact_id": "detect-overlap-ours-2026-08-12",
+      "claim": "совпадения regex-слоя классов A/B на нейтральном корпусе 2026-08-12: человеческие тексты и boundary-контроли",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["0/11", "2/2"],
+      "value_note": "0 совпадений на 11 человеческих текстах (Wilson 95% CI [0%; 25.9%]); 2/2 boundary-контроля",
+      "artifact": "research/leaderboard/*.json, eval/manifest.v1.json",
+      "reproduce": "python3 eval/run_eval.py",
+      "date": "2026-08-12"
+    },
+    {
+      "fact_id": "detect-overlap-smixs-2026-08-12",
+      "claim": "снимок третьей стороны: smixs/humanizer-ru на том же нейтральном корпусе",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["1/2"],
+      "value_note": "1/2 boundary-контролей (остальные ячейки строки — целые счётчики)",
+      "artifact": "research/leaderboard/*.json",
+      "date": "2026-08-12",
+      "note": "коммит 91f70df11f7fb30722e6fcf18803d402e2d86a53 (2026-08-05), MIT; числа столбца не сравнимы между кандидатами"
+    },
+    {
+      "fact_id": "axis-delta-llmrubric-2026-08-25",
+      "claim": "дельта детектируемости до/после (llm_rubric) — интерпретация как показателя качества после переписывания ОТОЗВАНА",
+      "status": "withdrawn",
+      "publication_approved": true,
+      "tokens": ["0.846", "0.438", "0.408", "11/12"],
+      "value_note": "скор raw 0.846 → после 0.438; дельта −0.408; 11/12 пар ниже; ячейка FP этой строки — отдельная запись (0/11)",
+      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+      "reproduce": "python3 eval/reproduce.py",
+      "retraction": "ERRATA.md (2026-09-01), research/AXIS-RUBRIC-RETRACTION-2026-09-01.md",
+      "date": "2026-08-25",
+      "note": "число воспроизводится; эффект даёт срез формата и обвязки (3/3 семьи), а не смысловая перезапись (0/3)"
+    },
+    {
+      "fact_id": "axis-delta-ttr-2026-08-25",
+      "claim": "дельта stdlib-прокси лексического разнообразия (ttr_lexdiv) — относительная метрика одной даты, не вердикт",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["0.414", "0.309", "0.105", "6/9"],
+      "value_note": "скор raw 0.414 → после 0.309; дельта −0.105; 6/9 валидных пар ниже (3 пары короче 20 токенов — guard None)",
+      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+      "reproduce": "python3 eval/reproduce.py --report eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+      "date": "2026-08-25",
+      "note": "якоря — эвристика уровня O; регрессии на 3 парах задокументированы в JSON"
+    },
+    {
+      "fact_id": "axis-noise-ttr-2026-08-25",
+      "claim": "шум ttr_lexdiv на человеческих текстах: максимум ниже порога",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["0.411"],
+      "value_note": "максимальный скор 0.411 (it-notation) при пороге 0.5",
+      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+      "date": "2026-08-25"
+    },
+    {
+      "fact_id": "panel-precedent-g5-2026-08-28",
+      "claim": "прецедент двухсемейной репликации слепой панели (норма 2026-08-28): G5, согласие семей",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": ["14/14"],
+      "value_note": "Qwen3.7-max и GLM-5.2 дали одинаковый вердикт 14/14 (p=0.000122)",
+      "artifact": "research/agent/G5-exp1-report.md, research/superposition/2026-08-28-q4-judge-panel/",
+      "date": "2026-08-28",
+      "note": "панельные числа — со статусом и оговоркой о позиционном шуме; механические оси второй семьи не требуют"
+    },
+    {
+      "fact_id": "softlayer-realistic-corpus-2026-09-01",
+      "claim": "мягкий слой на реалистичном корпусе: рабочей точки «FP=0 при ненулевом recall» не существует; прежняя заявка «62.5% при FP=0» отозвана",
+      "status": "withdrawn",
+      "publication_approved": false,
+      "tokens": ["0.211", "0.140", "0.306", "0.491", "0.445", "0.538"],
+      "value_note": "T=1/K=1: recall 0.211 [0.140; 0.306] при доле ложных обвинений 0.491 [0.445; 0.538]; корпус: 90 машинных против 440 человеческих",
+      "artifact": "run:experiments/w3-threshold.json (прогон run-20260831)",
+      "retraction": "ERRATA.md (2026-09-01), статус-баннеры research/F5-* и research/soft-threshold-sweep/",
+      "date": "2026-09-01",
+      "note": "отозванное число 62.5% в витринных текстах не встречается; здесь — честный замер на реалистичном корпусе"
+    },
+    {
+      "fact_id": "flagship-signtest-2026-08-25",
+      "claim": "знак-тест флагманской дельты — принадлежит отозванной интерпретации",
+      "status": "withdrawn",
+      "publication_approved": false,
+      "tokens": ["0.006"],
+      "value_note": "двусторонний знак-тест, 11/12 пар ниже, p=0.006",
+      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+      "reproduce": "python3 eval/reproduce.py",
+      "retraction": "ERRATA.md (2026-09-01)",
+      "date": "2026-08-25",
+      "note": "цитируется только в документе-отзыве"
+    },
+    {
+      "fact_id": "conj-genre-matched-in-retraction",
+      "claim": "жанрово-согласованный пересчёт частоты связок на свежих людях, процитированный в документе-отзыве",
+      "status": "limited",
+      "publication_approved": false,
+      "tokens": ["0.873", "0.810", "0.928", "0.735", "0.619", "0.841"],
+      "value_note": "инструкции: AUC 0.873 CI [0.810; 0.928] — проходит; эссе: 0.735 CI [0.619; 0.841] — не проходит",
+      "artifact": "run:experiments/genre-matched.json (прогон run-20260831)",
+      "date": "2026-09-01",
+      "note": "домен — чистая проза; публикация значения ждёт ответа владельца (см. RELEASE-REQUEST)"
+    }
+  ]
+}
