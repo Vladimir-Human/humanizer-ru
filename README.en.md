@@ -4,6 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=release&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Dogfooding](https://img.shields.io/badge/own_detectors-passing-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/scripts/check_all.py)
 
 **Русская версия → [README.md](README.md)** — the product is
 Russian-language; this document is the English entry point only.
