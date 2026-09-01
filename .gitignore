@@ -43,3 +43,4 @@ eval/runs/*.key.json
 node_modules/
 .claude/
 .codex/
+tmp_sweep_*.json
