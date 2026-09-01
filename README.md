@@ -230,6 +230,8 @@ humanizer-ru/
 ├── CHANGELOG.md              # Полная история версий
 ├── LEADERBOARD.md            # Механические оси: прогоны детекторов
 ├── ERRATA.md                 # Датированные отзывы опубликованных чисел
+├── llms.txt                  # Вход для агентов: маршрутизатор задач и границы
+├── contract.v1.json          # Машинный контракт: схемы выводов, коды выхода
 ├── PERSONA.md                # Компактные правила живого диалога
 ├── README.md / README.en.md  # Описание проекта (рус/англ)
 ├── SECURITY.md / SECURITY.en.md
@@ -255,6 +257,8 @@ humanizer-ru/
 │   ├── check_self_prose.py      # Самоприменение: витринная проза ниже порога мягкого слоя
 │   ├── check_spec.py             # Валидатор спецификации Agent Skills
 │   ├── check_facts.py            # Реестр фактов: дрейф чисел витрины и статусы
+│   ├── check_self_attack.py      # Запрет самоатаки: полировка не трогает признак детектора
+│   ├── check_contract.py         # Машинный контракт: сверка --json-выводов с contract.v1.json
 │   ├── check_fixture_sources.py  # Валидатор реестра источников
 │   ├── check_link_rot.py         # Гейт линк-рота реестра доказательств
 │   ├── check_outward.py          # Валидатор черновиков исходящих текстов
@@ -268,6 +272,7 @@ humanizer-ru/
 │   ├── apply_patch.py            # Точечные правки из patch.json
 │   ├── action_fix.py             # Текстовый автофикс маркеров класса A для CI-экшена
 │   ├── polish.py                 # Типографическая нормализация (идемпотентна, буквы целы)
+│   ├── detect_conj.py            # Детектор частоты связок (градуированный ответ, без вердикта)
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
@@ -313,7 +318,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 79 гейтов полного чек-листа (75 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 85 гейтов полного чек-листа (81 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
