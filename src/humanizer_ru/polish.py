@@ -287,7 +287,7 @@ def main(argv=None) -> int:
         else:
             sys.stdout.write(after)
     if args.json:
-        print(json.dumps({"tool": "polish", "schema": 1, "files": report},
+        print(json.dumps({"tool": "humanizer-polish", "schema": 1, "files": report},
                          ensure_ascii=False, indent=2))
     return rc
 

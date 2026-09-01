@@ -216,6 +216,8 @@ humanizer-ru/
 ├── CHANGELOG.md                  # Full version history
 ├── LEADERBOARD.md                # Mechanical axes: detector runs
 ├── ERRATA.md                     # Dated retractions of published numbers
+├── llms.txt                      # Agent entry point: task router and boundaries
+├── contract.v1.json              # Machine contract: output schemas, exit codes
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
@@ -237,6 +239,8 @@ humanizer-ru/
 │   ├── check_markers.py          # Regex test runner and text scanner
 │   ├── check_spec.py             # Agent Skills spec compliance
 │   ├── check_facts.py            # Fact registry: showcase number drift and statuses
+│   ├── check_self_attack.py      # Anti-self-attack: polish does not tune the detector feature
+│   ├── check_contract.py         # Machine contract: checks --json outputs against contract.v1.json
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_link_rot.py         # Fixture source link-rot gate
 │   ├── check_outward.py          # Outward-draft validator (issues, PRs)
@@ -250,6 +254,7 @@ humanizer-ru/
 │   ├── apply_patch.py            # Exact-match patches from patch.json
 │   ├── action_fix.py             # Text-path autofix for class-A markers (CI action)
 │   ├── polish.py                 # Typographic normalization (idempotent, letters preserved)
+│   ├── detect_conj.py            # Conjunction-frequency detector (graduated response, no verdict)
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
@@ -297,7 +302,7 @@ humanizer-ru/
                                   #     docs-check, release-check, dsh-install, demo-pages, action-smoke)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 79 gates in the full checklist (75 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 85 gates in the full checklist (81 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 

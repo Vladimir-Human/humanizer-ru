@@ -41,6 +41,7 @@ Releases = "https://github.com/Vladimir-Human/humanizer-ru/releases"
 humanizer-scan = "humanizer_ru.cli:scan_main"
 humanizer-markers = "humanizer_ru.cli:markers_main"
 humanizer-polish = "humanizer_ru.cli:polish_main"
+humanizer-detect = "humanizer_ru.cli:detect_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
