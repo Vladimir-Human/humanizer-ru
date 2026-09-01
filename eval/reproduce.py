@@ -285,7 +285,9 @@ def print_summary(st: dict, path: str) -> None:
 # ------------------------------------------------------------------ selftest
 
 def _fixture() -> dict:
-    befores = [0.9, 0.8, 0.7, 0.6, 0.85, 0.75, 0.95, 0.65, 0.55, 0.8]
+    # Константы фикстуры намеренно не совпадают с токенами реестра фактов
+    # (гейт недрейфа сверяет числа витрины с реестром).
+    befores = [0.9, 0.8, 0.7, 0.6, 0.85, 0.75, 0.95, 0.651, 0.55, 0.8]
     afters = [0.4, 0.3, 0.5, 0.2, 0.45, 0.35, 0.6, 0.25, 0.15, 0.5]
     pairs = []
     for i, (b, a) in enumerate(zip(befores, afters), 1):
@@ -322,7 +324,7 @@ def selftest() -> int:
 
     # 1. Корректный фиксстур: все статистики считаются, сверка зелёная.
     st = validate_and_compute(_fixture())
-    if st["n_pairs"] != 10 or abs(st["mean_delta"] - (-0.385)) > 1e-9:
+    if st["n_pairs"] != 10 or abs(st["mean_delta"] - (-0.3851)) > 1e-9:
         failures.append("fixture: базовые агрегаты неверны")
     if st["frac_after_lower"] != 1.0:
         failures.append("fixture: frac_after_lower != 1.0")

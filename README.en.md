@@ -236,6 +236,7 @@ humanizer-ru/
 ├── scripts/
 │   ├── check_markers.py          # Regex test runner and text scanner
 │   ├── check_spec.py             # Agent Skills spec compliance
+│   ├── check_facts.py            # Fact registry: showcase number drift and statuses
 │   ├── check_fixture_sources.py  # Fixture source verification
 │   ├── check_link_rot.py         # Fixture source link-rot gate
 │   ├── check_outward.py          # Outward-draft validator (issues, PRs)
@@ -272,6 +273,7 @@ humanizer-ru/
 │   ├── threshold_sweep.py        # Soft-layer threshold sweep
 │   └── check_all.py              # Full release checklist in one command
 ├── eval/
+│   ├── facts/                    # Showcase fact registry: schema, values, drift gate
 │   ├── run_eval.py               # Neutral corpus any candidate skill can run
 │   ├── blind_eval.py             # Blind paired evaluation of the skill effect
 │   ├── detect_eval.py            # Detector harness: before/after detectability delta
@@ -294,7 +296,7 @@ humanizer-ru/
                                   #     docs-check, release-check, dsh-install, demo-pages, action-smoke)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 75 gates in the full checklist (71 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 77 gates in the full checklist (73 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
