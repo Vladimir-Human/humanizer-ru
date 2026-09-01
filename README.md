@@ -267,6 +267,7 @@ humanizer-ru/
 │   ├── check_skill_reviewed.py # last_reviewed не старее коммита
 │   ├── apply_patch.py            # Точечные правки из patch.json
 │   ├── action_fix.py             # Текстовый автофикс маркеров класса A для CI-экшена
+│   ├── polish.py                 # Типографическая нормализация (идемпотентна, буквы целы)
 │   ├── count_style_markers.py    # Счётчик стилевых нарушений
 │   ├── check_docs.py             # Согласованность документации
 │   ├── check_examples.py         # Гейт честности примеров До/После
@@ -312,7 +313,7 @@ humanizer-ru/
 └── tests/fixtures/           # Проверочные образцы
 ```
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 77 гейтов полного чек-листа (73 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 79 гейтов полного чек-листа (75 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
