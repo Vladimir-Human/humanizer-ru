@@ -215,6 +215,7 @@ humanizer-ru/
 ├── README.en.md                  # This file
 ├── CHANGELOG.md                  # Full version history
 ├── LEADERBOARD.md                # Mechanical axes: detector runs
+├── ERRATA.md                     # Dated retractions of published numbers
 ├── SECURITY.md / SECURITY.en.md  # Security policy and threat model
 ├── CITATION.cff                  # Citation card
 ├── LICENSE                       # MIT
