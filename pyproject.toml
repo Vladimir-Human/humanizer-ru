@@ -40,6 +40,7 @@ Releases = "https://github.com/Vladimir-Human/humanizer-ru/releases"
 [project.scripts]
 humanizer-scan = "humanizer_ru.cli:scan_main"
 humanizer-markers = "humanizer_ru.cli:markers_main"
+humanizer-polish = "humanizer_ru.cli:polish_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

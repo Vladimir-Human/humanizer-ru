@@ -249,6 +249,7 @@ humanizer-ru/
 │   ├── check_skill_reviewed.py # last_reviewed not older than commit
 │   ├── apply_patch.py            # Exact-match patches from patch.json
 │   ├── action_fix.py             # Text-path autofix for class-A markers (CI action)
+│   ├── polish.py                 # Typographic normalization (idempotent, letters preserved)
 │   ├── check_docs.py             # Documentation consistency checks
 │   ├── check_examples.py         # Before/After example honesty gate
 │   ├── check_budget.py           # Context budget vs the official spec
@@ -296,7 +297,7 @@ humanizer-ru/
                                   #     docs-check, release-check, dsh-install, demo-pages, action-smoke)
 ```
 
-The full checklist runs in one command: `python scripts/check_all.py` — 77 gates in the full checklist (73 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 79 gates in the full checklist (75 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 The release policy separates a stable core (genre rules, false-positive boundaries, and the decision tree) from a fast marker layer. A fast-layer marker needs positive, negative, and boundary fixtures plus an evidence record in `research/fixtures/marker-sources.json`; it does not become a hard marker merely because it is new.
 
