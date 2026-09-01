@@ -68,6 +68,7 @@ TOP_LEVEL_MANIFEST = frozenset((
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
  "GOVERNANCE.md", "docs", "dsh",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
+ "ERRATA.md",
  "SECURITY.en.md", "SECURITY.md", "SKILL.md", "PRIVACY_POLICY.md", "AGENTS.md",
  "knowledge",
  "gemini-extension.json",
