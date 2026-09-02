@@ -1,6 +1,6 @@
 {
   "name": "humanizer-ru-dsh",
-  "version": "3.16.8",
+  "version": "3.16.9",
   "description": "Agent Skill: finds traces of machine generation in Russian text and, on explicit request, rewrites it to sound natural. Offline, text-only; 40 regex markers with an evidence registry.",
   "license": "MIT",
   "author": "Vladimir-Human",

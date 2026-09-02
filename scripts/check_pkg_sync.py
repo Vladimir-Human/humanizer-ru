@@ -2,15 +2,18 @@
 # -*- coding: utf-8 -*-
 """Гейт синхронности PyPI-пакета с корневыми скриптами.
 
-Пакет `src/humanizer_ru/` копирует два рантайм-скрипта корня:
-`scripts/check_markers.py` и `scripts/scan_soft_signals.py`. Копии обязаны
-побайтово повторять оригиналы: рассинхронизированный пакет — это wheel,
-который ведёт себя иначе, чем проверенное дерево репозитория.
+Пакет `src/humanizer_ru/` копирует четыре рантайм-скрипта корня:
+`scripts/check_markers.py`, `scripts/scan_soft_signals.py`,
+`scripts/polish.py` и `scripts/detect_conj.py`. Копии обязаны побайтово
+повторять оригиналы: рассинхронизированный пакет — это wheel, который
+ведёт себя иначе, чем проверенное дерево репозитория.
 
 Правила:
 1. `src/humanizer_ru/check_markers.py` равен `scripts/check_markers.py`.
 2. `src/humanizer_ru/scan_soft_signals.py` равен `scripts/scan_soft_signals.py`.
-3. В пакете нет других .py-файлов, кроме `__init__.py`, `cli.py` и двух копий.
+3. `src/humanizer_ru/polish.py` равен `scripts/polish.py`.
+4. `src/humanizer_ru/detect_conj.py` равен `scripts/detect_conj.py`.
+5. В пакете нет других .py-файлов, кроме `__init__.py`, `cli.py` и четырёх копий.
 
 Запуск из корня репозитория:
     python3 scripts/check_pkg_sync.py            # проверка
@@ -34,8 +37,11 @@ PKG = os.path.join("src", "humanizer_ru")
 SYNCED = [
     ("scripts", "check_markers.py"),
     ("scripts", "scan_soft_signals.py"),
+    ("scripts", "polish.py"),
+    ("scripts", "detect_conj.py"),
 ]
-ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py", "scan_soft_signals.py"}
+ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
+              "scan_soft_signals.py", "polish.py", "detect_conj.py"}
 
 
 def read(path):
@@ -103,6 +109,14 @@ def selftest():
             fh.write("y = 2\n")
         with open(os.path.join(td, PKG, "scan_soft_signals.py"), "w") as fh:
             fh.write("y = 2\n")
+        with open(os.path.join(td, "scripts", "polish.py"), "w") as fh:
+            fh.write("z = 3\n")
+        with open(os.path.join(td, PKG, "polish.py"), "w") as fh:
+            fh.write("z = 3\n")
+        with open(os.path.join(td, "scripts", "detect_conj.py"), "w") as fh:
+            fh.write("w = 4\n")
+        with open(os.path.join(td, PKG, "detect_conj.py"), "w") as fh:
+            fh.write("w = 4\n")
         cases.append(("синхронный пакет без ошибок", check(td) == []))
 
         with open(pkg_f, "a", encoding="utf-8") as fh:

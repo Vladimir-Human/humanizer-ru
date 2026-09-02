@@ -325,7 +325,21 @@ def _detect_row_mismatches():
     if not rows:
         return ["в LEADERBOARD нет строк оси (llm_rubric/ttr_lexdiv)"]
     if len(rows) < 2:
-        return ["в LEADERBOARD только %d строк(а) оси — H6 требует два прокси" % len(rows)]
+        # Второй прокси исключён из витрины эрратой: одна строка законна
+        # только при записи отзыва и только для stdlib-прокси. Если эррату
+        # убрать, гейт снова красный — инвариант не отменён, а зафиксирован.
+        err_path = os.path.join(ROOT, "ERRATA.md")
+        try:
+            with open(err_path, encoding="utf-8") as fh:
+                err_text = fh.read()
+        except OSError:
+            err_text = ""
+        if "Ось детектируемости: отозвана интерпретация" not in err_text:
+            return ["в LEADERBOARD только %d строк(а) оси, а эррата об отзыве "
+                    "второго прокси не найдена" % len(rows)]
+        if "ttr_lexdiv" not in rows[0]:
+            return ["одна строка оси после эрраты обязана быть "
+                    "stdlib-прокси ttr_lexdiv"]
 
     mismatches = []
     for row in rows:
