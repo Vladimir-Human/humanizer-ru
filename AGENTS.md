@@ -41,7 +41,7 @@ humanizer-ru — скилл Agent Skills: находит и снимает сл�
 ## Полный чек-лист одной командой
 
 ```sh
-python scripts/check_all.py        # 85 гейтов (81 в --quick)
+python scripts/check_all.py        # 86 гейтов (81 в --quick)
 python -m unittest discover -s tests
 ```
 

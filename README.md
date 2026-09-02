@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 [![Догфудинг](https://img.shields.io/badge/%D1%81%D0%B2%D0%BE%D0%B8_%D0%B4%D0%B5%D1%82%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D1%8B-%D0%BF%D1%80%D0%BE%D1%85%D0%BE%D0%B4%D0%B8%D1%82-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/scripts/check_all.py)
@@ -67,7 +68,7 @@ pip install humanizer-ru
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.16.9 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.10 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -88,15 +89,47 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 - `humanizer-markers` — поиск артефактов копипасты (классы A и B).
 - `humanizer-scan` — счётчик мягких признаков, калибрует объём правки.
 
+Все четыре команды читают stdin через «-». Пример вывода (маркеры на
+строке из чат-интерфейса):
+
+```sh
+$ echo "Согласно отчёту :contentReference[oaicite:0]{index=0}, рынок вырос." | humanizer-markers --scan -
+<stdin>:1 [contentReference] Согласно отчёту :contentReference[oaicite:0]{index=0}, рынок вырос.
+
+Найдено маркеров: 1.
+```
+
+Пример вывода (счётчик признаков, конверт контракта):
+
+```sh
+$ humanizer-scan --json notes.txt
+{
+  "tool": "humanizer-scan",
+  "schema": 1,
+  "files": [
+    {
+      "genre": "neutral",
+      "findings": [],
+      "categories": {},
+      "features_total": 0,
+      "categories_total": 0,
+      "recommendation": "мягких признаков-кандидатов не найдено; правка не требуется",
+      "note": "",
+      "file": "notes.txt"
+    }
+  ]
+}
+```
+
 Машинный интерфейс (схемы выводов, коды выхода, «когда не использовать»):
 `contract.v1.json`; вход для агентов — `llms.txt`.
 
 ## Что делает
 
-Прогоняет русский текст по 58 паттернам машинного письма (25 базовых и 33
-расширения для русского). Всего в скилле 58 паттернов и 40 проверяемых
-regex-маркеров классов A и B; у 38 из 40 маркеров полная запись
-доказательств в `research/fixtures/marker-sources.json`. Опирается на
+Прогоняет русский текст по паттернам и маркерам. В скилле 58 паттернов машинного письма
+(25 базовых и 33 расширения для русского) и 40 проверяемых regex-маркеров
+классов A и B; у 38 из 40 маркеров полная запись доказательств в
+`research/fixtures/marker-sources.json`. Опирается на
 [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)
 и [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0).
 
@@ -127,7 +160,7 @@ regex-маркеров классов A и B; у 38 из 40 маркеров п�
 
 Короткая карта; подробности в самих каталогах:
 
-- `SKILL.md` + `references/` — текстовое ядро скилла (карта, 13 справочников).
+- `SKILL.md` + `references/` — текстовое ядро скилла (карта, 13 справочников в 18 файлах).
 - `scripts/` — валидаторы и инструменты: полировка, детекторы, гейты
   (список в каталоге и в `contract.v1.json`).
 - `src/humanizer_ru/` — PyPI-пакет (зеркала скриптов, точки входа).
@@ -136,7 +169,7 @@ regex-маркеров классов A и B; у 38 из 40 маркеров п�
 - `tests/fixtures/` — образцы маркеров и полировки.
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 85 гейтов полного чек-листа (81 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 86 гейтов полного чек-листа (81 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

@@ -222,6 +222,8 @@ def _gates(quick, tmpdir):
                                         "--root", ".", "--build", zip_path], [], {0}),
             ("release: верификация архива", [PY, "scripts/check_release.py",
                                              "--verify", zip_path], [], {0}),
+            ("release: контракт выпуска", [PY, "scripts/check_release.py",
+                                           "--release-contract"], [], {0}),
         ]
     return gates
 

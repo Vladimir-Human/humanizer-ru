@@ -69,6 +69,7 @@ TOP_LEVEL_MANIFEST = frozenset((
  "CHANGELOG.md", "CITATION.cff", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md",
  "GOVERNANCE.md", "docs", "dsh",
  "LEADERBOARD.md", "LICENSE", "PERSONA.md", "README.en.md", "README.md",
+ "README.pypi.md",
  "ERRATA.md",
  "SECURITY.en.md", "SECURITY.md", "SKILL.md", "PRIVACY_POLICY.md", "AGENTS.md",
  "knowledge",
@@ -201,6 +202,13 @@ def check_repo(root):
   changelog = text("CHANGELOG.md")
   if changelog and not re.search(r"^##\s+%s\b" % re.escape(version), changelog, re.M):
    errors.append("CHANGELOG.md: нет записи ## %s для текущей версии" % version)
+ # 2a-bis. Все заголовки версий CHANGELOG датированы: «## X.Y.Z — YYYY-MM-DD».
+ # Выпуск без даты нарушает правило «без даты не цитируется» (ERRATA.md).
+ _chlog = text("CHANGELOG.md")
+ if _chlog:
+  for _m in re.finditer(r"^##\s+(\d+\.\d+\.\d+)\s*(.*)$", _chlog, re.M):
+   if not re.match(r"^—\s+\d{4}-\d{2}-\d{2}\s*$", _m.group(2)):
+    errors.append("CHANGELOG.md: заголовок ## %s без даты (формат «## X.Y.Z — YYYY-MM-DD»)" % _m.group(1))
  # 2b. Версия бандла dsh/package.json совпадает с версией скилла: бандл
  # живёт только в дереве репозитория, в релизный архив не входит, и
  # archive-side паритет (check_release) его не видит.
@@ -470,7 +478,7 @@ def check_repo(root):
    if not _pat_n:
     errors.append("I.17: пересчёт паттернов дал 0 — сломан подсчёт")
    _expect = {
-    "README.md": ["%d паттернам машинного письма" % _pat_n,
+    "README.md": ["%d паттернов машинного письма" % _pat_n,
                   "%d гейт[а-я]* полного" % _n_full,
                   r"\(\d+ в --quick\)"],
     "README.en.md": ["%d patterns" % _pat_n,
@@ -508,7 +516,7 @@ def _make_repo(root, version="3.3.5"):
     '# Humanizer-ru — очеловечивание текста (v%s)\n\n'
     'История изменений — в [CHANGELOG.md](CHANGELOG.md).\n'
     % (version, version))
- _w(root, "CHANGELOG.md", "# История версий\n\n## %s\n" % version)
+ _w(root, "CHANGELOG.md", "# История версий\n\n## %s — 2026-07-25\n" % version)
  _w(root, "PERSONA.md", "# PERSONA\n")
  _w(root, "README.md",
     "# R\n\nИстория — в [CHANGELOG.md](CHANGELOG.md).\n\n"
@@ -675,7 +683,7 @@ def selftest():
                  _w(r, "README.md",
                     "# R\n\n[CHANGELOG.md](CHANGELOG.md)\n\n```sh\ngit clone --branch v3.15.1 --depth 1 x\n```\n"),
                  _w(r, "CHANGELOG.md",
-                    "# История версий humanizer-ru\n\n## 3.15.1\n\nИсправления.\n"),
+                    "# История версий humanizer-ru\n\n## 3.15.1 — 2026-08-27\n\nИсправления.\n"),
                  _w(r, "CITATION.cff",
                     'cff-version: 1.2.0\nmessage: "Ссылайтесь так."\ntitle: "humanizer-ru"\n'
                     'authors:\n  - name: "Vladimir-Human"\nversion: 3.15.1\ndate-released: "2026-08-27"\n')),
@@ -704,9 +712,13 @@ def selftest():
       "имя каталога")
  case("устаревшее имя каталога в CHANGELOG.md -> OK (журнал цитирует прошлое)",
       lambda r: _w(r, "CHANGELOG.md",
-                   "# Журнал\n\n## 3.3.5\n\nПримечание приводило папку "
+                   "# Журнал\n\n## 3.3.5 — 2026-07-25\n\nПримечание приводило папку "
                    "`humanizer-ru-3.3.4` — исправлено.\n"),
       None)
+ case("заголовок версии CHANGELOG без даты -> FAIL",
+      lambda r: _w(r, "CHANGELOG.md",
+                   "# История версий\n\n## 3.3.5\n\nПравки.\n"),
+      "без даты")
  case("совпадающее имя каталога -> OK",
       lambda r: _w(r, "README.md",
                    "# R\n\nИстория — в [CHANGELOG.md](CHANGELOG.md).\n\n"

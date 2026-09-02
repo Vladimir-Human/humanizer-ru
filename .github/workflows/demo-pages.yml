@@ -8,6 +8,9 @@ on:
     branches: [main]
     paths:
       - 'demo/**'
+      - 'llms.txt'
+      - 'contract.v1.json'
+      - 'ERRATA.md'
       - '.github/workflows/demo-pages.yml'
   workflow_dispatch:
 
@@ -32,6 +35,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Настроить Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Добавить машинные файлы к артефакту
+        # llms.txt, contract.v1.json и ERRATA.md доступны по URL-конвенции
+        # /llms.txt и соседним путям: копия добавляется только в артефакт
+        # Pages, в каталоге demo/ репозитория их нет.
+        run: cp llms.txt contract.v1.json ERRATA.md demo/
       - name: Собрать артефакт из demo/
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

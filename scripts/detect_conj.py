@@ -211,7 +211,8 @@ def _gate_file(path: str) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Детектор частоты связок с границами домена.")
-    ap.add_argument("files", nargs="*", help="файлы для обработки")
+    ap.add_argument("files", nargs="*",
+                    help="файлы для обработки; «-» читает stdin (UTF-8)")
     ap.add_argument("--genre", default="auto",
                     help="жанр домена: instructions|essay|prose|web|auto")
     ap.add_argument("--json", action="store_true",
@@ -235,14 +236,19 @@ def main(argv=None) -> int:
     report = []
     for path in args.files:
         try:
-            with open(path, encoding="utf-8") as fh:
-                text = fh.read()
+            if path == "-":
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+                text = sys.stdin.read()
+            else:
+                with open(path, encoding="utf-8") as fh:
+                    text = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("НЕ ЧИТАЕТСЯ %s: %r" % (path, exc), file=sys.stderr)
             rc = 2
             continue
         res = detect(text, args.genre)
-        res = {"file": path, **res}
+        res = {"file": "<stdin>" if path == "-" else path, **res}
         if args.json:
             report.append(res)
         else:
