@@ -13,8 +13,11 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 import warnings
 import zipfile
 
@@ -238,6 +241,133 @@ def verify(archive: Path) -> str:
         _check_manifest_parity(rel_bytes)
     return sha256(archive)
 
+# ---- Контракт выпуска: подписанный тег + опубликованный Release ------------
+# GOVERNANCE п.2: тег vX.Y.Z обязан быть annotated и GPG-подписан; лёгкие и
+# неподписанные теги не являются выпусками. Зелёный чек-лист сам по себе
+# выпуском не считается: выпуск существует, когда подписанный тег и
+# соответствующий ему GitHub Release на месте.
+
+GPG_SIG_MARKER = "-----BEGIN PGP SIGNATURE-----"
+
+
+def _skill_version_file(root: Path) -> str | None:
+    skill = root / "SKILL.md"
+    if not skill.is_file():
+        return None
+    return _skill_version(skill.read_bytes())
+
+
+def _tag_object_signed(tag_text: str) -> bool:
+    """Объект тега несёт блок GPG-подписи."""
+    return GPG_SIG_MARKER in tag_text
+
+
+def _repo_slug_from_url(url: str) -> str | None:
+    """owner/repo github из remote URL (https или ssh форма)."""
+    m = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?/?$", url.strip())
+    if not m:
+        return None
+    return "%s/%s" % (m.group(1), m.group(2))
+
+
+def _release_status(slug: str, tag: str) -> int:
+    """GET /releases/tags/<tag>: HTTP-код (200 опубликован, 404 нет).
+
+    Сетевой отказ (URLError и прочее OSError) пробрасывается вызывающему —
+    это код 2 «проверка невозможна», а не «Release отсутствует».
+    """
+    url = "https://api.github.com/repos/%s/releases/tags/%s" % (slug, tag)
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "humanizer-ru-check-release",
+    })
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        req.add_header("Authorization", "Bearer " + token)
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return resp.status
+    except urllib.error.HTTPError as exc:
+        return exc.code
+
+
+def release_contract(root: Path) -> int:
+    """Контракт выпуска для текущей версии SKILL.md.
+
+    Состояние до выпуска (тег текущей версии ещё не создан) законно:
+    проверка срабатывает, как только тег появился. Тогда тег обязан быть
+    annotated и подписан, а Release — опубликован.
+
+    Коды: 0 — контракт выполнен либо выпуск ещё не начат; 1 — нарушение;
+    2 — проверка невозможна (git/сеть/API недоступны).
+    """
+    version = _skill_version_file(root)
+    if version is None:
+        print("RELEASE-КОНТРАКТ: версия SKILL.md не читается", file=sys.stderr)
+        return 2
+    tag = "v" + version
+
+    def _git(*args):
+        return subprocess.run(["git", *args], cwd=root, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, timeout=60,
+                              encoding="utf-8", errors="replace")
+
+    try:
+        listed = _git("tag", "-l", tag)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print("RELEASE-КОНТРАКТ: git недоступен: %r" % (exc,), file=sys.stderr)
+        return 2
+    if listed.returncode != 0:
+        print("RELEASE-КОНТРАКТ: git tag -l code %d: %s"
+              % (listed.returncode, listed.stderr.strip()[:200]), file=sys.stderr)
+        return 2
+    if not listed.stdout.strip():
+        print("RELEASE-КОНТРАКТ: тег %s ещё не создан — состояние до выпуска "
+              "допустимо; при выпуске тег обязан быть подписан, а Release "
+              "опубликован" % tag)
+        return 0
+    try:
+        obj = _git("cat-file", "tag", tag)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print("RELEASE-КОНТРАКТ: git недоступен: %r" % (exc,), file=sys.stderr)
+        return 2
+    if obj.returncode != 0:
+        print("[FAIL] RELEASE-КОНТРАКТ: тег %s не annotated — лёгкие теги не "
+              "являются выпусками (GOVERNANCE п.2)" % tag)
+        return 1
+    if not _tag_object_signed(obj.stdout):
+        print("[FAIL] RELEASE-КОНТРАКТ: тег %s не подписан GPG (GOVERNANCE п.2)" % tag)
+        return 1
+    try:
+        remote = _git("config", "remote.origin.url")
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print("RELEASE-КОНТРАКТ: git недоступен: %r" % (exc,), file=sys.stderr)
+        return 2
+    slug = _repo_slug_from_url(remote.stdout) if remote.returncode == 0 else None
+    if slug is None:
+        print("RELEASE-КОНТРАКТ: репозиторий не определён из remote.origin.url "
+              "— проверка Release невозможна", file=sys.stderr)
+        return 2
+    try:
+        status = _release_status(slug, tag)
+    except OSError as exc:
+        print("RELEASE-КОНТРАКТ: проверка Release невозможна (сеть/API): %r"
+              % (exc,), file=sys.stderr)
+        return 2
+    if status == 200:
+        print("RELEASE-КОНТРАКТ: тег %s подписан, Release опубликован — "
+              "выпуск действителен" % tag)
+        return 0
+    if status == 404:
+        print("[FAIL] RELEASE-КОНТРАКТ: тег %s подписан, но Release не "
+              "опубликован — зелёный чек-лист сам по себе выпуском не "
+              "считается" % tag)
+        return 1
+    print("RELEASE-КОНТРАКТ: проверка Release невозможна, код API %d" % status,
+          file=sys.stderr)
+    return 2
+
+
 def _minimal(root: Path) -> None:
     (root / "references").mkdir(parents=True)
     (root / "scripts").mkdir(parents=True)
@@ -398,6 +528,24 @@ def selftest() -> None:
             zf.writestr(".claude-plugin/plugin.json",
                         '{"name": "humanizer-ru", "version": "2.0.0"}\n')
         expect_fail(lambda: verify(parity_sneak), "archive manifest version mismatch")
+
+        # Контракт выпуска: чистые помощники с негативными кейсами
+        # (GPG-маркер в объекте тега; owner/repo из https и ssh remote).
+        signed_tag = ("object d4a35cc\ntype commit\ntag v3.16.9\n"
+                      "-----BEGIN PGP SIGNATURE-----\nabc\n"
+                      "-----END PGP SIGNATURE-----\n")
+        unsigned_tag = "object d4a35cc\ntype commit\ntag v3.16.9\n\nmessage\n"
+        assert _tag_object_signed(signed_tag), "подписанный тег не распознан"
+        assert not _tag_object_signed(unsigned_tag), "неподписанный тег принят"
+        assert (_repo_slug_from_url(
+            "https://github.com/Vladimir-Human/humanizer-ru.git")
+            == "Vladimir-Human/humanizer-ru"), "https remote не разобран"
+        assert (_repo_slug_from_url(
+            "git@github.com:Vladimir-Human/humanizer-ru.git")
+            == "Vladimir-Human/humanizer-ru"), "ssh remote не разобран"
+        assert _repo_slug_from_url("https://example.com/repo") is None
+        passed += 1
+        total += 1
     print(f"САМОПРОВЕРКА релизного префлайта: {passed}/{total} PASS")
 
 def main(argv: list[str] | None = None) -> int:
@@ -406,6 +554,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path)
     parser.add_argument("--build", type=Path, metavar="ZIP")
     parser.add_argument("--verify", type=Path, metavar="ZIP")
+    parser.add_argument("--release-contract", action="store_true",
+                        help="контракт выпуска: тег версии SKILL.md подписан "
+                             "и GitHub Release опубликован (0 — выполнен или "
+                             "выпуск не начат, 1 — нарушение, 2 — проверка "
+                             "невозможна)")
     args = parser.parse_args(argv)
     try:
         if args.selftest:
@@ -416,15 +569,19 @@ def main(argv: list[str] | None = None) -> int:
             digest = build(args.root, args.build)
             print(f"собрано: {args.build}")
             print(f"sha256: {digest}")
-        elif args.root:
+        elif args.root and not args.release_contract:
             files = collect(args.root)
             print(f"релизное дерево: {len(files)} файлов, ОК")
         if args.verify:
             print(f"проверено: {args.verify}")
             print(f"sha256: {verify(args.verify)}")
-        if not any((args.selftest, args.root, args.verify)):
-            parser.error("выберите --selftest, --root/--build или --verify")
-        return 0
+        rc_contract = 0
+        if args.release_contract:
+            rc_contract = release_contract(args.root or Path("."))
+        if not any((args.selftest, args.root, args.build, args.verify,
+                    args.release_contract)):
+            parser.error("выберите --selftest, --root/--build, --verify или --release-contract")
+        return rc_contract
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1

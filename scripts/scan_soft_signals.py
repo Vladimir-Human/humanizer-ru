@@ -1218,7 +1218,8 @@ def rep0_total(text):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Счётчик мягких признаков; вердикта об авторстве не выносит.")
-    ap.add_argument("files", nargs="*", help="файлы для проверки")
+    ap.add_argument("files", nargs="*",
+                    help="файлы для проверки; «-» читает stdin (UTF-8)")
     ap.add_argument("--genre", default="neutral", choices=GENRES)
     ap.add_argument("--plain-text", action="store_true",
                     help="текст не предназначен для Markdown-среды")
@@ -1245,11 +1246,16 @@ def main(argv=None):
     worst = 0
     worst_cats = 0
     multi_hit = False
-    payload = []
+    entries = []
     for path in args.files:
         try:
-            with open(path, encoding="utf-8") as fh:
-                text = fh.read()
+            if path == "-":
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+                text = sys.stdin.read()
+            else:
+                with open(path, encoding="utf-8") as fh:
+                    text = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
             return 2
@@ -1262,10 +1268,13 @@ def main(argv=None):
                 and report["categories_total"] >= 2):
             multi_hit = True
         if args.as_json:
-            payload.append(dict(report, file=path))
+            entries.append(dict(report, file="<stdin>" if path == "-" else path))
         else:
             print(render(path, report))
     if args.as_json:
+        # Конверт контракта {tool, schema, files} — как у polish и detect;
+        # голый массив больше не публикуется (contract.v1.json).
+        payload = {"tool": "humanizer-scan", "schema": 1, "files": entries}
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     if args.fail_at and worst >= args.fail_at:
         return 1

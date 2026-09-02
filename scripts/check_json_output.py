@@ -135,9 +135,29 @@ def _check_scan_soft_signals(td):
         return _fail_row(proc, payload)
     if proc.returncode not in (0,):
         return _fail_row(proc, "scan_soft_signals --json вернул код %d" % proc.returncode)
-    if not isinstance(payload, list) or not payload or payload[0].get("file") != path:
-        return "FAIL", "scan_soft_signals --json: неожиданная форма ответа", ""
-    return "PASS", "UTF-8 JSON: список из %d записей" % len(payload), ""
+    # Конверт контракта {tool, schema, files} — голый массив больше не принимается.
+    if (not isinstance(payload, dict) or payload.get("tool") != "humanizer-scan"
+            or payload.get("schema") != 1
+            or not isinstance(payload.get("files"), list) or not payload["files"]
+            or payload["files"][0].get("file") != path):
+        return "FAIL", "scan_soft_signals --json: неожиданная форма конверта", ""
+    return "PASS", "UTF-8 JSON: конверт, %d записей" % len(payload["files"]), ""
+
+
+def _check_markers_json(td):
+    path = _make_text_file(td)
+    proc = _call("scripts/check_markers.py", ["--scan", "--json", path])
+    ok, payload = _parse_stdout(proc)
+    if not ok:
+        return _fail_row(proc, payload)
+    if proc.returncode not in (0, 1):
+        return _fail_row(proc, "check_markers --scan --json вернул код %d" % proc.returncode)
+    if (not isinstance(payload, dict) or payload.get("tool") != "humanizer-markers"
+            or payload.get("schema") != 1
+            or not isinstance(payload.get("files"), list) or not payload["files"]
+            or payload["files"][0].get("file") != path):
+        return "FAIL", "check_markers --scan --json: неожиданная форма конверта", ""
+    return "PASS", "UTF-8 JSON: конверт, %d записей" % len(payload["files"]), ""
 
 
 def _check_filemarks(td):
@@ -234,6 +254,7 @@ def _check_run_eval(td):
 
 PROBES = [
     ("scan_soft_signals --json", _check_scan_soft_signals),
+    ("markers --scan --json", _check_markers_json),
     ("filemarks --inspect --json", _check_filemarks),
     ("score_synthid --json", _check_score_synthid),
     ("eval/run_eval summary", _check_run_eval),

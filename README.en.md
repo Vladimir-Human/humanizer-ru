@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=release&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 [![Dogfooding](https://img.shields.io/badge/own_detectors-passing-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/scripts/check_all.py)
@@ -69,7 +70,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.16.9 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.10 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -90,6 +91,39 @@ Package commands:
   no authorship verdict, graduated response.
 - `humanizer-markers` — copy-paste artifact search (classes A and B).
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
+
+All four commands read stdin via `-`. Sample output (markers on a chat
+interface line):
+
+```sh
+$ echo "Согласно отчёту :contentReference[oaicite:0]{index=0}, рынок вырос." | humanizer-markers --scan -
+<stdin>:1 [contentReference] Согласно отчёту :contentReference[oaicite:0]{index=0}, рынок вырос.
+
+Найдено маркеров: 1.
+```
+
+Sample output (soft-signal counter, contract envelope; the tool answers
+in Russian):
+
+```sh
+$ humanizer-scan --json notes.txt
+{
+  "tool": "humanizer-scan",
+  "schema": 1,
+  "files": [
+    {
+      "genre": "neutral",
+      "findings": [],
+      "categories": {},
+      "features_total": 0,
+      "categories_total": 0,
+      "recommendation": "мягких признаков-кандидатов не найдено; правка не требуется",
+      "note": "",
+      "file": "notes.txt"
+    }
+  ]
+}
+```
 
 Machine interface (output schemas, exit codes, when not to use):
 `contract.v1.json`; agent entry point: `llms.txt`.
@@ -131,7 +165,7 @@ its own class; statuses and dates — in `markers.v1.json`.
 
 Short map; details live in the directories themselves:
 
-- `SKILL.md` + `references/` — the skill's text core (map, 13 references).
+- `SKILL.md` + `references/` — the skill's text core (map, 13 references across 18 files).
 - `scripts/` — validators and tools: polish, detectors, gates (e.g.
   `check_docs.py`); full list in the directory and in `contract.v1.json`.
 - `src/humanizer_ru/` — PyPI package (script mirrors, entry points).
@@ -140,7 +174,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 85 gates in the full checklist (81 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 86 gates in the full checklist (81 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
