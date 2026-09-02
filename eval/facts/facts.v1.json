@@ -1,7 +1,7 @@
 {
   "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
   "schema": "facts.schema.v1.json",
-  "updated": "2026-09-01",
+  "updated": "2026-09-02",
   "entries": [
     {
       "fact_id": "fp-zero-snap-2026-08-25",
@@ -108,7 +108,7 @@
       "fact_id": "softlayer-realistic-corpus-2026-09-01",
       "claim": "мягкий слой на реалистичном корпусе: рабочей точки «FP=0 при ненулевом recall» не существует; прежняя заявка «62.5% при FP=0» отозвана",
       "status": "withdrawn",
-      "publication_approved": false,
+      "publication_approved": true,
       "tokens": ["0.211", "0.140", "0.306", "0.491", "0.445", "0.538"],
       "value_note": "T=1/K=1: recall 0.211 [0.140; 0.306] при доле ложных обвинений 0.491 [0.445; 0.538]; корпус: 90 машинных против 440 человеческих",
       "artifact": "run:experiments/w3-threshold.json (прогон run-20260831)",
@@ -120,7 +120,7 @@
       "fact_id": "flagship-signtest-2026-08-25",
       "claim": "знак-тест флагманской дельты — принадлежит отозванной интерпретации",
       "status": "withdrawn",
-      "publication_approved": false,
+      "publication_approved": true,
       "tokens": ["0.006"],
       "value_note": "двусторонний знак-тест, 11/12 пар ниже, p=0.006",
       "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
@@ -133,12 +133,12 @@
       "fact_id": "conj-genre-matched-in-retraction",
       "claim": "жанрово-согласованный пересчёт частоты связок на свежих людях, процитированный в документе-отзыве",
       "status": "limited",
-      "publication_approved": false,
+      "publication_approved": true,
       "tokens": ["0.873", "0.810", "0.928", "0.735", "0.619", "0.841"],
       "value_note": "инструкции: AUC 0.873 CI [0.810; 0.928] — проходит; эссе: 0.735 CI [0.619; 0.841] — не проходит",
       "artifact": "run:experiments/genre-matched.json (прогон run-20260831)",
       "date": "2026-09-01",
-      "note": "домен — чистая проза; публикация значения ждёт ответа владельца (см. RELEASE-REQUEST)"
+      "note": "домен — чистая проза; публикация значения одобрена ответом владельца (RELEASE-REQUEST-01, пункт 2)"
     }
   ]
 }
