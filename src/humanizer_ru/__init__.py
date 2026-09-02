@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""humanizer_ru — CLI-сканеры следов машинной генерации русского текста.
+"""humanizer_ru — инструменты русского текста: сканеры следов машинной
+генерации, типографическая нормализация и детектор частоты связок.
 
-Пакет копирует два скрипта из корневого каталога scripts/: check_markers.py
-и scan_soft_signals.py. Копии байтово синхронизируются гейтом
-scripts/check_pkg_sync.py.
+Пакет копирует четыре скрипта из корневого каталога scripts/:
+check_markers.py, scan_soft_signals.py, polish.py и detect_conj.py.
+Копии байтово синхронизируются гейтом scripts/check_pkg_sync.py.
 """
 __all__ = ["__version__"]
-__version__ = "3.16.8"
+__version__ = "3.16.9"

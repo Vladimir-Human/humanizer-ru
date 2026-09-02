@@ -16,6 +16,13 @@
 финальным переводом строки. Временных меток в документе нет, повторная
 генерация даёт байт-в-байт одинаковый результат.
 
+Переподпись класса (2.3): документ несёт `target_class`
+(copypaste_artifacts — маркеры ловят следы чат-интерфейсов и копирования,
+а не факт генерации), `live_policy` (ретайр только по провалу на своём
+классе), `suite_checked` (дата последней зафиксированной прогонки фикстур)
+и `live_status` у каждого маркера (live/retired; retired требует даты и
+причины).
+
 Запуск:
     python3 scripts/export_markers.py            # перезаписать markers.v1.json
     python3 scripts/export_markers.py --check    # только проверить, не писать
@@ -52,6 +59,28 @@ URL_RX = re.compile(r"^https?://[^ ]+$")
 
 STATUSES = {"confirmed", "lead", "none", "fixture-only"}
 EVIDENCE_CLASSES = {None, "primary", "secondary", "provenance", "synthetic"}
+
+# Переподпись класса (2.3): маркеры ловят следы чат-интерфейсов и копипасты,
+# а не сам факт генерации. Значения полей документа фиксированы здесь:
+# экспорт детерминирован, правка поля — осознанное изменение с историей.
+TARGET_CLASS = "copypaste_artifacts"
+TARGET_CLASS_NOTE = ("Маркеры ловят следы чат-интерфейсов и копирования: "
+                     "текст, который прошёл через чат-бот, был скопирован "
+                     "или отредактирован машиной с настройками по умолчанию. "
+                     "Они не определяют факт генерации: отсутствие маркеров "
+                     "не доказывает авторство человека, а их наличие указывает "
+                     "на путь текста, а не на автора.")
+LIVE_POLICY = ("Ретайр только по провалу на своём классе: маркер уходит из "
+               "активного слоя, если перестаёт ловить артефакт копипасты, на "
+               "который нацелен, или начинает срабатывать на чистом "
+               "человеческом тексте. Отсутствие срабатываний на выводах "
+               "новых генераторов основанием для ретайра не является — это "
+               "другой класс задач, не класс этого маркера.")
+# Дата последней зафиксированной прогонки фикстурного набора (все маркеры:
+# прямой/отрицательный/граничный образцы зелёные). Меняется только вместе с
+# фактическим прогоном и его фиксацией в истории.
+SUITE_CHECKED = "2026-09-01"
+LIVE_STATUSES = {"live", "retired"}
 
 def _load_check_markers(root):
     """Импорт CASES из scripts/check_markers.py по образцу check_fixture_sources.py.
@@ -234,6 +263,7 @@ def build_document(root=ROOT):
         marker = {
             "id": name,
             "class": cls,
+            "live_status": "live",
             "pattern": pattern,
             "description": description,
             "source": source_obj,
@@ -251,9 +281,14 @@ def build_document(root=ROOT):
     return {
         "schema_version": SCHEMA_VERSION,
         "id": "humanizer-ru-markers",
+        "target_class": TARGET_CLASS,
+        "target_class_note": TARGET_CLASS_NOTE,
+        "live_policy": LIVE_POLICY,
+        "suite_checked": SUITE_CHECKED,
         "count": len(markers),
         "class_a_count": len(markers) - class_b_count,
         "class_b_count": class_b_count,
+        "live_count": sum(1 for m in markers if m["live_status"] == "live"),
         "markers": markers,
     }
 
@@ -267,17 +302,28 @@ def validate_document(doc):
         errors.append("schema_version должен быть %r" % SCHEMA_VERSION)
     if doc.get("id") != "humanizer-ru-markers":
         errors.append("id должен быть humanizer-ru-markers")
+    if doc.get("target_class") != TARGET_CLASS:
+        errors.append("target_class должен быть %r" % TARGET_CLASS)
+    if not isinstance(doc.get("target_class_note"), str) \
+            or not doc.get("target_class_note"):
+        errors.append("target_class_note должен быть непустой строкой")
+    if not isinstance(doc.get("live_policy"), str) or not doc.get("live_policy"):
+        errors.append("live_policy должен быть непустой строкой")
+    if not isinstance(doc.get("suite_checked"), str) \
+            or not DATE_RX.match(doc.get("suite_checked", "")):
+        errors.append("suite_checked должен быть датой YYYY-MM-DD")
     markers = doc.get("markers")
     if not isinstance(markers, list) or len(markers) != doc.get("count"):
         errors.append("markers должен быть списком длины count")
 
     seen = set()
+    live_total = 0
     for i, marker in enumerate(markers or []):
         tag = "marker[%d]" % i
         if not isinstance(marker, dict):
             errors.append("%s: не объект" % tag)
             continue
-        for field in ("id", "class", "pattern", "description",
+        for field in ("id", "class", "live_status", "pattern", "description",
                       "source", "fixtures", "evidence_status", "evidence_class"):
             if field not in marker:
                 errors.append("%s: нет поля %s" % (tag, field))
@@ -289,6 +335,19 @@ def validate_document(doc):
         seen.add(mid)
         if marker.get("class") not in ("A", "B"):
             errors.append("%s: class должен быть A или B" % tag)
+        live_status = marker.get("live_status")
+        if live_status not in LIVE_STATUSES:
+            errors.append("%s: live_status должен быть одним из %s"
+                          % (tag, sorted(LIVE_STATUSES)))
+        elif live_status == "live":
+            live_total += 1
+        else:
+            retired_date = marker.get("retired_date", "")
+            if not isinstance(retired_date, str) or not DATE_RX.match(retired_date):
+                errors.append("%s: retired требует retired_date YYYY-MM-DD" % tag)
+            if not isinstance(marker.get("retired_reason"), str) \
+                    or not marker.get("retired_reason"):
+                errors.append("%s: retired требует retired_reason" % tag)
         if not isinstance(marker.get("pattern"), str) or not marker.get("pattern"):
             errors.append("%s: pattern должен быть непустой строкой" % tag)
         if not isinstance(marker.get("description"), str) or not marker.get("description"):
@@ -329,6 +388,8 @@ def validate_document(doc):
         if status == "confirmed":
             if not isinstance(source, dict) or not source.get("url") or not source.get("accessed"):
                 errors.append("%s: confirmed требует source.url и source.accessed" % tag)
+    if isinstance(markers, list) and doc.get("live_count") != live_total:
+        errors.append("live_count должен равняться числу маркеров со статусом live")
     return errors
 
 def serialize_document(doc):
@@ -370,6 +431,41 @@ def selftest():
                                      "evidence_class": None}]}
     errs = validate_document(bad)
     case("валидатор видит ошибки схемы", len(errs) >= 5)
+    case("нет target_class — видно",
+         any("target_class" in e for e in errs))
+    case("нет live_status у маркера — видно",
+         any("нет поля live_status" in e for e in errs))
+
+    def _good_marker(**over):
+        m = {"id": "m1", "class": "A", "live_status": "live", "pattern": "x",
+             "description": "маркер", "source": None,
+             "fixtures": {"positive": [], "negative": [], "multi": None},
+             "evidence_status": "fixture-only", "evidence_class": None}
+        m.update(over)
+        return m
+
+    def _good_doc(**over):
+        d = {"schema_version": SCHEMA_VERSION, "id": "humanizer-ru-markers",
+             "target_class": TARGET_CLASS, "target_class_note": "нота",
+             "live_policy": "правило", "suite_checked": "2026-09-01",
+             "count": 1, "class_a_count": 1, "class_b_count": 0,
+             "live_count": 1, "markers": [_good_marker()]}
+        d.update(over)
+        return d
+
+    case("валидный документ с переподписью класса проходит",
+         validate_document(_good_doc()) == [])
+    retired_errs = validate_document(_good_doc(live_count=0, markers=[_good_marker(
+        live_status="retired")]))
+    case("retired без даты и причины валится",
+         any("retired_date" in e for e in retired_errs)
+         and any("retired_reason" in e for e in retired_errs))
+    case("retired с датой и причиной проходит",
+         validate_document(_good_doc(live_count=0, markers=[_good_marker(
+             live_status="retired", retired_date="2026-09-01",
+             retired_reason="провал на своём классе")])) == [])
+    case("неверный счётчик live виден",
+         any("live_count" in e for e in validate_document(_good_doc(live_count=0))))
 
     print("Самопроверка: %d/%d" % (passed, passed + failed))
     return 0 if failed == 0 else 1

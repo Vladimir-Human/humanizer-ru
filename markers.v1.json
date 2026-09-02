@@ -1,13 +1,19 @@
 {
   "schema_version": "markers.v1",
   "id": "humanizer-ru-markers",
+  "target_class": "copypaste_artifacts",
+  "target_class_note": "Маркеры ловят следы чат-интерфейсов и копирования: текст, который прошёл через чат-бот, был скопирован или отредактирован машиной с настройками по умолчанию. Они не определяют факт генерации: отсутствие маркеров не доказывает авторство человека, а их наличие указывает на путь текста, а не на автора.",
+  "live_policy": "Ретайр только по провалу на своём классе: маркер уходит из активного слоя, если перестаёт ловить артефакт копипасты, на который нацелен, или начинает срабатывать на чистом человеческом тексте. Отсутствие срабатываний на выводах новых генераторов основанием для ретайра не является — это другой класс задач, не класс этого маркера.",
+  "suite_checked": "2026-09-01",
   "count": 40,
   "class_a_count": 31,
   "class_b_count": 9,
+  "live_count": 40,
   "markers": [
     {
       "id": "contentReference",
       "class": "A",
+      "live_status": "live",
       "pattern": ":contentReference\\[oaicite:\\d+\\]\\{index=\\d+\\}",
       "description": "Внутренняя метка ссылки в выводе ChatGPT",
       "source": {
@@ -35,6 +41,7 @@
     {
       "id": "oai_citation",
       "class": "A",
+      "live_status": "live",
       "pattern": "oai_citation:\\d+‡",
       "description": "Альтернативный формат внутренней ссылки",
       "source": {
@@ -58,6 +65,7 @@
     {
       "id": "oaicite_short",
       "class": "A",
+      "live_status": "live",
       "pattern": "oaicite:\\d+",
       "description": "Внутренняя метка ссылки в выводе ChatGPT",
       "source": {
@@ -80,6 +88,7 @@
     {
       "id": "turn_search",
       "class": "A",
+      "live_status": "live",
       "pattern": "turn\\d+search\\d+",
       "description": "Идентификатор результата поиска во внутренних ссылках ChatGPT",
       "source": {
@@ -107,6 +116,7 @@
     {
       "id": "turn_fetch",
       "class": "A",
+      "live_status": "live",
       "pattern": "turn\\d+fetch\\d+",
       "description": "Идентификатор загруженной страницы",
       "source": {
@@ -129,6 +139,7 @@
     {
       "id": "turn_file",
       "class": "A",
+      "live_status": "live",
       "pattern": "turn\\d+file\\d+",
       "description": "Идентификатор фрагмента файла из инструмента file_search; в тексте всплывает как `fileciteturn0file2` или сдвоенный `fileciteturn0file2turn0file6`",
       "source": {
@@ -156,6 +167,7 @@
     {
       "id": "ref_name_search",
       "class": "B",
+      "live_status": "live",
       "pattern": "<ref\\b[^>]{0,500}\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
       "description": "Имя сноски в вики-разметке: числовой префикс + имя внутреннего инструмента. Оно может остаться при копировании ответа агента с веб-поиском",
       "source": {
@@ -186,6 +198,7 @@
     {
       "id": "utm_chatgpt",
       "class": "A",
+      "live_status": "live",
       "pattern": "[?&]utm_source=chatgpt\\.com",
       "description": "OpenAI ChatGPT (веб и приложение)",
       "source": {
@@ -211,6 +224,7 @@
     {
       "id": "utm_openai",
       "class": "A",
+      "live_status": "live",
       "pattern": "[?&]utm_source=openai",
       "description": "Инструменты OpenAI (общий формат API)",
       "source": {
@@ -233,6 +247,7 @@
     {
       "id": "utm_copilot",
       "class": "A",
+      "live_status": "live",
       "pattern": "[?&]utm_source=copilot\\.com",
       "description": "Microsoft Copilot",
       "source": {
@@ -257,6 +272,7 @@
     {
       "id": "grok_referrer",
       "class": "B",
+      "live_status": "live",
       "pattern": "[?&]referrer=grok\\.com",
       "description": "xAI Grok",
       "source": {
@@ -281,6 +297,7 @@
     {
       "id": "attached_file",
       "class": "A",
+      "live_status": "live",
       "pattern": "attached_file:\\/\\/",
       "description": "OpenAI ChatGPT при загрузке файлов",
       "source": null,
@@ -299,6 +316,7 @@
     {
       "id": "grok_card",
       "class": "A",
+      "live_status": "live",
       "pattern": "grok_card:\\/\\/",
       "description": "xAI Grok при ссылке на карточку записи в X (бывший Twitter)",
       "source": null,
@@ -317,6 +335,7 @@
     {
       "id": "grok_render_json",
       "class": "A",
+      "live_status": "live",
       "pattern": "grok_render_citation_card_json",
       "description": "xAI Grok: JSON-разметка карточек цитирования вместо ссылки",
       "source": {
@@ -342,6 +361,7 @@
     {
       "id": "vertexaisearch",
       "class": "A",
+      "live_status": "live",
       "pattern": "vertexaisearch\\.cloud\\.google\\.com/grounding-api-redirect",
       "description": "Google Gemini, ссылки веб-поиска с привязкой к источникам",
       "source": {
@@ -365,6 +385,7 @@
     {
       "id": "attributableIndex",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\battributableIndex\\b",
       "description": "Внутренние поля разметки в JSON-ответах при использовании инструментов",
       "source": {
@@ -388,6 +409,7 @@
     {
       "id": "citation_n",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[citation:\\d+\\]",
       "description": "Стиль Perplexity и других поисковых ИИ",
       "source": {
@@ -410,6 +432,7 @@
     {
       "id": "copilot_caret",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[\\^\\d+\\^\\]",
       "description": "Microsoft Copilot и Bing: сноска-ссылка при копировании ответа",
       "source": {
@@ -436,6 +459,7 @@
     {
       "id": "assistants_source",
       "class": "A",
+      "live_status": "live",
       "pattern": "【\\d+(?::\\d+)?†source】",
       "description": "OpenAI Assistants (поиск по файлам): метка цитаты, скобки-уголки + кинжал",
       "source": {
@@ -459,6 +483,7 @@
     {
       "id": "cite_turn",
       "class": "A",
+      "live_status": "live",
       "pattern": "citeturn\\d+[a-z]+\\d+",
       "description": "ChatGPT: служебная метка цитаты, попавшая в текст при копировании из потока",
       "source": {
@@ -485,6 +510,7 @@
     {
       "id": "sandbox_link",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\]\\(sandbox:/mnt/data/",
       "description": "ChatGPT (анализ данных): сломанная ссылка на скачивание файла из контейнера",
       "source": {
@@ -510,6 +536,7 @@
     {
       "id": "openai_pua",
       "class": "B",
+      "live_status": "live",
       "pattern": "[-]",
       "description": "OpenAI ChatGPT: служебные разделители цитат и скрытых блоков",
       "source": {
@@ -537,6 +564,7 @@
     {
       "id": "openai_pua_short",
       "class": "B",
+      "live_status": "live",
       "pattern": "[]",
       "description": "OpenAI ChatGPT: короткая форма сноски — только номер, ограждённый невидимыми символами",
       "source": {
@@ -565,6 +593,7 @@
     {
       "id": "think_tag",
       "class": "A",
+      "live_status": "live",
       "pattern": "(?m)^\\s*</?think>|</think>\\s*$",
       "description": "DeepSeek R1 и наследники, другие открытые модели с режимом рассуждения (через API и локальный запуск)",
       "source": {
@@ -593,6 +622,7 @@
     {
       "id": "source_plus_chain",
       "class": "A",
+      "live_status": "live",
       "pattern": "[A-Za-zА-Яа-яЁё)]\\+\\d+(?=[A-ZА-ЯЁ][A-Za-zА-Яа-яЁё&.\\-]*(?: [A-ZА-ЯЁ][A-Za-zА-Яа-яЁё&.\\-]*){0,3}\\+\\d)",
       "description": "OpenAI ChatGPT: ошибка отрисовки сносок",
       "source": {
@@ -626,6 +656,7 @@
     {
       "id": "gemini_cite_start",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[cite_start\\]",
       "description": "Google Gemini: внутренняя метка начала цитируемого фрагмента при анализе PDF",
       "source": {
@@ -653,6 +684,7 @@
     {
       "id": "gemini_cite_n",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[[Cc]ite:\\s?\\d+(?:,\\s?\\d+)*\\]",
       "description": "Google Gemini: ссылка на фрагмент источника; с v3.2 выражение покрывает и перечисление нескольких фрагментов через запятую",
       "source": {
@@ -682,6 +714,7 @@
     {
       "id": "gemini_span",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[span_\\d+\\][\\[(](?:start_span|end_span)[\\])]",
       "description": "Google Gemini: внутренние span-метки границ фрагментов; всплывают при копировании ответа с подсветкой источников",
       "source": {
@@ -711,6 +744,7 @@
     {
       "id": "zero_width",
       "class": "B",
+      "live_status": "live",
       "pattern": "[​‌‎‏‪-‮⁠-⁤⁦-⁩﻿￹-￻]|(?<![🀀-🫿☀-➿️🇦-🇿])‍(?![🀀-🫿☀-➿️🇦-🇿])",
       "description": "Наблюдались у ряда моделей (обзорные источники весны 2025; атрибуция конкретной версии не подтверждена); расширение класса — публичный разбор watermarks-remover, 2026-08-13",
       "source": {
@@ -743,6 +777,7 @@
     {
       "id": "writing_block",
       "class": "A",
+      "live_status": "live",
       "pattern": ":::\\w+\\{variant",
       "description": "Writing-разметка; атрибуция версии не подтверждена",
       "source": {
@@ -772,6 +807,7 @@
     {
       "id": "deepseek_line_ref",
       "class": "A",
+      "live_status": "live",
       "pattern": "【\\d+†L\\d+(?:-L?\\d+)?】",
       "description": "DeepSeek и производные модели: ссылка на строки источника",
       "source": {
@@ -801,6 +837,7 @@
     {
       "id": "grok_card_tag",
       "class": "A",
+      "live_status": "live",
       "pattern": "<grok-card\\b[^>]*\\bcitation_card\\b",
       "description": "xAI Grok: XML-тег карточки цитирования после сноски",
       "source": {
@@ -825,6 +862,7 @@
     {
       "id": "turn_other",
       "class": "A",
+      "live_status": "live",
       "pattern": "turn\\d+(?:image|news|video|ref)\\d+",
       "description": "Идентификаторы из других инструментов ChatGPT: изображения, новости, видео, ссылки на источники; всплывают при копировании ответов с мультимедиа",
       "source": {
@@ -854,6 +892,7 @@
     {
       "id": "attached_web_bracket",
       "class": "A",
+      "live_status": "live",
       "pattern": "\\[(?:attached_file|web):\\d+\\]",
       "description": "Perplexity (с осени 2025; возможно и другие поисковые ИИ): скобочная форма ссылок на прикреплённые файлы и веб-результаты в конце предложений",
       "source": {
@@ -881,6 +920,7 @@
     {
       "id": "perplexity_s3",
       "class": "A",
+      "live_status": "live",
       "pattern": "ppl-ai-file-upload",
       "description": "Perplexity: ссылки на Amazon S3-bucket с этим идентификатором в адресе; всплывают при копировании ответа с привязкой к источникам",
       "source": {
@@ -905,6 +945,7 @@
     {
       "id": "generated_ref_id",
       "class": "A",
+      "live_status": "live",
       "pattern": "citegenerated-reference-identifier",
       "description": "ChatGPT: редкая служебная метка сгенерированного идентификатора ссылки, всплывает при сбое отрисовки цитат",
       "source": {
@@ -927,6 +968,7 @@
     {
       "id": "placeholder_url",
       "class": "B",
+      "live_status": "live",
       "pattern": "\\b(?:INSERT_SOURCE_URL(?:_\\d+)?|URL_HERE|PASTE_\\w+_URL_HERE)\\b",
       "description": "Placeholder-URL из шаблонных ответов: ИИ выдаёт структуру ссылки, которую пользователь должен заполнить, но публикует без правки",
       "source": {
@@ -955,6 +997,7 @@
     {
       "id": "placeholder_date",
       "class": "B",
+      "live_status": "live",
       "pattern": "\\b(?:19|20)\\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}\\b",
       "description": "Placeholder-дата из шаблонных ответов: ИИ подставляет заглушку вместо неизвестной даты (чаще всего — «дата обращения» в списке литературы)",
       "source": {
@@ -987,6 +1030,7 @@
     {
       "id": "invisible_layout",
       "class": "B",
+      "live_status": "live",
       "pattern": "­|[  　]|(?<![🀀-🫿☀-➿🇦-🇿©®‼⁉™ℹ↔-↙↩-↪⌚-⌛⌨⏏⏩-⏺Ⓜ▪-◾⤴-⤵⬀-⯿〰〽㊗㊙])[︀-️](?![🀀-🫿☀-➿🇦-🇿⃣])",
       "description": "Публичный разбор классов меток watermarks-remover, 2026-08-13; классовое описание, атрибуция конкретных моделей не подтверждена",
       "source": {
@@ -1026,6 +1070,7 @@
     {
       "id": "unicode_tags",
       "class": "B",
+      "live_status": "live",
       "pattern": "(?<![🏴🏳️󠀀-󠁿])[󠀀-󠁿]",
       "description": "Стеганографические инструменты (SteganoPrompt, arXiv:2605.16336, AIES 2026): нагрузка кодируется как `chr(0xE0000 + ord(c))` и вставляется в видимый текст; модель, получившая промпт дословно, переносит метку в ответ",
       "source": {
