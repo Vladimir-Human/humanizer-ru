@@ -34,7 +34,7 @@
       "task": "типографическая нормализация: тире, кавычки, многоточие, невидимые символы, маркеры разметки, переносы строк к LF",
       "when_not": "когда нужна правка лексики или смысла — полировка слов не трогает",
       "invariants": ["идемпотентность", "буквы и цифры дословно"],
-      "modes": ["stdout", "--diff", "--in-place (.bak)", "--dry-run", "--json"],
+      "modes": ["stdout", "--diff", "--in-place (.bak)", "--dry-run", "--json", "--gate ПУТЬ", "--selftest", "- (stdin)"],
       "json_schema": 1
     },
     {
@@ -48,30 +48,31 @@
         "prose": "not-validated",
         "web": "not-applicable"
       },
-      "modes": ["stdout", "--json", "--genre"],
+      "modes": ["stdout", "--json", "--genre", "--gate ПУТЬ", "--selftest", "- (stdin)"],
       "json_schema": 1
     },
     {
       "command": "humanizer-markers",
       "script": "scripts/check_markers.py",
-      "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B",
-      "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека",
-      "modes": ["--scan ФАЙЛ..."],
-      "json_schema": 0
+      "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B; находит и показывает, не удаляет",
+      "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека; файловое удаление невидимых меток — scripts/filemarks (в pip-пакет не входит)",
+      "modes": ["--scan ФАЙЛ...", "--class a|all", "--json", "--selftest (без файлов)", "- (stdin)"],
+      "json_schema": 1
     },
     {
       "command": "humanizer-scan",
       "script": "scripts/scan_soft_signals.py",
       "task": "мягкие признаки машинного письма: счётчик по категориям, калибрует объём правки",
       "when_not": "вердикта об авторстве не даёт ни в каком сочетании признаков",
-      "modes": ["ФАЙЛ...", "--fail-multicat N"],
-      "json_schema": 0
+      "modes": ["ФАЙЛ...", "--genre", "--plain-text", "--json", "--fail-at N", "--fail-multicat N", "--max-cats N", "--selftest", "- (stdin)"],
+      "json_schema": 1
     }
   ],
   "router": [
     {"need": "проверить текст на следы машинного происхождения", "use": "humanizer-detect + humanizer-markers"},
-    {"need": "убрать артефакты копипасты и разметки", "use": "humanizer-markers + humanizer-polish"},
+    {"need": "найти артефакты копипасты и разметки", "use": "humanizer-markers (показывает совпадения; не удаляет)"},
     {"need": "нормализовать типографику без правки смысла", "use": "humanizer-polish"},
+    {"need": "удалить невидимые метки чат-интерфейсов из файла", "use": "scripts/filemarks (репозиторий; в pip-пакет не входит)"},
     {"need": "переписать текст по-человечески", "use": "скилл humanizer-ru (SKILL.md) агентом, по явной просьбе; заявлений о качестве нет"}
   ],
   "provenance_note": "числа валидации в контракт не включаются: их единственный источник — реестр фактов (eval/facts/facts.v1.json) с одобрением владельца на публикацию каждого"

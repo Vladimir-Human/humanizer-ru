@@ -1,4 +1,4 @@
-version: "3.16.9"
+version: "3.16.10"
 name: humanizer-ru
 interface:
   display_name: "Humanizer RU"

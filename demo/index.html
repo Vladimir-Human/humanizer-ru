@@ -2,8 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<link rel="icon" href="data:,">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Статическое демо humanizer-ru: находит артефакты копипасты и следы чат-интерфейсов в русском тексте прямо в браузере, без отправки данных. 40 regex-маркеров, классы A и B.">
+<meta property="og:title" content="humanizer-ru — нормализация и диагностика русского текста">
+<meta property="og:description" content="Демо regex-слоя: артефакты копипасты и следы чат-интерфейсов находятся в браузере, текст никуда не отправляется. Полный скилл и команды — в репозитории и на PyPI.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/">
+<meta property="og:site_name" content="humanizer-ru">
+<meta property="og:locale" content="ru_RU">
 <title>humanizer-ru — статическое демо regex-слоя</title>
 <script src="markers.js"></script>
 <style>
@@ -168,5 +175,13 @@
   run();
 })();
 </script>
+<footer style="border-top:1px solid var(--line);background:#fff;padding:10px 20px;color:#666;font-size:13px;">
+  humanizer-ru v3.16.10 · демо детерминированного regex-слоя; переписывание и детектор связок — в
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории</a> и
+  <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>. Машинные файлы:
+  <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt">llms.txt</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/contract.v1.json">contract.v1.json</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md">ERRATA.md</a>.
+</footer>
 </body>
 </html>

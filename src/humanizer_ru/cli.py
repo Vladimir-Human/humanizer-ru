@@ -28,19 +28,42 @@ def scan_main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 def markers_main(argv: Optional[Sequence[str]] = None) -> int:
-    """Точка входа humanizer-markers: режим --scan check_markers.py.
+    """Точка входа humanizer-markers: скан 40 маркеров артефактов копипасты.
 
-    Поддерживается как форма `humanizer-markers --scan файл1 [...]`, так и
-    сокращённая `humanizer-markers файл1 [...]` (--scan подразумевается).
-    Без файлов запускается самопроверка 40 выражений, как и в оригинальном
-    check_markers.py без аргументов.
+    Полный argparse-интерфейс: --help работает, --json печатает конверт
+    контракта {tool, schema, files}, «-» читает stdin. Форма
+    `humanizer-markers --scan файл1 [...]` сохранена (флаг --scan —
+    совместимость, режим сканирования включён всегда). Без файлов
+    запускается самопроверка 40 выражений с явным сообщением в stderr.
     """
-    args = list(sys.argv[1:] if argv is None else argv)
-    if args and args[0] == "--scan":
-        args = args[1:]
-    if not args:
+    import argparse
+
+    ap = argparse.ArgumentParser(
+        prog="humanizer-markers",
+        description="Артефакты копипасты и чат-интерфейсов: 40 маркеров "
+                    "классов A и B. Находит и показывает; вердикта об "
+                    "авторстве нет. Удаление меток — scripts/filemarks "
+                    "(в pip-пакет не входит).")
+    ap.add_argument("files", nargs="*",
+                    help="файлы для проверки; «-» читает stdin (UTF-8)")
+    ap.add_argument("--scan", action="store_true",
+                    help="совместимость: режим сканирования включён всегда")
+    ap.add_argument("--class", dest="cls", choices=["a", "all"], default="all",
+                    help="код возврата: все маркеры (all) или только класс A (a)")
+    ap.add_argument("--json", action="store_true",
+                    help="машиночитаемый отчёт (конверт {tool, schema, files})")
+    ap.add_argument("--selftest", action="store_true",
+                    help="самопроверка 40 выражений")
+    args = ap.parse_args(list(sys.argv[1:] if argv is None else argv))
+    if args.selftest or not args.files:
+        if not args.files and not args.selftest:
+            print("нет файлов — запускается самопроверка выражений; "
+                  "справка: --help", file=sys.stderr)
         return check_markers.main()
-    return check_markers.scan(args)
+    paths = list(args.files)
+    if args.cls != "all":
+        paths += ["--class", args.cls]
+    return check_markers.scan(paths, as_json=args.json)
 
 
 def polish_main(argv: Optional[Sequence[str]] = None) -> int:

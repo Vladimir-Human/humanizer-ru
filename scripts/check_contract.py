@@ -75,6 +75,10 @@ def contract_errors(doc) -> list[str]:
         for field in ("task", "when_not", "modes"):
             if not t.get(field):
                 errors.append("%s: нет поля %s" % (cmd, field))
+        js = t.get("json_schema")
+        if not isinstance(js, int) or isinstance(js, bool) or js < 1:
+            errors.append("%s: json_schema обязан быть целым >= 1 — все четыре "
+                          "инструмента дают --json-конверт" % cmd)
         script = t.get("script")
         if not script or not os.path.isfile(os.path.join(ROOT, *script.split("/"))):
             errors.append("%s: скрипт не найден (%s)" % (cmd, script))
@@ -126,12 +130,21 @@ def live_check() -> list[str]:
     probes = [
         ("humanizer-polish", [sys.executable,
                               os.path.join(ROOT, "scripts", "polish.py"),
-                              "--json", fixture]),
+                              "--json", fixture], (0,)),
         ("humanizer-detect", [sys.executable,
                               os.path.join(ROOT, "scripts", "detect_conj.py"),
-                              "--json", "--genre", "auto", fixture]),
+                              "--json", "--genre", "auto", fixture], (0,)),
+        # markers и scan на чистой фикстуре дают 0, на тексте с маркерами/
+        # признаками — 1; оба кода законны (градуированный ответ), конверт
+        # обязан быть валидным в любом случае.
+        ("humanizer-markers", [sys.executable,
+                               os.path.join(ROOT, "scripts", "check_markers.py"),
+                               "--scan", "--json", fixture], (0, 1)),
+        ("humanizer-scan", [sys.executable,
+                            os.path.join(ROOT, "scripts", "scan_soft_signals.py"),
+                            "--json", fixture], (0, 1)),
     ]
-    for command, argv in probes:
+    for command, argv, ok_codes in probes:
         try:
             proc = subprocess.run(argv, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, timeout=120,
@@ -139,7 +152,7 @@ def live_check() -> list[str]:
         except (OSError, subprocess.TimeoutExpired) as exc:
             errors.append("%s: запуск не удался: %r" % (command, exc))
             continue
-        if proc.returncode != 0:
+        if proc.returncode not in ok_codes:
             errors.append("%s: код %d: %s"
                           % (command, proc.returncode, proc.stderr.strip()[:200]))
             continue
@@ -183,9 +196,15 @@ def selftest() -> int:
         case("контракт читается и структурно валиден", contract_errors(doc) == [])
         case("все четыре инструмента описаны",
              {t["command"] for t in doc.get("tools", [])} == set(EXPECTED_TOOLS))
-    except (OSError, json.JSONDecodeError) as exc:
+        case("все четыре инструмента несут json_schema >= 1",
+             all(isinstance(t.get("json_schema"), int)
+                 and not isinstance(t.get("json_schema"), bool)
+                 and t["json_schema"] >= 1
+                 for t in doc.get("tools", [])))
+    except (OSError, json.JSONDecodeError):
         case("контракт читается и структурно валиден", False)
         case("все четыре инструмента описаны", False)
+        case("все четыре инструмента несут json_schema >= 1", False)
 
     print("САМОПРОВЕРКА check_contract: %d/%d PASS" % (passed, passed + failed))
     return 1 if failed else 0
