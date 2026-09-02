@@ -17,6 +17,7 @@
 """
 
 import glob
+import json
 import re
 import sys
 
@@ -618,13 +619,20 @@ def _fenced_lines(lines: list) -> set:
     return inside
 
 
-def scan(paths: list) -> int:
+def scan(paths: list, as_json: bool = False) -> int:
     """Прогон всех выражений по произвольным файлам.
 
     Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
              python3 scripts/check_markers.py --scan --class a файл1 …
              python3 scripts/check_markers.py --scan файл1 --class a …
-    Печатает каждое совпадение в формате «файл:строка [имя] фрагмент».
+             python3 scripts/check_markers.py --scan --json файл1 …
+    «-» в списке файлов читает stdin (UTF-8) и обозначается <stdin>.
+    Текстовый режим печатает каждое совпадение в формате
+    «файл:строка [имя] фрагмент»; --json печатает конверт контракта
+    {tool: "humanizer-markers", schema: 1, files: [...]} — по записи на
+    файл: file, markers (line, marker, class, fragment, shadow), count,
+    warnings_b. В --json текстовые строки совпадений не печатаются:
+    stdout обязан быть чистым JSON.
     Совпадения внутри обратных кавычек пропускаются (документация выражений),
     вложенные дубли одного артефакта схлопываются (см. _line_matches).
     Код возврата 0 — чисто, 1 — найдены маркеры, 2 — файл не читается.
@@ -651,13 +659,21 @@ def scan(paths: list) -> int:
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
     found = 0
     class_b_warnings = 0
+    json_files = []
     for path in remaining:
+        label = "<stdin>" if path == "-" else path
         try:
-            with open(path, encoding="utf-8") as fh:
-                lines = fh.read().splitlines()
+            if path == "-":
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+                lines = sys.stdin.read().splitlines()
+            else:
+                with open(path, encoding="utf-8") as fh:
+                    lines = fh.read().splitlines()
         except (OSError, UnicodeDecodeError) as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
             return 2
+        entry = {"file": label, "markers": [], "count": 0, "warnings_b": 0}
         blocked = _fenced_lines(lines)
         for lineno, line in enumerate(lines, 1):
             if lineno in blocked:
@@ -665,14 +681,20 @@ def scan(paths: list) -> int:
             direct = _line_matches(line, compiled)
             for _start, _end, name in direct:
                 cls = CLASS_OF.get(name, "A")
+                fragment = _console_text(line.strip()[:90])
                 if class_filter == "a" and cls == "B":
                     class_b_warnings += 1
-                    fragment = _console_text(line.strip()[:90])
-                    print(f"[B, предупреждение] {path}:{lineno} [{name}] {fragment}")
-                    continue
-                found += 1
-                fragment = _console_text(line.strip()[:90])
-                print(f"{path}:{lineno} [{name}] {fragment}")
+                    entry["warnings_b"] += 1
+                    if not as_json:
+                        print(f"[B, предупреждение] {label}:{lineno} [{name}] {fragment}")
+                else:
+                    found += 1
+                    entry["count"] += 1
+                    if not as_json:
+                        print(f"{label}:{lineno} [{name}] {fragment}")
+                entry["markers"].append({"line": lineno, "marker": name,
+                                         "class": cls, "fragment": fragment,
+                                         "shadow": False})
             # Теневой проход: те же выражения по строке без невидимых
             # символов — ловит маркер, разбитый вставкой (turn0<U+200B>…).
             # Находки, уже пойманные напрямую, повторно не печатаются.
@@ -686,11 +708,23 @@ def scan(paths: list) -> int:
                     fragment = _console_text(shadow.strip()[:90])
                     if class_filter == "a" and cls == "B":
                         class_b_warnings += 1
-                        print(f"[B, предупреждение] {path}:{lineno} [{name}] "
-                              f"(теневой) {fragment}")
-                        continue
-                    found += 1
-                    print(f"{path}:{lineno} [{name}] (теневой) {fragment}")
+                        entry["warnings_b"] += 1
+                        if not as_json:
+                            print(f"[B, предупреждение] {label}:{lineno} [{name}] "
+                                  f"(теневой) {fragment}")
+                    else:
+                        found += 1
+                        entry["count"] += 1
+                        if not as_json:
+                            print(f"{label}:{lineno} [{name}] (теневой) {fragment}")
+                    entry["markers"].append({"line": lineno, "marker": name,
+                                             "class": cls, "fragment": fragment,
+                                             "shadow": True})
+        json_files.append(entry)
+    if as_json:
+        print(json.dumps({"tool": "humanizer-markers", "schema": 1,
+                          "files": json_files}, ensure_ascii=False, indent=2))
+        return 1 if found else 0
     if class_filter == "a":
         print(f"\nМаркеров класса A: {found}; предупреждений класса B: {class_b_warnings}.")
         return 1 if found else 0
@@ -862,8 +896,13 @@ def parity(*md_paths: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--scan":
-        # scan() разбирает --class {a|all} сам, поэтому передаём весь хвост.
-        sys.exit(scan(sys.argv[2:]))
+        # scan() разбирает --class {a|all} сам, поэтому передаём весь хвост;
+        # --json снимается здесь (конверт контракта вместо текстовых строк).
+        rest = sys.argv[2:]
+        as_json = "--json" in rest
+        if as_json:
+            rest = [a for a in rest if a != "--json"]
+        sys.exit(scan(rest, as_json=as_json))
     if len(sys.argv) > 1 and sys.argv[1] == "--parity":
         sys.exit(parity(*sys.argv[2:]))
     sys.exit(main())

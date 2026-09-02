@@ -89,7 +89,16 @@ def scan_file(path, genre):
         raise RuntimeError("scan_soft_signals.py упал на %s: %s"
                            % (path, proc.stderr.strip()[:200]))
     payload = json.loads(proc.stdout)
-    report = payload[0] if isinstance(payload, list) and payload else payload
+    # Конверт контракта {tool, schema, files} — текущая форма вывода;
+    # голый массив — старая форма, принимается для совместимости с
+    # сохранёнными прогонами.
+    if (isinstance(payload, dict) and isinstance(payload.get("files"), list)
+            and payload["files"]):
+        report = payload["files"][0]
+    elif isinstance(payload, list) and payload:
+        report = payload[0]
+    else:
+        report = payload
     if not isinstance(report, dict):
         raise RuntimeError("scan_soft_signals.py вернул неожиданный JSON: %s"
                            % path)

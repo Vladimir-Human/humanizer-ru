@@ -223,7 +223,8 @@ def _diff_text(before: str, after: str, label: str) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Типографическая нормализация русского текста.")
-    ap.add_argument("files", nargs="*", help="файлы для обработки")
+    ap.add_argument("files", nargs="*",
+                    help="файлы для обработки; «-» читает stdin (UTF-8)")
     ap.add_argument("--diff", action="store_true",
                     help="показать унифицированный диф до/после")
     ap.add_argument("--in-place", action="store_true",
@@ -250,9 +251,19 @@ def main(argv=None) -> int:
     report = []
     rc = 0
     for path in args.files:
+        if path == "-" and args.in_place:
+            print("НЕ ЧИТАЕТСЯ -: --in-place неприменим к stdin",
+                  file=sys.stderr)
+            rc = 2
+            continue
         try:
-            with open(path, encoding="utf-8") as fh:
-                before = fh.read()
+            if path == "-":
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+                before = sys.stdin.read()
+            else:
+                with open(path, encoding="utf-8") as fh:
+                    before = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("НЕ ЧИТАЕТСЯ %s: %r" % (path, exc), file=sys.stderr)
             rc = 2
@@ -263,7 +274,7 @@ def main(argv=None) -> int:
             rc = 1
         changed = after != before
         entry = {
-            "file": path,
+            "file": "<stdin>" if path == "-" else path,
             "changed": changed,
             "chars_before": len(before),
             "chars_after": len(after),
@@ -285,7 +296,10 @@ def main(argv=None) -> int:
                         fh.write(after)
                 print(("ЗАПИСАНО " if changed else "БЕЗ ИЗМЕНЕНИЙ ") + path)
         else:
-            sys.stdout.write(after)
+            # Завершающий перевод строки обязателен: следующий промпт
+            # консоли не должен прилипать к тексту.
+            sys.stdout.write(after if not after or after.endswith("\n")
+                             else after + "\n")
     if args.json:
         print(json.dumps({"tool": "humanizer-polish", "schema": 1, "files": report},
                          ensure_ascii=False, indent=2))
