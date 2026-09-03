@@ -672,8 +672,19 @@ def scan(paths: list, as_json: bool = False) -> int:
                     lines = fh.read().splitlines()
         except (OSError, UnicodeDecodeError) as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
+            if as_json:
+                json_files.append({"file": label, "markers": [], "count": 0,
+                                   "warnings_b": 0, "error": str(exc)})
+                print(json.dumps({"tool": "humanizer-markers", "schema": 1,
+                                  "files": json_files,
+                                  "error": "вход не читается (код 2)"},
+                                 ensure_ascii=False, indent=2))
             return 2
         entry = {"file": label, "markers": [], "count": 0, "warnings_b": 0}
+        if not any(line.strip() for line in lines):
+            # Градуированный ответ на пустом входе: поиск структурных
+            # артефактов не отказывает, но честный статус входа виден.
+            entry["scope_note"] = "вне области: пустой вход"
         blocked = _fenced_lines(lines)
         for lineno, line in enumerate(lines, 1):
             if lineno in blocked:

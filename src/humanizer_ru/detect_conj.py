@@ -208,9 +208,32 @@ def _gate_file(path: str) -> int:
 
 # ---------------------------------------------------------------------- CLI
 
+def _cyrillic_share(text: str) -> float:
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 0.0
+    cyr = sum(1 for c in letters if "\u0400" <= c <= "\u04ff")
+    return cyr / len(letters)
+
+
+def scope_note(text: str) -> str:
+    """Пометка «вне области»: пустой и не-русский вход — вне домена скилла.
+
+    Градуированный ответ остаётся непустым (контракт): плотность связок
+    считается механически, но область детектора — русская проза и
+    инструкции, а не произвольный текст.
+    """
+    if not text.strip():
+        return "вне области: пустой вход"
+    if _cyrillic_share(text) < 0.1:
+        return "вне области: текст не на русском (область детектора — русская проза и инструкции)"
+    return ""
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Детектор частоты связок с границами домена.")
+        description="Детектор частоты связок с границами домена. Вердикта об "
+                    "авторстве не выносит никогда.")
     ap.add_argument("files", nargs="*",
                     help="файлы для обработки; «-» читает stdin (UTF-8)")
     ap.add_argument("--genre", default="auto",
@@ -234,6 +257,7 @@ def main(argv=None) -> int:
 
     rc = 0
     report = []
+    errors = []
     for path in args.files:
         try:
             if path == "-":
@@ -245,10 +269,16 @@ def main(argv=None) -> int:
                     text = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("НЕ ЧИТАЕТСЯ %s: %r" % (path, exc), file=sys.stderr)
+            errors.append({"file": "<stdin>" if path == "-" else path,
+                           "error": repr(exc)})
             rc = 2
             continue
         res = detect(text, args.genre)
         res = {"file": "<stdin>" if path == "-" else path, **res}
+        note = scope_note(text)
+        if note:
+            res["status"] = "out-of-scope"
+            res["scope_note"] = note
         if args.json:
             report.append(res)
         else:
@@ -257,9 +287,14 @@ def main(argv=None) -> int:
                      res["genre"], res["status"]))
             print("  направление: %s" % res["direction"])
             print("  примечание: %s" % res["note"])
+            if note:
+                print("  %s" % note)
     if args.json:
-        print(json.dumps({"tool": "humanizer-detect", "schema": 1, "files": report},
-                         ensure_ascii=False, indent=2))
+        envelope = {"tool": "humanizer-detect", "schema": 1,
+                    "files": report + errors}
+        if rc == 2:
+            envelope["error"] = "вход не читается (код 2)"
+        print(json.dumps(envelope, ensure_ascii=False, indent=2))
     return rc
 
 

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# humanizer-ru: статическое демо и машинные файлы.
+# Машинный вход: /llms.txt и /.well-known/llms.txt
+# Репозиторий: https://github.com/Vladimir-Human/humanizer-ru

@@ -27,6 +27,8 @@
 CLI:
   python3 eval/reproduce.py                              # флагманский отчёт llm_rubric
   python3 eval/reproduce.py eval/detect-results/<файл>.json
+  python3 eval/reproduce.py --report eval/detect-results/<файл>.json  # документированная форма
+  python3 eval/reproduce.py --all-reports                # сверить каждый отчёт eval/detect-results/
   python3 eval/reproduce.py <отчёт> --json out.json      # статистики в JSON
   python3 eval/reproduce.py --selftest                   # негативные кейсы, без данных
 
@@ -38,8 +40,10 @@ seed (random.Random, Mersenne Twister — платформенно-незави�
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import math
+import os
 import random
 import sys
 
@@ -155,25 +159,40 @@ def load_report(path: str) -> dict:
     return data
 
 
-def extract_pairs(data: dict) -> list[dict]:
+def extract_pairs(data: dict) -> tuple[list[dict], int]:
+    """Валидные пары + число guard-пропусков.
+
+    Guard-пара — любое из полей before/after/delta равно None:
+    задокументированный отказ счёта для пар, где любая сторона короче
+    20 токенов (note агрегатов отчёта, LEADERBOARD). Это часть данных,
+    а не ошибка входа: пара исключается из статистик с явным счётчиком.
+    Значение поля не число и не None (строка, bool) — порча отчёта,
+    ReportError.
+    """
     pairs = data.get("pairs")
     if not isinstance(pairs, list) or not pairs:
         raise ReportError("в отчёте нет непустого массива pairs")
     out = []
+    skipped = 0
     for i, p in enumerate(pairs):
         if not isinstance(p, dict):
             raise ReportError(f"пара #{i} — не объект")
-        for key in ("before", "after", "delta"):
-            v = p.get(key)
+        vals = [p.get(key) for key in ("before", "after", "delta")]
+        if any(v is None for v in vals):
+            skipped += 1
+            continue
+        for key, v in zip(("before", "after", "delta"), vals):
             if not isinstance(v, (int, float)) or isinstance(v, bool):
                 raise ReportError(f"пара #{i}: поле {key} не число")
         out.append(p)
-    return out
+    if not out:
+        raise ReportError("в отчёте нет ни одной валидной пары (все — guard)")
+    return out, skipped
 
 
 def validate_and_compute(data: dict) -> dict:
     """Сверка отчёта с пересчётом + все статистики. Расхождение — MismatchError."""
-    pairs = extract_pairs(data)
+    pairs, guard_skipped = extract_pairs(data)
     deltas = []
     for i, p in enumerate(pairs):
         d = float(p["after"]) - float(p["before"])
@@ -211,9 +230,19 @@ def validate_and_compute(data: dict) -> dict:
             raise ReportError("fp_audit.details отсутствует или не список")
         thr = fp.get("threshold", 0.5)
         acc = 0
+        guard_fp = 0
         bad = []
         for j, rec in enumerate(details):
             s = rec.get("score")
+            if s is None:
+                # guard: текст короче порога прокси — скор не вычислен.
+                # Такая запись не может быть ложным обвинением (обвинение
+                # требует скора); флаг false_accusation=true при score=null
+                # — рассогласование данных.
+                if rec.get("false_accusation"):
+                    bad.append(j)
+                guard_fp += 1
+                continue
             if not isinstance(s, (int, float)) or isinstance(s, bool):
                 raise ReportError(f"fp_audit.details[{j}].score не число")
             expected = s >= thr
@@ -232,6 +261,7 @@ def validate_and_compute(data: dict) -> dict:
                 f"fp_audit.false_accusations={fp['false_accusations']} != {acc}")
         lo, hi = wilson_ci(acc, len(details))
         fp_stats = {"n": len(details), "false_accusations": acc,
+                    "guard_skipped": guard_fp,
                     "threshold": thr,
                     "wilson95": [round(lo, 4), round(hi, 4)]}
 
@@ -240,6 +270,7 @@ def validate_and_compute(data: dict) -> dict:
     neg, n_nz, p_sign = sign_test_two_sided(deltas)
     return {
         "n_pairs": n,
+        "guard_skipped": guard_skipped,
         "mean_before": round(mean_before, 4),
         "mean_after": round(mean_after, 4),
         "mean_delta": round(mean_delta, 4),
@@ -263,6 +294,8 @@ def print_summary(st: dict, path: str) -> None:
         print(f"детектор: {det.get('name')} | модель: {det.get('model')} | "
               f"дата: {st.get('created')}")
     print(f"n пар: {st['n_pairs']}")
+    if st.get("guard_skipped"):
+        print(f"пар пропущено (guard, короче 20 токенов): {st['guard_skipped']}")
     print(f"средний скор до:    {st['mean_before']}")
     print(f"средний скор после: {st['mean_after']}")
     print(f"дельта (после − до): {st['mean_delta']}")
@@ -279,7 +312,46 @@ def print_summary(st: dict, path: str) -> None:
         w = f["wilson95"]
         print(f"FP-аудит: {f['false_accusations']}/{f['n']} при пороге "
               f"{f['threshold']}; Wilson 95% [{w[0]}; {w[1]}]")
+        if f.get("guard_skipped"):
+            print(f"  (из них guard-записей без скора: {f['guard_skipped']} — "
+                  f"обвинением быть не могут)")
     print("воспроизводится из данных: да")
+
+
+def all_reports(directory: str) -> int:
+    """Сверка каждого отчёта каталога: rc=0, когда ВСЕ числа воспроизводимы.
+
+    Гейт «витринная строка воспроизводится» не должен зависеть от того,
+    какой именно отчёт выбран по умолчанию: проверяются все файлы
+    eval/detect-results/*.json. Код 1 — хотя бы одно расхождение числа с
+    данными; код 2 — хотя бы один отчёт не читается (входная ошибка).
+    """
+    paths = sorted(glob.glob(os.path.join(directory, "*.json")))
+    if not paths:
+        print(f"в каталоге нет отчётов: {directory}", file=sys.stderr)
+        return 2
+    mismatch = False
+    input_error = False
+    for path in paths:
+        try:
+            data = load_report(path)
+            st = validate_and_compute(data)
+        except ReportError as e:
+            print(f"ОШИБКА ВХОДА {path}: {e}", file=sys.stderr)
+            input_error = True
+            continue
+        except MismatchError as e:
+            print(f"РАСХОЖДЕНИЕ {path}: {e}", file=sys.stderr)
+            mismatch = True
+            continue
+        g = st.get("guard_skipped") or 0
+        tail = f", guard-пропусков {g}" if g else ""
+        print(f"OK {path}: n={st['n_pairs']}{tail}, дельта {st['mean_delta']}")
+    ok = not (mismatch or input_error)
+    print(f"воспроизводимость всех отчётов {directory}: {'да' if ok else 'НЕТ'}")
+    if input_error:
+        return 2
+    return 1 if mismatch else 0
 
 
 # ------------------------------------------------------------------ selftest
@@ -391,12 +463,63 @@ def selftest() -> int:
     if abs((lo + hi) / 2 - mid) > 1e-12 or not (lo < mid < hi):
         failures.append("t-интервал несимметричен")
 
+    # 10. Guard-пара (before/after/delta = None все три) пропускается со
+    # счётом; статистики считаются по валидным парам.
+    f = _deep_copy(_fixture())
+    f["pairs"][2] = {"id": "x-03", "kind": "ai",
+                     "before": None, "after": None, "delta": None}
+    f["aggregates"] = {}
+    st = validate_and_compute(f)
+    if st["n_pairs"] != 9 or st["guard_skipped"] != 1:
+        failures.append("guard-пара не пропущена или счётчик неверен")
+
+    # 11. Частичный null (сторона короче 20 токенов) — тот же guard;
+    # нечисловое значение поля (строка) — порча отчёта, ReportError.
+    f = _deep_copy(_fixture())
+    f["pairs"][1]["after"] = None
+    f["pairs"][1]["delta"] = None
+    f["aggregates"] = {}
+    st = validate_and_compute(f)
+    if st["n_pairs"] != 9 or st["guard_skipped"] != 1:
+        failures.append("частичный null не учтён как guard")
+    f = _deep_copy(_fixture())
+    f["pairs"][1]["after"] = "0.3"
+    try:
+        validate_and_compute(f)
+        failures.append("нечисловое поле пары не поймано")
+    except ReportError:
+        pass
+
+    # 12. --all-reports: чистый каталог — 0, подложенное расхождение — 1
+    # (негатив гейта «воспроизводимость всех отчётов»).
+    import tempfile as _tf
+    with _tf.TemporaryDirectory(prefix="repro-all-") as td:
+        with open(os.path.join(td, "good.json"), "w", encoding="utf-8") as fh:
+            json.dump(_fixture(), fh)
+        if all_reports(td) != 0:
+            failures.append("all_reports на чистом каталоге не дал 0")
+        bad = _deep_copy(_fixture())
+        bad["aggregates"]["mean_delta"] = -0.01
+        with open(os.path.join(td, "bad.json"), "w", encoding="utf-8") as fh:
+            json.dump(bad, fh)
+        if all_reports(td) == 0:
+            failures.append("all_reports не поймал подложенное расхождение")
+
+    # 13. fp_audit: запись score=None — guard (не обвинение); Wilson по полному n.
+    f = _deep_copy(_fixture())
+    f["fp_audit"]["details"][1] = {"file": "h2", "score": None}
+    f["fp_audit"]["false_accusations"] = 0
+    st = validate_and_compute(f)
+    fa = st["fp_audit"]
+    if fa["false_accusations"] != 0 or fa["guard_skipped"] != 1 or fa["n"] != 3:
+        failures.append("fp-guard не учтён (скор None должен быть пропуском)")
+
     if failures:
         print("SELFTEST FAIL:")
         for msg in failures:
             print(f"  - {msg}")
         return 1
-    print("SELFTEST OK: 9/9")
+    print("SELFTEST OK: 13/13")
     return 0
 
 
@@ -406,8 +529,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Воспроизведение оси «дельта детектируемости» из отчёта "
                     "eval/detect-results/ (пересчёт + сверка чисел).")
-    ap.add_argument("report", nargs="?", default=DEFAULT_REPORT,
+    ap.add_argument("report", nargs="?", default=None,
                     help=f"путь к отчёту JSON (по умолчанию {DEFAULT_REPORT})")
+    ap.add_argument("--report", dest="report_flag", metavar="ПУТЬ", default=None,
+                    help="то же, что позиционный аргумент; документированная "
+                         "форма команды (LEADERBOARD.md, реестр фактов)")
+    ap.add_argument("--all-reports", metavar="DIR", nargs="?",
+                    const="eval/detect-results", default=None,
+                    help="сверить каждый *.json в DIR (по умолчанию "
+                         "eval/detect-results); код 1 при расхождении любого")
     ap.add_argument("--json", metavar="OUT",
                     help="записать статистики в OUT (JSON, UTF-8)")
     ap.add_argument("--selftest", action="store_true",
@@ -416,9 +546,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.selftest:
         return selftest()
+    if args.all_reports is not None:
+        return all_reports(args.all_reports)
+    report = args.report_flag or args.report or DEFAULT_REPORT
 
     try:
-        data = load_report(args.report)
+        data = load_report(report)
         st = validate_and_compute(data)
     except ReportError as e:
         print(f"ОШИБКА ВХОДА (код 2): {e}", file=sys.stderr)
@@ -427,7 +560,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"РАСХОЖДЕНИЕ (код 1): {e}", file=sys.stderr)
         return 1
 
-    print_summary(st, args.report)
+    print_summary(st, report)
     if args.json:
         with open(args.json, "w", encoding="utf-8", newline="\n") as fh:
             json.dump(st, fh, ensure_ascii=False, indent=2)

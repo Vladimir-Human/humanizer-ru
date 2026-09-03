@@ -18,10 +18,17 @@ from contextlib import redirect_stdout, redirect_stderr
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(ROOT, "scripts")
-if SCRIPTS not in sys.path:
-    sys.path.insert(0, SCRIPTS)
 
-import scan_soft_signals as ss  # noqa: E402
+if os.path.isdir(SCRIPTS):
+    # Дерево репозитория: канон — scripts/ (установленный пакет может быть
+    # старее рабочего дерева).
+    if SCRIPTS not in sys.path:
+        sys.path.insert(0, SCRIPTS)
+    import scan_soft_signals as ss  # noqa: E402
+else:
+    # sdist вне дерева: копия из пакета побайтово равна scripts/
+    # (гейт scripts/check_pkg_sync.py).
+    from humanizer_ru import scan_soft_signals as ss  # noqa: F401
 
 
 def _fires(det, text):

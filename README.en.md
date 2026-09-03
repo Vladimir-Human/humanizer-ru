@@ -70,7 +70,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.16.10 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.11 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -87,6 +87,8 @@ Package commands:
 
 - `humanizer-polish` — typographic normalization (`--diff`, `--dry-run`,
   `--in-place`, `--json`); idempotent, letters and digits preserved.
+  Do not run on Markdown or markup: it strips `##`, `**`, guillemets,
+  dashes, ellipsis.
 - `humanizer-detect` — conjunction-frequency detector with a domain status;
   no authorship verdict, graduated response.
 - `humanizer-markers` — copy-paste artifact search (classes A and B).
@@ -174,7 +176,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 86 gates in the full checklist (81 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 90 gates in the full checklist (83 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
