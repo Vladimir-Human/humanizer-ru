@@ -77,6 +77,9 @@ TOP_LEVEL_MANIFEST = frozenset((
  ".github", "eval", "references", "research", "scripts", "tests",
  # C10: плагин-манифесты, агентские декларации и слэш-команды.
  ".claude-plugin", ".codex-plugin", ".cursor-plugin", "agents", "commands",
+ # 2026-09-03 (батч 3, приказ полной автономии): витрина измерений,
+ # регламент выпусков и машиночитаемая идентичность.
+ "METRICS.md", "RELEASE.md", "identity.v1.json",
 ))
 
 def _tracked_top_levels(root):

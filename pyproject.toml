@@ -50,7 +50,7 @@ humanizer-mcp = "humanizer_ru.mcp_server:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-humanizer_ru = ["contract.v1.json", "markers.v1.json"]
+humanizer_ru = ["contract.v1.json", "markers.v1.json", "identity.v1.json"]
 
 [tool.setuptools.dynamic]
 version = { attr = "humanizer_ru.__version__" }

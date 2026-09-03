@@ -121,6 +121,8 @@ For terminal commands instead of the agent skill, install from PyPI:
 pip install humanizer-ru
 ```
 
+Upgrade: `pip install --upgrade humanizer-ru`; freshness feed — [releases.atom](https://github.com/Vladimir-Human/humanizer-ru/releases.atom).
+
 Try before installing: [online demo](https://vladimir-human.github.io/humanizer-ru/)
 or `demo/index.html` offline — text is processed in the browser and never
 leaves the machine. The demo shows only the deterministic artifact-search
@@ -138,7 +140,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.18.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.19.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -251,7 +253,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 104 gates in the full checklist (93 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 106 gates in the full checklist (95 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 

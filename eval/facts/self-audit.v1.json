@@ -1,10 +1,10 @@
 {
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
-  "version": "3.18.0",
+  "version": "3.19.0",
   "date": "2026-09-03",
-  "measured_commit": "51caefc90639a000a0703a71ae4c844d49d18b72",
+  "measured_commit": "b42515459893154e4793e66c7c09abe98197d8ab",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
-  "scope_files": 37,
+  "scope_files": 38,
   "methods": {
     "markers": "scripts/check_markers.py (40 regex-маркеров, построчно, fenced/бэктики пропускаются)",
     "scan": "scripts/scan_soft_signals.py по витринной прозе (без таблиц/fenced/цитат); не-структурные признаки",
@@ -25,12 +25,12 @@
   "totals": {
     "markers_class_a": 0,
     "markers_class_b": 0,
-    "own_style_max": 76,
+    "own_style_max": 79,
     "own_style_max_file": "README.md",
     "scan_max_features": 11,
     "detect": {
       "not-applicable": 26,
-      "not-validated": 11,
+      "not-validated": 12,
       "works": 0
     }
   },
@@ -45,7 +45,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 76,
+      "style_total": 79,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -56,7 +56,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 64,
+      "style_total": 65,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -67,7 +67,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 17,
+      "style_total": 19,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -78,7 +78,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 66,
+      "style_total": 67,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -189,7 +189,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 27,
+      "style_total": 29,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -222,7 +222,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 29,
+      "style_total": 34,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -246,6 +246,17 @@
       "scan_features": 1,
       "scan_categories": 1,
       "style_total": 60,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "docs/INDEX.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 6,
       "detect_status": "not-validated",
       "detect_genre": "prose",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"

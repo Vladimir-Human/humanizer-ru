@@ -12,9 +12,13 @@
 pip install humanizer-ru
 ```
 
+Обновление: `pip install --upgrade humanizer-ru`; лента свежести —
+[releases.atom](https://github.com/Vladimir-Human/humanizer-ru/releases.atom).
+
 Команды пакета: `humanizer-polish`, `humanizer-detect`, `humanizer-markers`,
-`humanizer-scan`. Все четыре читают stdin через «-»; `--json` даёт конверт
-`{tool, schema, files}`. Только стандартная библиотека Python.
+`humanizer-scan`, `humanizer-mcp` (MCP-сервер stdio). Все CLI читают stdin
+через «-»; `--json` даёт конверт `{tool, schema, files}`. Только
+стандартная библиотека Python.
 
 Скилл для агента (без pip):
 
@@ -25,7 +29,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 или клон тега выпуска:
 
 ```sh
-git clone --branch v3.18.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.19.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Попробовать без установки: [онлайн-демо](https://vladimir-human.github.io/humanizer-ru/) —

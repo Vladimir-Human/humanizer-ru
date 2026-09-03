@@ -58,7 +58,10 @@ SCOPE = (
     "ERRATA.md",
     "llms.txt",
     "docs/FRAMEWORK.md",
+    "docs/INDEX.md",
     ".github/pull_request_template.md",
+    "METRICS.md",
+    "RELEASE.md",
 )
 
 

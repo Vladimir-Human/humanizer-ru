@@ -40,7 +40,8 @@ FILES = ["README.md", "README.en.md", "README.pypi.md", "SKILL.md",
          "CODE_OF_CONDUCT.md", "GOVERNANCE.md", "AGENTS.md", "ERRATA.md",
          "PRIVACY_POLICY.md", "llms.txt", "eval/README.md",
          "eval/HOW-TO-RUN.md", "eval/runs/README.md",
-         ".github/pull_request_template.md"]
+         ".github/pull_request_template.md", "docs/INDEX.md",
+         "METRICS.md", "RELEASE.md"]
 STRUCTURAL = "структурная"
 FAIL_FEATURES = 3
 FAIL_CATEGORIES = 2
