@@ -45,8 +45,17 @@ SYNCED = [
     ("scripts", "detect_conj.py"),
 ]
 ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
-              "scan_soft_signals.py", "polish.py", "detect_conj.py"}
+              "scan_soft_signals.py", "polish.py", "detect_conj.py",
+              "mcp_server.py", "text_layer.py"}
 SYNCED_DATA = ["contract.v1.json", "markers.v1.json"]
+# Копии с другим именем: MCP-сервер (scripts/mcp/humanizer_mcp.py ->
+# модуль пакета mcp_server.py, точка входа humanizer-mcp) и текстовый
+# слой снятия (scripts/filemarks/text_layer.py -> модуль пакета
+# text_layer.py, движок humanizer-markers --remove).
+SYNCED_RENAMED = [
+    (os.path.join("scripts", "mcp", "humanizer_mcp.py"), "mcp_server.py"),
+    (os.path.join("scripts", "filemarks", "text_layer.py"), "text_layer.py"),
+]
 
 
 def read(path):
@@ -92,6 +101,19 @@ def check(root):
                 errors.append("пакет рассинхронизирован: %s" % file_name)
         except OSError:
             pass
+    # 5b. Копии с другим именем (MCP-сервер).
+    for src_rel, dst_name in SYNCED_RENAMED:
+        src = os.path.join(root, src_rel)
+        dst = os.path.join(root, PKG, dst_name)
+        if dst_name not in files:
+            errors.append("в пакете нет файла: %s" % dst_name)
+            continue
+        try:
+            if read(src) != read(dst):
+                errors.append("пакет рассинхронизирован: %s (копия %s)"
+                              % (dst_name, src_rel))
+        except OSError as exc:
+            errors.append("не читается %s: %r" % (src_rel, exc))
     # 6. Данные пакета (contract.v1.json, markers.v1.json) синхронны с корнем.
     for name in SYNCED_DATA:
         src = os.path.join(root, name)
@@ -139,7 +161,34 @@ def selftest():
                 fh.write('{"data": 1}\n')
             with open(os.path.join(td, PKG, data_name), "w", encoding="utf-8") as fh:
                 fh.write('{"data": 1}\n')
+        os.makedirs(os.path.join(td, "scripts", "mcp"))
+        for mcp_p in (os.path.join(td, "scripts", "mcp", "humanizer_mcp.py"),
+                      os.path.join(td, PKG, "mcp_server.py")):
+            with open(mcp_p, "w", encoding="utf-8") as fh:
+                fh.write("m = 5\n")
+        os.makedirs(os.path.join(td, "scripts", "filemarks"))
+        for tl_p in (os.path.join(td, "scripts", "filemarks", "text_layer.py"),
+                     os.path.join(td, PKG, "text_layer.py")):
+            with open(tl_p, "w", encoding="utf-8") as fh:
+                fh.write("t = 6\n")
         cases.append(("синхронный пакет без ошибок", check(td) == []))
+
+        with open(os.path.join(td, PKG, "mcp_server.py"), "a",
+                  encoding="utf-8") as fh:
+            fh.write("дрейф\n")
+        cases.append(("дрейф mcp-копии виден",
+                      any("mcp_server.py" in e for e in check(td))))
+        with open(os.path.join(td, PKG, "mcp_server.py"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("m = 5\n")
+        with open(os.path.join(td, PKG, "text_layer.py"), "a",
+                  encoding="utf-8") as fh:
+            fh.write("дрейф\n")
+        cases.append(("дрейф text_layer-копии виден",
+                      any("text_layer.py" in e for e in check(td))))
+        with open(os.path.join(td, PKG, "text_layer.py"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("t = 6\n")
 
         with open(os.path.join(td, PKG, "contract.v1.json"), "a",
                   encoding="utf-8") as fh:

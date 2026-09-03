@@ -134,7 +134,7 @@ pip install humanizer-ru
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.17.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.18.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -154,12 +154,15 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
   многоточие; для разметки режимы `--preserve-markup` (только невидимые
   символы и NBSP) и `--typographic` (русская публикационная типографика:
   парные прямые кавычки в ёлочки, многоточие единым символом; код, заборы
-  и frontmatter не трогает — на документах самого проекта нулевой диф,
-  гейт `scripts/check_polish_modes.py`). Постановку тире по русской норме
-  делает агентный слой скилла, не эта команда.
+  и frontmatter не трогает, на документах проекта нулевой диф — гейт
+  `scripts/check_polish_modes.py`). Тире по русской норме ставит агентный
+  слой скилла, не эта команда.
 - `humanizer-detect` — частота связок со статусом домена; вердикта об
   авторстве нет, ответ градуированный.
-- `humanizer-markers` — поиск артефактов копипасты (классы A и B).
+- `humanizer-markers` — поиск артефактов копипасты, классы A и B;
+  `--remove` снимает невидимые метки по классификации риска: safe
+  автоматически, ambiguous только opt-in, dangerous никогда; таблица в
+  `references/removal-matrix.md`.
 - `humanizer-scan` — счётчик мягких признаков, калибрует объём правки.
 
 Все четыре команды читают stdin через «-». Пример вывода (маркеры на
@@ -242,7 +245,7 @@ $ humanizer-scan --json notes.txt
 - `tests/fixtures/` — образцы маркеров и полировки.
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 100 гейтов полного чек-листа (89 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 104 гейта полного чек-листа (93 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
@@ -280,6 +283,11 @@ $ humanizer-scan --json notes.txt
 безопасности» в `SKILL.md`). Модель угроз и порядок сообщения об
 уязвимостях — в [SECURITY.md](SECURITY.md).
 
+Запрещённые использования перечислены в блоке `prohibited_uses` файла
+`contract.v1.json`: сдача работ там, где ИИ запрещён, обход антиплагиата
+и атрибуции, сокрытие факта использования ИИ, снятие водяных знаков с
+чужого контента. Легитимная область: свой текст и честный отчёт.
+
 Про аудит каталога skills.sh: скилл содержит идентификатор S3-бакета
 Perplexity `ppl-ai-file-upload` как документированную примету класса A;
 сканер однажды принял описание приметы за ссылку на скачивание (класс
@@ -297,6 +305,11 @@ Perplexity `ppl-ai-file-upload` как документированную при
 - [Википедия:Признаки сгенерированности текста](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0)
 - [WikiProject AI Cleanup](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup)
 - `docs/FRAMEWORK.md` — методология проверяемости; `ERRATA.md` — датированные отзывы чисел.
+- Проверочные корпусы `eval/manifest.v1.json` содержат дословные
+  фрагменты произведений общественного достояния Wikisource и тексты,
+  написанные проектом в регистре Википедии/Викиновостей; источники и
+  лицензии каждого файла — в `research/validation/README.md`. MIT
+  проекта покрывает код и собственные тексты, не чужие вставки.
 
 ## История изменений
 
