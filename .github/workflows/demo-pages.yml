@@ -52,13 +52,12 @@ jobs:
           cp eval/facts/facts.v1.json demo/eval/facts/facts.v1.json
           cp llms.txt demo/.well-known/llms.txt
       - name: Собрать артефакт из demo/
-        # upload-artifact напрямую (а не upload-pages-artifact) с
-        # include-hidden-files: скрытые пути (.well-known/, .nojekyll)
-        # иначе вырезаются из артефакта и Pages отдаёт 404 на
-        # /.well-known/llms.txt — конвенция машинного входа ломается.
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        # include-hidden-files: true обязателен: с v4 действие по умолчанию
+        # вырезает скрытые пути, и Pages отдаёт 404 на /.well-known/llms.txt
+        # (конвенция машинного входа). Голый upload-artifact не подходит:
+        # deploy-pages отвергает его артефакт («hard links, symlinks»).
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          name: github-pages
           path: demo
           include-hidden-files: true
       - name: Опубликовать
