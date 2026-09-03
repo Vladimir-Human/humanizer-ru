@@ -1,0 +1,2 @@
+Согласно отчёту :contentReference[oaicite:12]{index=12}, число заявок за неделю выросло на 12% — источник: https://example.com/report?utm_source=chatgpt.com
+Данные подтверждены ассистентом​, подробности см. в чате.

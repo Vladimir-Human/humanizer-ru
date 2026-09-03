@@ -48,5 +48,8 @@ humanizer-detect = "humanizer_ru.cli:detect_main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+humanizer_ru = ["contract.v1.json", "markers.v1.json"]
+
 [tool.setuptools.dynamic]
 version = { attr = "humanizer_ru.__version__" }

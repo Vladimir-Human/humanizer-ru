@@ -25,7 +25,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 или клон тега выпуска:
 
 ```sh
-git clone --branch v3.16.11 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.17.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Попробовать без установки: [онлайн-демо](https://vladimir-human.github.io/humanizer-ru/) —
@@ -36,7 +36,9 @@ git clone --branch v3.16.11 --depth 1 https://github.com/Vladimir-Human/humanize
 - `humanizer-polish` — типографическая нормализация: идемпотентна, буквы и
   цифры сохраняет дословно (`--diff`, `--dry-run`, `--in-place`, `--json`).
   Не запускать на Markdown и разметке: снимает `##`, `**`, ёлочки, тире,
-  многоточие.
+  многоточие; для разметки — `--preserve-markup` (только невидимые
+  символы) и `--typographic` (русская публикационная типографика без
+  снятия разметки).
 - `humanizer-detect` — частота связок со статусом домена; вердикта об
   авторстве нет, ответ градуированный.
 - `humanizer-markers` — 40 regex-маркеров артефактов копипасты и

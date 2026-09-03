@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """Карты разбитых справочников: единственность разделов и живость ссылок.
 
-Справочники `chatbot-artifacts` и `test-fixtures` разбиты на индекс и части.
+Справочники `chatbot-artifacts` (в references/) и `test-fixtures` (в tests/,
+проверочные данные не входят в бандл скилла) разбиты на индекс и части.
 Этот валидатор держит два свойства конструкции:
 
 1. Каждый заголовок раздела (ID вроде `A.1`–`A.12`, `Раздел II`, `C`, `D`,
@@ -45,8 +46,8 @@ FAMILIES = (
     },
     {
         "name": "test-fixtures",
-        "glob": os.path.join("references", "test-fixtures*.md"),
-        "index": os.path.join("references", "test-fixtures.md"),
+        "glob": os.path.join("tests", "test-fixtures*.md"),
+        "index": os.path.join("tests", "test-fixtures.md"),
         "headings": ["## Образцы для регулярных выражений",
                      "## Полные пары",
                      "## Эмпирическая проверка регулярных выражений",

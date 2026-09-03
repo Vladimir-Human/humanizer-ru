@@ -21,7 +21,7 @@ humanizer-ru — скилл Agent Skills: находит и снимает сл�
 3. **Новый regex-маркер** — полный конвейер: запись в `CASES` +
    `CLASS_OF` (A/B) + три образца (прямой/отрицательный/граничный) +
    строка в `references/chatbot-artifacts-*.md` (для паритета) + секция в
-   `references/test-fixtures-cases.md` + запись в
+   `tests/test-fixtures-cases.md` + запись в
    `research/fixtures/marker-sources.json` (source_url, accessed,
    verbatim_sample, fixture в `tests/fixtures/`) + имя в
    `REGISTERED_CASES` (`scripts/check_fixture_sources.py`) + регенерация
@@ -41,15 +41,15 @@ humanizer-ru — скилл Agent Skills: находит и снимает сл�
 ## Полный чек-лист одной командой
 
 ```sh
-python scripts/check_all.py        # 90 гейтов (83 в --quick)
+python scripts/check_all.py        # 100 гейтов (89 в --quick)
 python -m unittest discover -s tests
 ```
 
-Полный прогон идёт около 5 минут (самые долгие гейты — целостность blind-eval,
-~2 минуты, и `--sdist-test` с чистым venv). Таймаут вызова меньше 8 минут обрывает
-зелёный прогон и выглядит как падение гейтов: при автоматическом запуске
-закладывай таймаут >= 8 минут или используй `--quick` (83 гейта) для быстрой
-проверки.
+Полный прогон идёт около 9 минут (самые долгие гейты — целостность blind-eval,
+~2,5 минуты, `--sdist-test` и compatibility-тест с чистыми venv). Таймаут вызова
+меньше 12 минут обрывает зелёный прогон и выглядит как падение гейтов: при
+автоматическом запуске закладывай таймаут >= 12 минут или используй `--quick`
+(89 гейтов, ~2 минуты) для быстрой проверки.
 
 Перед сдачей правки оба прогона обязаны быть зелёными.
 

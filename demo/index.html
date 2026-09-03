@@ -13,6 +13,8 @@
 <meta property="og:locale" content="ru_RU">
 <title>humanizer-ru — статическое демо regex-слоя</title>
 <script src="markers.js"></script>
+<script src="engine.js"></script>
+<script src="sample.js"></script>
 <style>
   :root { --a: #b3261e; --b: #8a6d00; --bg: #f6f5f2; --line: #d9d5cc; }
   body { font: 15px/1.45 Georgia, "Times New Roman", serif; margin: 0; background: var(--bg); color: #1f1d1a; }
@@ -47,6 +49,7 @@
     <label><input type="checkbox" id="onlyA"> только класс A</label>
     <label><input type="checkbox" id="showAll" checked> показывать полный текст с подсветкой</label>
     <button id="run">Проверить</button>
+    <button id="insertSample" type="button" title="Реальная вставка из чат-интерфейса: contentReference, utm-метка, невидимый символ">Вставить образец</button>
     <span id="summary" class="note" aria-live="polite"></span>
   </div>
   <div class="cols">
@@ -77,30 +80,28 @@
   const runBtn = document.getElementById("run");
 
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
-  const rules = (DATA && DATA.rules) || [];
-  const compiled = rules.map(r => ({
-    id: r.id, cls: r.class, description: r.description,
-    regex: new RegExp(r.source, r.flags.indexOf("g") >= 0 ? r.flags : r.flags + "g")
+  const rules = ((DATA && DATA.rules) || []).map(r => ({
+    id: r.id, class: r.class, description: r.description,
+    source: r.source, flags: r.flags
   }));
+  const descById = {};
+  for (const r of rules) { descById[r.id] = r.description; }
 
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
   function findMatches(text) {
-    const out = [];
-    for (const rule of compiled) {
-      if (onlyA.checked && rule.cls !== "A") continue;
-      rule.regex.lastIndex = 0;
-      let m;
-      while ((m = rule.regex.exec(text)) !== null) {
-        if (m[0] === "") { rule.regex.lastIndex++; continue; }
-        out.push({ rule: rule.id, cls: rule.cls, description: rule.description, start: m.index, end: m.index + m[0].length, text: m[0] });
-        if (rule.regex.lastIndex <= m.index) rule.regex.lastIndex = m.index + 1;
-      }
-    }
-    out.sort((a, b) => (a.start - b.start) || (a.end - b.end) || (a.rule.localeCompare(b.rule)));
-    return out;
+    // Общий движок demo/engine.js: семантика CLI (построчно, fenced-блоки и
+    // бэктики пропускаются, вложенные дубли одного артефакта схлопываются).
+    // Паритет с humanizer-markers сверяет scripts/check_demo_parity.py.
+    if (typeof HumanizerEngine === "undefined") return [];
+    const out = HumanizerEngine.scanText(text, rules);
+    const filtered = onlyA.checked ? out.filter(m => m.cls === "A") : out;
+    return filtered.map(m => ({
+      rule: m.rule, cls: m.cls, description: descById[m.rule] || "",
+      start: m.start, end: m.end, text: m.text
+    }));
   }
 
   function mergedRanges(matches) {
@@ -167,6 +168,11 @@
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);
   runBtn.addEventListener("click", run);
+  document.getElementById("insertSample").addEventListener("click", () => {
+    if (typeof HUMANIZER_SAMPLE === "undefined") return;
+    textarea.value = HUMANIZER_SAMPLE;
+    run();
+  });
   let _timer;
   textarea.addEventListener("input", () => {
     clearTimeout(_timer);
@@ -176,7 +182,7 @@
 })();
 </script>
 <footer style="border-top:1px solid var(--line);background:#fff;padding:10px 20px;color:#666;font-size:13px;">
-  humanizer-ru v3.16.11 · демо детерминированного regex-слоя; переписывание и детектор связок — в
+  humanizer-ru v3.17.0 · демо детерминированного regex-слоя; переписывание и детектор связок — в
   <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории</a> и
   <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>. Машинные файлы:
   <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt">llms.txt</a> ·

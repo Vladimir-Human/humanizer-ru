@@ -1,0 +1,25 @@
+{
+  "cli_rc": 1,
+  "count": 3,
+  "warnings_b": 0,
+  "markers": [
+    {
+      "line": 1,
+      "marker": "contentReference",
+      "class": "A",
+      "shadow": false
+    },
+    {
+      "line": 1,
+      "marker": "utm_chatgpt",
+      "class": "A",
+      "shadow": false
+    },
+    {
+      "line": 2,
+      "marker": "zero_width",
+      "class": "B",
+      "shadow": false
+    }
+  ]
+}
