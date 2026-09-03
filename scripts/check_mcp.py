@@ -323,8 +323,11 @@ def selftest() -> int:
     case("живая сессия: версия 2024-11-05 поддерживается",
          by.get(1, {}).get("result", {}).get("protocolVersion")
          == "2024-11-05")
-    case("живая сессия: tools/list из 4 инструментов",
-         len(by.get(2, {}).get("result", {}).get("tools", [])) == 4)
+    with open(os.path.join(ROOT, "contract.v1.json"), encoding="utf-8") as fh:
+        _n_tools = len(json.load(fh).get("tools", []))
+    case("живая сессия: tools/list равен числу инструментов контракта",
+         len(by.get(2, {}).get("result", {}).get("tools", [])) == _n_tools
+         and _n_tools >= 5)
     print("САМОПРОВЕРКА check_mcp: %d/%d PASS" % (passed, passed + failed))
     return 1 if failed else 0
 

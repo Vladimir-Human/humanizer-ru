@@ -127,7 +127,15 @@ def generate_tool_defs(contract) -> list:
             if not t.get(field):
                 raise ValueError("инструмент %s: нет поля %s" % (cmd, field))
         name = cmd.replace("-", "_")
-        props = {"text": dict(TEXT_PARAM)}
+        if cmd == "humanizer-facts":
+            props = {
+                "text_before": dict(TEXT_PARAM),
+                "text_after": dict(TEXT_PARAM),
+            }
+            required = ["text_before", "text_after"]
+        else:
+            props = {"text": dict(TEXT_PARAM)}
+            required = ["text"]
         if cmd in ("humanizer-scan", "humanizer-detect"):
             enum = effective.get(cmd) or genres.get("dictionary")
             if not enum:
@@ -167,7 +175,7 @@ def generate_tool_defs(contract) -> list:
             "inputSchema": {
                 "type": "object",
                 "properties": props,
-                "required": ["text"],
+                "required": required,
                 "additionalProperties": False,
             },
             "outputSchema": t["output_schema"],
@@ -192,6 +200,7 @@ def _module_for(tool_name):
         "humanizer_markers": "check_markers",
         "humanizer_polish": "polish",
         "humanizer_detect": "detect_conj",
+        "humanizer_facts": "facts_diff",
     }[tool_name]
 
 
@@ -199,6 +208,9 @@ def _tool_argv(tool_name, arguments, text_path):
     """argv дочернего процесса (python -m humanizer_ru.<модуль> ...)."""
     mod = "humanizer_ru." + _module_for(tool_name)
     argv = [sys.executable, "-X", "utf8", "-m", mod]
+    if tool_name == "humanizer_facts":
+        # два входа: файлы кладёт call_tool, порядок before, after
+        return argv + ["diff", text_path, text_path + ".after", "--json"]
     if tool_name == "humanizer_markers":
         argv.append("--scan")
     argv.append("--json")
@@ -221,6 +233,55 @@ def call_tool(tool_name, arguments, tool_defs):
     """Вызов инструмента: (result_dict, jsonrpc_error_or_None)."""
     if tool_name not in {d["name"] for d in tool_defs}:
         return None, (-32602, "неизвестный инструмент: %s" % tool_name)
+    if tool_name == "humanizer_facts":
+        before = arguments.get("text_before")
+        after = arguments.get("text_after")
+        if not isinstance(before, str) or not isinstance(after, str):
+            return None, (-32602, "text_before и text_after обязательны "
+                                  "и обязаны быть строками")
+        tmp = tempfile.mkdtemp(prefix="mcp-facts-")
+        pb = os.path.join(tmp, "input.txt")
+        pa = pb + ".after"
+        try:
+            with open(pb, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(before)
+            with open(pa, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(after)
+            argv = _tool_argv(tool_name, arguments, pb)
+            proc = subprocess.run(argv, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE,
+                                  timeout=CALL_TIMEOUT, encoding="utf-8",
+                                  errors="replace")
+            try:
+                envelope = json.loads(proc.stdout)
+            except json.JSONDecodeError:
+                envelope = None
+            content = [{"type": "text",
+                        "text": json.dumps(envelope, ensure_ascii=False,
+                                           indent=2) if envelope is not None
+                        else (proc.stdout or "") + (proc.stderr or "")}]
+            result = {"content": content,
+                      "isError": proc.returncode == 2}
+            if envelope is not None:
+                result["structuredContent"] = envelope
+            if proc.returncode == 2:
+                result["content"].append(
+                    {"type": "text",
+                     "text": "Ошибка входа (код 2): вход не читается; конверт "
+                             "ошибки выше. Это tool result, не transport error."})
+            return result, None
+        except OSError as exc:
+            return {"content": [{"type": "text",
+                                 "text": "сбой окружения: %r" % exc}],
+                    "isError": True}, None
+        except subprocess.TimeoutExpired:
+            return {"content": [{"type": "text",
+                                 "text": "таймаут инструмента (%d с)"
+                                         % CALL_TIMEOUT}],
+                    "isError": True}, None
+        finally:
+            import shutil
+            shutil.rmtree(tmp, ignore_errors=True)
     text = arguments.get("text")
     if not isinstance(text, str):
         return None, (-32602, "text обязателен и обязан быть строкой")
@@ -406,7 +467,8 @@ def selftest() -> int:
 
     contract = load_contract()
     defs = generate_tool_defs(contract)
-    case("четыре инструмента", len(defs) == 4)
+    case("все инструменты контракта присутствуют в MCP (>=5)",
+         len(defs) == len(contract.get("tools", [])) and len(defs) >= 5)
     state = {}
     r = handle_message(json.dumps({
         "jsonrpc": "2.0", "id": 1, "method": "initialize",
