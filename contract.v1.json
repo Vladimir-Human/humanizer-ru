@@ -4,9 +4,9 @@
   "language": "ru",
   "product": {
     "name": "humanizer-ru",
-    "version": "3.19.0",
+    "version": "3.19.1",
     "install": {
-      "pip": "pip install humanizer-ru==3.19.0",
+      "pip": "pip install humanizer-ru==3.19.1",
       "requires_python": ">=3.9",
       "freshness": "сверьте версию с https://github.com/Vladimir-Human/humanizer-ru/releases/latest или лентой releases.atom"
     },
