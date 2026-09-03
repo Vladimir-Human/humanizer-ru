@@ -50,6 +50,7 @@ jobs:
           mkdir -p demo/docs demo/eval/facts demo/.well-known
           cp docs/FRAMEWORK.md demo/docs/FRAMEWORK.md
           cp eval/facts/facts.v1.json demo/eval/facts/facts.v1.json
+          cp eval/facts/self-audit.v1.json demo/eval/facts/self-audit.v1.json
           cp llms.txt demo/.well-known/llms.txt
       - name: Собрать артефакт из demo/
         # include-hidden-files: true обязателен: с v4 действие по умолчанию
