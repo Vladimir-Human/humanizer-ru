@@ -106,16 +106,22 @@ CI [0.000; 0.176]. **Вердикт: FAIL** (ни одна семья не пр�
 
 ## 6. Воспроизведение
 
-Публичный набор (в репозитории, каталог esearch/di-control-2026-09/\):
-предрег \prereg.md\ (хеш 3224964484dd6d0a… зафиксирован в RUNLOG W-76 до
-первого суждения), анализатор \scripts/di_control_analyze.py\ (хеш
-1dfc20a80fa94f6d…), сырые суждения esults-qwen.json\,
-esults-deepseek.json\, esults-kimi.json\, ячейки \cells.json\, отчёт
-анализатора \control-report.json\ (sha256 aabed4cf7cae80eb…). Запуск:
-\python3 scripts/di_control_analyze.py\ из корня репозитория (один проход;
-переанализ запрещён). Приватные артефакты (sides.json, cell-texts.json,
-launch-hashes.json — полные тексты человеческих контролей habr/классики)
-остаются в статусе limited до лицензионного и privacy-гейта: хеши, причина
-и путь к архиву — в esearch/di-control-2026-09/PRIVATE-ARTIFACTS.md\;
-заморозка до суждений проверяется без раскрытия текстов по хешам RUNLOG
-W-76/W-77, OTS-штампам и порядку mtime.
+Публичный набор (в репозитории, каталог `research/di-control-2026-09/`):
+предрег `prereg.md` (хеш 3224964484dd6d0a… зафиксирован в RUNLOG W-76 до
+первого суждения), анализатор `scripts/di_control_analyze.py` (хеш
+1dfc20a80fa94f6d…), сырые суждения `results-qwen.json`,
+`results-deepseek.json`, `results-kimi.json`, ячейки `cells.json`, отчёт
+анализатора `control-report.json` (sha256 aabed4cf7cae80eb… в байт-виде
+прогона). Запуск: `python3 scripts/di_control_analyze.py` из корня
+репозитория (один проход; переанализ запрещён). Приватные артефакты
+(sides.json, cell-texts.json, launch-hashes.json — полные тексты
+человеческих контролей habr/классики) остаются в статусе limited до
+лицензионного и privacy-гейта: хеши, причина и путь к архиву — в
+`research/di-control-2026-09/PRIVATE-ARTIFACTS.md`; заморозка до суждений
+проверяется без раскрытия текстов по хешам RUNLOG W-76/W-77, OTS-штампам
+и порядку mtime.
+
+Байт-вид control-report.json: оригинал прогона в run-каталоге и r-FINAL —
+CRLF, sha256 aabed4cf7cae80eb…; копия в репозитории LF-нормализована
+(релизный гейт отвергает CR в архиве), sha256 df5b50be5ed42b16…, после
+нормализации переводов строк байт-равна оригиналу.
