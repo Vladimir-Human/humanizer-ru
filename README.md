@@ -136,7 +136,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.19.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.19.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -152,19 +152,19 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 
 - `humanizer-polish` — типографическая нормализация (`--diff`, `--dry-run`,
   `--in-place`, `--json`); идемпотентна, буквы и цифры не трогает.
-  Не запускать на Markdown и разметке: снимает `##`, `**`, ёлочки, тире,
-  многоточие; для разметки режимы `--preserve-markup` (только невидимые
-  символы и NBSP) и `--typographic` (русская публикационная типографика:
-  парные прямые кавычки в ёлочки, многоточие единым символом; код, заборы
-  и frontmatter не трогает (нулевой диф на документах проекта — гейт
-  `scripts/check_polish_modes.py`); тире по русской норме ставит агентный слой, не эта команда.
+  Не запускать на Markdown и разметке: снимает `##`, `**`, ёлочки, тире;
+  для разметки режимы `--preserve-markup` и `--typographic` (публикационная типографика, нулевой диф на документах проекта, гейт `scripts/check_polish_modes.py`); тире ставит агентный слой.
 - `humanizer-detect` — частота связок со статусом домена; вердикта об
-  авторстве нет, ответ градуированный.
+  авторстве нет. `humanizer-scan` — счётчик мягких признаков, калибрует
+  объём правки.
 - `humanizer-markers` — поиск артефактов копипасты, классы A и B;
   `--remove` снимает невидимые метки по классификации риска: safe
   автоматически, ambiguous только opt-in, dangerous никогда; таблица в
   `references/removal-matrix.md`.
-- `humanizer-scan` — счётчик мягких признаков, калибрует объём правки.
+- MCP-сервер `humanizer-mcp`, stdio и JSON-RPC 2.0, — те же четыре инструмента
+  для MCP-клиентов: `humanizer_scan`, `humanizer_markers`, `humanizer_polish`,
+  `humanizer_detect`. Имена: в CLI дефис, в MCP подчёркивание, один-в-один;
+  схемы и коды одинаковы, conformance сверяет гейт `scripts/check_mcp.py`.
 
 Все четыре команды читают stdin через «-». Пример вывода (маркеры на
 строке из чат-интерфейса):

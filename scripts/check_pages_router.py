@@ -44,7 +44,7 @@ PAGES_PATHS = ["llms.txt", ".well-known/llms.txt", "contract.v1.json",
                "ERRATA.md", "README.md", "README.en.md", "SKILL.md",
                "docs/FRAMEWORK.md", "eval/facts/facts.v1.json", "robots.txt",
                "favicon.svg", "identity.v1.json", "og-image.png",
-               "sitemap.xml"]
+               "sitemap.xml", "eval/facts/self-audit.v1.json"]
 # Строки, которые обязан содержать шаг копирования workflow (статическая
 # проверка до деплоя: на PR ветке Pages ещё старый, сеть по Pages не
 # проверяется, но состав артефакта виден из workflow).

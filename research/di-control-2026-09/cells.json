@@ -1,0 +1,272 @@
+[
+ {
+  "cell": "P-gen-deepseek-essay-1",
+  "type": "P",
+  "source": "gen-deepseek-essay-1",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-essay-1"
+   ],
+   [
+    "human",
+    "habr-13367"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-deepseek-essay-2",
+  "type": "P",
+  "source": "gen-deepseek-essay-2",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-essay-2"
+   ],
+   [
+    "human",
+    "habr-137790"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-deepseek-essay-3",
+  "type": "P",
+  "source": "gen-deepseek-essay-3",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-essay-3"
+   ],
+   [
+    "human",
+    "habr-235829"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-deepseek-howto-1",
+  "type": "P",
+  "source": "gen-deepseek-howto-1",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-howto-1"
+   ],
+   [
+    "human",
+    "habr-144922"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-deepseek-howto-2",
+  "type": "P",
+  "source": "gen-deepseek-howto-2",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-howto-2"
+   ],
+   [
+    "human",
+    "habr-85936"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-deepseek-howto-3",
+  "type": "P",
+  "source": "gen-deepseek-howto-3",
+  "ref": [
+   [
+    "machine",
+    "gen-deepseek-howto-3"
+   ],
+   [
+    "human",
+    "habr-11184"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-essay-1",
+  "type": "P",
+  "source": "gen-glm-essay-1",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-essay-1"
+   ],
+   [
+    "human",
+    "habr-13358"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-essay-2",
+  "type": "P",
+  "source": "gen-glm-essay-2",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-essay-2"
+   ],
+   [
+    "human",
+    "habr-344358"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-essay-3",
+  "type": "P",
+  "source": "gen-glm-essay-3",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-essay-3"
+   ],
+   [
+    "human",
+    "habr-490038"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-howto-1",
+  "type": "P",
+  "source": "gen-glm-howto-1",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-howto-1"
+   ],
+   [
+    "human",
+    "habr-91714"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-howto-2",
+  "type": "P",
+  "source": "gen-glm-howto-2",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-howto-2"
+   ],
+   [
+    "human",
+    "habr-89271"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-glm-howto-3",
+  "type": "P",
+  "source": "gen-glm-howto-3",
+  "ref": [
+   [
+    "machine",
+    "gen-glm-howto-3"
+   ],
+   [
+    "human",
+    "habr-235817"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-essay-1",
+  "type": "P",
+  "source": "gen-qwen-essay-1",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-essay-1"
+   ],
+   [
+    "human",
+    "habr-91754"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-essay-2",
+  "type": "P",
+  "source": "gen-qwen-essay-2",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-essay-2"
+   ],
+   [
+    "human",
+    "habr-582962"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-essay-3",
+  "type": "P",
+  "source": "gen-qwen-essay-3",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-essay-3"
+   ],
+   [
+    "human",
+    "habr-53126"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-howto-1",
+  "type": "P",
+  "source": "gen-qwen-howto-1",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-howto-1"
+   ],
+   [
+    "human",
+    "habr-547850"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-howto-2",
+  "type": "P",
+  "source": "gen-qwen-howto-2",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-howto-2"
+   ],
+   [
+    "human",
+    "habr-37561"
+   ]
+  ]
+ },
+ {
+  "cell": "P-gen-qwen-howto-3",
+  "type": "P",
+  "source": "gen-qwen-howto-3",
+  "ref": [
+   [
+    "machine",
+    "gen-qwen-howto-3"
+   ],
+   [
+    "human",
+    "habr-54481"
+   ]
+  ]
+ }
+]

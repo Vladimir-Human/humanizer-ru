@@ -1,0 +1,67 @@
+{
+ "design": "di-control-2026-09",
+ "cells": 18,
+ "families": [
+  "qwen",
+  "deepseek",
+  "kimi"
+ ],
+ "protocol_violations": [],
+ "absent_families": [],
+ "family_results": {
+  "qwen": {
+   "correct": 8,
+   "wrong": 10,
+   "ties": 0,
+   "nulls": 0,
+   "invalid": 0,
+   "decided": 18,
+   "accuracy": 0.4444,
+   "wilson95": [
+    0.2456,
+    0.6628
+   ],
+   "pass": false
+  },
+  "deepseek": {
+   "correct": 0,
+   "wrong": 18,
+   "ties": 0,
+   "nulls": 0,
+   "invalid": 0,
+   "decided": 18,
+   "accuracy": 0.0,
+   "wilson95": [
+    0.0,
+    0.1759
+   ],
+   "pass": false
+  },
+  "kimi": {
+   "correct": 0,
+   "wrong": 18,
+   "ties": 0,
+   "nulls": 0,
+   "invalid": 0,
+   "decided": 18,
+   "accuracy": 0.0,
+   "wilson95": [
+    0.0,
+    0.1759
+   ],
+   "pass": false
+  }
+ },
+ "aggregate": {
+  "pairs": 18,
+  "decided": 18,
+  "correct_majority": 0,
+  "undecided": 0,
+  "share_of_decided": 0.0,
+  "wilson95": [
+   0.0,
+   0.1759
+  ]
+ },
+ "verdict": "FAIL"
+}
