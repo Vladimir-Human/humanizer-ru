@@ -22,6 +22,9 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVAL = os.path.join(ROOT, "eval")
+if not os.path.isdir(EVAL):
+    # sdist вне дерева репозитория: eval-гарнесс не входит в pip-пакет.
+    raise unittest.SkipTest("eval/ отсутствует (sdist): гарнесс вне pip-пакета")
 if EVAL not in sys.path:
     sys.path.insert(0, EVAL)
 

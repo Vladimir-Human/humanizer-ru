@@ -16,20 +16,26 @@
   в pip-пакет не входит. Все четыре команды читают stdin через «-».
 - Нормализовать типографику без правки смысла: `humanizer-polish`
   (идемпотентна; буквы и цифры сохраняет дословно; режимы `--diff`,
-  `--dry-run`, `--in-place`, `--json`).
+  `--dry-run`, `--in-place`, `--json`). Не запускать на Markdown и
+  разметке: снимает `##`, `**`, ёлочки, тире, многоточие; постановку
+  ёлочек и тире по русской норме делает агентный слой скилла (SKILL.md),
+  не эта команда.
 - Переписать текст по-человечески: скилл `humanizer-ru` (SKILL.md),
   только по явной просьбе пользователя; заявлений о качестве переписывания
   нет.
 
 ## Машинный интерфейс
 
-- Контракт: [contract.v1.json](contract.v1.json) — схема конверта
-  `{tool, schema, files}`, версии схем, коды выхода, «когда не
-  использовать» для каждого инструмента.
-- Реестр маркеров: [markers.v1.json](markers.v1.json) — 40 маркеров
-  класса `copypaste_artifacts` с доказательствами и статусами
-  `live`/`retired`.
-- Реестр фактов витрины: [eval/facts/facts.v1.json](eval/facts/facts.v1.json)
+Ссылки абсолютные: llms.txt отдаётся с двух хостов (репозиторий и Pages),
+относительные цели с Pages не разрешаются.
+
+- Контракт: [contract.v1.json](https://github.com/Vladimir-Human/humanizer-ru/blob/main/contract.v1.json)
+  — схема конверта `{tool, schema, files}`, версии схем, коды выхода,
+  «когда не использовать» для каждого инструмента.
+- Реестр маркеров: [markers.v1.json](https://github.com/Vladimir-Human/humanizer-ru/blob/main/markers.v1.json)
+  — 40 маркеров класса `copypaste_artifacts` с доказательствами и
+  статусами `live`/`retired`.
+- Реестр фактов витрины: [eval/facts/facts.v1.json](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/facts.v1.json)
   — единственное место, где живут публичные числа проекта, со статусами и
   командами воспроизведения.
 
@@ -45,8 +51,10 @@
 
 ## Документация
 
-- [README](README.md) — установка и использование (рус).
-- [README (English entry)](README.en.md) — документация для не-русских
-  читателей; продукт остаётся русскоязычным.
-- [Методология проверяемости](docs/FRAMEWORK.md) и
-  [эррата](ERRATA.md) — датированные отзывы опубликованных чисел.
+- [README](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.md)
+  — установка и использование (рус).
+- [README (English entry)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md)
+  — документация для не-русских читателей; продукт остаётся русскоязычным.
+- [Методология проверяемости](https://github.com/Vladimir-Human/humanizer-ru/blob/main/docs/FRAMEWORK.md) и
+  [эррата](https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md)
+  — датированные отзывы опубликованных чисел.

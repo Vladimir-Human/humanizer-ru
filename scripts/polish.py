@@ -11,6 +11,12 @@
 многоточие, невидимые символы и NBSP, снятие **/__ и хэшей заголовков,
 переносы строк к LF. Лексика и списки нетронуты.
 
+ЧЕСТНАЯ ГРАНИЦА: T снимает машинный слой типографики и для этого
+выравнивает русскую типографику и Markdown в плоский текст — не
+запускайте polish на Markdown и разметке: он снимет ##, **, ёлочки,
+тире и многоточие. Постановку ёлочек и тире по русской норме делает
+агентный слой (SKILL.md), а не этот инструмент.
+
 Два инварианта (оба проверяются гейтом и самопроверкой):
   1. Идемпотентность: polish(polish(x)) == polish(x).
   2. Ноль смысловых правок: последовательность букв и цифр до и после
@@ -20,9 +26,11 @@
 
 Доля отказов 0: polish не отказывает ни на каком входе; текст без
 типографических дефектов возвращается неизменным (пустой диф — норма).
+Пустой и не-русский вход помечаются «вне области» (scope_note): механика
+типографики отрабатывает, но область скилла — русский текст.
 
 Режимы:
-    python3 scripts/polish.py ФАЙЛ...           # результат в stdout
+    python3 scripts/polish.py ФАЙЛ...           # результат в stdout («-» = stdin)
     python3 scripts/polish.py --diff ФАЙЛ...    # унифицированный диф
     python3 scripts/polish.py --in-place ФАЙЛ...# запись на место (+ .bak)
     python3 scripts/polish.py --dry-run --in-place ФАЙЛ...  # что изменится
@@ -31,7 +39,8 @@
     python3 scripts/polish.py --selftest        # самопроверка с негативами
 
 Коды: 0 — успех/инварианты целы; 1 — нарушение инварианта или диф-гейт;
-2 — вход не читается. Только стандартная библиотека.
+2 — вход не читается (с --json конверт ошибки {tool, schema, error, files}
+печатается в stdout). Только стандартная библиотека.
 """
 from __future__ import annotations
 
@@ -114,6 +123,27 @@ def invariant_problems(original: str, cleaned: str) -> list[str]:
     return problems
 
 
+def _cyrillic_share(text: str) -> float:
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 0.0
+    cyr = sum(1 for c in letters if "\u0400" <= c <= "\u04ff")
+    return cyr / len(letters)
+
+
+def scope_note(text: str) -> str:
+    """Пометка «вне области»: пустой и не-русский вход — вне домена скилла.
+
+    Градуированный ответ остаётся непустым (контракт): механика типографики
+    отрабатывает на любом входе, но честный статус входа агент обязан видеть.
+    """
+    if not text.strip():
+        return "вне области: пустой вход"
+    if _cyrillic_share(text) < 0.1:
+        return "вне области: текст не на русском (область скилла — русский текст)"
+    return ""
+
+
 # ------------------------------------------------------------------ selftest
 
 def selftest() -> int:
@@ -169,6 +199,13 @@ def selftest() -> int:
     clean = "Обычный текст без дефектов. Второй абзац.\n"
     case("чистый текст неизменен (доля отказов 0)", polish(clean) == clean)
 
+    # Пометка «вне области»: пустой и не-русский вход (градуированный ответ
+    # остаётся непустым, но статус входа честный).
+    case("пустой вход — вне области", scope_note("") != "" and scope_note("  \n") != "")
+    case("английский текст — вне области",
+         scope_note("Plain English text without any Russian.") != "")
+    case("русский текст — в области", scope_note("Обычный русский текст.") == "")
+
     print("САМОПРОВЕРКА polish: %d/%d PASS" % (passed, passed + failed))
     return 1 if failed else 0
 
@@ -222,7 +259,9 @@ def _diff_text(before: str, after: str, label: str) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Типографическая нормализация русского текста.")
+        description="Типографическая нормализация русского текста. "
+                    "Не запускать на Markdown и разметке: снимает ##, **, "
+                    "ёлочки, тире, многоточие.")
     ap.add_argument("files", nargs="*",
                     help="файлы для обработки; «-» читает stdin (UTF-8)")
     ap.add_argument("--diff", action="store_true",
@@ -249,11 +288,13 @@ def main(argv=None) -> int:
         return 2
 
     report = []
+    errors = []
     rc = 0
     for path in args.files:
         if path == "-" and args.in_place:
-            print("НЕ ЧИТАЕТСЯ -: --in-place неприменим к stdin",
-                  file=sys.stderr)
+            msg = "--in-place неприменим к stdin"
+            print("НЕ ЧИТАЕТСЯ -: " + msg, file=sys.stderr)
+            errors.append({"file": "<stdin>", "error": msg})
             rc = 2
             continue
         try:
@@ -266,6 +307,7 @@ def main(argv=None) -> int:
                     before = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("НЕ ЧИТАЕТСЯ %s: %r" % (path, exc), file=sys.stderr)
+            errors.append({"file": path, "error": repr(exc)})
             rc = 2
             continue
         after = polish(before)
@@ -273,6 +315,7 @@ def main(argv=None) -> int:
         if problems:
             rc = 1
         changed = after != before
+        note = scope_note(before)
         entry = {
             "file": "<stdin>" if path == "-" else path,
             "changed": changed,
@@ -280,6 +323,10 @@ def main(argv=None) -> int:
             "chars_after": len(after),
             "invariants": problems,
         }
+        if note:
+            entry["status"] = "out-of-scope"
+            entry["scope_note"] = note
+            print("%s: %s" % (path, note), file=sys.stderr)
         if args.json:
             report.append(entry)
         elif args.diff:
@@ -301,8 +348,11 @@ def main(argv=None) -> int:
             sys.stdout.write(after if not after or after.endswith("\n")
                              else after + "\n")
     if args.json:
-        print(json.dumps({"tool": "humanizer-polish", "schema": 1, "files": report},
-                         ensure_ascii=False, indent=2))
+        envelope = {"tool": "humanizer-polish", "schema": 1,
+                    "files": report + errors}
+        if rc == 2:
+            envelope["error"] = "вход не читается (код 2)"
+        print(json.dumps(envelope, ensure_ascii=False, indent=2))
     return rc
 
 

@@ -3,28 +3,47 @@
 """Entry points консольных команд humanizer-ru.
 
 humanizer-scan    -> scan_soft_signals.main()  (мягкие признаки)
-humanizer-markers -> check_markers.scan()      (режим --scan из CLI скрипта)
+humanizer-markers -> check_markers.scan()      (скан артефактов копипасты)
 humanizer-polish  -> polish.main()             (типографическая нормализация)
 humanizer-detect  -> detect_conj.main()        (детектор частоты связок)
 
-Оригинальные модули настраивают sys.stdout/stderr при импорте (обход
-Windows-консолей без кириллицы). Стандартная библиотека Python; сторонних
-зависимостей нет.
+Все четыре команды поддерживают --version (версия пакета): установленная
+команда обязана называть свою версию — восстановление обещанного машинного
+интерфейса. Оригинальные модули настраивают sys.stdout/stderr при импорте
+(обход Windows-консолей без кириллицы). Стандартная библиотека Python;
+сторонних зависимостей нет.
 """
 from __future__ import annotations
 
 import sys
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
+from . import __version__
 from . import check_markers
 from . import detect_conj
 from . import polish
 from . import scan_soft_signals
 
 
+def _resolved(argv: Optional[Sequence[str]]) -> List[str]:
+    return list(sys.argv[1:] if argv is None else argv)
+
+
+def _common(args: List[str]) -> Optional[int]:
+    """Перехват --version до делегирования парсеру инструмента."""
+    if "--version" in args:
+        print(__version__)
+        return 0
+    return None
+
+
 def scan_main(argv: Optional[Sequence[str]] = None) -> int:
     """Точка входа humanizer-scan: счётчик мягких признаков."""
-    return scan_soft_signals.main(argv)
+    args = _resolved(argv)
+    rc = _common(args)
+    if rc is not None:
+        return rc
+    return scan_soft_signals.main(args)
 
 
 def markers_main(argv: Optional[Sequence[str]] = None) -> int:
@@ -38,6 +57,10 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
     """
     import argparse
 
+    args = _resolved(argv)
+    rc = _common(args)
+    if rc is not None:
+        return rc
     ap = argparse.ArgumentParser(
         prog="humanizer-markers",
         description="Артефакты копипасты и чат-интерфейсов: 40 маркеров "
@@ -54,23 +77,31 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
                     help="машиночитаемый отчёт (конверт {tool, schema, files})")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка 40 выражений")
-    args = ap.parse_args(list(sys.argv[1:] if argv is None else argv))
-    if args.selftest or not args.files:
-        if not args.files and not args.selftest:
+    parsed = ap.parse_args(args)
+    if parsed.selftest or not parsed.files:
+        if not parsed.files and not parsed.selftest:
             print("нет файлов — запускается самопроверка выражений; "
                   "справка: --help", file=sys.stderr)
         return check_markers.main()
-    paths = list(args.files)
-    if args.cls != "all":
-        paths += ["--class", args.cls]
-    return check_markers.scan(paths, as_json=args.json)
+    paths = list(parsed.files)
+    if parsed.cls != "all":
+        paths += ["--class", parsed.cls]
+    return check_markers.scan(paths, as_json=parsed.json)
 
 
 def polish_main(argv: Optional[Sequence[str]] = None) -> int:
     """Точка входа humanizer-polish: типографическая нормализация."""
-    return polish.main(list(sys.argv[1:] if argv is None else argv))
+    args = _resolved(argv)
+    rc = _common(args)
+    if rc is not None:
+        return rc
+    return polish.main(args)
 
 
 def detect_main(argv: Optional[Sequence[str]] = None) -> int:
     """Точка входа humanizer-detect: детектор частоты связок."""
-    return detect_conj.main(list(sys.argv[1:] if argv is None else argv))
+    args = _resolved(argv)
+    rc = _common(args)
+    if rc is not None:
+        return rc
+    return detect_conj.main(args)
