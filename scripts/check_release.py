@@ -701,6 +701,50 @@ def sdist_test(root: Path, arg: str) -> int:
             return 1
         print("SDIST-TEST: " + proc.stdout.strip()
               + f" (чистое venv, sdist {sdist.name})")
+        # Upgrade-смоук: предыдущая опубликованная версия -> --upgrade sdist
+        # -> версия дерева. Отказ сети/PyPI = отказ среды (код 2).
+        try:
+            import json as _json
+            import urllib.request as _ur
+            with _ur.urlopen("https://pypi.org/pypi/humanizer-ru/json",
+                             timeout=30) as _r:
+                _rel = _json.loads(_r.read().decode("utf-8"))["releases"]
+
+            def _vk(v):
+                return tuple(int(x) for x in v.split("."))
+            _ver = subprocess.run(
+                [str(vpy), "-c", "import humanizer_ru as h; print(h.__version__)"],
+                capture_output=True, text=True, timeout=60).stdout.strip()
+            _prev = max((v for v in _rel if _rel[v] and _vk(v) < _vk(_ver)),
+                        key=_vk, default=None)
+            if _prev:
+                up = subprocess.run(
+                    [str(vpy), "-m", "pip", "install", "--quiet",
+                     "--disable-pip-version-check", "humanizer-ru==" + _prev],
+                    capture_output=True, text=True, timeout=600)
+                if up.returncode != 0:
+                    print("SDIST-TEST: upgrade-smoke: установка %s не удалась: %s"
+                          % (_prev, (up.stderr or "")[-200:]), file=sys.stderr)
+                    return 2
+                up2 = subprocess.run(
+                    [str(vpy), "-m", "pip", "install", "--quiet",
+                     "--disable-pip-version-check", "--upgrade", str(sdist)],
+                    capture_output=True, text=True, timeout=600)
+                ver2 = subprocess.run(
+                    [str(vpy), "-c", "import humanizer_ru as h; print(h.__version__)"],
+                    capture_output=True, text=True, timeout=60).stdout.strip()
+                if up2.returncode != 0 or ver2 != _ver:
+                    print("SDIST-TEST: upgrade-smoke ПРОВАЛЕН: %s -> %s (ожидалось %s)"
+                          % (_prev, ver2, _ver), file=sys.stderr)
+                    return 1
+                print("SDIST-TEST: upgrade-smoke OK: %s -> %s" % (_prev, ver2))
+            else:
+                print("SDIST-TEST: upgrade-smoke: предыдущей опубликованной "
+                      "версии нет, пропуск")
+        except (OSError, ValueError) as exc:
+            print(f"SDIST-TEST: upgrade-smoke отказ среды: {exc!r}",
+                  file=sys.stderr)
+            return 2
         return 0
     except (OSError, tarfile.TarError, subprocess.TimeoutExpired) as exc:
         print(f"SDIST-TEST: отказ среды: {exc!r}", file=sys.stderr)
