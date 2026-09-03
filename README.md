@@ -136,7 +136,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.19.2 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.20.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -157,6 +157,7 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 - `humanizer-detect` — частота связок со статусом домена; вердикта об
   авторстве нет. `humanizer-scan` — счётчик мягких признаков, калибрует
   объём правки.
+- `humanizer-facts` — сверка фактов двух версий текста (числа, даты, URL, имена, цитаты, отрицания, модальности): lost/added/changed с позициями; код 1 при потере или инверсии, вердиктов нет.
 - `humanizer-markers` — поиск артефактов копипасты, классы A и B;
   `--remove` снимает невидимые метки по классификации риска: safe
   автоматически, ambiguous только opt-in, dangerous никогда; таблица в
@@ -247,7 +248,7 @@ $ humanizer-scan --json notes.txt
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 - `METRICS.md`, `RELEASE.md`, `identity.v1.json`, `server.json` — витрина измерений, регламент выпусков, машиночитаемая идентичность и метаданные MCP-реестра.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 106 гейтов полного чек-листа (95 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 108 гейтов полного чек-листа (97 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

@@ -4,15 +4,20 @@
   "language": "ru",
   "product": {
     "name": "humanizer-ru",
-    "version": "3.19.2",
+    "version": "3.20.0",
     "install": {
-      "pip": "pip install humanizer-ru==3.19.2",
+      "pip": "pip install humanizer-ru==3.20.0",
       "requires_python": ">=3.9",
       "freshness": "сверьте версию с https://github.com/Vladimir-Human/humanizer-ru/releases/latest или лентой releases.atom"
     },
     "identity": "нормализатор и диагност русского текста; переписывание — только по явной просьбе и без заявлений о качестве",
     "scope": "русский связный текст",
-    "not_for": ["текст не на русском", "исходный код и конфиги", "юридические документы", "художественная проза и поэзия"]
+    "not_for": [
+      "текст не на русском",
+      "исходный код и конфиги",
+      "юридические документы",
+      "художественная проза и поэзия"
+    ]
   },
   "output_envelope": {
     "format": "json",
@@ -48,10 +53,35 @@
     "legitimate": "свой текст: правка и диагностика собственных материалов, снятие следов копипасты из своих вставок, честный отчёт без вердиктов об авторстве"
   },
   "genres": {
-    "dictionary": ["neutral", "fiction", "legal", "academic", "marketing", "chat", "instructions", "essay", "prose", "web", "auto"],
+    "dictionary": [
+      "neutral",
+      "fiction",
+      "legal",
+      "academic",
+      "marketing",
+      "chat",
+      "instructions",
+      "essay",
+      "prose",
+      "web",
+      "auto"
+    ],
     "effective_by_tool": {
-      "humanizer-scan": ["neutral", "fiction", "legal", "academic", "marketing", "chat"],
-      "humanizer-detect": ["instructions", "essay", "prose", "web", "auto"]
+      "humanizer-scan": [
+        "neutral",
+        "fiction",
+        "legal",
+        "academic",
+        "marketing",
+        "chat"
+      ],
+      "humanizer-detect": [
+        "instructions",
+        "essay",
+        "prose",
+        "web",
+        "auto"
+      ]
     },
     "rule": "единый словарь --genre для всех CLI: счётчик признаков отображает чужие домены в neutral, детектор связок для чужих значений включает автоклассификацию (auto); эффективные домены: счётчик — neutral/fiction/legal/academic/marketing/chat, детектор — instructions/essay/prose/web/auto"
   },
@@ -62,32 +92,85 @@
       "task": "типографическая нормализация: тире, кавычки, многоточие, невидимые символы, маркеры разметки, переносы строк к LF",
       "transformation": "дефолтный режим снимает машинный слой типографики: невидимые символы и NBSP, **/__, хэши заголовков, выравнивает тире/ёлочки/многоточия в плоский текст, переносы строк к LF; --preserve-markup снимает только невидимые символы и NBSP, сохраняя разметку и типографику; --typographic — публикационный режим: парные прямые кавычки в ёлочки, три точки в единый символ многоточия, невидимые символы снимаются только в прозе — разметка, fenced-блоки, инлайн-код и YAML-frontmatter не трогает; постановку тире по русской норме делает агентный слой по SKILL.md",
       "when_not": "не запускать на Markdown и разметке дефолтным режимом: снимает ##, **, ёлочки, тире, многоточие — для разметки режимы --preserve-markup и --typographic; когда нужна правка лексики или смысла — полировка слов не трогает",
-      "invariants": ["идемпотентность", "буквы и цифры дословно"],
-      "modes": ["stdout", "--diff", "--in-place (.bak)", "--dry-run", "--json", "--preserve-markup", "--typographic", "--gate ПУТЬ", "--selftest", "- (stdin)", "--version", "--contract"],
+      "invariants": [
+        "идемпотентность",
+        "буквы и цифры дословно"
+      ],
+      "modes": [
+        "stdout",
+        "--diff",
+        "--in-place (.bak)",
+        "--dry-run",
+        "--json",
+        "--preserve-markup",
+        "--typographic",
+        "--gate ПУТЬ",
+        "--selftest",
+        "- (stdin)",
+        "--version",
+        "--contract"
+      ],
       "output_schema": {
         "type": "object",
-        "required": ["tool", "schema", "files"],
+        "required": [
+          "tool",
+          "schema",
+          "files"
+        ],
         "properties": {
-          "tool": {"const": "humanizer-polish"},
-          "schema": {"const": 1},
-          "error": {"type": "string"},
+          "tool": {
+            "const": "humanizer-polish"
+          },
+          "schema": {
+            "const": 1
+          },
+          "error": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["file"],
+              "required": [
+                "file"
+              ],
               "properties": {
-                "file": {"type": "string"},
-                "changed": {"type": "boolean"},
-                "chars_before": {"type": "integer"},
-                "chars_after": {"type": "integer"},
-                "preserve_markup": {"type": "boolean"},
-                "typographic": {"type": "boolean"},
-                "invariants": {"type": "array", "items": {"type": "string"}},
-                "status": {"enum": ["out-of-scope"]},
-                "scope_note": {"type": "string"},
-                "error": {"type": "string"}
+                "file": {
+                  "type": "string"
+                },
+                "changed": {
+                  "type": "boolean"
+                },
+                "chars_before": {
+                  "type": "integer"
+                },
+                "chars_after": {
+                  "type": "integer"
+                },
+                "preserve_markup": {
+                  "type": "boolean"
+                },
+                "typographic": {
+                  "type": "boolean"
+                },
+                "invariants": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "status": {
+                  "enum": [
+                    "out-of-scope"
+                  ]
+                },
+                "scope_note": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -105,30 +188,69 @@
         "prose": "not-validated",
         "web": "not-applicable"
       },
-      "modes": ["stdout", "--json", "--genre", "--gate ПУТЬ", "--selftest", "- (stdin)", "--version", "--contract"],
+      "modes": [
+        "stdout",
+        "--json",
+        "--genre",
+        "--gate ПУТЬ",
+        "--selftest",
+        "- (stdin)",
+        "--version",
+        "--contract"
+      ],
       "output_schema": {
         "type": "object",
-        "required": ["tool", "schema", "files"],
+        "required": [
+          "tool",
+          "schema",
+          "files"
+        ],
         "properties": {
-          "tool": {"const": "humanizer-detect"},
-          "schema": {"const": 1},
-          "error": {"type": "string"},
+          "tool": {
+            "const": "humanizer-detect"
+          },
+          "schema": {
+            "const": 1
+          },
+          "error": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["file"],
+              "required": [
+                "file"
+              ],
               "properties": {
-                "file": {"type": "string"},
-                "conj_density": {"type": "number"},
-                "words_total": {"type": "integer"},
-                "genre": {"type": "string"},
-                "status": {"type": "string"},
-                "direction": {"type": "string"},
-                "note": {"type": "string"},
-                "scope_note": {"type": "string"},
-                "error": {"type": "string"}
+                "file": {
+                  "type": "string"
+                },
+                "conj_density": {
+                  "type": "number"
+                },
+                "words_total": {
+                  "type": "integer"
+                },
+                "genre": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "scope_note": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -140,46 +262,123 @@
       "script": "scripts/check_markers.py",
       "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B; находит и показывает; --remove снимает невидимые метки текстового слоя по классификации риска (safe автоматически, ambiguous только opt-in, dangerous никогда)",
       "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека; контейнерные файлы (PNG/DOCX/PDF/…) — scripts/filemarks (репозиторий); текстовый слой снятия входит в пакет (text_layer)",
-      "modes": ["--scan ФАЙЛ...", "--class a|all", "--json", "--remove ФАЙЛ...", "--include-ambiguous", "--dry-run", "--diff", "--in-place (.bak)", "--selftest (без файлов)", "- (stdin)", "--version", "--contract"],
+      "modes": [
+        "--scan ФАЙЛ...",
+        "--class a|all",
+        "--json",
+        "--remove ФАЙЛ...",
+        "--include-ambiguous",
+        "--dry-run",
+        "--diff",
+        "--in-place (.bak)",
+        "--selftest (без файлов)",
+        "- (stdin)",
+        "--version",
+        "--contract"
+      ],
       "output_schema": {
         "type": "object",
-        "required": ["tool", "schema", "files"],
+        "required": [
+          "tool",
+          "schema",
+          "files"
+        ],
         "properties": {
-          "tool": {"const": "humanizer-markers"},
-          "schema": {"const": 1},
-          "error": {"type": "string"},
+          "tool": {
+            "const": "humanizer-markers"
+          },
+          "schema": {
+            "const": 1
+          },
+          "error": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["file"],
+              "required": [
+                "file"
+              ],
               "properties": {
-                "file": {"type": "string"},
-                "count": {"type": "integer"},
-                "warnings_b": {"type": "integer"},
-                "scope_note": {"type": "string"},
-                "error": {"type": "string"},
-                "mode": {"enum": ["remove"]},
-                "removed": {"type": "array"},
-                "reported": {"type": "array"},
-                "flag_sequences_kept": {"type": "array"},
-                "warnings": {"type": "array", "items": {"type": "string"}},
-                "removed_safe": {"type": "integer"},
-                "removed_ambiguous": {"type": "integer"},
-                "reported_total": {"type": "integer"},
-                "changed": {"type": "boolean"},
+                "file": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "warnings_b": {
+                  "type": "integer"
+                },
+                "scope_note": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "mode": {
+                  "enum": [
+                    "remove"
+                  ]
+                },
+                "removed": {
+                  "type": "array"
+                },
+                "reported": {
+                  "type": "array"
+                },
+                "flag_sequences_kept": {
+                  "type": "array"
+                },
+                "warnings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "removed_safe": {
+                  "type": "integer"
+                },
+                "removed_ambiguous": {
+                  "type": "integer"
+                },
+                "reported_total": {
+                  "type": "integer"
+                },
+                "changed": {
+                  "type": "boolean"
+                },
                 "markers": {
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "required": ["line", "marker", "class", "fragment", "shadow"],
+                    "required": [
+                      "line",
+                      "marker",
+                      "class",
+                      "fragment",
+                      "shadow"
+                    ],
                     "properties": {
-                      "line": {"type": "integer"},
-                      "marker": {"type": "string"},
-                      "class": {"enum": ["A", "B"]},
-                      "fragment": {"type": "string"},
-                      "shadow": {"type": "boolean"}
+                      "line": {
+                        "type": "integer"
+                      },
+                      "marker": {
+                        "type": "string"
+                      },
+                      "class": {
+                        "enum": [
+                          "A",
+                          "B"
+                        ]
+                      },
+                      "fragment": {
+                        "type": "string"
+                      },
+                      "shadow": {
+                        "type": "boolean"
+                      }
                     }
                   }
                 }
@@ -194,33 +393,168 @@
       "script": "scripts/scan_soft_signals.py",
       "task": "мягкие признаки машинного письма: счётчик по категориям, калибрует объём правки",
       "when_not": "вердикта об авторстве не даёт ни в каком сочетании признаков",
-      "modes": ["ФАЙЛ...", "--genre", "--plain-text", "--json", "--fail-at N", "--fail-multicat N", "--max-cats N", "--selftest", "- (stdin)", "--version", "--contract"],
+      "modes": [
+        "ФАЙЛ...",
+        "--genre",
+        "--plain-text",
+        "--json",
+        "--fail-at N",
+        "--fail-multicat N",
+        "--max-cats N",
+        "--selftest",
+        "- (stdin)",
+        "--version",
+        "--contract"
+      ],
       "output_schema": {
         "type": "object",
-        "required": ["tool", "schema", "files"],
+        "required": [
+          "tool",
+          "schema",
+          "files"
+        ],
         "properties": {
-          "tool": {"const": "humanizer-scan"},
-          "schema": {"const": 1},
-          "error": {"type": "string"},
+          "tool": {
+            "const": "humanizer-scan"
+          },
+          "schema": {
+            "const": 1
+          },
+          "error": {
+            "type": "string"
+          },
           "files": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["file"],
+              "required": [
+                "file"
+              ],
               "properties": {
-                "file": {"type": "string"},
-                "genre": {"type": "string"},
-                "features_total": {"type": "integer"},
-                "categories_total": {"type": "integer"},
-                "recommendation": {"type": "string"},
-                "note": {"type": "string"},
-                "status": {"enum": ["out-of-scope"]},
-                "scope_note": {"type": "string"},
-                "findings": {"type": "array"},
-                "categories": {"type": "object"},
-                "error": {"type": "string"}
+                "file": {
+                  "type": "string"
+                },
+                "genre": {
+                  "type": "string"
+                },
+                "features_total": {
+                  "type": "integer"
+                },
+                "categories_total": {
+                  "type": "integer"
+                },
+                "recommendation": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "out-of-scope"
+                  ]
+                },
+                "scope_note": {
+                  "type": "string"
+                },
+                "findings": {
+                  "type": "array"
+                },
+                "categories": {
+                  "type": "object"
+                },
+                "error": {
+                  "type": "string"
+                }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "command": "humanizer-facts",
+      "script": "src/humanizer_ru/facts_diff.py",
+      "task": "сверка фактов двух версий текста: числа с единицами, числительные, даты во всех русских форматах, URL, e-mail, заглавные последовательности как имена, кавычные цитаты, отрицания и модальности; выдаёт lost/added/changed с позициями",
+      "transformation": "не меняет текст: только сравнивает; diff <до> <после> [--json]; коды выхода 0 — потерь и инверсий нет, 1 — есть lost или changed, 2 — вход не читается",
+      "when_not": "не для текстов не на русском и не для исходного кода; не даёт вердиктов об авторстве, качестве и стиле; added не влияет на код выхода (их ловит check_examples.py)",
+      "invariants": [
+        "детерминированность",
+        "без ML и внешних зависимостей",
+        "позиции в символах от начала текста"
+      ],
+      "inputs": [
+        "text_before",
+        "text_after"
+      ],
+      "modes": [
+        "diff <до> <после>",
+        "--json",
+        "--selftest"
+      ],
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "tool",
+          "schema",
+          "files",
+          "counts",
+          "diff"
+        ],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "enum": [
+              "humanizer-facts"
+            ]
+          },
+          "schema": {
+            "type": "integer",
+            "const": 1
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "integer"
+              },
+              "added": {
+                "type": "integer"
+              },
+              "changed": {
+                "type": "integer"
+              }
+            }
+          },
+          "diff": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "array"
+              },
+              "added": {
+                "type": "array"
+              },
+              "changed": {
+                "type": "array"
+              }
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }
@@ -228,11 +562,26 @@
     }
   ],
   "router": [
-    {"need": "проверить текст на следы машинного происхождения", "use": "humanizer-detect + humanizer-markers"},
-    {"need": "найти артефакты копипасты и разметки", "use": "humanizer-markers (показывает совпадения)"},
-    {"need": "нормализовать типографику без правки смысла", "use": "humanizer-polish (на Markdown и разметке — только с --preserve-markup)"},
-    {"need": "удалить невидимые метки чат-интерфейсов из файла", "use": "humanizer-markers --remove (safe автоматически; ambiguous только --include-ambiguous с предупреждениями; dangerous показывается и не снимается); контейнерные файлы — scripts/filemarks (репозиторий)"},
-    {"need": "переписать текст по-человечески", "use": "скилл humanizer-ru (SKILL.md) агентом, по явной просьбе; заявлений о качестве нет"}
+    {
+      "need": "проверить текст на следы машинного происхождения",
+      "use": "humanizer-detect + humanizer-markers"
+    },
+    {
+      "need": "найти артефакты копипасты и разметки",
+      "use": "humanizer-markers (показывает совпадения)"
+    },
+    {
+      "need": "нормализовать типографику без правки смысла",
+      "use": "humanizer-polish (на Markdown и разметке — только с --preserve-markup)"
+    },
+    {
+      "need": "удалить невидимые метки чат-интерфейсов из файла",
+      "use": "humanizer-markers --remove (safe автоматически; ambiguous только --include-ambiguous с предупреждениями; dangerous показывается и не снимается); контейнерные файлы — scripts/filemarks (репозиторий)"
+    },
+    {
+      "need": "переписать текст по-человечески",
+      "use": "скилл humanizer-ru (SKILL.md) агентом, по явной просьбе; заявлений о качестве нет"
+    }
   ],
   "provenance_note": "числа валидации в контракт не включаются: их единственный источник — реестр фактов (eval/facts/facts.v1.json) с одобрением владельца на публикацию каждого"
 }

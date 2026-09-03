@@ -19,13 +19,18 @@
     "mcp": {
       "entry": "humanizer-mcp",
       "transport": "stdio",
-      "protocol_versions": ["2025-06-18", "2025-03-26", "2024-11-05"]
+      "protocol_versions": [
+        "2025-06-18",
+        "2025-03-26",
+        "2024-11-05"
+      ]
     },
     "tools": [
       "humanizer-scan",
       "humanizer-markers",
       "humanizer-polish",
-      "humanizer-detect"
+      "humanizer-detect",
+      "humanizer-facts"
     ]
   },
   "claims_forbidden": [
