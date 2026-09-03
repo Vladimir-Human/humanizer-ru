@@ -51,6 +51,7 @@ EXPECTED_TOOLS = {
     "humanizer-detect": ("scripts", "detect_conj.py"),
     "humanizer-markers": ("scripts", "check_markers.py"),
     "humanizer-scan": ("scripts", "scan_soft_signals.py"),
+    "humanizer-facts": ("src/humanizer_ru", "facts_diff.py"),
 }
 
 # Честная граница polish: фраза-маркер обязана быть в каждом носителе.
@@ -397,7 +398,7 @@ def live_check() -> list[str]:
             doc2 = json.loads(proc.stdout)
             ok2 = proc.returncode == 0 \
                 and doc2.get("schema_version") == "contract.v1" \
-                and len(doc2.get("tools", [])) == 4
+                and len(doc2.get("tools", [])) == len(doc.get("tools", []))
         except json.JSONDecodeError:
             ok2 = False
         if not ok2:

@@ -77,6 +77,8 @@ def _gates(quick, tmpdir):
         ("soft: threshold_sweep самопроверка", [PY, "scripts/threshold_sweep.py", "--selftest"], [], {0}),
         ("examples: самопроверка", [PY, "scripts/check_examples.py", "--selftest"], [], {0}),
         ("examples: честность До/После", [PY, "scripts/check_examples.py"], [], {0}),
+        ("facts-diff: selftest модуля (F1)", [PY, "scripts/check_facts_diff.py", "--selftest"], [], {0}),
+        ("facts-diff: CLI-коды и продукт (F1)", [PY, "scripts/check_facts_diff.py"], [], {0}),
         ("readme-parity: самопроверка", [PY, "scripts/check_readme_parity.py", "--selftest"], [], {0}),
         ("readme-parity: витрина", [PY, "scripts/check_readme_parity.py"],
          ["README.md", "README.en.md"], {0}),

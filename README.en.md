@@ -7,14 +7,10 @@
 [![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 [![Dogfooding](https://img.shields.io/badge/own_detectors-report-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/self-audit.v1.json)
 
-**Русская версия → [README.md](README.md)** — the product is
-Russian-language; this document is the English entry point only.
+**Русская версия → [README.md](README.md)** — the product is Russian-language; this document is the English entry point only.
 
-A skill and a command set for Russian text: finds copy-paste artifacts and
-machine-generation traces, normalizes typography without touching meaning.
-Rewriting of machine-flavoured text happens on explicit request, with no
-quality claims attached. Not for non-Russian text, source code, legal
-documents, fiction or poetry.
+A skill and a command set for Russian text: finds copy-paste artifacts and machine-generation traces, normalizes typography without touching meaning.
+Rewriting of machine-flavoured text happens on explicit request, with no quality claims attached. Not for non-Russian text, source code, legal documents, fiction or poetry.
 
 In practice: text pasted from a chatbot carries service marks, invisible
 characters and machine typography. The skill removes that layer and shows
@@ -140,7 +136,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.19.2 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.20.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -170,6 +166,7 @@ Package commands:
   ambiguous only with `--include-ambiguous` and a warning, dangerous is
   reported and never removed (table: `references/removal-matrix.md`).
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
+- `humanizer-facts` — fact diff of two text versions (numbers, dates, URLs, names, quotes, negations, modals): lost/added/changed with positions; exit 1 on lost or inverted fact; no authorship or quality verdicts.
 
 All four commands read stdin via `-`. Sample output (markers on a chat
 interface line):
@@ -253,7 +250,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 106 gates in the full checklist (95 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 108 gates in the full checklist (97 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
