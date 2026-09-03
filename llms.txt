@@ -53,6 +53,15 @@
   tool result (isError false), ошибка входа — isError true с конвертом.
   Проверено: conformance-гейт `scripts/check_mcp.py` и протокол в
   `research/mcp-conformance-protocol.md`.
+- Идентичность продукта: файл `identity.v1.json` в корне репозитория и на
+  Pages (/identity.v1.json) — имя, область, URL-якоря, точка входа MCP,
+  список запрещённых заявлений; сверяется с носителями гейтом
+  `scripts/check_identity.py`.
+- Как обновиться: `pip install --upgrade humanizer-ru==<версия>`; свежая
+  версия — [GitHub Releases](https://github.com/Vladimir-Human/humanizer-ru/releases)
+  или лента [releases.atom](https://github.com/Vladimir-Human/humanizer-ru/releases.atom);
+  машиночитаемая сверка версии — `humanizer-scan --contract`
+  (product.version, блок install).
 
 ## Чего этот проект не делает
 

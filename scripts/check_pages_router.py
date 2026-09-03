@@ -43,13 +43,15 @@ PAGES_BASE = "https://vladimir-human.github.io/humanizer-ru/"
 PAGES_PATHS = ["llms.txt", ".well-known/llms.txt", "contract.v1.json",
                "ERRATA.md", "README.md", "README.en.md", "SKILL.md",
                "docs/FRAMEWORK.md", "eval/facts/facts.v1.json", "robots.txt",
-               "favicon.svg"]
+               "favicon.svg", "identity.v1.json", "og-image.png",
+               "sitemap.xml"]
 # Строки, которые обязан содержать шаг копирования workflow (статическая
 # проверка до деплоя: на PR ветке Pages ещё старый, сеть по Pages не
 # проверяется, но состав артефакта виден из workflow).
 WORKFLOW_REQUIRED = ["llms.txt", "contract.v1.json", "ERRATA.md", "README.md",
                      "README.en.md", "SKILL.md", "docs/FRAMEWORK.md",
-                     "eval/facts/facts.v1.json", ".well-known"]
+                     "eval/facts/facts.v1.json", ".well-known",
+                     "identity.v1.json"]
 
 LINK_RX = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 

@@ -1,0 +1,39 @@
+{
+  "schema_version": "identity.v1",
+  "id": "humanizer-ru-identity",
+  "note": "Машиночитаемая идентичность продукта: устойчивые факты без версий (версии — в contract.v1.json product.version и носителях; гейт scripts/check_identity.py сверяет этот файл с носителями и запрещает дрейф). Правка поля = правка всех носителей в том же коммите.",
+  "product": {
+    "name": "humanizer-ru",
+    "identity": "нормализатор и диагност русского текста; переписывание — только по явной просьбе и без заявлений о качестве",
+    "scope": "русский связный текст",
+    "language": "ru",
+    "license": "MIT",
+    "repository": "https://github.com/Vladimir-Human/humanizer-ru",
+    "demo": "https://vladimir-human.github.io/humanizer-ru/",
+    "llms": [
+      "https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt",
+      "https://vladimir-human.github.io/humanizer-ru/llms.txt"
+    ],
+    "pypi": "https://pypi.org/project/humanizer-ru/",
+    "releases_feed": "https://github.com/Vladimir-Human/humanizer-ru/releases.atom",
+    "mcp": {
+      "entry": "humanizer-mcp",
+      "transport": "stdio",
+      "protocol_versions": ["2025-06-18", "2025-03-26", "2024-11-05"]
+    },
+    "tools": [
+      "humanizer-scan",
+      "humanizer-markers",
+      "humanizer-polish",
+      "humanizer-detect"
+    ]
+  },
+  "claims_forbidden": [
+    "обход детекторов как гарантия",
+    "вердикт об авторстве по мягким признакам",
+    "доказывает, что текст написан человеком",
+    "снимает совпадение с базой антиплагиата",
+    "удаляет все невидимые символы одним режимом"
+  ],
+  "prohibited_uses_ref": "contract.v1.json#/prohibited_uses"
+}
