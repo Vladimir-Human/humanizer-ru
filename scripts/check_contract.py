@@ -59,6 +59,13 @@ POLISH_WARNING_EN = "do not run on Markdown"
 WARNING_CARRIERS_RU = ["contract.v1.json", "README.md", "README.pypi.md",
                        "llms.txt"]
 WARNING_CARRIERS_EN = ["README.en.md"]
+# Запрещённые использования: ключевая фраза списка обязана быть в контракте
+# и в каждом зеркале (RU/EN/SKILL/llms) — правило v2 3.4.
+PROHIBITED_KEY_PHRASE_RU = "сдача работ там, где ИИ запрещён"
+PROHIBITED_KEY_PHRASE_EN = "submitting work where AI is prohibited"
+PROHIBITED_CARRIERS_RU = ["contract.v1.json", "README.md", "README.pypi.md",
+                          "llms.txt", "SKILL.md"]
+PROHIBITED_CARRIERS_EN = ["README.en.md"]
 
 _TYPES = {
     "object": dict,
@@ -182,6 +189,15 @@ def contract_errors(doc) -> list[str]:
     missing = set(EXPECTED_TOOLS) - seen
     for cmd in sorted(missing):
         errors.append("инструмент не описан в контракте: %s" % cmd)
+    pu = doc.get("prohibited_uses")
+    if not isinstance(pu, dict) or not isinstance(pu.get("list"), list) \
+            or not pu.get("list"):
+        errors.append("нет prohibited_uses: блок с непустым list обязателен")
+    else:
+        joined = " ".join(str(x) for x in pu["list"]).lower()
+        if PROHIBITED_KEY_PHRASE_RU.lower() not in joined:
+            errors.append("prohibited_uses.list: нет ключевой фразы «%s»"
+                          % PROHIBITED_KEY_PHRASE_RU)
     return errors
 
 
@@ -211,6 +227,28 @@ def wording_errors() -> list[str]:
         if POLISH_WARNING_EN.lower() not in text.lower():
             errors.append("%s: нет честной границы polish («%s»)"
                           % (rel, POLISH_WARNING_EN))
+    for rel in PROHIBITED_CARRIERS_RU:
+        path = os.path.join(ROOT, rel)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError:
+            errors.append("носитель не читается: %s" % rel)
+            continue
+        if PROHIBITED_KEY_PHRASE_RU.lower() not in text.lower():
+            errors.append("%s: нет запрещённых использований («%s»)"
+                          % (rel, PROHIBITED_KEY_PHRASE_RU))
+    for rel in PROHIBITED_CARRIERS_EN:
+        path = os.path.join(ROOT, rel)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError:
+            errors.append("носитель не читается: %s" % rel)
+            continue
+        if PROHIBITED_KEY_PHRASE_EN.lower() not in text.lower():
+            errors.append("%s: нет запрещённых использований («%s»)"
+                          % (rel, PROHIBITED_KEY_PHRASE_EN))
     return errors
 
 
@@ -365,6 +403,33 @@ def live_check() -> list[str]:
         if not ok2:
             errors.append("cli.%s --contract: ожидался контракт из данных "
                           "пакета (код %d)" % (entry, proc.returncode))
+    # MCP-smoke: сервер отвечает на initialize версией из контракта и несёт
+    # четыре инструмента (полное conformance-ядро — scripts/check_mcp.py).
+    try:
+        sys.path.insert(0, HERE)
+        import check_mcp
+        responses, _proc = check_mcp.run_session([
+            check_mcp._req(1, "initialize",
+                           {"protocolVersion": "2025-06-18",
+                            "capabilities": {},
+                            "clientInfo": {"name": "contract-smoke",
+                                           "version": "0"}}),
+            check_mcp._req(2, "tools/list"),
+        ], timeout=120)
+        by = {r.get("id"): r for r in responses if "id" in r}
+        init = (by.get(1) or {}).get("result") or {}
+        ver = ((init.get("serverInfo") or {}).get("version"))
+        prod_ver = (doc.get("product") or {}).get("version")
+        if prod_ver and ver != prod_ver:
+            errors.append("MCP-smoke: serverInfo.version %r != contract "
+                          "product.version %r" % (ver, prod_ver))
+        tools = ((by.get(2) or {}).get("result") or {}).get("tools") or []
+        if len(tools) != len(doc.get("tools", [])):
+            errors.append("MCP-smoke: tools/list несёт %d инструментов, "
+                          "контракт — %d" % (len(tools),
+                                             len(doc.get("tools", []))))
+    except Exception as exc:  # noqa: BLE001 — smoke не должен валить гейт-скрипт
+        errors.append("MCP-smoke не исполнен: %r" % exc)
     errors.extend(_help_warning_error())
     errors.extend(wording_errors())
     return errors
@@ -425,11 +490,19 @@ def selftest() -> int:
                  and t.get("transformation")
                  and POLISH_WARNING_RU in str(t.get("when_not", ""))
                  for t in doc.get("tools", [])))
+        case("prohibited_uses несёт ключевую фразу",
+             contract_errors(doc) == [])
+        no_pu = json.loads(json.dumps(doc))
+        del no_pu["prohibited_uses"]
+        case("контракт без prohibited_uses валится (негатив)",
+             any("prohibited_uses" in e for e in contract_errors(no_pu)))
     except (OSError, json.JSONDecodeError):
         case("контракт читается и структурно валиден", False)
         case("все четыре инструмента описаны", False)
         case("все четыре инструмента несут output_schema с const >= 1", False)
         case("polish несёт transformation и честное when_not", False)
+        case("prohibited_uses несёт ключевую фразу", False)
+        case("контракт без prohibited_uses валится (негатив)", False)
 
     print("САМОПРОВЕРКА check_contract: %d/%d PASS" % (passed, passed + failed))
     return 1 if failed else 0

@@ -138,7 +138,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.17.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.18.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -163,7 +163,10 @@ Package commands:
   `scripts/check_polish_modes.py`).
 - `humanizer-detect` — conjunction-frequency detector with a domain status;
   no authorship verdict, graduated response.
-- `humanizer-markers` — copy-paste artifact search (classes A and B).
+- `humanizer-markers` — copy-paste artifact search (classes A and B);
+  `--remove` strips invisible marks by risk class: safe automatically,
+  ambiguous only with `--include-ambiguous` and a warning, dangerous is
+  reported and never removed (table: `references/removal-matrix.md`).
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
 
 All four commands read stdin via `-`. Sample output (markers on a chat
@@ -248,7 +251,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 100 gates in the full checklist (89 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 104 gates in the full checklist (93 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
@@ -264,12 +267,26 @@ scanner once treated the marker description as a download link (a false
 positive, a case class known from YARA rules and the EICAR string). The
 marker cannot be removed: that would be a hole in the detector.
 
+Prohibited uses (full list in the `prohibited_uses` block of
+`contract.v1.json`): submitting work where AI is prohibited (exams,
+coursework, professional certification); evading plagiarism or attribution
+systems; concealing AI use where disclosure is required; stripping
+watermarks from content the user does not own; attributing machine text to
+another person. The legitimate area is your own text and honest reporting
+without authorship verdicts.
+
 ## Sources
 
 - [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)
 - [Russian Wikipedia: signs of generated text](https://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F%3A%D0%9F%D1%80%D0%B8%D0%B7%D0%BD%D0%B0%D0%BA%D0%B8_%D1%81%D0%B3%D0%B5%D0%BD%D0%B5%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%B0)
 - [WikiProject AI Cleanup](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup)
 - `docs/FRAMEWORK.md` — verifiability methodology; `ERRATA.md` — dated retractions.
+- The validation corpora (`eval/manifest.v1.json`) contain verbatim
+  fragments of public-domain works (Wikisource) and texts written by the
+  project in the register of Wikipedia/Wikinews for the corpus; sources
+  and per-file licenses: `research/validation/README.md`. Borrowed
+  fragments stay under their own licenses; the project MIT covers the
+  code and original texts, not third-party inserts.
 
 ## Changelog
 
