@@ -69,3 +69,5 @@
   неотобранных прогонов, локальные пути, внутренние роли).
 
 Единица бюджета витрины: гейт `check_docs.py` (I.18) меряет СИМВОЛЫ: SKILL.md ≤ 15750 символов (≈4500 токенов при оценке 3.5 символа/токен), README.md ≤ 320 строк, README.en.md ≤ 300, GOVERNANCE.md ≤ 98.
+
+Trusted Publishing: доверенный издатель настроен владельцем 2026-09-04 (owner Vladimir-Human, repo humanizer-ru, workflow pypi-publish.yml, environment pypi); работоспособность доказана сухим прогоном workflow_dispatch 2026-09-04 (run 33794879701): OIDC-авторизация успешна, существующие файлы пропущены (skip-existing). twine остаётся запасным путём на случай отказа OIDC.
