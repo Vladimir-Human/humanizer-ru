@@ -1,0 +1,276 @@
+{
+  "manifest_version": 1,
+  "candidate": "eval/candidates/smixs_runner.py",
+  "files": 52,
+  "files_missing": 0,
+  "hash_mismatches": 0,
+  "runner_errors": 0,
+  "runner_failed": false,
+  "human_hits": 75,
+  "ai_hits": 150,
+  "ai_unexpected": 3,
+  "boundary_expected_ok": 1,
+  "boundary_unexpected": 1,
+  "details": [
+    {
+      "file": "research/validation/human/09-wikipedia-modern.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/11-it-notation.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 11,
+          "case": "A остаток размышлений"
+        },
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 11,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/13-krylov-kvartet.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 10,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 10,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/14-afanasyev-finist.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/15-perelman-zavtrak.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 0,
+          "case": "формальное открытие"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/16-chekhov-smert-chinovnika.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 4,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 4,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 8,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/17-saltykov-shchedrin-dva-generala.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 7,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/18-goncharov-oblomov.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 0,
+          "case": "формальное открытие"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/19-gilyarovsky-moskvich.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 9,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/21-leskov-levsha.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 8,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 10,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/23-ershov-konek-predislovie.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 3,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 6,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 6,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/24-gercen-byloe-i-dumy.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 3,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/human/25-ciolkovsky-grezy.txt",
+      "kind": "human",
+      "hits": [
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 1,
+          "case": "23 длинное тире"
+        },
+        {
+          "line": 11,
+          "case": "23 длинное тире"
+        }
+      ],
+      "fp": true
+    },
+    {
+      "file": "research/validation/boundary/emoji-zwj.txt",
+      "kind": "boundary",
+      "expected": 0,
+      "actual": 1,
+      "cases": [
+        "21 эмодзи"
+      ]
+    },
+    {
+      "file": "research/raw/gemini/02-valans-span.txt",
+      "kind": "ai",
+      "expected": 3,
+      "actual": 3,
+      "cases": [
+        "A gemini-цитата"
+      ]
+    },
+    {
+      "file": "research/raw/gemini/03-eretria-span.txt",
+      "kind": "ai",
+      "expected": 7,
+      "actual": 9,
+      "cases": [
+        "23 длинное тире",
+        "A gemini-цитата"
+      ]
+    },
+    {
+      "file": "research/raw/le-chat/01-fast-канберра.txt",
+      "kind": "ai",
+      "expected": 1,
+      "actual": 1,
+      "cases": [
+        "23 длинное тире"
+      ]
+    }
+  ]
+}

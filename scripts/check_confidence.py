@@ -52,10 +52,14 @@ def wilson(k, n, z=Z):
     """95% доверительный интервал Уилсона для доли k/n.
 
     Возвращает (low, high) в долях единицы. При n=0 возвращает (0.0, 0.0):
-    по нулю наблюдений оценивать долю нельзя.
+    по нулю наблюдений оценивать долю нельзя. При k>n доля невозможна
+    (наблюдений больше знаменателя — это сумма совпадений, а не доля
+    файлов): ValueError, вызывающий обязан вывести «сумму» без CI.
     """
     if n <= 0:
         return (0.0, 0.0)
+    if k > n:
+        raise ValueError("wilson: k=%d > n=%d — доля невозможна" % (k, n))
     p = k / float(n)
     denom = 1.0 + z * z / n
     center = (p + z * z / (2.0 * n)) / denom
@@ -206,6 +210,10 @@ def _render_tables():
         parts.append("|---|---:|---:|---:|---:|")
         for stem in sorted(records):
             rec = records[stem]
+            if rec["human_hits"] > _HUMAN_N:
+                parts.append("| %s | %d | %d | сумма совпадений | — |"
+                             % (rec["candidate"], rec["human_hits"], _HUMAN_N))
+                continue
             low, high = wilson(rec["human_hits"], _HUMAN_N)
             parts.append("| %s | %d | %d | %.1f%% | %s |"
                          %(rec["candidate"], rec["human_hits"], _HUMAN_N,
@@ -439,7 +447,15 @@ def _check_leaderboard():
         if rec["ai_hits"] is not None and _parse_int(ai_cell) != rec["ai_hits"]:
             mismatches.append("AI-выводы: LEADERBOARD=%s, JSON=%d"
                               % (ai_cell, rec["ai_hits"]))
-        if ci_cell is not None:
+        if rec["human_hits"] > _HUMAN_N:
+            # Сумма совпадений больше числа файлов: доля и Wilson неприменимы,
+            # в колонке CI обязано стоять тире с пометкой «сумма, не доля».
+            if ci_cell is None or not ci_cell.startswith("—"):
+                mismatches.append(
+                    "%s: при совпадениях %d > файлах %d колонка Wilson CI "
+                    "обязана быть «—» (сумма совпадений, не доля)"
+                    % (cells[0], rec["human_hits"], _HUMAN_N))
+        elif ci_cell is not None:
             expected_ci = _fmt_pct(*wilson(rec["human_hits"], _HUMAN_N))
             if ci_cell != expected_ci:
                 mismatches.append("человеческие тексты CI: LEADERBOARD=%s, Wilson=%s"
@@ -485,6 +501,11 @@ def selftest():
     case("парсер читает boundary 2/2", _parse_boundary("2/2") == (2, 2))
     low, high = wilson(0, 11)
     case("формат CI 0/11 = [0%; 25.9%]", _fmt_pct(low, high) == "[0%; 25.9%]")
+    try:
+        wilson(75, 26)
+        case("wilson(k>n) валится — доля невозможна", False)
+    except ValueError:
+        case("wilson(k>n) валится — доля невозможна", True)
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 

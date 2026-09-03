@@ -47,7 +47,7 @@ SYNCED = [
 ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
               "scan_soft_signals.py", "polish.py", "detect_conj.py",
               "mcp_server.py", "text_layer.py"}
-SYNCED_DATA = ["contract.v1.json", "markers.v1.json"]
+SYNCED_DATA = ["contract.v1.json", "markers.v1.json", "identity.v1.json"]
 # Копии с другим именем: MCP-сервер (scripts/mcp/humanizer_mcp.py ->
 # модуль пакета mcp_server.py, точка входа humanizer-mcp) и текстовый
 # слой снятия (scripts/filemarks/text_layer.py -> модуль пакета
