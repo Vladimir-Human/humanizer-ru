@@ -4,26 +4,57 @@
   "title": "Реестр фактов: публичные числа витрины (схема v1)",
   "description": "Каждое десятичное/дробное число витринных текстов существует только как запись этого реестра. Значения, не одобренные владельцем к публикации, в публичный реестр не попадают вовсе и живут в приватном реестре прогона; неодобренные числа подготовленного пакета несут publication_approved: false и до пуша сверяются режимом --strict-publication гейта scripts/check_facts.py. Числа без записи — дрейф, сборка падает. Число со статусом withdrawn вне документов-отзывов — сборка падает.",
   "type": "object",
-  "required": ["registry", "schema", "updated", "entries"],
+  "required": [
+    "registry",
+    "schema",
+    "updated",
+    "entries"
+  ],
   "properties": {
-    "registry": {"type": "string", "minLength": 1},
-    "schema": {"type": "string", "const": "facts.schema.v1.json"},
-    "updated": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "registry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema": {
+      "type": "string",
+      "const": "facts.schema.v1.json"
+    },
+    "updated": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
     "entries": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["fact_id", "claim", "status", "publication_approved", "tokens", "artifact", "date"],
+        "required": [
+          "fact_id",
+          "claim",
+          "status",
+          "publication_approved",
+          "tokens",
+          "artifact",
+          "date"
+        ],
         "properties": {
           "fact_id": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9-]*$",
             "description": "уникальный идентификатор записи"
           },
-          "claim": {"type": "string", "minLength": 10, "description": "утверждение одной строкой"},
+          "claim": {
+            "type": "string",
+            "minLength": 10,
+            "description": "утверждение одной строкой"
+          },
           "status": {
-            "enum": ["proven", "limited", "unknown", "withdrawn"],
+            "enum": [
+              "proven",
+              "limited",
+              "unknown",
+              "withdrawn"
+            ],
             "description": "proven — измерено и прошло предрегистрированный гейт; limited — измерено с датой и областью; unknown — заявлено без измерения (событие, не норма); withdrawn — интерпретация отозвана, место числа только в документах-отзывах"
           },
           "publication_approved": {
@@ -33,15 +64,50 @@
           "tokens": {
             "type": "array",
             "minItems": 1,
-            "items": {"type": "string", "pattern": "^(\\d\\.\\d{2,4}|\\d{1,4}/\\d{1,4})$"},
+            "items": {
+              "type": "string",
+              "pattern": "^(\\d\\.\\d{2,4}|\\d{1,4}/\\d{1,4})$"
+            },
             "description": "числовые токены записи в той же форме, в какой их извлекает гейт (без знака)"
           },
-          "value_note": {"type": "string", "description": "значение словами: число, интервалы, n"},
-          "artifact": {"type": "string", "minLength": 3, "description": "путь к данным (в репо — относительный; в ран-директории — с префиксом run:)"},
-          "reproduce": {"type": "string", "description": "команда, которая падает, если число перестало воспроизводиться"},
-          "retraction": {"type": "string", "description": "где зафиксирован отзыв (для withdrawn)"},
-          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
-          "note": {"type": "string"}
+          "value_note": {
+            "type": "string",
+            "description": "значение словами: число, интервалы, n"
+          },
+          "artifact": {
+            "type": "string",
+            "minLength": 3,
+            "description": "путь к данным (в репо — относительный; в ран-директории — с префиксом run:)"
+          },
+          "reproduce": {
+            "type": "string",
+            "description": "команда, которая падает, если число перестало воспроизводиться"
+          },
+          "retraction": {
+            "type": "string",
+            "description": "где зафиксирован отзыв (для withdrawn)"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "note": {
+            "type": "string"
+          },
+          "assumptions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "llm-judge-oracle",
+                "single-family-panel",
+                "private-run-artifact",
+                "prereg-frozen",
+                "positional-noise-documented"
+              ]
+            },
+            "description": "контролируемый словарь допущений записи; run:-артефакт обязан нести private-run-artifact"
+          }
         }
       }
     }

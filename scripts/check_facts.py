@@ -78,7 +78,14 @@ STATUSES = ("proven", "limited", "unknown", "withdrawn")
 # Пометка для записей, чей артефакт живёт в приватном прогоне: одобренное
 # число обязано быть проверяемым, поэтому приватный артефакт без явной
 # пометки (и обязательства публикации данных следующим батчем) — нарушение.
-PRIVATE_MARK = "артефакт приватного прогона"
+PRIVATE_MARK = "артефакт приватного прогона"  # историческая пометка note; заменена полем assumptions
+# Контролируемый словарь допущений (заимствование A из консультации
+# fable-primegaps-applicability, 2026-09-04): аналог permitted_axioms у
+# формализаций OpenAI. Запись с run:-артефактом обязана нести
+# private-run-artifact; допущение вне словаря валит гейт.
+ASSUMPTIONS_ENUM = ("llm-judge-oracle", "single-family-panel",
+                    "private-run-artifact", "prereg-frozen",
+                    "positional-noise-documented")
 # Документированный сверочный суффикс артефакта: «путь (sha256 <64 hex>)».
 SHA_SUFFIX_RE = re.compile(r" \(sha256 [0-9A-Fa-f]{64}\)$")
 
@@ -154,6 +161,23 @@ def schema_errors(data):
     return errs
 
 
+def assumptions_problems(data):
+    """Допущения записи — только из словаря ASSUMPTIONS_ENUM."""
+    probs = []
+    for e in data.get("entries", []):
+        fid = e.get("fact_id", "?")
+        if "assumptions" not in e:
+            continue
+        a = e["assumptions"]
+        if not isinstance(a, list) or not a:
+            probs.append("запись %s: assumptions должен быть непустым списком" % fid)
+            continue
+        for v in a:
+            if v not in ASSUMPTIONS_ENUM:
+                probs.append("запись %s: допущение вне словаря: %r" % (fid, v))
+    return probs
+
+
 def changed_vs_origin(root):
     """Файлы, которые пуш сделает впервые публичными: добавленные/изменённые
     относительно origin/main плюс неотслеживаемые. Возвращает множество путей
@@ -227,11 +251,13 @@ def artifact_problems(root, data):
         approved = e.get("publication_approved") is True
         for part in [p.strip() for p in art.split(",") if p.strip()]:
             if part.startswith("run:"):
-                if PRIVATE_MARK not in note:
+                assumptions = e.get("assumptions")
+                if not isinstance(assumptions, list) \
+                        or "private-run-artifact" not in assumptions:
                     problems.append(
-                        "запись %s: артефакт %s указывает приватный прогон без "
-                        "пометки «%s»%s" % (
-                            fid, part, PRIVATE_MARK,
+                        "запись %s: run:-артефакт без допущения "
+                        "private-run-artifact в assumptions%s" % (
+                            fid,
                             " (publication_approved=true — одобренное число "
                             "обязано быть проверяемым)" if approved else ""))
                 continue
@@ -256,6 +282,7 @@ def run(root, strict):
         return 1, errs, ""
     statuses, approved = token_maps(data)
     problems = artifact_problems(root, data)
+    problems += assumptions_problems(data)
     for rel in SHOWCASE:
         path = os.path.join(root, rel)
         if not os.path.isfile(path):
@@ -421,11 +448,12 @@ def selftest():
     td = tree_with(run_art)
     rc, probs, _ = run(td, strict=False)
     case("run:-артефакт без пометки ВАЛИТСЯ (одобренное число непроверяемо)",
-         rc == 1 and any(PRIVATE_MARK in p for p in probs))
+         rc == 1 and any("private-run-artifact" in p for p in probs))
 
     run_marked = _registry([_entry(
         artifact="run:w1/x.json",
-        note="артефакт приватного прогона, публикация — RR-03")])
+        note="артефакт приватного прогона, публикация — RR-03",
+        assumptions=["private-run-artifact"])])
     td = tree_with(run_marked)
     rc, probs, _ = run(td, strict=False)
     case("run:-артефакт с пометкой законен", rc == 0 and not probs)
