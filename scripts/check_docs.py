@@ -80,6 +80,10 @@ TOP_LEVEL_MANIFEST = frozenset((
  # 2026-09-03 (батч 3, приказ полной автономии): витрина измерений,
  # регламент выпусков и машиночитаемая идентичность.
  "METRICS.md", "RELEASE.md", "identity.v1.json",
+ # 2026-09-04: метаданные сервера для официального MCP-реестра
+ # (схема modelcontextprotocol.io 2025-12-11); каталоги MCP
+ # (Glama и подобные) индексируют серверы по этому файлу.
+ "server.json",
 ))
 
 def _tracked_top_levels(root):
