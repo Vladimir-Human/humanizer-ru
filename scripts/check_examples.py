@@ -33,6 +33,37 @@ if hasattr(sys.stdout, "reconfigure"):
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# F1: детерминированная сверка фактов двух версий текста (модуль пакета).
+sys.path.insert(0, os.path.join(ROOT, "src"))
+from humanizer_ru import facts_diff  # noqa: E402
+
+# Категории авторских фактов для проверки «не потерял». urls/emails сознательно
+# вне списка: снятие машинных ссылок и utm-меток — обещание очистки класса A,
+# а не потеря факта автора; quotes вне списка потому, что цитата — span-контент:
+# редакция вправе объединять и укорачивать цитаты, не теряя атомарных фактов.
+# В CLI humanizer-facts urls, emails и quotes видны как lost всегда: решение
+# оставляет человек, глядя на список.
+AUTHOR_FACT_CATS = ("numbers", "numwords", "dates", "names", "modals")
+# Нормативные модальности — факт («нельзя публиковать»); hedge-модальности
+# («можно сказать», «следует отметить») — стилевой шум, который правка
+# убирает законно: в гейте примеров они не считаются потерей. В CLI
+# humanizer-facts видны все модальности: решение оставляет человек.
+NORMATIVE_MODALS = ("должен", "должна", "должно", "должны", "нельзя",
+                    "запрещено", "разрешено", "необходимо", "требуется")
+# Метки пар, где снятие псевдофактов и есть демонстрация (выдуманные DOI,
+# спекулятивные масштабы): потеря проверяемых строк в них законна.
+LOSS_EXEMPT_LABELS = ("снятие псевдофактов", "pseudo-fact removal")
+# Payload машинных маркеров (:contentReference[...]{...}, utm_*, *_card://)
+# и невидимые символы — не факты автора: их снятие и есть обещание класса A.
+MARKER_PAYLOAD_RX = re.compile(
+    r":\w+\[[^\]\n]*\](?:\{[^\}\n]*\})?|\butm_\w+=[^\s&]+|"
+    r"\w+_card://\S+|[\u200b\u200c\u200d\u2060\ufeff]")
+
+
+def _loss_text(text):
+    return MARKER_PAYLOAD_RX.sub(" ", _strip_markup(text))
+
+
 TARGETS = ["SKILL.md", "README.md", "README.en.md",
            os.path.join("tests", "test-fixtures-pairs.md"),
            os.path.join("tests", "test-fixtures-cases.md")]
@@ -378,7 +409,8 @@ PAIR_RX = re.compile(
     # Двоеточие метки допускается и внутри жирного, и сразу после него
     # («**До:**» и «**До**:</...>»): вариант разметки не должен тихо
     # выключать пару из проверки.
-    r"\*\*(?:До|Before)(?::\*\*|\*\*\s*:)(?P<before>.*?)(?=\n\s*\n(?!>)|\Z)\n\s*\n"
+    r"\*\*(?:До|Before)(?::\*\*|\*\*\s*:)"
+    r"(?P<before>(?:(?!\*\*(?:До|Before)).)*?)(?=\n\s*\n(?!>)|\Z)\n\s*\n"
     r"\*\*(?:После|After)(?P<label>[^:*]*)(?::\*\*|\*\*\s*:)(?P<after>.*?)"
     r"(?=\n\s*\n(?!>)|\n\s*\n\*\*(?:До|Before|После|After|Что)|\n\s*\n---|\n\s*\n#|\Z)",
     re.S,
@@ -406,8 +438,29 @@ def check_text(text, path="<text>"):
         # случайные подписи со словом author гейт не отключают.
         # Скобки и пробелы нормализуются: в примерах метка живёт в виде
         # «После (с фактами автора):».
-        authored = label.strip("() ").strip() in AUTHOR_LABELS
+        label_clean = label.strip("() ").strip()
+        authored = label_clean in AUTHOR_LABELS
+        loss_exempt = label_clean in LOSS_EXEMPT_LABELS
         added = new_facts(before, after)
+        lost_author = []
+        if not authored and not loss_exempt:
+            fd = facts_diff.diff(_loss_text(before), _loss_text(after))
+            after_low = _loss_text(after).casefold()
+            lost_author = [i for i in fd["lost"] + fd["changed"]
+                           if i["category"] in AUTHOR_FACT_CATS and not (
+                               i["category"] == "modals"
+                               and i.get("value") not in NORMATIVE_MODALS)
+                           and not (
+                               i["category"] == "names"
+                               and i["value"].casefold() in after_low)]
+        if lost_author:
+            errors.append(
+                "%s:%d: правка потеряла или инвертировала авторские факты: %s"
+                % (path, line, "; ".join(
+                    ("%s->%s" % (i.get("before"), i.get("after")))
+                    if i in fd["changed"] else "[%s] %s"
+                    % (i["category"], i["value"]) for i in lost_author))
+            )
         if authored:
             stats["authored"] += 1
             if not added:
@@ -433,6 +486,17 @@ def check_text(text, path="<text>"):
 
 def selftest():
     ok = True
+    lost_num = ("**До:** Бюджет проекта 500 тыс. руб.\n\n"
+                "**После:** Бюджет проекта уточняется.\n")
+    e, w, s = check_text(lost_num)
+    ok &= bool(e) and any("потеряла" in x for x in e)
+    print("негатив: потеря числа в паре ловится: %s" % bool(e))
+    exempt = ("**До:** DOI 10.5555/x.2020.42 выдуман.\n\n"
+              "**После (снятие псевдофактов):** DOI не подтверждён.\n")
+    e2, w2, s2 = check_text(exempt)
+    ok &= not e2
+    print("метка снятия псевдофактов освобождает от проверки потерь: %s"
+          % (not e2))
     clean = "**До:** Галерея выступает в качестве пространства.\n\n**После:** Галерея — это пространство.\n"
     dirty = "**До:** Результаты улучшаются.\n\n**После:** Результаты улучшились на 30%.\n"
     labeled = "**До:** Результаты улучшаются.\n\n**После (с фактами автора):** Результаты улучшились на 30%.\n"
