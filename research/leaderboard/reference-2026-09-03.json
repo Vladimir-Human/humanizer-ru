@@ -1,0 +1,15 @@
+{
+  "manifest_version": 1,
+  "candidate": "check_markers.py (reference)",
+  "files": 52,
+  "files_missing": 0,
+  "hash_mismatches": 0,
+  "runner_errors": 0,
+  "runner_failed": false,
+  "human_hits": 0,
+  "ai_hits": 11,
+  "ai_unexpected": 0,
+  "boundary_expected_ok": 2,
+  "boundary_unexpected": 0,
+  "details": []
+}

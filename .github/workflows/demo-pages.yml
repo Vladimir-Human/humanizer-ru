@@ -46,7 +46,7 @@ jobs:
         # копии добавляются только в артефакт Pages, в каталоге demo/
         # репозитория их нет. Состав сверяет гейт scripts/check_pages_router.py.
         run: |
-          cp llms.txt contract.v1.json ERRATA.md README.md README.en.md SKILL.md demo/
+          cp llms.txt contract.v1.json ERRATA.md README.md README.en.md SKILL.md identity.v1.json demo/
           mkdir -p demo/docs demo/eval/facts demo/.well-known
           cp docs/FRAMEWORK.md demo/docs/FRAMEWORK.md
           cp eval/facts/facts.v1.json demo/eval/facts/facts.v1.json
