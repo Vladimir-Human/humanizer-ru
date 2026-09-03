@@ -1,0 +1,4 @@
+# Состав sdist: пакет (src/) и pyproject попадают автоматически; здесь —
+# тесты, чтобы цепочка «sdist -> чистое venv -> тесты» работала и без дерева
+# репозитория (гейт --sdist-test в scripts/check_release.py и шаг публикации).
+recursive-include tests *.py

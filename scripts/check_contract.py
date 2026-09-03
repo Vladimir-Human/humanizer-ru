@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -166,6 +167,75 @@ def live_check() -> list[str]:
                           % (command, payload.get("tool")))
         errors.extend("%s: %s" % (command, e)
                       for e in envelope_errors(payload, command, schemas.get(command)))
+
+    # out-of-scope: английский и пустой вход — status out-of-scope, код 0.
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="contract-scope-") as td:
+        en = os.path.join(td, "en.txt")
+        empty = os.path.join(td, "empty.txt")
+        with open(en, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("Plain English text without any Russian words at all.\n")
+        with open(empty, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("")
+        for label, path in (("английский", en), ("пустой", empty)):
+            proc = subprocess.run(
+                [sys.executable,
+                 os.path.join(ROOT, "scripts", "scan_soft_signals.py"),
+                 "--json", path],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120,
+                encoding="utf-8", errors="replace")
+            try:
+                payload = json.loads(proc.stdout)
+                status = payload["files"][0].get("status")
+            except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                status = None
+            if proc.returncode != 0 or status != "out-of-scope":
+                errors.append("scan на %s входе: ожидался status out-of-scope "
+                              "при коде 0, получено %r (код %d)"
+                              % (label, status, proc.returncode))
+        # Конверт ошибки: нечитаемый файл с --json — валидный JSON с error,
+        # код 2 (stdout не пустой: агент всегда получает разобранный ответ).
+        missing = os.path.join(td, "does-not-exist.txt")
+        for command, script in (("humanizer-scan", "scan_soft_signals.py"),
+                                ("humanizer-polish", "polish.py"),
+                                ("humanizer-detect", "detect_conj.py"),
+                                ("humanizer-markers", "check_markers.py")):
+            argv = [sys.executable, os.path.join(ROOT, "scripts", script)]
+            if command == "humanizer-markers":
+                argv.append("--scan")
+            argv += ["--json", missing]
+            proc = subprocess.run(argv, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, timeout=120,
+                                  encoding="utf-8", errors="replace")
+            ok = proc.returncode == 2
+            try:
+                payload = json.loads(proc.stdout)
+                ok = ok and payload.get("tool") == command \
+                    and isinstance(payload.get("error"), str) \
+                    and isinstance(payload.get("files"), list)
+            except json.JSONDecodeError:
+                ok = False
+            if not ok:
+                errors.append("%s: на нечитаемом файле с --json ожидался конверт "
+                              "{tool, schema, error, files} в stdout при коде 2 "
+                              "(код %d)" % (command, proc.returncode))
+
+    # --version: установленные команды называют версию пакета (cli.py);
+    # в дереве репозитория проверяется через PYTHONPATH=src.
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.path.join(ROOT, "src") + os.pathsep \
+        + env.get("PYTHONPATH", "")
+    for entry in ("scan_main", "markers_main", "polish_main", "detect_main"):
+        proc = subprocess.run(
+            [sys.executable, "-c",
+             "from humanizer_ru.cli import %s; import sys; "
+             "sys.exit(%s(['--version']))" % (entry, entry)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60,
+            encoding="utf-8", errors="replace", env=env, cwd=ROOT)
+        ver = proc.stdout.strip()
+        if proc.returncode != 0 or not re.match(r"^\d+\.\d+\.\d+$", ver):
+            errors.append("cli.%s --version: ожидалась версия X.Y.Z, получено "
+                          "%r (код %d)" % (entry, ver, proc.returncode))
     return errors
 
 

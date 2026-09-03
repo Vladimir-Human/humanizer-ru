@@ -11,6 +11,11 @@ on:
       - 'llms.txt'
       - 'contract.v1.json'
       - 'ERRATA.md'
+      - 'README.md'
+      - 'README.en.md'
+      - 'SKILL.md'
+      - 'docs/FRAMEWORK.md'
+      - 'eval/facts/facts.v1.json'
       - '.github/workflows/demo-pages.yml'
   workflow_dispatch:
 
@@ -36,10 +41,16 @@ jobs:
       - name: Настроить Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Добавить машинные файлы к артефакту
-        # llms.txt, contract.v1.json и ERRATA.md доступны по URL-конвенции
-        # /llms.txt и соседним путям: копия добавляется только в артефакт
-        # Pages, в каталоге demo/ репозитория их нет.
-        run: cp llms.txt contract.v1.json ERRATA.md demo/
+        # llms.txt, контракт, эррата и витринные копии доступны по
+        # URL-конвенции (/llms.txt, /.well-known/llms.txt, /README.md, ...):
+        # копии добавляются только в артефакт Pages, в каталоге demo/
+        # репозитория их нет. Состав сверяет гейт scripts/check_pages_router.py.
+        run: |
+          cp llms.txt contract.v1.json ERRATA.md README.md README.en.md SKILL.md demo/
+          mkdir -p demo/docs demo/eval/facts demo/.well-known
+          cp docs/FRAMEWORK.md demo/docs/FRAMEWORK.md
+          cp eval/facts/facts.v1.json demo/eval/facts/facts.v1.json
+          cp llms.txt demo/.well-known/llms.txt
       - name: Собрать артефакт из demo/
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
@@ -47,3 +58,7 @@ jobs:
       - name: Опубликовать
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+      - name: Проверить машинный вход на Pages
+        # После деплоя: копии и обе конвенции llms.txt отдают 200,
+        # ссылки llms.txt разрешаются.
+        run: python3 scripts/check_pages_router.py --live-pages
