@@ -1,8 +1,8 @@
 {
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
-  "version": "3.19.1",
+  "version": "3.19.2",
   "date": "2026-09-03",
-  "measured_commit": "57c4d4ad75a99685579bf6f87b7701f09544dea6",
+  "measured_commit": "3bcaa5d653b9f41ec32636484fefe0771086cec2",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
   "scope_files": 38,
   "methods": {
@@ -67,7 +67,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 19,
+      "style_total": 21,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
