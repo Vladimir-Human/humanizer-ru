@@ -1,0 +1,105 @@
+{
+  "ambiguous.txt": {
+    "default": {
+      "changed": false,
+      "kept_flags": 0,
+      "removed": [],
+      "reported": [
+        "U+200F",
+        "U+202E",
+        "U+202C",
+        "U+FE0F",
+        "U+00A0"
+      ]
+    },
+    "opt_in": {
+      "removed": [
+        "U+200F",
+        "U+202E",
+        "U+202C",
+        "U+FE0F",
+        "U+00A0"
+      ],
+      "warnings_min": 5
+    }
+  },
+  "dangerous.txt": {
+    "default": {
+      "changed": false,
+      "kept_flags": 0,
+      "removed": [],
+      "reported": [
+        "U+2028",
+        "U+2029",
+        "U+FFF9"
+      ]
+    },
+    "opt_in": {
+      "removed": [],
+      "warnings_min": 0
+    }
+  },
+  "emoji_zwj.txt": {
+    "default": {
+      "changed": false,
+      "kept_flags": 0,
+      "removed": [],
+      "reported": [
+        "U+200D",
+        "U+200D",
+        "U+FE0F"
+      ]
+    },
+    "opt_in": {
+      "removed": [
+        "U+200D",
+        "U+200D",
+        "U+FE0F"
+      ],
+      "warnings_min": 3
+    }
+  },
+  "flag_england.txt": {
+    "default": {
+      "changed": true,
+      "kept_flags": 6,
+      "removed": [
+        "U+E0041"
+      ],
+      "reported": []
+    },
+    "opt_in": {
+      "removed": [
+        "U+E0041"
+      ],
+      "warnings_min": 0
+    }
+  },
+  "safe.txt": {
+    "default": {
+      "changed": true,
+      "kept_flags": 0,
+      "removed": [
+        "U+200B",
+        "U+FEFF",
+        "U+00AD",
+        "U+2060",
+        "U+E201"
+      ],
+      "removed_classes": [
+        "safe"
+      ],
+      "reported": []
+    },
+    "opt_in": {
+      "removed": [
+        "U+200B",
+        "U+FEFF",
+        "U+00AD",
+        "U+2060",
+        "U+E201"
+      ],
+      "warnings_min": 0
+    }
+  }
+}

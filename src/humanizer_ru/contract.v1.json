@@ -4,9 +4,9 @@
   "language": "ru",
   "product": {
     "name": "humanizer-ru",
-    "version": "3.17.0",
+    "version": "3.18.0",
     "install": {
-      "pip": "pip install humanizer-ru==3.17.0",
+      "pip": "pip install humanizer-ru==3.18.0",
       "requires_python": ">=3.9",
       "freshness": "сверьте версию с https://github.com/Vladimir-Human/humanizer-ru/releases/latest или лентой releases.atom"
     },
@@ -36,8 +36,23 @@
     "out_of_scope": "пустой вход и текст не на русском: механика отрабатывает, но ответ несёт status out-of-scope и scope_note — область скилла русский текст, «правка не требуется» таким входам не адресуется",
     "empty_response_is": "дефект дизайна, а не честность"
   },
+  "prohibited_uses": {
+    "rule": "проект не помогает в перечисленном; агентный слой (SKILL.md) отказывает таким просьбам, документация их не скрывает",
+    "list": [
+      "сдача работ там, где ИИ запрещён: экзамены, учебные задания, служебная аттестация",
+      "обход систем антиплагиата и атрибуции: перезапись не устраняет совпадение с базой и не создаёт авторство",
+      "сокрытие факта использования ИИ, когда его раскрытие требуется законом или правилами площадки",
+      "снятие водяных знаков и меток с чужого контента, которым пользователь не владеет",
+      "приписывание машинного текста другому лицу"
+    ],
+    "legitimate": "свой текст: правка и диагностика собственных материалов, снятие следов копипасты из своих вставок, честный отчёт без вердиктов об авторстве"
+  },
   "genres": {
     "dictionary": ["neutral", "fiction", "legal", "academic", "marketing", "chat", "instructions", "essay", "prose", "web", "auto"],
+    "effective_by_tool": {
+      "humanizer-scan": ["neutral", "fiction", "legal", "academic", "marketing", "chat"],
+      "humanizer-detect": ["instructions", "essay", "prose", "web", "auto"]
+    },
     "rule": "единый словарь --genre для всех CLI: счётчик признаков отображает чужие домены в neutral, детектор связок для чужих значений включает автоклассификацию (auto); эффективные домены: счётчик — neutral/fiction/legal/academic/marketing/chat, детектор — instructions/essay/prose/web/auto"
   },
   "tools": [
@@ -123,9 +138,9 @@
     {
       "command": "humanizer-markers",
       "script": "scripts/check_markers.py",
-      "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B; находит и показывает, не удаляет",
-      "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека; файловое удаление невидимых меток — scripts/filemarks (в pip-пакет не входит)",
-      "modes": ["--scan ФАЙЛ...", "--class a|all", "--json", "--selftest (без файлов)", "- (stdin)", "--version", "--contract"],
+      "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B; находит и показывает; --remove снимает невидимые метки текстового слоя по классификации риска (safe автоматически, ambiguous только opt-in, dangerous никогда)",
+      "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека; контейнерные файлы (PNG/DOCX/PDF/…) — scripts/filemarks (репозиторий); текстовый слой снятия входит в пакет (text_layer)",
+      "modes": ["--scan ФАЙЛ...", "--class a|all", "--json", "--remove ФАЙЛ...", "--include-ambiguous", "--dry-run", "--diff", "--in-place (.bak)", "--selftest (без файлов)", "- (stdin)", "--version", "--contract"],
       "output_schema": {
         "type": "object",
         "required": ["tool", "schema", "files"],
@@ -145,6 +160,15 @@
                 "warnings_b": {"type": "integer"},
                 "scope_note": {"type": "string"},
                 "error": {"type": "string"},
+                "mode": {"enum": ["remove"]},
+                "removed": {"type": "array"},
+                "reported": {"type": "array"},
+                "flag_sequences_kept": {"type": "array"},
+                "warnings": {"type": "array", "items": {"type": "string"}},
+                "removed_safe": {"type": "integer"},
+                "removed_ambiguous": {"type": "integer"},
+                "reported_total": {"type": "integer"},
+                "changed": {"type": "boolean"},
                 "markers": {
                   "type": "array",
                   "items": {
@@ -205,9 +229,9 @@
   ],
   "router": [
     {"need": "проверить текст на следы машинного происхождения", "use": "humanizer-detect + humanizer-markers"},
-    {"need": "найти артефакты копипасты и разметки", "use": "humanizer-markers (показывает совпадения; не удаляет)"},
+    {"need": "найти артефакты копипасты и разметки", "use": "humanizer-markers (показывает совпадения)"},
     {"need": "нормализовать типографику без правки смысла", "use": "humanizer-polish (на Markdown и разметке — только с --preserve-markup)"},
-    {"need": "удалить невидимые метки чат-интерфейсов из файла", "use": "scripts/filemarks (репозиторий; в pip-пакет не входит)"},
+    {"need": "удалить невидимые метки чат-интерфейсов из файла", "use": "humanizer-markers --remove (safe автоматически; ambiguous только --include-ambiguous с предупреждениями; dangerous показывается и не снимается); контейнерные файлы — scripts/filemarks (репозиторий)"},
     {"need": "переписать текст по-человечески", "use": "скилл humanizer-ru (SKILL.md) агентом, по явной просьбе; заявлений о качестве нет"}
   ],
   "provenance_note": "числа валидации в контракт не включаются: их единственный источник — реестр фактов (eval/facts/facts.v1.json) с одобрением владельца на публикацию каждого"

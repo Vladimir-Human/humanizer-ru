@@ -26,6 +26,52 @@
 
 PDF-C2PA-оговорка: `exiftool -all=` (и stdlib-режим) НЕ вынимают вложения AssociatedFiles/JUMBF — только осмотр находит `/AssociatedFiles`/имя `C2PA`. Для снятия таких вложений нужен перевыпуск PDF (qpdf `--object-streams=disable` + пересборка) — опциональный второй инструмент за рамками stdlib-режима.
 
+## Классификация невидимых символов по риску (снятие в тексте)
+
+Текстовый путь снятия — `humanizer-markers --remove` (пакет) и функция
+`remove_invisible` в `scripts/filemarks/text_layer.py` (единственный
+источник таблицы; публикуемая копия — блок `invisible_classes` в
+`markers.v1.json`, гейт `scripts/check_invisible_removal.py`).
+
+- **safe** — невидимые обвязки копипасты: снимаются автоматически.
+- **ambiguous** — символы с легитимными источниками: снятие ТОЛЬКО opt-in
+  (`--include-ambiguous`), с дифом и предупреждением; спецпробелы
+  заменяются обычным пробелом, а не удаляются.
+- **dangerous** — структурные и аннотационные: показываются в отчёте и не
+  снимаются никогда. Невидимый символ вне таблицы считается dangerous
+  (fail-safe). Массовое «удалить всё невидимое» запрещено по построению:
+  такого режима нет.
+
+| Диапазон | Класс | Имя | Риск | Действие |
+|---|---|---|---|---|
+| U+200B | safe | zero-width space | обвязка копипасты чат-интерфейсов | remove |
+| U+2060 | safe | word joiner | обвязка копипасты | remove |
+| U+FEFF | safe | BOM / ZWNBSP | обвязка копипасты и кодировок | remove |
+| U+00AD | safe | soft hyphen | скрытый перенос, ломает поиск и сравнение | remove |
+| U+180E | safe | mongolian vowel separator | исторический разделитель, в русском тексте не легитимен | remove |
+| U+034F | safe | combining grapheme joiner | невидимая обвязка, в русском тексте не легитимна | remove |
+| U+E0000–U+E007F | safe | unicode tag characters | теговые метки поставщиков (OpenAI/Gemini); вне эмодзи-флагов | remove |
+| U+E200–U+E204 | safe | openai citation PUA | служебные метки цитирования ChatGPT | remove |
+| U+EA01–U+EA02 | safe | openai citation PUA short | обёртки усечённой формы меток ChatGPT | remove |
+| U+200C–U+200D | ambiguous | ZWNJ / ZWJ | эмодзи-последовательности и индийские письменности: снятие меняет отображение | opt-in |
+| U+200E–U+200F | ambiguous | LRM / RLM | bidi-марки: легитимны в смешанных направлениях | opt-in |
+| U+202A–U+202E | ambiguous | bidi embeddings/overrides | риск Trojan Source: показывать диф обязательно | opt-in |
+| U+2066–U+2069 | ambiguous | bidi isolates | легитимная bidi-изоляция | opt-in |
+| U+206A–U+206F | ambiguous | deprecated format characters | устаревшие форматные; в контейнерных путях снимаются TAG_STRIP | opt-in |
+| U+FE00–U+FE0F | ambiguous | variation selectors | эмодзи-вариации: снятие меняет глиф | opt-in |
+| U+3164 | ambiguous | hangul filler | корейские филлеры: легитимны в хангыле | opt-in |
+| U+FFA0 | ambiguous | hangul filler (halfwidth) | корейские филлеры: легитимны в хангыле | opt-in |
+| U+00A0 | ambiguous | no-break space | легитимная типографика (неразрывные сочетания); действие — обычный пробел, не удаление | to-space |
+| U+2009 | ambiguous | thin space | типографский узкий пробел; действие — обычный пробел | to-space |
+| U+202F | ambiguous | narrow no-break space | типографский узкий неразрывный пробел; действие — обычный пробел | to-space |
+| U+2028 | dangerous | line separator | структура текста: снятие склеивает строки | report-only |
+| U+2029 | dangerous | paragraph separator | структура текста: снятие склеивает абзацы | report-only |
+| U+FFF9–U+FFFB | dangerous | interlinear annotation | межстрочные аннотации: снятие теряет чтение | report-only |
+
+Теговые символы внутри эмодзи-флагов (U+1F3F4 + теги + U+E007F) не
+снимаются ни в каком режиме — это легитимные флаги (Англия, Шотландия,
+Уэльс); одиночные теги вне флагов снимаются как safe.
+
 ## Порядок работы (из watermarks-remover, адаптировано)
 
 Правовая рамка: снятие меток выполняется для контента, которым владеет

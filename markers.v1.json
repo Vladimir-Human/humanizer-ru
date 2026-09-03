@@ -9,6 +9,238 @@
   "class_a_count": 31,
   "class_b_count": 9,
   "live_count": 40,
+  "invisible_classes": [
+    {
+      "range": [
+        "U+200B",
+        "U+200B"
+      ],
+      "class": "safe",
+      "name": "zero-width space",
+      "risk": "обвязка копипасты чат-интерфейсов",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+2060",
+        "U+2060"
+      ],
+      "class": "safe",
+      "name": "word joiner",
+      "risk": "обвязка копипасты",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+FEFF",
+        "U+FEFF"
+      ],
+      "class": "safe",
+      "name": "BOM / ZWNBSP",
+      "risk": "обвязка копипасты и кодировок",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+00AD",
+        "U+00AD"
+      ],
+      "class": "safe",
+      "name": "soft hyphen",
+      "risk": "скрытый перенос, ломает поиск и сравнение",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+180E",
+        "U+180E"
+      ],
+      "class": "safe",
+      "name": "mongolian vowel separator",
+      "risk": "исторический разделитель, в русском тексте не легитимен",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+034F",
+        "U+034F"
+      ],
+      "class": "safe",
+      "name": "combining grapheme joiner",
+      "risk": "невидимая обвязка, в русском тексте не легитимна",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+E0000",
+        "U+E007F"
+      ],
+      "class": "safe",
+      "name": "unicode tag characters",
+      "risk": "теговые метки поставщиков (OpenAI/Gemini); вне эмодзи-флагов",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+E200",
+        "U+E204"
+      ],
+      "class": "safe",
+      "name": "openai citation PUA",
+      "risk": "служебные метки цитирования ChatGPT",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+EA01",
+        "U+EA02"
+      ],
+      "class": "safe",
+      "name": "openai citation PUA short",
+      "risk": "обёртки усечённой формы меток ChatGPT",
+      "action": "remove"
+    },
+    {
+      "range": [
+        "U+200C",
+        "U+200D"
+      ],
+      "class": "ambiguous",
+      "name": "ZWNJ / ZWJ",
+      "risk": "эмодзи-последовательности и индийские письменности: снятие меняет отображение",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+200E",
+        "U+200F"
+      ],
+      "class": "ambiguous",
+      "name": "LRM / RLM",
+      "risk": "bidi-марки: легитимны в смешанных направлениях",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+202A",
+        "U+202E"
+      ],
+      "class": "ambiguous",
+      "name": "bidi embeddings/overrides",
+      "risk": "риск Trojan Source: показывать диф обязательно",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+2066",
+        "U+2069"
+      ],
+      "class": "ambiguous",
+      "name": "bidi isolates",
+      "risk": "легитимная bidi-изоляция",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+206A",
+        "U+206F"
+      ],
+      "class": "ambiguous",
+      "name": "deprecated format characters",
+      "risk": "устаревшие форматные; в контейнерных путях снимаются TAG_STRIP",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+FE00",
+        "U+FE0F"
+      ],
+      "class": "ambiguous",
+      "name": "variation selectors",
+      "risk": "эмодзи-вариации: снятие меняет глиф",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+3164",
+        "U+3164"
+      ],
+      "class": "ambiguous",
+      "name": "hangul filler",
+      "risk": "корейские филлеры: легитимны в хангыле",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+FFA0",
+        "U+FFA0"
+      ],
+      "class": "ambiguous",
+      "name": "hangul filler (halfwidth)",
+      "risk": "корейские филлеры: легитимны в хангыле",
+      "action": "opt-in"
+    },
+    {
+      "range": [
+        "U+00A0",
+        "U+00A0"
+      ],
+      "class": "ambiguous",
+      "name": "no-break space",
+      "risk": "легитимная типографика (неразрывные сочетания); действие — обычный пробел, не удаление",
+      "action": "to-space"
+    },
+    {
+      "range": [
+        "U+2009",
+        "U+2009"
+      ],
+      "class": "ambiguous",
+      "name": "thin space",
+      "risk": "типографский узкий пробел; действие — обычный пробел",
+      "action": "to-space"
+    },
+    {
+      "range": [
+        "U+202F",
+        "U+202F"
+      ],
+      "class": "ambiguous",
+      "name": "narrow no-break space",
+      "risk": "типографский узкий неразрывный пробел; действие — обычный пробел",
+      "action": "to-space"
+    },
+    {
+      "range": [
+        "U+2028",
+        "U+2028"
+      ],
+      "class": "dangerous",
+      "name": "line separator",
+      "risk": "структура текста: снятие склеивает строки",
+      "action": "report-only"
+    },
+    {
+      "range": [
+        "U+2029",
+        "U+2029"
+      ],
+      "class": "dangerous",
+      "name": "paragraph separator",
+      "risk": "структура текста: снятие склеивает абзацы",
+      "action": "report-only"
+    },
+    {
+      "range": [
+        "U+FFF9",
+        "U+FFFB"
+      ],
+      "class": "dangerous",
+      "name": "interlinear annotation",
+      "risk": "межстрочные аннотации: снятие теряет чтение",
+      "action": "report-only"
+    }
+  ],
   "markers": [
     {
       "id": "contentReference",
