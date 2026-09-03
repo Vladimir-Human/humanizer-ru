@@ -8,8 +8,8 @@ name: Самопроверка скилла на собственные марк
 # что scripts/check_markers.py, tests/fixtures и пакетные копии
 # src/humanizer_ru/{check_markers,scan_soft_signals}.py: файлы
 # содержат свои фикстуры и выражения с маркерами по построению.
-# check_compatibility.py, check_mcp.py, scripts/mcp/* и пакетная копия
-# mcp_server.py исключены с v3.17.0/v3.18.0 по тому же принципу: их
+# check_compatibility.py, check_mcp.py, scripts/mcp/* и пакетные копии
+# mcp_server.py и text_layer.py исключены с v3.17.0/v3.18.0 по тому же принципу: их
 # пробники и selftest несут образцы маркированного текста намеренно
 # (матрица совместимости и conformance-сессия MCP).
 
@@ -70,6 +70,7 @@ jobs:
             ! -path './tests/*' \
             ! -path './src/humanizer_ru/check_markers.py' \
             ! -path './src/humanizer_ru/scan_soft_signals.py' \
+            ! -path './src/humanizer_ru/text_layer.py' \
             ! -path './src/humanizer_ru/mcp_server.py' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
