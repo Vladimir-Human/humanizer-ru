@@ -670,6 +670,27 @@ def sdist_test(root: Path, arg: str) -> int:
             assert rc == 0 and env["tool"] == "humanizer-polish" \\
                 and env["schema"] == 1, "polish envelope"
             os.unlink(p)
+            # MCP: точка входа humanizer-mcp установлена и сервер отвечает
+            # на initialize (roundtrip одной строкой JSON-RPC).
+            import subprocess as _sp, sys as _sys
+            exe = "humanizer-mcp" + (".exe" if os.name == "nt" else "")
+            mcp_exe = os.path.join(os.path.dirname(_sys.executable), exe)
+            assert os.path.isfile(mcp_exe), \\
+                "точка входа humanizer-mcp не установлена"
+            init = json.dumps({"jsonrpc": "2.0", "id": 1,
+                               "method": "initialize",
+                               "params": {"protocolVersion": "2025-06-18",
+                                          "capabilities": {},
+                                          "clientInfo": {"name": "sdist",
+                                                         "version": "0"}}})
+            mp = _sp.run([mcp_exe], input=init + "\\n",
+                         stdout=_sp.PIPE, stderr=_sp.DEVNULL, timeout=120,
+                         encoding="utf-8", errors="replace")
+            mr = json.loads(mp.stdout.strip().splitlines()[0])
+            assert mr["result"]["protocolVersion"] == "2025-06-18", \\
+                "MCP initialize roundtrip"
+            assert mr["result"]["serverInfo"]["version"] == __version__, \\
+                "MCP serverInfo.version"
             print("PROBES OK " + __version__)
         """)
         proc = subprocess.run([str(vpy), "-c", probe], capture_output=True,

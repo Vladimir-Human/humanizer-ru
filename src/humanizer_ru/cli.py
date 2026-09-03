@@ -74,6 +74,11 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
     `humanizer-markers --scan файл1 [...]` сохранена (флаг --scan —
     совместимость, режим сканирования включён всегда). Без файлов
     запускается самопроверка 40 выражений с явным сообщением в stderr.
+
+    Режим --remove: снятие невидимых меток по классификации риска
+    (safe — автоматически; ambiguous — только --include-ambiguous, с
+    дифом и предупреждениями; dangerous — показывается и не снимается
+    никогда). Массовое удаление всего невидимого запрещено по построению.
     """
     import argparse
 
@@ -85,8 +90,10 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
         prog="humanizer-markers",
         description="Артефакты копипасты и чат-интерфейсов: 40 маркеров "
                     "классов A и B. Находит и показывает; вердикта об "
-                    "авторстве нет. Удаление меток — scripts/filemarks "
-                    "(в pip-пакет не входит).",
+                    "авторстве нет. --remove снимает невидимые метки по "
+                    "классификации риска (safe автоматически, ambiguous "
+                    "только opt-in, dangerous никогда); контейнерные файлы "
+                    "(PNG/DOCX/…) — scripts/filemarks в репозитории.",
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*",
@@ -97,9 +104,25 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
                     help="код возврата: все маркеры (all) или только класс A (a)")
     ap.add_argument("--json", action="store_true",
                     help="машиночитаемый отчёт (конверт {tool, schema, files})")
+    ap.add_argument("--remove", action="store_true",
+                    help="снять невидимые метки класса safe (ambiguous — "
+                         "только с --include-ambiguous; dangerous не "
+                         "снимается никогда)")
+    ap.add_argument("--include-ambiguous", action="store_true",
+                    help="opt-in снятие ambiguous-символов (bidi, "
+                         "вариационные селекторы, ZWJ/ZWNJ, спецпробелы) "
+                         "с предупреждением о риске изменения отображения")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="с --remove: показать отчёт, не писать файл")
+    ap.add_argument("--diff", action="store_true",
+                    help="с --remove: унифицированный диф до/после")
+    ap.add_argument("--in-place", action="store_true",
+                    help="с --remove: писать на место (копия .bak)")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка 40 выражений")
     parsed = ap.parse_args(args)
+    if parsed.remove:
+        return _markers_remove(parsed)
     if parsed.selftest or not parsed.files:
         if not parsed.files and not parsed.selftest:
             print("нет файлов — запускается самопроверка выражений; "
@@ -109,6 +132,95 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
     if parsed.cls != "all":
         paths += ["--class", parsed.cls]
     return check_markers.scan(paths, as_json=parsed.json)
+
+
+def _markers_remove(parsed) -> int:
+    """Режим --remove: снятие невидимых меток по классификации риска."""
+    import difflib
+    import json
+
+    from . import text_layer
+
+    if not parsed.files:
+        print("нет файлов для --remove; «-» читает stdin", file=sys.stderr)
+        return 2
+    report_files = []
+    rc = 0
+    for path in parsed.files:
+        label = "<stdin>" if path == "-" else path
+        try:
+            if path == "-":
+                if hasattr(sys.stdin, "reconfigure"):
+                    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
+                before = sys.stdin.read()
+            else:
+                with open(path, encoding="utf-8") as fh:
+                    before = fh.read()
+        except (OSError, UnicodeDecodeError) as exc:
+            print("не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
+            report_files.append({"file": label, "mode": "remove",
+                                 "error": str(exc)})
+            rc = 2
+            continue
+        after, report = text_layer.remove_invisible(
+            before, include_ambiguous=parsed.include_ambiguous)
+        entry = {
+            "file": label,
+            "mode": "remove",
+            "removed": report["removed"],
+            "reported": report["reported"],
+            "flag_sequences_kept": report["flag_sequences_kept"],
+            "warnings": report["warnings"],
+            "removed_safe": sum(1 for r in report["removed"]
+                                if r["class"] == "safe"),
+            "removed_ambiguous": sum(1 for r in report["removed"]
+                                     if r["class"] == "ambiguous"),
+            "reported_total": len(report["reported"]),
+            "changed": after != before,
+        }
+        if parsed.json:
+            report_files.append(entry)
+            continue
+        if parsed.diff:
+            sys.stdout.writelines(difflib.unified_diff(
+                before.splitlines(keepends=True),
+                after.splitlines(keepends=True),
+                fromfile=label + " (до)", tofile=label + " (после)"))
+        for w in report["warnings"]:
+            print("ПРЕДУПРЕЖДЕНИЕ: " + w, file=sys.stderr)
+        for rec in report["reported"]:
+            print("ПОКАЗАНО, НЕ СНЯТО [%s] %s %s (строка %d)"
+                  % (rec["class"], rec["codepoint"], rec["name"], rec["line"]),
+                  file=sys.stderr)
+        if parsed.dry_run:
+            if entry["changed"]:
+                print("ИЗМЕНИТСЯ %s: снято safe %d, ambiguous %d; показано %d"
+                      % (label, entry["removed_safe"],
+                         entry["removed_ambiguous"], entry["reported_total"]))
+            else:
+                print("БЕЗ ИЗМЕНЕНИЙ " + label)
+            continue
+        if parsed.in_place and path != "-":
+            if entry["changed"]:
+                with open(path + ".bak", "w", encoding="utf-8",
+                          newline="") as fh:
+                    fh.write(before)
+                with open(path, "w", encoding="utf-8", newline="") as fh:
+                    fh.write(after)
+            print(("ЗАПИСАНО " if entry["changed"] else "БЕЗ ИЗМЕНЕНИЙ ")
+                  + label)
+            continue
+        if parsed.diff:
+            continue
+        sys.stdout.write(after if not after or after.endswith("\n")
+                         else after + "\n")
+    if parsed.json:
+        envelope = {"tool": "humanizer-markers", "schema": 1,
+                    "files": report_files}
+        if rc == 2:
+            envelope["error"] = "вход не читается (код 2)"
+        print(json.dumps(envelope, ensure_ascii=False, indent=2))
+    return rc
 
 
 def polish_main(argv: Optional[Sequence[str]] = None) -> int:

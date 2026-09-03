@@ -278,6 +278,12 @@ def build_document(root=ROOT):
         markers.append(marker)
 
     class_b_count = sum(1 for m in markers if m["class"] == "B")
+    tl = _load_text_layer(root)
+    invisible = [
+        {"range": ["U+%04X" % lo, "U+%04X" % hi], "class": cls,
+         "name": name, "risk": risk, "action": action}
+        for (lo, hi), cls, name, risk, action in tl.INVISIBLE_CLASSES
+    ]
     return {
         "schema_version": SCHEMA_VERSION,
         "id": "humanizer-ru-markers",
@@ -289,8 +295,18 @@ def build_document(root=ROOT):
         "class_a_count": len(markers) - class_b_count,
         "class_b_count": class_b_count,
         "live_count": sum(1 for m in markers if m["live_status"] == "live"),
+        "invisible_classes": invisible,
         "markers": markers,
     }
+
+
+def _load_text_layer(root):
+    """text_layer.py — единственный источник классификации невидимых."""
+    path = os.path.join(root, "scripts", "filemarks", "text_layer.py")
+    spec = importlib.util.spec_from_file_location("_export_text_layer", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def validate_document(doc):
@@ -315,6 +331,33 @@ def validate_document(doc):
     markers = doc.get("markers")
     if not isinstance(markers, list) or len(markers) != doc.get("count"):
         errors.append("markers должен быть списком длины count")
+
+    inv = doc.get("invisible_classes")
+    if not isinstance(inv, list) or not inv:
+        errors.append("invisible_classes должен быть непустым списком")
+        inv = []
+    for i, e in enumerate(inv):
+        tag = "invisible_classes[%d]" % i
+        if not isinstance(e, dict):
+            errors.append("%s: не объект" % tag)
+            continue
+        if e.get("class") not in ("safe", "ambiguous", "dangerous"):
+            errors.append("%s: class вне safe/ambiguous/dangerous" % tag)
+        if e.get("action") not in ("remove", "opt-in", "to-space",
+                                   "report-only"):
+            errors.append("%s: action вне remove/opt-in/to-space/report-only"
+                          % tag)
+        if e.get("class") == "dangerous" and e.get("action") != "report-only":
+            errors.append("%s: dangerous обязан иметь action report-only "
+                          "(массовое удаление запрещено)" % tag)
+        rng = e.get("range")
+        if (not isinstance(rng, list) or len(rng) != 2
+                or not all(isinstance(x, str) and x.startswith("U+")
+                           for x in rng)):
+            errors.append("%s: range должен быть [U+XXXX, U+XXXX]" % tag)
+        for field in ("name", "risk"):
+            if not isinstance(e.get(field), str) or not e.get(field):
+                errors.append("%s: нет непустого %s" % (tag, field))
 
     seen = set()
     live_total = 0
@@ -449,12 +492,25 @@ def selftest():
              "target_class": TARGET_CLASS, "target_class_note": "нота",
              "live_policy": "правило", "suite_checked": "2026-09-01",
              "count": 1, "class_a_count": 1, "class_b_count": 0,
-             "live_count": 1, "markers": [_good_marker()]}
+             "live_count": 1,
+             "invisible_classes": [
+                 {"range": ["U+200B", "U+200B"], "class": "safe",
+                  "name": "zero-width space", "risk": "копипаста",
+                  "action": "remove"},
+                 {"range": ["U+2028", "U+2028"], "class": "dangerous",
+                  "name": "line separator", "risk": "структура",
+                  "action": "report-only"}],
+             "markers": [_good_marker()]}
         d.update(over)
         return d
 
     case("валидный документ с переподписью класса проходит",
          validate_document(_good_doc()) == [])
+    case("dangerous с action=remove валится (негатив)",
+         any("report-only" in e for e in validate_document(_good_doc(
+             invisible_classes=[{"range": ["U+2028", "U+2028"],
+                                 "class": "dangerous", "name": "x",
+                                 "risk": "y", "action": "remove"}]))))
     retired_errs = validate_document(_good_doc(live_count=0, markers=[_good_marker(
         live_status="retired")]))
     case("retired без даты и причины валится",
