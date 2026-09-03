@@ -7,11 +7,10 @@ humanizer-markers -> check_markers.scan()      (скан артефактов к
 humanizer-polish  -> polish.main()             (типографическая нормализация)
 humanizer-detect  -> detect_conj.main()        (детектор частоты связок)
 
-Все четыре команды поддерживают --version (версия пакета): установленная
-команда обязана называть свою версию — восстановление обещанного машинного
-интерфейса. Оригинальные модули настраивают sys.stdout/stderr при импорте
-(обход Windows-консолей без кириллицы). Стандартная библиотека Python;
-сторонних зависимостей нет.
+Все четыре команды поддерживают --version (версия пакета) и --contract
+(машинный контракт contract.v1.json из данных пакета). Оригинальные
+модули настраивают sys.stdout/stderr при импорте (обход Windows-консолей
+без кириллицы). Стандартная библиотека Python; сторонних зависимостей нет.
 """
 from __future__ import annotations
 
@@ -24,15 +23,36 @@ from . import detect_conj
 from . import polish
 from . import scan_soft_signals
 
+EPILOG = ("Репозиторий: https://github.com/Vladimir-Human/humanizer-ru\n"
+          "Вход для агентов: llms.txt; машинный контракт: contract.v1.json")
+
+
+def _contract_text() -> str:
+    """contract.v1.json из данных пакета (копия едет в wheel/sdist)."""
+    try:
+        from importlib.resources import files
+        return files("humanizer_ru").joinpath("contract.v1.json").read_text(
+            encoding="utf-8")
+    except Exception:  # pragma: no cover — запасной путь для странных окружений
+        import os
+        here = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(here, "contract.v1.json"),
+                  encoding="utf-8") as fh:
+            return fh.read()
+
 
 def _resolved(argv: Optional[Sequence[str]]) -> List[str]:
     return list(sys.argv[1:] if argv is None else argv)
 
 
 def _common(args: List[str]) -> Optional[int]:
-    """Перехват --version до делегирования парсеру инструмента."""
+    """Перехват --version/--contract до делегирования парсеру инструмента."""
     if "--version" in args:
         print(__version__)
+        return 0
+    if "--contract" in args:
+        text = _contract_text()
+        sys.stdout.write(text if text.endswith("\n") else text + "\n")
         return 0
     return None
 
@@ -66,7 +86,9 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
         description="Артефакты копипасты и чат-интерфейсов: 40 маркеров "
                     "классов A и B. Находит и показывает; вердикта об "
                     "авторстве нет. Удаление меток — scripts/filemarks "
-                    "(в pip-пакет не входит).")
+                    "(в pip-пакет не входит).",
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*",
                     help="файлы для проверки; «-» читает stdin (UTF-8)")
     ap.add_argument("--scan", action="store_true",

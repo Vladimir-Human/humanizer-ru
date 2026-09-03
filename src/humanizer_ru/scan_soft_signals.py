@@ -72,6 +72,10 @@ CONTENT, LANGUAGE, STRUCTURE, COMMUNICATION = (
     "содержательная", "языковая", "структурная", "коммуникативная")
 
 GENRES = ("neutral", "fiction", "legal", "academic", "marketing", "chat")
+# Единый словарь --genre для всех CLI (contract.v1.json): значения доменов
+# детектора связок принимаются и отображаются в дефолтный «neutral» —
+# эффективные домены каждого инструмента описаны в контракте.
+GENRE_UNION = GENRES + ("instructions", "essay", "prose", "web", "auto")
 
 # Жанровые исключения — по дереву решений SKILL.md и false-positives.md.
 # Точечные исключения отдельных фраз внутри детектора: false-positives.md
@@ -1238,10 +1242,14 @@ def scope_note(text):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        description="Счётчик мягких признаков; вердикта об авторстве не выносит.")
+        description="Счётчик мягких признаков; вердикта об авторстве не выносит.",
+        epilog="Репозиторий: https://github.com/Vladimir-Human/humanizer-ru\n"
+               "Вход для агентов: llms.txt; машинный контракт: contract.v1.json",
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*",
                     help="файлы для проверки; «-» читает stdin (UTF-8)")
-    ap.add_argument("--genre", default="neutral", choices=GENRES)
+    ap.add_argument("--genre", default="neutral", choices=GENRE_UNION,
+                    help="жанр (единый словарь CLI; чужие домены -> neutral)")
     ap.add_argument("--plain-text", action="store_true",
                     help="текст не предназначен для Markdown-среды")
     ap.add_argument("--json", action="store_true", dest="as_json")
@@ -1260,6 +1268,10 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
+    genre = args.genre if args.genre in GENRES else "neutral"
+    if genre != args.genre:
+        print("--genre %s: не домен счётчика признаков, использован neutral"
+              % args.genre, file=sys.stderr)
     if not args.files:
         ap.print_usage()
         print("нет входных файлов", file=sys.stderr)
@@ -1285,12 +1297,9 @@ def main(argv=None):
                            "error": str(exc)})
             rc = 2
             continue
-        report = analyze(text, genre=args.genre, plain_text=args.plain_text)
+        report = analyze(text, genre=genre, plain_text=args.plain_text)
         note = scope_note(text)
         if note:
-            # Честный статус входа: пустой и не-русский текст — вне области
-            # скилла; счётчик отрабатывает механически, но «правка не
-            # требуется» таким входам не адресуется.
             report = dict(report)
             report["status"] = "out-of-scope"
             report["scope_note"] = note

@@ -16,10 +16,10 @@
 1. Создайте свою копию репозитория (fork) и ветку от `main`.
 2. Для нового regex-маркера обязателен весь конвейер артефактов:
    - выражение и описание — в `references/chatbot-artifacts.md` (с классом A/B);
-   - три уровня проверочных образцов (прямой/отрицательный/граничный) — в `references/test-fixtures.md`;
+   - три уровня проверочных образцов (прямой/отрицательный/граничный) — в `tests/test-fixtures.md`;
    - запись `CASES` и `CLASS_OF` в `scripts/check_markers.py`;
    - запись в `research/fixtures/marker-sources.json` (immutable URL, дата доступа, дословный образец, класс доказательства);
-   - секция в `references/test-fixtures-cases.md` и имя в `REGISTERED_CASES` (`scripts/check_fixture_sources.py`);
+   - секция в `tests/test-fixtures-cases.md` и имя в `REGISTERED_CASES` (`scripts/check_fixture_sources.py`);
    - регенерация `markers.v1.json` (`scripts/export_markers.py`) и демо (`demo/generate_js_rules.py`).
 3. Прогоните валидаторы — все должны проходить:
    ```sh

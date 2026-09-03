@@ -4,11 +4,17 @@
 
 Считает мягкие признаки счётчиком проекта со снятой разметкой
 (`count_style_markers.py --skip-markup`) и требует, чтобы каждый файл скоупа
-держался не выше порога. Скоуп — проза поставки; справочники `references/`,
-`CHANGELOG.md` и `research/` не берутся по причинам, описанным в
+держался не выше порога. Скоуп объединён с `check_self_prose.py` (приказ
+владельца 2026-09-03): оба гейта смотрят один список публичных файлов
+поставки, каждый своим методом. Единственное исключение — `CHANGELOG.md`:
+журнал версий только дописывается и цитирует отозванный машинный текст
+(сырой счёт журнала заведомо выше любого порога), поэтому журнал проверяется
+методом витринной прозы в `check_self_prose.py`, а не сырым счётом здесь.
+Справочники `references/` и `research/` не берутся по причинам из
 `research/BACKLOG.md` («Собственный стиль», замер 2026-08-06): справочники
-цитируют машинный текст, журнал версий только дописывается, история изысканий
-фиксирует записанное.
+цитируют машинный текст, история изысканий фиксирует записанное.
+Порог 80 выбран по фактическому максимуму скоупа (замер 2026-09-03): гейт
+обязан уметь падать на реальном тексте, а не быть недостижимым.
 
 Запуск из корня репозитория:
     python3 scripts/check_own_style.py            # весь скоуп
@@ -31,11 +37,12 @@ if hasattr(sys.stdout, "reconfigure"):
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 COUNTER = os.path.join(HERE, "count_style_markers.py")
-LIMIT = 90
+LIMIT = 80
 SCOPE = (
     "SKILL.md",
     "README.md",
     "README.en.md",
+    "README.pypi.md",
     "CONTRIBUTING.md",
     "PERSONA.md",
     "eval/README.md",
@@ -45,6 +52,12 @@ SCOPE = (
     "SECURITY.en.md",
     "CODE_OF_CONDUCT.md",
     "GOVERNANCE.md",
+    "PRIVACY_POLICY.md",
+    "AGENTS.md",
+    "LEADERBOARD.md",
+    "ERRATA.md",
+    "llms.txt",
+    "docs/FRAMEWORK.md",
     ".github/pull_request_template.md",
 )
 

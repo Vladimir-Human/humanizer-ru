@@ -1,0 +1,63 @@
+# Публикация на PyPI через Trusted Publishing (PEP 740).
+#
+# Без долгоживущего API-токена: GitHub выдаёт OIDC-токен (id-token: write),
+# PyPI проверяет его по доверенному издателю. Требуется ОДНОРАЗОВАЯ настройка
+# на стороне PyPI (web-UI проекта humanizer-ru: Trusted publishers →
+# GitHub Actions, owner Vladimir-Human, repo humanizer-ru, workflow
+# pypi-publish.yml, environment pypi). До настройки загрузка завершится 403;
+# в этом случае публикация выполняется вручную twine с раскрытием в нотах
+# выпуска (как для 3.16.9/3.16.10).
+#
+# Аттестаты PEP 740 (provenance) генерируются действием публикации.
+name: Публикация на PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Сборка и чистое venv
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Установить build
+        run: python3 -m pip install --user build
+
+      - name: Собрать sdist и wheel
+        run: python3 -m build
+
+      - name: sdist -> чистое venv -> тесты + CLI-зонды
+        run: python3 scripts/check_release.py --sdist-test dist/humanizer_ru-*.tar.gz
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pypi-dist
+          path: dist/
+
+  publish:
+    name: Публикация (Trusted Publishing)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write   # OIDC-токен для PyPI (PEP 740), вместо API-ключа
+    environment: pypi
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: pypi-dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        # Аттестаты provenance включены в действии по умолчанию.

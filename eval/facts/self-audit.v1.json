@@ -1,0 +1,453 @@
+{
+  "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
+  "version": "3.17.0",
+  "date": "2026-09-03",
+  "measured_commit": "32fcce11c12beb478780bdba76d353c175df3865",
+  "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
+  "scope_files": 37,
+  "methods": {
+    "markers": "scripts/check_markers.py (40 regex-маркеров, построчно, fenced/бэктики пропускаются)",
+    "scan": "scripts/scan_soft_signals.py по витринной прозе (без таблиц/fenced/цитат); не-структурные признаки",
+    "style": "scripts/count_style_markers.py --skip-markup (порог 80)",
+    "detect": "scripts/detect_conj.py (доменный статус; вердикта об авторстве нет)",
+    "polish": "не применяется к витринным .md (см. polish.reason)"
+  },
+  "thresholds": {
+    "own_style_limit": 80,
+    "scan_fail": "≥3 не-структурных признака из ≥2 категорий (дерево решений SKILL.md)"
+  },
+  "scope_notes": [
+    "высокий scan_features у справочников references/ и knowledge/ ожидаем: они цитируют машинный текст как примеры (граница задокументирована в references/false-positives.md); гейт витринной прозы check_self_prose покрывает витринные файлы",
+    "CHANGELOG.md и docs/CHANGELOG-archive.md: сырой style-счёт не применяется (журнал цитирует отозванный машинный текст) — style_total null с причиной; гейт check_own_style проверяет их методом витринной прозы через check_self_prose",
+    "style_total справочников references/, commands/ и knowledge/ записывается как факт, но порогу check_own_style не подлежит: они цитируют машинный текст как примеры (скоуп порога — витринная проза); totals.own_style_max считается только по скоупу гейта",
+    "detect_status: к витринной прозе детектор связок не выносит вердикт — статусы домена (not-applicable/not-validated) публикуются вместо несуществующего «проходит»"
+  ],
+  "totals": {
+    "markers_class_a": 0,
+    "markers_class_b": 0,
+    "own_style_max": 76,
+    "own_style_max_file": "README.md",
+    "scan_max_features": 11,
+    "detect": {
+      "not-applicable": 26,
+      "not-validated": 11,
+      "works": 0
+    }
+  },
+  "polish": {
+    "applicable": false,
+    "reason": "снимает Markdown-разметку и русскую типографику (##, **, ёлочки, тире, многоточия); к витринным .md не применяется — см. contract.v1.json (when_not) и режим --preserve-markup"
+  },
+  "files": [
+    {
+      "file": "README.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 76,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "README.en.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 60,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "README.pypi.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 14,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "SKILL.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 2,
+      "scan_categories": 2,
+      "style_total": 64,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": null,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится",
+      "style_note": "журнал версий цитирует отозванный машинный текст; применяется метод scan (витринная проза), сырой счёт не применяется — граница гейта check_own_style"
+    },
+    {
+      "file": "PERSONA.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 2,
+      "scan_categories": 1,
+      "style_total": 10,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "SECURITY.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 11,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "SECURITY.en.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 6,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "PRIVACY_POLICY.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 2,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "CODE_OF_CONDUCT.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 1,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 17,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "GOVERNANCE.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 20,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "AGENTS.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 48,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "LEADERBOARD.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 27,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "ERRATA.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 4,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "CITATION.cff",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 2,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "llms.txt",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 20,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "docs/CHANGELOG-archive.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": null,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится",
+      "style_note": "журнал версий цитирует отозванный машинный текст; применяется метод scan (витринная проза), сырой счёт не применяется — граница гейта check_own_style"
+    },
+    {
+      "file": "docs/FRAMEWORK.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 60,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/audit-checklist.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 3,
+      "scan_categories": 2,
+      "style_total": 38,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/chatbot-artifacts-legacy.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 7,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/chatbot-artifacts-links.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 47,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/chatbot-artifacts-markup.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 119,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/chatbot-artifacts.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 31,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/communication-patterns.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 7,
+      "scan_categories": 2,
+      "style_total": 70,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/content-patterns.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 11,
+      "scan_categories": 2,
+      "style_total": 90,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/false-positives.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 5,
+      "scan_categories": 1,
+      "style_total": 173,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/language-patterns.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 7,
+      "scan_categories": 1,
+      "style_total": 135,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/llm-fingerprints.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 34,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/quantitative-heuristics.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 61,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/removal-matrix.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 13,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/rewrite-guide.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 5,
+      "scan_categories": 2,
+      "style_total": 152,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/source-fabrication.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 36,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "references/structural-style-patterns.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 95,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "commands/audit.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 2,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "commands/humanize.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 0,
+      "scan_categories": 0,
+      "style_total": 2,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    },
+    {
+      "file": "knowledge/corrections.md",
+      "markers_a": 0,
+      "markers_b": 0,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 7,
+      "detect_status": "not-validated",
+      "detect_genre": "prose",
+      "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
+    }
+  ],
+  "reproduce": "python3 scripts/self_audit.py --check"
+}
