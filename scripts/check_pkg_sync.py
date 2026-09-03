@@ -14,6 +14,10 @@
 3. `src/humanizer_ru/polish.py` равен `scripts/polish.py`.
 4. `src/humanizer_ru/detect_conj.py` равен `scripts/detect_conj.py`.
 5. В пакете нет других .py-файлов, кроме `__init__.py`, `cli.py` и четырёх копий.
+6. Данные пакета синхронны с корневыми: `src/humanizer_ru/contract.v1.json`
+   равен `contract.v1.json`, `src/humanizer_ru/markers.v1.json` равен
+   `markers.v1.json` (копии едут в wheel/sdist — `--contract` установленного
+   пакета обязан печатать тот же контракт, что и дерево репозитория).
 
 Запуск из корня репозитория:
     python3 scripts/check_pkg_sync.py            # проверка
@@ -42,6 +46,7 @@ SYNCED = [
 ]
 ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
               "scan_soft_signals.py", "polish.py", "detect_conj.py"}
+SYNCED_DATA = ["contract.v1.json", "markers.v1.json"]
 
 
 def read(path):
@@ -87,6 +92,18 @@ def check(root):
                 errors.append("пакет рассинхронизирован: %s" % file_name)
         except OSError:
             pass
+    # 6. Данные пакета (contract.v1.json, markers.v1.json) синхронны с корнем.
+    for name in SYNCED_DATA:
+        src = os.path.join(root, name)
+        dst = os.path.join(root, PKG, name)
+        if not os.path.isfile(dst):
+            errors.append("в пакете нет файла данных: %s" % name)
+            continue
+        try:
+            if read(src) != read(dst):
+                errors.append("пакет рассинхронизирован (данные): %s" % name)
+        except OSError as exc:
+            errors.append("не читается %s: %r" % (name, exc))
     return errors
 
 
@@ -117,7 +134,21 @@ def selftest():
             fh.write("w = 4\n")
         with open(os.path.join(td, PKG, "detect_conj.py"), "w") as fh:
             fh.write("w = 4\n")
+        for data_name in SYNCED_DATA:
+            with open(os.path.join(td, data_name), "w", encoding="utf-8") as fh:
+                fh.write('{"data": 1}\n')
+            with open(os.path.join(td, PKG, data_name), "w", encoding="utf-8") as fh:
+                fh.write('{"data": 1}\n')
         cases.append(("синхронный пакет без ошибок", check(td) == []))
+
+        with open(os.path.join(td, PKG, "contract.v1.json"), "a",
+                  encoding="utf-8") as fh:
+            fh.write("дрейф\n")
+        cases.append(("дрейф данных пакета виден",
+                      any("данные" in e and "contract" in e for e in check(td))))
+        with open(os.path.join(td, PKG, "contract.v1.json"), "w",
+                  encoding="utf-8") as fh:
+            fh.write('{"data": 1}\n')
 
         with open(pkg_f, "a", encoding="utf-8") as fh:
             fh.write("дрейф\n")

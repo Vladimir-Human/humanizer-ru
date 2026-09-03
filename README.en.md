@@ -5,7 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
 [![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-catalog-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
-[![Dogfooding](https://img.shields.io/badge/own_detectors-passing-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/scripts/check_all.py)
+[![Dogfooding](https://img.shields.io/badge/own_detectors-report-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/self-audit.v1.json)
 
 **Русская версия → [README.md](README.md)** — the product is
 Russian-language; this document is the English entry point only.
@@ -23,15 +23,65 @@ machine interface is described in `contract.v1.json`.
 
 **Before:**
 
-> 🚀 **Инновации:** Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Это безусловно является свидетельством нашего стремления к качеству. Кроме того, эти функции обеспечивают бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
+> Согласно отчёту `:contentReference[oaicite:12]{index=12}`, число заявок за неделю выросло на 12% — источник: `https://example.com/report?utm_source=chatgpt.com`
+> Данные подтверждены `ассистентом​`, подробности см. в чате.
 
 **After:**
 
-> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим.
+> Согласно отчёту, число заявок за неделю выросло на 12%.
+> Данные подтверждены, подробности см. в чате.
 
-The skill strips clichés but never adds facts for the author: the "After"
-variant contains nothing that was absent from the source. The project's own
-texts pass its soft-layer gates (self-check in `check_all`).
+This is a real chat-interface paste: a citation mark, a utm tag and an
+invisible character inside a word (zero-width space). In this README the
+artifacts are wrapped in backticks — documentation form; a user paste has
+no backticks. The deterministic layer finds the artifacts and rewrites
+nothing — output of `humanizer-markers --scan --json` on the same paste
+without backticks (the demo has an "Insert sample" button with the very
+same text; demo and CLI produce identical counts, gate
+`scripts/check_demo_parity.py`):
+
+```json
+{
+  "tool": "humanizer-markers",
+  "schema": 1,
+  "files": [
+    {
+      "file": "<stdin>",
+      "markers": [
+        {
+          "line": 1,
+          "marker": "contentReference",
+          "class": "A",
+          "fragment": "Согласно отчёту :contentReference[oaicite:12]{index=12}, число заявок за неделю выросло на",
+          "shadow": false
+        },
+        {
+          "line": 1,
+          "marker": "utm_chatgpt",
+          "class": "A",
+          "fragment": "Согласно отчёту :contentReference[oaicite:12]{index=12}, число заявок за неделю выросло на",
+          "shadow": false
+        },
+        {
+          "line": 2,
+          "marker": "zero_width",
+          "class": "B",
+          "fragment": "Данные подтверждены ассистентом​, подробности см. в чате.",
+          "shadow": false
+        }
+      ],
+      "count": 3,
+      "warnings_b": 0
+    }
+  ]
+}
+```
+
+The layer removal and the rewriting are done by the agent layer of the
+skill: the "After" variant contains nothing that was absent from the
+source — the edit never adds facts for the author (gate
+`scripts/check_examples.py`). The project's own texts pass its own gates
+(self-check in `check_all`).
 
 ## What to give it
 
@@ -40,6 +90,24 @@ traces and rewrites on request. `SKILL.md` is the agent instruction, loaded
 for analysis or editing tasks together with the references from
 `references/`. `PERSONA.md` is different: short rules of a live tone for
 dialogue, not for text checking.
+
+## Rewriting
+
+On explicit request only. The agent layer strips clichés and never adds
+facts for the author — for example, from marketing copy:
+
+**Before:**
+
+> 🚀 **Инновации:** Мы добавили пакетную обработку, горячие клавиши и офлайн-режим. Это безусловно является свидетельством нашего стремления к качеству. Кроме того, эти функции обеспечивают бесшовный, интуитивно понятный и мощный пользовательский опыт — гарантируя эффективность. Эксперты считают, что это революция.
+
+**After:**
+
+> Мы добавили пакетную обработку, горячие клавиши и офлайн-режим.
+
+This is done by the agent layer; the deterministic layer does not mark
+such text up: it carries no copy-paste artifacts (markers stay silent),
+while the soft-signal counter `humanizer-scan` shows the clichés as an
+edit scope, not as a verdict.
 
 ## Install in 30 seconds
 
@@ -70,7 +138,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.16.11 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.17.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -88,7 +156,11 @@ Package commands:
 - `humanizer-polish` — typographic normalization (`--diff`, `--dry-run`,
   `--in-place`, `--json`); idempotent, letters and digits preserved.
   Do not run on Markdown or markup: it strips `##`, `**`, guillemets,
-  dashes, ellipsis.
+  dashes, ellipsis; for markup use `--preserve-markup` (invisibles/NBSP
+  only) or `--typographic` (Russian publishing typography: paired straight
+  quotes to guillemets, single-character ellipsis; code, fences and
+  frontmatter untouched — zero diff on this project's own docs, gate
+  `scripts/check_polish_modes.py`).
 - `humanizer-detect` — conjunction-frequency detector with a domain status;
   no authorship verdict, graduated response.
 - `humanizer-markers` — copy-paste artifact search (classes A and B).
@@ -167,7 +239,7 @@ its own class; statuses and dates — in `markers.v1.json`.
 
 Short map; details live in the directories themselves:
 
-- `SKILL.md` + `references/` — the skill's text core (map, 13 references across 18 files).
+- `SKILL.md` + `references/` — the skill's text core (map, 12 references across 15 files).
 - `scripts/` — validators and tools: polish, detectors, gates (e.g.
   `check_docs.py`); full list in the directory and in `contract.v1.json`.
 - `src/humanizer_ru/` — PyPI package (script mirrors, entry points).
@@ -176,7 +248,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 90 gates in the full checklist (83 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 100 gates in the full checklist (89 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 

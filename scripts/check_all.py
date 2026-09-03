@@ -177,12 +177,18 @@ def _gates(quick, tmpdir):
         gates.append(("eval: manifest.v1.json", [PY, "eval/run_eval.py"],
                       ["eval/run_eval.py", "eval/manifest.v1.json",
                        "research/validation/human"], {0}))
+    # blind-eval — самые долгие гейты (~150 с на целостности results):
+    # в --quick не входят, быстрый режим обязан оставаться быстрым
+    # (обещание AGENTS.md сверяется замером, критерий --quick ≤ 120 с).
+    if not quick:
+        gates += [
+            ("blind-eval: самопроверка", [PY, "eval/blind_eval.py", "--selftest"],
+             ["eval/blind_eval.py"], {0}),
+            ("blind-eval: целостность results", [PY, "eval/blind_eval.py",
+                                                  "--verify-results"],
+             ["eval/blind_eval.py", "eval/results", "eval/runs"], {0}),
+        ]
     gates += [
-        ("blind-eval: самопроверка", [PY, "eval/blind_eval.py", "--selftest"],
-         ["eval/blind_eval.py"], {0}),
-        ("blind-eval: целостность results", [PY, "eval/blind_eval.py",
-                                              "--verify-results"],
-         ["eval/blind_eval.py", "eval/results", "eval/runs"], {0}),
         # Без парных прогонов гарнесс обязан отказать кодом 2 (fail-closed);
         # при собранных данных законен и код 0 — оба исхода не ошибка.
         ("blind-eval: отказ без данных", [PY, "eval/blind_eval.py"],
@@ -206,6 +212,32 @@ def _gates(quick, tmpdir):
         ("pages-router: самопроверка",
          [PY, "scripts/check_pages_router.py", "--selftest"],
          ["scripts/check_pages_router.py"], {0}),
+        ("demo-parity: самопроверка",
+         [PY, "scripts/check_demo_parity.py", "--selftest"],
+         ["scripts/check_demo_parity.py"], {0}),
+        ("demo-parity: демо и CLI на фикстуре",
+         [PY, "scripts/check_demo_parity.py"],
+         ["scripts/check_demo_parity.py", "demo/engine.js", "demo/sample.js",
+          "demo/markers.js", "tests/fixtures/demo-parity/sample.txt",
+          "tests/fixtures/demo-parity/expected.json"], {0}),
+        ("polish-modes: самопроверка",
+         [PY, "scripts/check_polish_modes.py", "--selftest"],
+         ["scripts/check_polish_modes.py"], {0}),
+        ("polish-modes: typographic не трогает витрину, strip честен",
+         [PY, "scripts/check_polish_modes.py"],
+         ["scripts/check_polish_modes.py", "scripts/polish.py", "README.md",
+          "SKILL.md", "CONTRIBUTING.md", "llms.txt"], {0}),
+        ("compatibility: самопроверка",
+         [PY, "scripts/check_compatibility.py", "--selftest"],
+         ["scripts/check_compatibility.py"], {0}),
+        ("self-audit: самопроверка", [PY, "scripts/self_audit.py", "--selftest"],
+         ["scripts/self_audit.py"], {0}),
+        ("attribution: самопроверка",
+         [PY, "scripts/check_attribution.py", "--selftest"],
+         ["scripts/check_attribution.py"], {0}),
+        ("attribution: коммиты после якоря и срез GOVERNANCE",
+         [PY, "scripts/check_attribution.py"],
+         ["scripts/check_attribution.py", "GOVERNANCE.md"], {0}),
         ("triggers: самопроверка", [PY, "eval/run_triggers.py", "--selftest"],
          ["eval/run_triggers.py"], {0}),
         ("triggers: граница активации", [PY, "eval/run_triggers.py"],
@@ -235,11 +267,23 @@ def _gates(quick, tmpdir):
              [PY, "scripts/check_pages_router.py"],
              ["scripts/check_pages_router.py", "llms.txt",
               ".github/workflows/demo-pages.yml", "demo/robots.txt"], {0}),
+            # Self-audit — прогон всех инструментов по всем публичным файлам
+            # (~30 с): в --quick не входит, быстрый режим остаётся быстрым.
+            ("self-audit: отчёт соответствует факту",
+             [PY, "scripts/self_audit.py", "--check"],
+             ["scripts/self_audit.py", "eval/facts/self-audit.v1.json"], {0}),
             # sdist -> чистое venv -> тесты: требует сеть (pip) и модуль build;
             # отказ среды (код 2) в локальном прогоне законен и печатается,
             # в CI публикации (pypi-publish.yml) гейт обязан дать 0.
             ("release: sdist -> чистое venv -> тесты",
              [PY, "scripts/check_release.py", "--sdist-test"], [], {0, 2}),
+            # Compatibility-тест против предыдущей опубликованной версии
+            # (PyPI + чистое venv): аддитивность без смены rc и детекции.
+            # Отказ среды (нет сети) законен локально; в релизном цикле
+            # выполняется до тега.
+            ("compatibility: против опубликованной версии",
+             [PY, "scripts/check_compatibility.py"],
+             ["scripts/check_compatibility.py"], {0, 2}),
         ]
     return gates
 
