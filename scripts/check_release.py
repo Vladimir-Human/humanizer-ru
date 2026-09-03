@@ -659,7 +659,8 @@ def sdist_test(root: Path, arg: str) -> int:
                 rc = markers_main(["--contract"])
             doc = json.loads(buf.getvalue())
             assert rc == 0 and doc["schema_version"] == "contract.v1", "--contract"
-            assert len(doc["tools"]) == 4, "contract tools"
+            assert sorted(t["command"] for t in doc["tools"]) == @EXPECTED_TOOLS@, \
+                "contract tools"
             fd, p = tempfile.mkstemp(suffix=".txt")
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 fh.write("Обычный русский текст без дефектов.\\n")
@@ -693,6 +694,10 @@ def sdist_test(root: Path, arg: str) -> int:
                 "MCP serverInfo.version"
             print("PROBES OK " + __version__)
         """)
+        with open(os.path.join(str(root), "contract.v1.json"),
+                  encoding="utf-8") as fh:
+            _expected = sorted(t["command"] for t in json.load(fh)["tools"])
+        probe = probe.replace("@EXPECTED_TOOLS@", repr(_expected))
         proc = subprocess.run([str(vpy), "-c", probe], capture_output=True,
                               text=True, timeout=300)
         if proc.returncode != 0:
