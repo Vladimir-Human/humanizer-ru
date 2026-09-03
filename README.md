@@ -68,7 +68,7 @@ pip install humanizer-ru
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.16.10 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.16.11 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -84,6 +84,9 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 
 - `humanizer-polish` — типографическая нормализация (`--diff`, `--dry-run`,
   `--in-place`, `--json`); идемпотентна, буквы и цифры не трогает.
+  Не запускать на Markdown и разметке: снимает `##`, `**`, ёлочки, тире,
+  многоточие. Постановку ёлочек и тире по русской норме делает агентный
+  слой скилла, не эта команда.
 - `humanizer-detect` — частота связок со статусом домена; вердикта об
   авторстве нет, ответ градуированный.
 - `humanizer-markers` — поиск артефактов копипасты (классы A и B).
@@ -169,7 +172,7 @@ $ humanizer-scan --json notes.txt
 - `tests/fixtures/` — образцы маркеров и полировки.
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 86 гейтов полного чек-листа (81 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 90 гейтов полного чек-листа (83 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

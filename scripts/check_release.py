@@ -546,7 +546,140 @@ def selftest() -> None:
         assert _repo_slug_from_url("https://example.com/repo") is None
         passed += 1
         total += 1
+    # --sdist-test, негатив: несуществующий sdist — отказ среды (код 2),
+    # а не молчаливый ноль.
+    rc_missing = sdist_test(Path("."), "нет-такого-sdist.tar.gz")
+    assert rc_missing == 2, f"несуществующий sdist: ждали 2, получили {rc_missing}"
+    passed += 1
+    total += 1
     print(f"САМОПРОВЕРКА релизного префлайта: {passed}/{total} PASS")
+
+# ------------------------------------------------------- sdist -> venv -> тесты
+
+class SdistEnvError(RuntimeError):
+    """Среда отказала (нет сети, venv или модуля build) — код 2, не провал."""
+
+
+def _venv_python(venvdir: Path) -> Path:
+    if os.name == "nt":
+        return venvdir / "Scripts" / "python.exe"
+    return venvdir / "bin" / "python"
+
+
+def _sdist_resolve(root: Path, arg: str) -> Path:
+    if arg != "auto":
+        p = Path(arg)
+        if not p.is_file():
+            raise SdistEnvError(
+                f"sdist не найден: {p} (сборка: python -m build --sdist)")
+        return p
+    dist = root / "dist"
+    cands = sorted(dist.glob("humanizer_ru-*.tar.gz")) if dist.is_dir() else []
+    if cands:
+        return cands[-1]
+    proc = subprocess.run(
+        [sys.executable, "-m", "build", "--sdist", "--outdir", str(dist)],
+        cwd=str(root), capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise SdistEnvError("сборка sdist не удалась (модуль build/сеть): "
+                            + (proc.stderr or "")[-300:])
+    cands = sorted(dist.glob("humanizer_ru-*.tar.gz"))
+    if not cands:
+        raise SdistEnvError("после сборки в dist/ нет sdist")
+    return cands[-1]
+
+
+def sdist_test(root: Path, arg: str) -> int:
+    """sdist -> чистое venv -> тесты + CLI-зонды (housekeeping-патч).
+
+    Устанавливает собранный sdist в свежее временное venv и проверяет, что
+    поставка самодостаточна: тесты из sdist проходят (репо-only модули
+    честно скипаются), --version печатает версию пакета, --json-вывод
+    соответствует конверту контракта.
+    Коды: 0 — пройдено; 1 — провал тестов/зондов/состава; 2 — отказ среды
+    (нет сети, venv, модуля build или файла sdist).
+    """
+    import shutil
+    import tarfile
+    import tempfile
+    import textwrap
+    try:
+        sdist = _sdist_resolve(root, arg)
+    except SdistEnvError as exc:
+        print(f"SDIST-TEST: отказ среды: {exc}", file=sys.stderr)
+        return 2
+    tmp = Path(tempfile.mkdtemp(prefix="sdist-test-"))
+    try:
+        with tarfile.open(sdist, "r:gz") as tf:
+            try:
+                tf.extractall(tmp, filter="data")
+            except TypeError:      # Python < 3.12: аргумента filter нет
+                tf.extractall(tmp)
+        pkgs = [d for d in tmp.iterdir() if d.is_dir() and (d / "tests").is_dir()]
+        if not pkgs:
+            print("SDIST-TEST: в sdist нет tests/ — MANIFEST.in не сработал",
+                  file=sys.stderr)
+            return 1
+        src = pkgs[0]
+        venv = tmp / "venv"
+        proc = subprocess.run([sys.executable, "-m", "venv", str(venv)],
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            print("SDIST-TEST: venv не создан: " + (proc.stderr or "")[-200:],
+                  file=sys.stderr)
+            return 2
+        vpy = _venv_python(venv)
+        proc = subprocess.run(
+            [str(vpy), "-m", "pip", "install", "--quiet",
+             "--disable-pip-version-check", str(sdist)],
+            capture_output=True, text=True, timeout=900)
+        if proc.returncode != 0:
+            print("SDIST-TEST: установка sdist не удалась (сеть?): "
+                  + (proc.stderr or "")[-300:], file=sys.stderr)
+            return 2
+        proc = subprocess.run(
+            [str(vpy), "-m", "unittest", "discover", "-s", "tests"],
+            capture_output=True, text=True, timeout=900, cwd=str(src))
+        tail = [ln for ln in (proc.stderr or "").strip().splitlines() if ln][-3:]
+        if proc.returncode != 0:
+            print("SDIST-TEST: тесты в чистом venv ПРОВАЛЕНЫ:\n  "
+                  + "\n  ".join(tail), file=sys.stderr)
+            return 1
+        print("SDIST-TEST: тесты: " + " | ".join(tail[-2:]))
+        probe = textwrap.dedent("""
+            import contextlib, io, json, os, tempfile
+            from humanizer_ru import __version__
+            from humanizer_ru.cli import scan_main, polish_main
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = scan_main(["--version"])
+            assert rc == 0 and buf.getvalue().strip() == __version__, "--version"
+            fd, p = tempfile.mkstemp(suffix=".txt")
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write("Обычный русский текст без дефектов.\\n")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = polish_main(["--json", p])
+            env = json.loads(buf.getvalue())
+            assert rc == 0 and env["tool"] == "humanizer-polish" \\
+                and env["schema"] == 1, "polish envelope"
+            os.unlink(p)
+            print("PROBES OK " + __version__)
+        """)
+        proc = subprocess.run([str(vpy), "-c", probe], capture_output=True,
+                              text=True, timeout=300)
+        if proc.returncode != 0:
+            print("SDIST-TEST: CLI-зонды ПРОВАЛЕНЫ: " + (proc.stderr or "")[-400:],
+                  file=sys.stderr)
+            return 1
+        print("SDIST-TEST: " + proc.stdout.strip()
+              + f" (чистое venv, sdist {sdist.name})")
+        return 0
+    except (OSError, tarfile.TarError, subprocess.TimeoutExpired) as exc:
+        print(f"SDIST-TEST: отказ среды: {exc!r}", file=sys.stderr)
+        return 2
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -559,6 +692,11 @@ def main(argv: list[str] | None = None) -> int:
                              "и GitHub Release опубликован (0 — выполнен или "
                              "выпуск не начат, 1 — нарушение, 2 — проверка "
                              "невозможна)")
+    parser.add_argument("--sdist-test", nargs="?", const="auto",
+                        default=None, metavar="SDIST",
+                        help="sdist -> чистое venv -> тесты + CLI-зонды "
+                             "(без значения: взять/собрать dist/*.tar.gz; "
+                             "0 — пройдено, 1 — провал, 2 — отказ среды)")
     args = parser.parse_args(argv)
     try:
         if args.selftest:
@@ -569,7 +707,7 @@ def main(argv: list[str] | None = None) -> int:
             digest = build(args.root, args.build)
             print(f"собрано: {args.build}")
             print(f"sha256: {digest}")
-        elif args.root and not args.release_contract:
+        elif args.root and not args.release_contract and not args.sdist_test:
             files = collect(args.root)
             print(f"релизное дерево: {len(files)} файлов, ОК")
         if args.verify:
@@ -578,10 +716,14 @@ def main(argv: list[str] | None = None) -> int:
         rc_contract = 0
         if args.release_contract:
             rc_contract = release_contract(args.root or Path("."))
+        rc_sdist = 0
+        if args.sdist_test is not None:
+            rc_sdist = sdist_test(args.root or Path("."), args.sdist_test)
         if not any((args.selftest, args.root, args.build, args.verify,
-                    args.release_contract)):
-            parser.error("выберите --selftest, --root/--build, --verify или --release-contract")
-        return rc_contract
+                    args.release_contract, args.sdist_test is not None)):
+            parser.error("выберите --selftest, --root/--build, --verify, "
+                         "--release-contract или --sdist-test")
+        return rc_contract or rc_sdist
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1

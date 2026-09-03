@@ -201,6 +201,11 @@ def _gates(quick, tmpdir):
         ("reproduce: флагманский отчёт оси", [PY, "eval/reproduce.py"],
          ["eval/reproduce.py",
           "eval/detect-results/2026-08-25-detect-axis-12-glm53.json"], {0}),
+        ("reproduce: все отчёты оси", [PY, "eval/reproduce.py", "--all-reports"],
+         ["eval/reproduce.py", "eval/detect-results"], {0}),
+        ("pages-router: самопроверка",
+         [PY, "scripts/check_pages_router.py", "--selftest"],
+         ["scripts/check_pages_router.py"], {0}),
         ("triggers: самопроверка", [PY, "eval/run_triggers.py", "--selftest"],
          ["eval/run_triggers.py"], {0}),
         ("triggers: граница активации", [PY, "eval/run_triggers.py"],
@@ -224,6 +229,17 @@ def _gates(quick, tmpdir):
                                              "--verify", zip_path], [], {0}),
             ("release: контракт выпуска", [PY, "scripts/check_release.py",
                                            "--release-contract"], [], {0}),
+            # Сетевой гейт (HEAD ссылок llms.txt): в --quick не входит —
+            # быстрый режим не должен зависеть от сети.
+            ("pages-router: ссылки llms.txt и состав Pages",
+             [PY, "scripts/check_pages_router.py"],
+             ["scripts/check_pages_router.py", "llms.txt",
+              ".github/workflows/demo-pages.yml", "demo/robots.txt"], {0}),
+            # sdist -> чистое venv -> тесты: требует сеть (pip) и модуль build;
+            # отказ среды (код 2) в локальном прогоне законен и печатается,
+            # в CI публикации (pypi-publish.yml) гейт обязан дать 0.
+            ("release: sdist -> чистое venv -> тесты",
+             [PY, "scripts/check_release.py", "--sdist-test"], [], {0, 2}),
         ]
     return gates
 

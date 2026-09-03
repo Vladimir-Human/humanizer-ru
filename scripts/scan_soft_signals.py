@@ -1215,6 +1215,27 @@ def rep0_total(text):
     return analyze(text)["features_total"]
 
 
+def _cyrillic_share(text):
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 0.0
+    cyr = sum(1 for c in letters if "\u0400" <= c <= "\u04ff")
+    return cyr / float(len(letters))
+
+
+def scope_note(text):
+    """Пометка «вне области»: пустой и не-русский вход — вне домена скилла.
+
+    Градуированный ответ остаётся непустым (контракт): счётчик отрабатывает
+    механически, но «правка не требуется» таким входам не адресуется.
+    """
+    if not text.strip():
+        return "вне области: пустой вход"
+    if _cyrillic_share(text) < 0.1:
+        return "вне области: текст не на русском (область скилла — русский текст)"
+    return ""
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Счётчик мягких признаков; вердикта об авторстве не выносит.")
@@ -1247,6 +1268,8 @@ def main(argv=None):
     worst_cats = 0
     multi_hit = False
     entries = []
+    errors = []
+    rc = 0
     for path in args.files:
         try:
             if path == "-":
@@ -1258,8 +1281,21 @@ def main(argv=None):
                     text = fh.read()
         except (OSError, UnicodeDecodeError) as exc:
             print("не удалось прочитать %s: %s" % (path, exc), file=sys.stderr)
-            return 2
+            errors.append({"file": "<stdin>" if path == "-" else path,
+                           "error": str(exc)})
+            rc = 2
+            continue
         report = analyze(text, genre=args.genre, plain_text=args.plain_text)
+        note = scope_note(text)
+        if note:
+            # Честный статус входа: пустой и не-русский текст — вне области
+            # скилла; счётчик отрабатывает механически, но «правка не
+            # требуется» таким входам не адресуется.
+            report = dict(report)
+            report["status"] = "out-of-scope"
+            report["scope_note"] = note
+            report["recommendation"] = note + "; минимальная механика подана"
+            print("%s: %s" % (path, note), file=sys.stderr)
         worst = max(worst, report["features_total"])
         worst_cats = max(worst_cats, report["categories_total"])
         # --fail-multicat: условие дерева решений — признаки из >=2 категорий.
@@ -1274,8 +1310,13 @@ def main(argv=None):
     if args.as_json:
         # Конверт контракта {tool, schema, files} — как у polish и detect;
         # голый массив больше не публикуется (contract.v1.json).
-        payload = {"tool": "humanizer-scan", "schema": 1, "files": entries}
+        payload = {"tool": "humanizer-scan", "schema": 1,
+                   "files": entries + errors}
+        if rc == 2:
+            payload["error"] = "вход не читается (код 2)"
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if rc == 2:
+        return 2
     if args.fail_at and worst >= args.fail_at:
         return 1
     if multi_hit:
