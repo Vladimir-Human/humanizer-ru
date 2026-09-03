@@ -39,6 +39,21 @@
 
 Счётчики: 106 гейтов полного check_all, 95 в --quick (без изменений).
 
+## 3.19.2 — 2026-09-04
+
+Патч-релиз: метаданные официального MCP-реестра; поведение CLI/MCP не меняется.
+
+- `server.json` в корне репозитория по схеме modelcontextprotocol.io
+  2025-12-11: имя `io.github.Vladimir-Human/humanizer-ru`, транспорт stdio,
+  пакет PyPI `humanizer-ru`, заметка издателя о conformance (Inspector CLI и
+  официальный Python SDK). Файл валиден по схеме (jsonschema, draft-07).
+- README.pypi.md: строка `mcp-name: io.github.Vladimir-Human/humanizer-ru` —
+  требование проверки владения PyPI-пакетом при публикации в MCP-реестр.
+- `check_docs.py`: server.json в манифесте верхнего уровня; дерево README
+  дополнено.
+
+Счётчики: 106 гейтов полного check_all, 95 в --quick (без изменений).
+
 ## Режим поддержки и роста — 2026-09-03
 
 После v3.19.0 проект переходит в режим поддержки и роста: реакции на
