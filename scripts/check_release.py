@@ -594,8 +594,8 @@ def sdist_test(root: Path, arg: str) -> int:
 
     Устанавливает собранный sdist в свежее временное venv и проверяет, что
     поставка самодостаточна: тесты из sdist проходят (репо-only модули
-    честно скипаются), --version печатает версию пакета, --json-вывод
-    соответствует конверту контракта.
+    честно скипаются), --version печатает версию пакета, --contract —
+    контракт из данных пакета, --json-выводы соответствуют конверту.
     Коды: 0 — пройдено; 1 — провал тестов/зондов/состава; 2 — отказ среды
     (нет сети, venv, модуля build или файла sdist).
     """
@@ -649,11 +649,17 @@ def sdist_test(root: Path, arg: str) -> int:
         probe = textwrap.dedent("""
             import contextlib, io, json, os, tempfile
             from humanizer_ru import __version__
-            from humanizer_ru.cli import scan_main, polish_main
+            from humanizer_ru.cli import scan_main, markers_main, polish_main
             buf = io.StringIO()
             with contextlib.redirect_stdout(buf):
                 rc = scan_main(["--version"])
             assert rc == 0 and buf.getvalue().strip() == __version__, "--version"
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = markers_main(["--contract"])
+            doc = json.loads(buf.getvalue())
+            assert rc == 0 and doc["schema_version"] == "contract.v1", "--contract"
+            assert len(doc["tools"]) == 4, "contract tools"
             fd, p = tempfile.mkstemp(suffix=".txt")
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 fh.write("Обычный русский текст без дефектов.\\n")

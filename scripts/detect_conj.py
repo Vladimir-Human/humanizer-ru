@@ -233,11 +233,16 @@ def scope_note(text: str) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Детектор частоты связок с границами домена. Вердикта об "
-                    "авторстве не выносит никогда.")
+                    "авторстве не выносит никогда.",
+        epilog="Репозиторий: https://github.com/Vladimir-Human/humanizer-ru\n"
+               "Вход для агентов: llms.txt; машинный контракт: contract.v1.json",
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*",
                     help="файлы для обработки; «-» читает stdin (UTF-8)")
     ap.add_argument("--genre", default="auto",
-                    help="жанр домена: instructions|essay|prose|web|auto")
+                    help="жанр домена: instructions|essay|prose|web|auto "
+                         "(единый словарь CLI: значения счётчика признаков "
+                         "уходят в автоклассификацию)")
     ap.add_argument("--json", action="store_true",
                     help="машиночитаемый отчёт")
     ap.add_argument("--gate", metavar="ПУТЬ",

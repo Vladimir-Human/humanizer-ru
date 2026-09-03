@@ -30,8 +30,17 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
-FILES = ["README.md", "README.en.md", "SKILL.md", "LEADERBOARD.md",
-         "CHANGELOG.md", "docs/FRAMEWORK.md"]
+# Скоуп объединён с check_own_style.py (приказ владельца 2026-09-03):
+# публичные файлы поставки, каждый своим методом. CHANGELOG.md здесь
+# проверяется методом витринной прозы (цитаты и таблицы снимаются),
+# а не сырым счётом, которым журнал заведомо выше любого порога.
+FILES = ["README.md", "README.en.md", "README.pypi.md", "SKILL.md",
+         "LEADERBOARD.md", "CHANGELOG.md", "docs/FRAMEWORK.md",
+         "PERSONA.md", "CONTRIBUTING.md", "SECURITY.md", "SECURITY.en.md",
+         "CODE_OF_CONDUCT.md", "GOVERNANCE.md", "AGENTS.md", "ERRATA.md",
+         "PRIVACY_POLICY.md", "llms.txt", "eval/README.md",
+         "eval/HOW-TO-RUN.md", "eval/runs/README.md",
+         ".github/pull_request_template.md"]
 STRUCTURAL = "структурная"
 FAIL_FEATURES = 3
 FAIL_CATEGORIES = 2

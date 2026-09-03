@@ -496,6 +496,30 @@ def check_repo(root):
            errors.append("I.17: %s не содержит «%s» (факт: %d/%d гейтов)"
                          % (_rel, _sub, _n_full, _n_quick))
 
+ # I.18: бюджет витринных документов (приказ владельца 2026-09-03, п.2.5/2.8).
+ # SKILL.md <= 4500 токенов: счёт по символам, консервативная эвристика для
+ # русского текста chars/3.5 (4500 * 3.5 = 15750); бюджет агентских скиллов
+ # измеряется токенами, посимвольный счёт — его верхняя оценка. Потолки строк
+ # README и GOVERNANCE зарегистрированы 2026-09-03 (README.md 303,
+ # README.en.md 277, GOVERNANCE.md 98 — GOVERNANCE заморожен по объёму):
+ # рост только осознанный, через обновление потолка в этом гейте.
+ for _rel18, _unit18, _limit18 in (
+   ("SKILL.md", "chars", 15750),
+   ("README.md", "lines", 320),
+   ("README.en.md", "lines", 300),
+   ("GOVERNANCE.md", "lines", 98),
+ ):
+  _path18 = os.path.join(root, _rel18)
+  if not os.path.isfile(_path18):
+   continue
+  _t18 = text(_rel18)
+  _n18 = len(_t18) if _unit18 == "chars" else len(_t18.splitlines())
+  if _n18 > _limit18:
+   errors.append(
+    "I.18: %s: %s %d больше бюджета %d — сократите документ или осознанно "
+    "поднимите потолок в scripts/check_docs.py"
+    % (_rel18, "символов" if _unit18 == "chars" else "строк", _n18, _limit18))
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -746,6 +770,16 @@ def selftest():
  case("длинные ======= не маркер -> OK",
       lambda r: _w(r, "research/GAPS.md", "заголовок\n========\n"),
       None)
+ case("SKILL.md сверх токен-бюджета -> FAIL",
+      lambda r: _w(r, "SKILL.md",
+                   open(os.path.join(r, "SKILL.md"), encoding="utf-8").read()
+                   + "наполнитель " * 3000),
+      "I.18")
+ case("README.md сверх построчного бюджета -> FAIL",
+      lambda r: _w(r, "README.md",
+                   open(os.path.join(r, "README.md"), encoding="utf-8").read()
+                   + "".join("строка %d\n" % i for i in range(400))),
+      "I.18")
 
  passed = 0
  for name, mutate, expect_token in cases:

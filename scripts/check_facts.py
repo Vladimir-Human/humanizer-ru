@@ -29,6 +29,7 @@ docs/FRAMEWORK.md, ERRATA.md, AGENTS.md и документ-отзыв оси. C
     python3 scripts/check_facts.py --selftest
 """
 import argparse
+import glob
 import json
 import os
 import re
@@ -57,6 +58,9 @@ STRICT_SKIP = {
     REGISTRY_REL.replace(os.sep, "/"),
     "eval/facts/facts.schema.v1.json",
     "scripts/check_facts.py",
+    # Архив журнала версий: перенос уже публичного в origin/main текста
+    # (ранние версии) дословно — не новая публикация чисел.
+    "docs/CHANGELOG-archive.md",
 }
 TEXT_EXT = (".md", ".txt", ".json", ".py", ".yml", ".yaml", ".cff", ".toml")
 
@@ -70,6 +74,13 @@ TOKEN_FORM_RE = re.compile(r"^(\d\.\d{2,4}|\d{1,4}/\d{1,4})$")
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 STATUSES = ("proven", "limited", "unknown", "withdrawn")
+
+# Пометка для записей, чей артефакт живёт в приватном прогоне: одобренное
+# число обязано быть проверяемым, поэтому приватный артефакт без явной
+# пометки (и обязательства публикации данных следующим батчем) — нарушение.
+PRIVATE_MARK = "артефакт приватного прогона"
+# Документированный сверочный суффикс артефакта: «путь (sha256 <64 hex>)».
+SHA_SUFFIX_RE = re.compile(r" \(sha256 [0-9A-Fa-f]{64}\)$")
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -195,6 +206,47 @@ def token_maps(data):
     return statuses, approved
 
 
+def artifact_problems(root, data):
+    """publication_approved=true ⇒ артефакт публично доступен.
+
+    Артефакт — путь/глоб в дереве репозитория (проверяется существование;
+    документированный суффикс «(sha256 <64 hex>)» — сверочный хеш файла —
+    при проверке пути отбрасывается), URL (гейт не ходит в сеть;
+    доступность обеспечивает публичная ссылка) или префикс run: (приватный
+    прогон). Запись с run:-артефактом обязана нести пометку «артефакт
+    приватного прогона» в note — зарегистрированное исключение до
+    публикации данных; для одобренных записей отсутствие пометки вдвойне
+    нарушение: одобренное число должно быть проверяемым из публичных
+    данных.
+    """
+    problems = []
+    for e in data.get("entries", []):
+        fid = e.get("fact_id", "?")
+        art = str(e.get("artifact", ""))
+        note = str(e.get("note", ""))
+        approved = e.get("publication_approved") is True
+        for part in [p.strip() for p in art.split(",") if p.strip()]:
+            if part.startswith("run:"):
+                if PRIVATE_MARK not in note:
+                    problems.append(
+                        "запись %s: артефакт %s указывает приватный прогон без "
+                        "пометки «%s»%s" % (
+                            fid, part, PRIVATE_MARK,
+                            " (publication_approved=true — одобренное число "
+                            "обязано быть проверяемым)" if approved else ""))
+                continue
+            if part.startswith(("http://", "https://")):
+                continue
+            path_part = SHA_SUFFIX_RE.sub("", part)
+            if not glob.glob(os.path.join(root, path_part.replace("/", os.sep))):
+                problems.append("запись %s: артефакт %s недоступен в дереве "
+                                "репозитория%s" % (
+                                    fid, part,
+                                    " (publication_approved=true)"
+                                    if approved else ""))
+    return problems
+
+
 def run(root, strict):
     data, errs = load_registry(root)
     if errs:
@@ -203,7 +255,7 @@ def run(root, strict):
     if errs:
         return 1, errs, ""
     statuses, approved = token_maps(data)
-    problems = []
+    problems = artifact_problems(root, data)
     for rel in SHOWCASE:
         path = os.path.join(root, rel)
         if not os.path.isfile(path):
@@ -298,6 +350,7 @@ def selftest():
         td = tempfile.mkdtemp(prefix="facts-selftest-")
         _w(td, REGISTRY_REL, json.dumps(reg, ensure_ascii=False))
         _w(td, "README.md", readme)
+        _w(td, "tests/fixtures/selftest.json", "{}")
         for rel, text in (extra or {}).items():
             _w(td, rel, text)
         return td
@@ -364,9 +417,43 @@ def selftest():
     case("--strict-publication ловит неодобренный токен (без git: всё дерево)",
          rc == 1 and any("0.5555" in p for p in probs))
 
+    run_art = _registry([_entry(artifact="run:w1/x.json")])
+    td = tree_with(run_art)
+    rc, probs, _ = run(td, strict=False)
+    case("run:-артефакт без пометки ВАЛИТСЯ (одобренное число непроверяемо)",
+         rc == 1 and any(PRIVATE_MARK in p for p in probs))
+
+    run_marked = _registry([_entry(
+        artifact="run:w1/x.json",
+        note="артефакт приватного прогона, публикация — RR-03")])
+    td = tree_with(run_marked)
+    rc, probs, _ = run(td, strict=False)
+    case("run:-артефакт с пометкой законен", rc == 0 and not probs)
+
+    missing = _registry([_entry(artifact="eval/facts/does-not-exist.json")])
+    td = tree_with(missing)
+    rc, probs, _ = run(td, strict=False)
+    case("одобренная запись с отсутствующим артефактом ВАЛИТСЯ",
+         rc == 1 and any("недоступен" in p for p in probs))
+
+    sha_art = _registry([_entry(
+        artifact="tests/fixtures/selftest.json (sha256 %s)" % ("ab" * 32))])
+    td = tree_with(sha_art)
+    rc, probs, _ = run(td, strict=False)
+    case("сверочный суффикс (sha256 …) не мешает разрешению пути артефакта",
+         rc == 0 and not probs)
+    sha_bad = _registry([_entry(
+        artifact="tests/fixtures/selftest.json (sha256 short)")])
+    td = tree_with(sha_bad)
+    rc, probs, _ = run(td, strict=False)
+    case("неполный суффикс sha256 не разрешает отсутствующий путь (негатив)",
+         rc == 1 and any("недоступен" in p for p in probs))
+
     data, errs = load_registry(ROOT)
     case("реальный реестр читается", data is not None and not errs)
     case("реальный реестр структурно валиден", not schema_errors(data))
+    case("реальный реестр: артефакты доступны",
+         not artifact_problems(ROOT, data))
 
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1

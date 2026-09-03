@@ -34,8 +34,8 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TARGETS = ["SKILL.md", "README.md", "README.en.md",
-           os.path.join("references", "test-fixtures-pairs.md"),
-           os.path.join("references", "test-fixtures-cases.md")]
+           os.path.join("tests", "test-fixtures-pairs.md"),
+           os.path.join("tests", "test-fixtures-cases.md")]
 
 NUMWORDS = set("""
 один одна одно одного одним два две двух двумя три трех тремя четыре четырех
@@ -483,8 +483,51 @@ def selftest():
     print("[%s] отдельный файл без пар не валит порог (код возврата: %d)"
           % ("OK  " if lone_ok else "FAIL", rc_lone))
 
+    # Первый экран README: первая пара обязана ловиться маркерами (count>=1).
+    pair_ok, pair_count = _readme_first_pair_detected()
+    ok = ok and pair_ok
+    print("[%s] первая пара README ловится маркерами (count: %d)"
+          % ("OK  " if pair_ok else "FAIL", pair_count))
+
     print("Самопроверка: " + ("пройдена" if ok else "ПРОВАЛЕНА"))
     return 0 if ok else 1
+
+
+def _readme_first_pair_detected():
+    """Первая пара «До/После» README обязана ловиться маркерами (count>=1).
+
+    Первый экран показывает настоящую вставку из чат-интерфейса: если
+    детерминированный слой её не видит, пример снова стал декоративным
+    (дефект, найденный внешним прогоном: старый пример «До» давал ноль
+    совпадений маркеров и рекомендацию «не править» у счётчика).
+    В README артефакты обёрнуты в бэктики (документационная форма —
+    самоскан репозитория их пропускает); пользовательская вставка
+    бэктиков не содержит, поэтому перед подсчётом они снимаются.
+    Возвращает (ok, count).
+    """
+    path = os.path.join(ROOT, "README.md")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except (OSError, UnicodeDecodeError):
+        return False, -1
+    m = PAIR_RX.search(text)
+    if not m:
+        return False, -1
+    before_raw = m.group("before").replace("`", "")
+    scripts_dir = os.path.join(ROOT, "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    try:
+        import check_markers
+    except ImportError:
+        return False, -1
+    compiled = {name: re.compile(case[0])
+                for name, case in check_markers.CASES.items()}
+    total = 0
+    for line in before_raw.splitlines():
+        total += len(check_markers._line_matches(line, compiled))
+    return total >= 1, total
 
 
 def main():
@@ -534,6 +577,15 @@ def main():
             "проверьте PAIR_RX и разметку примеров: гейт мог перестать видеть пары"
             % (total["pairs"], MIN_PAIRS)
         )
+
+    if full_run:
+        pair_ok, pair_count = _readme_first_pair_detected()
+        if not pair_ok:
+            all_err.append(
+                "первая пара «До/После» README не ловится маркерами (count=%d) — "
+                "первый экран обязан показывать вставку, которую детерминированный "
+                "слой реально находит" % pair_count
+            )
 
     for w in all_warn:
         print("[WARN] " + w)
