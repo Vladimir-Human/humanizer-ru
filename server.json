@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Vladimir-Human/humanizer-ru",
+  "title": "humanizer-ru",
+  "description": "Russian-text AI-trace detection and typography normalization over stdio MCP",
+  "version": "3.19.2",
+  "websiteUrl": "https://github.com/Vladimir-Human/humanizer-ru",
+  "repository": {
+    "url": "https://github.com/Vladimir-Human/humanizer-ru",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "humanizer-ru",
+      "version": "3.19.2",
+      "runtimeHint": "uv",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "note": "Stdlib-only Python package. One stdio MCP server via console entry point humanizer-mcp exposing humanizer_scan, humanizer_markers, humanizer_polish, humanizer_detect. JSON-RPC 2.0, newline-delimited stdio; protocol versions 2025-06-18, 2025-03-26, 2024-11-05. Tool schemas generated from contract.v1.json; a contract violation returns rc=2 with the contract envelope as isError:true. Conformance proven against MCP Inspector CLI and the official Python SDK: research/mcp-conformance-protocol.md.",
+      "install": "pip install humanizer-ru==3.19.2 then run humanizer-mcp (or: uvx --from humanizer-ru humanizer-mcp)"
+    }
+  }
+}
