@@ -97,7 +97,7 @@ def op_translit(text, rounds, rng):
 def op_zw(text, rounds, rng):
     for _ in range(rounds):
         i = rng.randrange(max(1, len(text)))
-        text = text[:i] + "​" + text[i:]
+        text = text[:i] + "\u200b" + text[i:]
     return text
 
 

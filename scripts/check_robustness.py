@@ -36,7 +36,7 @@ def _mut(kind, s, rng):
     if kind == "homoglyph":
         return "".join(HOMO.get(ch, ch) for ch in s)
     if kind == "zero-width":
-        return s[:3] + "​" + s[3:]
+        return s[:3] + "\u200b" + s[3:]
     if kind == "punctuation":
         return s.replace(":", "：")
     if kind == "linebreak":

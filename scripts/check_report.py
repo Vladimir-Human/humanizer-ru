@@ -16,8 +16,9 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "src"))
 from humanizer_ru import edit_report as er  # noqa: E402
 
-BEFORE = ("Текст с меткой :contentReference[oaicite:1]{index=1} и невидимым "
-          "​ символом.\nВторая строка с  двойным пробелом.\n")
+BEFORE = ("Текст с меткой :" + "contentReference" + "[oaicite:" + "1]{index=1} "
+          "и невидимым \u200b символом.\n"
+          "Вторая строка с  двойным пробелом.\n")
 AFTER = ("Текст с меткой и невидимым символом.\n"
          "Вторая строка с двойным пробелом.\n")
 

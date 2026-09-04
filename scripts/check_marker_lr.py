@@ -22,7 +22,7 @@ def check(rep, res):
     errs = []
     for name, r in res["markers"].items():
         lr = ("%.4f" % r["lr_lower"]) if r["lr_lower"] is not None else "-"
-        frag = "| %s | %s | %.6f |" % (name, r["class"], r["p1"])
+        frag = "| `%s` | %s | %.6f |" % (name, r["class"], r["p1"])
         if frag not in rep:
             errs.append("строка маркера %s не совпадает со снимком" % name)
         if lr != "-" and lr not in rep:
@@ -33,7 +33,7 @@ def check(rep, res):
 def selftest():
     rep, res = load()
     checks = [("числа отчёта сходятся со снимком", check(rep, res) == [])]
-    bad = rep.replace("| zero_width |", "| zero_width_X |")
+    bad = rep.replace("| `zero_width` |", "| `zero_width_X` |", 1)
     checks.append(("детектор реагирует на подмену строки",
                    check(bad, res) != []))
     fails = 0
