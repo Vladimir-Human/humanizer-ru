@@ -5,7 +5,7 @@ const HUMANIZER_MARKERS = {
   "meta": {
     "rules_version": "markers.v1",
     "markers_count": 40,
-    "build_date": "2026-09-04"
+    "build_date": "2026-08-26"
   },
   "rules": [
     {
