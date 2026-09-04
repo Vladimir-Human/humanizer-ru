@@ -134,7 +134,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.29.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.30.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -163,7 +163,7 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 - Проект детерминированно удаляет следы копипасты из чат-интерфейсов:
   contentReference, utm-метки, невидимые символы; ноль ложных срабатываний на
   контрольном корпусе из 40 текстов-неносителей, реестр фактов, число обновится
-  после замера F16. Рынок продаёт это как обход детекторов; здесь обход не обещается и не измеряется: prohibited_uses контракта. Границы: docs/THREAT-MODEL.md; библиография: research/BIBLIOGRAPHY.md.
+  после замера F16. Рынок продаёт это как обход детекторов; здесь обход не обещается и не измеряется: prohibited_uses контракта. Границы: docs/THREAT-MODEL.md; библиография: research/BIBLIOGRAPHY.md. Классовая разбивка FP, exploratory, вне предрега F16: класс A: 0 из 12314 текстов-неносителей; класс B: 8 из 12314, то есть 0.00065, Wilson 95% CI от 0.0003 до 0.0013; контрольный набор 40 текстов: флагов 0; тяжёлый домен S4 legal и official, n=381, дефицит объёма зафиксирован в предреге: 18 из 381, то есть 0.0472, Wilson 95% CI от 0.0301 до 0.0734; знаменатели: 12354 полный корпус F16, 12314 validation-страта.
 - MCP-сервер `humanizer-mcp`, stdio и JSON-RPC 2.0, — те же четыре инструмента
   для MCP-клиентов: `humanizer_scan`, `humanizer_markers`, `humanizer_polish`,
   `humanizer_detect`; имена CLI дефис / MCP подчёркивание, conformance сверяет `scripts/check_mcp.py`.
@@ -248,7 +248,7 @@ $ humanizer-scan --json notes.txt
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 - `METRICS.md`, `RELEASE.md`, `identity.v1.json`, `server.json` — витрина измерений, регламент выпусков, машиночитаемая идентичность и метаданные MCP-реестра.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 119 гейтов полного чек-листа (108 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 121 гейт полного чек-листа (110 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

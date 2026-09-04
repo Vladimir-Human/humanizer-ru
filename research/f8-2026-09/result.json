@@ -1,0 +1,208 @@
+{
+  "f8c_auc": {
+    "S1-machine-21-22_vs_human_all": {
+      "auc": 0.6068,
+      "ci95": [
+        0.602,
+        0.6119
+      ]
+    },
+    "S2-machine-24-26_vs_human_all": {
+      "auc": 0.6487,
+      "ci95": [
+        0.6081,
+        0.6933
+      ]
+    },
+    "machine_all_vs_S3-light": {
+      "auc": 0.6211,
+      "ci95": [
+        0.6167,
+        0.6255
+      ]
+    },
+    "machine_all_vs_S4-heavy": {
+      "auc": 0.1626,
+      "ci95": [
+        0.1425,
+        0.1835
+      ]
+    }
+  },
+  "f12": {
+    "base_auc_holdout": 0.5139,
+    "candidate": {
+      "token": "после",
+      "delta_freq": 0.052621,
+      "auc2": 0.52,
+      "fp_on_human_holdout": true
+    },
+    "delta_auc": 0.0061,
+    "included_as_marker": false,
+    "verdict": "отрицательный результат: кандидат не включается (порог дельты или FP)"
+  },
+  "f8d_axes": {
+    "creator": {
+      "core_keys": [
+        "creator",
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 2
+    },
+    "no_creator": {
+      "core_keys": [
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 2
+    },
+    "revision_high": {
+      "core_keys": [
+        "creator",
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 2
+    },
+    "total_time": {
+      "core_keys": [
+        "creator",
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 2
+    },
+    "rsids_many": {
+      "core_keys": [
+        "creator",
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 6
+    },
+    "company": {
+      "core_keys": [
+        "creator",
+        "revision"
+      ],
+      "app_keys": [
+        "Application",
+        "Company",
+        "TotalTime"
+      ],
+      "rsid_count": 2
+    }
+  },
+  "f8a_baseline": [
+    "html-escape",
+    "markup",
+    "synonym-swap",
+    "whitespace"
+  ],
+  "s5_recall": {
+    ":contentReference": {
+      "k": 0,
+      "n": 236,
+      "recall": 0.0,
+      "wilson95": [
+        0.0,
+        0.016
+      ]
+    },
+    "cite_turn": {
+      "k": 15,
+      "n": 47,
+      "recall": 0.3191,
+      "wilson95": [
+        0.204,
+        0.4617
+      ]
+    },
+    "utm_source=chatgpt": {
+      "k": 0,
+      "n": 195,
+      "recall": 0.0,
+      "wilson95": [
+        0.0,
+        0.0193
+      ]
+    },
+    "grok.com/?referrer": {
+      "k": 0,
+      "n": 114,
+      "recall": 0.0,
+      "wilson95": [
+        0.0,
+        0.0326
+      ]
+    },
+    "attributableIndex": {
+      "k": 89,
+      "n": 158,
+      "recall": 0.5633,
+      "wilson95": [
+        0.4854,
+        0.6382
+      ]
+    }
+  },
+  "f16b_fp": {
+    "overall": {
+      "k": 18,
+      "n": 381,
+      "fpr": 0.0472,
+      "wilson95": [
+        0.0301,
+        0.0734
+      ]
+    },
+    "S4-heavy-legal": {
+      "k": 3,
+      "n": 127,
+      "fpr": 0.0236,
+      "wilson95": [
+        0.0081,
+        0.0672
+      ]
+    },
+    "S4-heavy-official": {
+      "k": 15,
+      "n": 254,
+      "fpr": 0.0591,
+      "wilson95": [
+        0.0361,
+        0.0951
+      ]
+    },
+    "S4-heavy-ocr": {
+      "k": 0,
+      "n": 0,
+      "fpr": null,
+      "wilson95": [
+        0.0,
+        0.0
+      ]
+    }
+  }
+}
