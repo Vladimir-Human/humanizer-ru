@@ -31,6 +31,27 @@
 4. Прогоните `python3 scripts/check_markers.py --scan` по изменённым файлам: в тексте документации не должно остаться живых маркеров, только экранированные.
 5. Откройте PR: встроенный шаблон напомнит указать связанное issue, источник образцов и результаты проверок.
 
+## Добавить маркер за 10 минут
+
+1. Файл `scripts/check_markers.py`: добавьте ключ в `CASES` (Python re,
+   экранированные контрольные символы) и класс в `CLASS_OF` (A — улика
+   вставки, B — невидимый или разметочный след).
+2. Образцы: три строки в `tests/fixtures/` (положительный, отрицательный,
+   граничный) и секция в `tests/test-fixtures-cases.md`.
+3. Доказательство: запись в `research/fixtures/marker-sources.json`
+   (source_url, accessed, verbatim_sample) и имя кейса в `REGISTERED_CASES`
+   внутри `scripts/check_fixture_sources.py`.
+4. Описание: строка в `references/chatbot-artifacts-*.md` с пометкой
+   класса; формат строки копируйте с соседней строки таблицы того же
+   файла (парсер таблиц ожидает фиксированное число колонок).
+5. Регенерация: `python3 scripts/export_markers.py` и
+   `python3 demo/generate_js_rules.py` (markers.v1.json и markers.js).
+6. Проверка: `python3 scripts/check_markers.py`,
+   `python3 scripts/check_markers.py --parity`,
+   `python3 scripts/check_all.py --quick` и selftest затронутых гейтов.
+7. PR: шаблон заполнен, CHANGELOG дописан, обе README проверены на бюджет
+   строк и own_style.
+
 ## Как взять issue
 
 1. Выберите issue с меткой `good-first-issue` или `help-wanted`.
