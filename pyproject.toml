@@ -53,6 +53,7 @@ humanizer-markers = "humanizer_ru.cli:markers_main"
 humanizer-polish = "humanizer_ru.cli:polish_main"
 humanizer-detect = "humanizer_ru.cli:detect_main"
 humanizer-facts = "humanizer_ru.facts_diff:main"
+humanizer-report = "humanizer_ru.edit_report:main"
 humanizer-mcp = "humanizer_ru.mcp_server:main"
 
 [tool.setuptools.packages.find]

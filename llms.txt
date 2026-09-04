@@ -89,3 +89,4 @@
   [эррата](https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md)
   — датированные отзывы опубликованных чисел.
 - Границы честности: что проект структурно не ловит и почему — docs/THREAT-MODEL.md; проверенная библиография — research/BIBLIOGRAPHY.md.
+- humanizer-report до.md после.md --json: машиночитаемый отчёт правки (токены keep/add/delete, SARI-адаптация, классы правок, сверка фактов); вердиктов об авторстве не выносит.
