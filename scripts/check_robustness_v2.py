@@ -42,7 +42,7 @@ def check(rep, res):
 def selftest():
     rep, res = load()
     checks = [("числа отчёта сходятся со снимком", check(rep, res) == [])]
-    bad = rep.replace("zero-width |", "zero-width_X |", 1)
+    bad = rep.replace("| typo |", "| typo_X |", 1)
     checks.append(("детектор реагирует на подмену строки",
                    check(bad, res) != []))
     fails = 0
