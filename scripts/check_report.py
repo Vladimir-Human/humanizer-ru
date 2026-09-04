@@ -34,6 +34,29 @@ def _pair(before, after):
     return b, a
 
 
+def metrics_linked(met=None):
+    """Каждая метрика отчёта имеет строку в METRICS.md с ДИ или пометкой
+    «ДИ неприменим» (П11); тест падает при метрике без ссылки."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "..", "src"))
+    from humanizer_ru import edit_report as er
+    if met is None:
+        met = open(os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "research", "METRICS.md"),
+            encoding="utf-8").read()
+    errs = []
+    for name in er.METRIC_NAMES:
+        root = name.split(".")[0]
+        if root not in met:
+            errs.append("метрика %s без строки в METRICS.md" % name)
+    section = met.split("Метрики humanizer-report")[-1]
+    for name in er.METRIC_NAMES:
+        root = name.split(".")[0]
+        if root not in section:
+            errs.append("метрика %s вне секции метрик отчёта" % name)
+    return errs
+
+
 def selftest():
     checks = []
     b, a = _pair(BEFORE, AFTER)
@@ -53,6 +76,14 @@ def selftest():
                    "В отчёте 26 таблиц и 3 вывода.\n")
     f3 = er.report(b3, a3)["files"][0]
     checks.append(("изменённый факт помечается", not f3["facts"]["unchanged"]))
+    checks.append(("метрики отчёта имеют строки METRICS с ДИ или "
+                   "пометкой", metrics_linked() == []))
+    _met = open(os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "research", "METRICS.md"),
+        encoding="utf-8").read()
+    checks.append(("метрика без строки METRICS ловится",
+                   metrics_linked(_met.replace("mtld",
+                                               "lexical_diversity_x")) != []))
     fails = 0
     for name, ok in checks:
         print("%s: %s" % ("PASS" if ok else "FAIL", name))
