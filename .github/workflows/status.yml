@@ -24,19 +24,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Python
-        uses: actions/setup-python@47ecd47e2fbf4fafad304486e7d61a2bdf3a8aa8 # v6
-        with:
-          python-version: "3.11"
-
       - name: Тесты
-        run: python -m unittest discover -s tests
+        run: python3 -m unittest discover -s tests
 
       - name: Паритет демо и CLI
-        run: python scripts/check_demo_parity.py
+        run: python3 scripts/check_demo_parity.py
 
       - name: Записать status.json
-        run: python scripts/write_status.py
+        run: python3 scripts/write_status.py
 
       - name: Опубликовать status.json
         run: |
