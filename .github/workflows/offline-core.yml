@@ -1,0 +1,50 @@
+name: Оффлайн-ядро
+
+# П9 поправки V2: без сети проходят contract-тесты, --json, --remove и
+# check_facts. Онлайн-зависимые компоненты перечислены в docs/THREAT-MODEL.md
+# (раздел «Что требует сети»): OIDC-публикация PyPI, публикация MCP-реестров,
+# ots-штампы, загрузки корпусов, Pages-деплой, sdist-test и compatibility
+# (нужен индекс PyPI).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: offline-core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Python
+        uses: actions/setup-python@47ecd47e2fbf4fafad304486e7d61a2bdf3a8aa8 # v6
+        with:
+          python-version: "3.11"
+
+      - name: Установка пакета (до отключения сети)
+        run: python -m pip install -e .
+
+      - name: Ядро без сети (unshare -n)
+        run: |
+          sudo unshare -n bash -c '
+            set -euxo pipefail
+            python -m unittest tests.test_mcp_conformance tests.test_facts_diff tests.test_markers_cases
+            humanizer-markers --scan --json tests/fixtures/ref-name-search.txt > /tmp/markers.json
+            test -s /tmp/markers.json
+            humanizer-detect --json tests/fixtures/ref-name-search.txt > /tmp/detect.json
+            test -s /tmp/detect.json
+            humanizer-polish --remove tests/fixtures/ref-name-search.txt > /tmp/polished.txt
+            test -s /tmp/polished.txt
+            python scripts/check_facts.py
+          '
