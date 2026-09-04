@@ -230,6 +230,9 @@ def scope_note(text: str) -> str:
     return ""
 
 
+SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Детектор частоты связок с границами домена. Вердикта об "
@@ -249,6 +252,7 @@ def main(argv=None) -> int:
                     help="режим смоук-гейта по файлам/каталогу")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка с негативными кейсами")
+    ap.description = SHORT_RU + "\n\n" + (ap.description or "")
     args = ap.parse_args(argv)
 
     if args.selftest:

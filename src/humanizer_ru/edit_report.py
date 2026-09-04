@@ -157,11 +157,15 @@ def report(before_path, after_path):
             "files": [{"before": before_path, "after": after_path, **body}]}
 
 
+SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="humanizer-report")
     ap.add_argument("before")
     ap.add_argument("after")
     ap.add_argument("--json", action="store_true")
+    ap.description = SHORT_RU + "\n\n" + (ap.description or "")
     args = ap.parse_args(argv)
     env = report(args.before, args.after)
     if args.json:
