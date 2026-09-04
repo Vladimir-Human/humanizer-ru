@@ -14,7 +14,7 @@ import xml.sax.saxutils as su
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SAMPLE = ("Согласно отчёту :" + "contentReference[oaicite:12]{index=12}, "
+SAMPLE = ("Согласно отчёту :" + "contentReference[oaicite:" + "12]{index=12}, "
           "число "
           "заявок за неделю выросло на 12% — источник: "
           "https://example.com/report?utm_source=" + "chatgpt.com\n"
