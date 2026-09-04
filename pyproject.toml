@@ -39,6 +39,14 @@ Changelog = "https://github.com/Vladimir-Human/humanizer-ru/blob/main/CHANGELOG.
 Tracker = "https://github.com/Vladimir-Human/humanizer-ru/issues"
 Releases = "https://github.com/Vladimir-Human/humanizer-ru/releases"
 
+[project.optional-dependencies]
+# Словарная морфология (не ML): леммы имён в F1/F2.
+# лемматизация — pymorphy3 напрямую (>=2.0.6, версия в lock-заметке
+# LICENSES.md); razdel допустим как замороженный сегментатор (MIT,
+# ноль зависимостей); natasha/yargy/slovnet НЕ использовать (мертвы
+# с 07.2023, тянут pymorphy2) — поправка 49.
+ru-morph = ["pymorphy3>=2.0.6", "razdel>=0.5"]
+
 [project.scripts]
 humanizer-scan = "humanizer_ru.cli:scan_main"
 humanizer-markers = "humanizer_ru.cli:markers_main"
