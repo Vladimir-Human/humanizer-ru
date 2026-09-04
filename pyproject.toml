@@ -13,8 +13,9 @@ authors = [
   { name = "Vladimir-Human" },
 ]
 keywords = [
-  "russian", "ai-text", "ai-detection", "humanizer", "claude-code",
-  "agent-skills", "codex", "cursor", "dsh",
+  "русский текст", "машинный текст", "редактура", "проверка текста",
+  "ИИ-текст", "артефакты копипасты", "russian", "ai-text", "humanizer",
+  "agent-skills",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -38,6 +39,8 @@ Documentation = "https://github.com/Vladimir-Human/humanizer-ru/blob/main/README
 Changelog = "https://github.com/Vladimir-Human/humanizer-ru/blob/main/CHANGELOG.md"
 Tracker = "https://github.com/Vladimir-Human/humanizer-ru/issues"
 Releases = "https://github.com/Vladimir-Human/humanizer-ru/releases"
+Demo = "https://vladimir-human.github.io/humanizer-ru/"
+Benchmark = "https://vladimir-human.github.io/humanizer-ru/benchmark/"
 
 [project.optional-dependencies]
 # Словарная морфология (не ML): леммы имён в F1/F2.
