@@ -135,7 +135,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.29.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.30.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -165,7 +165,7 @@ Package commands:
   ambiguous only with `--include-ambiguous` and a warning, dangerous is
   reported and never removed (table: `references/removal-matrix.md`).
 - The project deterministically removes copy-paste traces of chat interfaces
-  (contentReference, utm tags, invisible characters) with zero false positives on 40
+  (contentReference, utm tags, invisible characters) with zero false positives on 40 Class split of false positives, exploratory, outside the F16 prereg: class A: 0 out of 12314 non-carrier texts; class B: 8 out of 12314, i.e. 0.00065, Wilson 95% CI from 0.0003 to 0.0013; control set of 40 texts: 0 flags; heavy domain S4 legal and official, n=381, volume deficit fixed in the prereg: 18 out of 381, i.e. 0.0472, Wilson 95% CI from 0.0301 to 0.0734; denominators: 12354 full F16 corpus, 12314 validation stratum.
   non-carrier control texts (fact registry; number updates after the F16 measurement).
   The market sells this as detector evasion; here evasion is neither promised nor measured: prohibited_uses.
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
@@ -253,7 +253,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 119 gates in the full checklist (108 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 121 gates in the full checklist (110 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
