@@ -265,7 +265,7 @@
       document.getElementById("buildinfo").textContent =
         "правила v" + HUMANIZER_MARKERS.meta.rules_version +
         " · маркеров: " + HUMANIZER_MARKERS.meta.markers_count +
-        " · сборка " + HUMANIZER_MARKERS.meta.build_date;
+        " · данные правил от " + HUMANIZER_MARKERS.meta.build_date;
       fetch("status.json").then((r) => r.ok ? r.json() : null)
         .then((st) => {
           if (st) {

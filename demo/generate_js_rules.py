@@ -73,11 +73,22 @@ def build_js(doc):
             "flags": flags,
             "explain": m.get("explain_ru"),
         })
-    import datetime
+    # Дата сборки выводится из содержания реестра (максимальная дата
+    # accessed в записях источников), а не из текущего дня: регенерация
+    # детерминирована, гейт синхронности не ломается на следующий день и
+    # работает во временной копии без git. Резерв — дата файла реестра.
+    accessed = [m["source"]["accessed"] for m in doc["markers"]
+                if m.get("source") and m["source"].get("accessed")]
+    if accessed:
+        build_date = max(accessed)
+    else:
+        import datetime
+        build_date = datetime.date.fromtimestamp(
+            os.path.getmtime(IN)).isoformat()
     data = {"schema_version": doc["schema_version"], "count": doc["count"],
             "meta": {"rules_version": doc["schema_version"],
                      "markers_count": doc["count"],
-                     "build_date": datetime.date.today().isoformat()},
+                     "build_date": build_date},
             "rules": rules}
     return ("/* Автогенерация из markers.v1.json скриптом generate_js_rules.py. */\n"
             "const HUMANIZER_MARKERS = " +
