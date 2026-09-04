@@ -3,14 +3,19 @@
 Каждый пункт: что сделать, где кликнуть, что вставить, ожидаемый результат.
 Всё остальное исполняется агентом без участия владельца.
 
-1. GitHub About и Website: Settings → General → Description: «Находит следы
-   машинного текста в русском и объясняет их вам»; Website:
-   https://vladimir-human.github.io/humanizer-ru/. Ожидание: About дословно
-   равен короткой формуле позиционирования.
-2. Включить Discussions: Settings → Features → Discussions (категория Q&A).
-   Ожидание: вкладка Discussions видна; contact_links шаблонов issue работают.
+1. [ИСПОЛНЕНО агентом 2026-09-04 через API] GitHub About и Website:
+   description установлен дословно «Находит следы машинного текста в русском
+   и объясняет их вам», homepage уже указывал на
+   https://vladimir-human.github.io/humanizer-ru/. Проверка:
+   gh repo view Vladimir-Human/humanizer-ru --json description,homepageUrl.
+2. [ИСПОЛНЕНО агентом 2026-09-04 через API] Discussions включены
+   (PATCH has_discussions=true), категории по умолчанию на месте, включая
+   Q&A; contact_links шаблонов issue работают. Проверка:
+   gh repo view Vladimir-Human/humanizer-ru --json hasDiscussionsEnabled.
 3. Закрепить репозиторий в профиле: профиль GitHub → Pin repositories →
    humanizer-ru. Ожидание: репозиторий в закреплённых на странице профиля.
+   Статус 2026-09-04: публичного API для закреплённых репозиториев профиля
+   нет — только ваш UI.
 4. Glama: вход и submission MCP-сервера. Черновик формы:
    drafts/glama-submission.md (в run-каталоге исполнителя; перенести в PR при
    необходимости). Ожидание: листинг сервера в реестре Glama; бейдж добавляется
@@ -19,9 +24,16 @@
    web-UI: pypi.org → Manage project humanizer-ru → Publishing. Ожидание:
    доверие указывает на workflow pypi-publish.yml текущего репозитория;
    долгоживущих токенов нет и не создавать (аудит W-107: токенов нет).
+   Статус 2026-09-04: OIDC-доверие работоспособно (публикация 3.31.0
+   прошла без токенов); долгоживущих токенов в репозитории и секретах нет —
+   ротировать нечего; решение о ротации доверия — за вами в UI.
 6. MultiSocial (Zenodo 13846152): доступ к файлам выдаётся по запросу с
    официальной академической почты. Если такой почты нет — пункт снимается
    как недоступный, страта остаётся исключённой с пометкой в отчётах.
+   Статус 2026-09-04: лицензии перепроверены живым API записи (CC BY 4.0,
+   access restricted, intended use non-commercial research only, ~8%
+   потенциально токсичных семплов по дисклеймеру) — фрагменты публиковать
+   нельзя даже при доступе; см. research/LICENSES-EXTERNAL.md.
 7. Личная GPG-подпись финального акта FRONTIER-ACT после его сборки:
    gpg --clearsign акта поверх исполнительской подписи. Ожидание: акт подписан
    ключом владельца.
