@@ -33,7 +33,8 @@ def check(rep, met, res):
         errs.append("F16b overall не совпадает со снимком")
     for k, v in res["s5_recall"].items():
         frag = "| %s | %d/%d |" % (k, v["k"], v["n"])
-        if frag not in rep:
+        frag_bt = "| `%s` | %d/%d |" % (k, v["k"], v["n"])
+        if frag not in rep and frag_bt not in rep:
             errs.append("S5 строка %s не совпадает со снимком" % k)
     for name, doc in (("FP-CORPUS", open(os.path.join(
             ROOT, "research", "FP-CORPUS-2026.md"), encoding="utf-8").read()),

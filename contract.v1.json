@@ -560,6 +560,92 @@
           }
         }
       }
+    },
+    {
+      "command": "humanizer-report",
+      "script": "src/humanizer_ru/edit_report.py",
+      "task": "машиночитаемый отчёт правки: токены keep/add/delete, адаптированные компоненты SARI, классы правок, сверка фактов авторских категорий, MTLD до и после",
+      "transformation": "не меняет текст: читает пару до/после и печатает конверт JSON или человекочитаемую сводку; вердиктов об авторстве не выносит",
+      "when_not": "не для текстов не на русском и не для исходного кода; не даёт вердиктов об авторстве, качестве и стиле; added не влияет на код выхода (их ловит check_examples.py)",
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "tool",
+          "schema",
+          "files",
+          "counts",
+          "diff"
+        ],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "enum": [
+              "humanizer-facts"
+            ]
+          },
+          "schema": {
+            "type": "integer",
+            "const": 1
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "integer"
+              },
+              "added": {
+                "type": "integer"
+              },
+              "changed": {
+                "type": "integer"
+              }
+            }
+          },
+          "diff": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "array"
+              },
+              "added": {
+                "type": "array"
+              },
+              "changed": {
+                "type": "array"
+              }
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "modes": [
+        "<до> <после>",
+        "--json"
+      ],
+      "inputs": [
+        "text_before",
+        "text_after"
+      ],
+      "invariants": [
+        "детерминированность",
+        "без ML и внешних зависимостей",
+        "не меняет текст: только отчёт"
+      ]
     }
   ],
   "router": [

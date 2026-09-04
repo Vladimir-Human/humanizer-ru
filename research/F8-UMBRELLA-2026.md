@@ -45,7 +45,7 @@ html-escape, markup, synonym-swap, whitespace
 | cite_turn | 15/47 | 0.3191 | [0.204; 0.4617] |
 | utm_source=chatgpt | 0/195 | 0.0 | [0.0; 0.0193] |
 | grok.com/?referrer | 0/114 | 0.0 | [0.0; 0.0326] |
-| attributableIndex | 89/158 | 0.5633 | [0.4854; 0.6382] |
+| `attributableIndex` | 89/158 | 0.5633 | [0.4854; 0.6382] |
 
 ## F16b: FP тяжёлого домена (дефицит объёма зафиксирован в предреге)
 

@@ -127,7 +127,7 @@ def generate_tool_defs(contract) -> list:
             if not t.get(field):
                 raise ValueError("инструмент %s: нет поля %s" % (cmd, field))
         name = cmd.replace("-", "_")
-        if cmd == "humanizer-facts":
+        if cmd in ("humanizer-facts", "humanizer-report"):
             props = {
                 "text_before": dict(TEXT_PARAM),
                 "text_after": dict(TEXT_PARAM),
@@ -201,6 +201,7 @@ def _module_for(tool_name):
         "humanizer_polish": "polish",
         "humanizer_detect": "detect_conj",
         "humanizer_facts": "facts_diff",
+        "humanizer_report": "edit_report",
     }[tool_name]
 
 
@@ -211,6 +212,8 @@ def _tool_argv(tool_name, arguments, text_path):
     if tool_name == "humanizer_facts":
         # два входа: файлы кладёт call_tool, порядок before, after
         return argv + ["diff", text_path, text_path + ".after", "--json"]
+    if tool_name == "humanizer_report":
+        return argv + [text_path, text_path + ".after", "--json"]
     if tool_name == "humanizer_markers":
         argv.append("--scan")
     argv.append("--json")
@@ -233,7 +236,7 @@ def call_tool(tool_name, arguments, tool_defs):
     """Вызов инструмента: (result_dict, jsonrpc_error_or_None)."""
     if tool_name not in {d["name"] for d in tool_defs}:
         return None, (-32602, "неизвестный инструмент: %s" % tool_name)
-    if tool_name == "humanizer_facts":
+    if tool_name in ("humanizer_facts", "humanizer_report"):
         before = arguments.get("text_before")
         after = arguments.get("text_after")
         if not isinstance(before, str) or not isinstance(after, str):
