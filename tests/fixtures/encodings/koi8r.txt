@@ -1,0 +1,1 @@
+Текст с меткой :contentReference[oaicite:3]{index=3} внутри.
