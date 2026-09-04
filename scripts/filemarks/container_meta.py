@@ -405,8 +405,69 @@ def _inspect_ooxml(data, media_prefix, label):
     return has_c2pa, has_ai or has_c2pa, findings, {"parts": len(parts)}
 
 
+DOCX_TEXT_PARTS_RX = re.compile(
+    r"^word/(document|footnotes|comments|header\d*|footer\d*|endnotes)\.xml$")
+DOCX_TOKEN_FINDINGS = (
+    ("utm_source=chatgpt", "utm-метка провайдера чата"),
+    ("utm_source=openai", "utm-метка провайдера чата"),
+    ("utm_source=copilot", "utm-метка провайдера чата"),
+    (":contentReference", "служебная метка ссылки ответа ассистента"),
+    ("chatgpt.com", "домен провайдера чата в тексте части"),
+    ("\u200b", "невидимый символ нулевой ширины"),
+)
+
+
+def _inspect_docx_parts(data, budget):
+    """Сканирование частей DOCX сверх docProps: rels-targets гиперссылок,
+    полевые команды (w:instrText), скрытый текст (w:vanish), следы
+    чат-интерфейсов в document/footnotes/comments/headers/footers."""
+    findings = []
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            for info in zf.infolist():
+                name = info.filename
+                if name.startswith("word/_rels/") and name.endswith(".rels"):
+                    _check_zip_budget(info, budget)
+                    txt = _safe_read(zf, name, budget).decode("utf-8",
+                                                              errors="replace")
+                    for m in re.finditer(r'Target="(https?://[^"]+)"', txt):
+                        target = m.group(1)
+                        if re.search(r"utm_source=(chatgpt|openai|copilot)"
+                                     r"|chatgpt\.com|sandbox|/mnt/data",
+                                     target, re.I):
+                            findings.append("rels-target %s: %s" % (name, target))
+                    continue
+                if not DOCX_TEXT_PARTS_RX.match(name):
+                    continue
+                _check_zip_budget(info, budget)
+                txt = _safe_read(zf, name, budget).decode("utf-8",
+                                                          errors="replace")
+                instr = len(re.findall(r"<w:instrText", txt))
+                if instr:
+                    findings.append("полевые команды %s: w:instrText x%d"
+                                    % (name, instr))
+                vanish = len(re.findall(r"<w:vanish", txt))
+                if vanish:
+                    findings.append("скрытый текст %s: w:vanish x%d"
+                                    % (name, vanish))
+                for token, label in DOCX_TOKEN_FINDINGS:
+                    if token in txt:
+                        findings.append("след чат-интерфейса %s: %s"
+                                        % (name, label))
+    except (zipfile.BadZipFile, ValueError):
+        return []
+    return findings
+
+
 def inspect_docx(data):
-    return _inspect_ooxml(data, "word/media/", "DOCX")
+    has_c2pa, has_ai, findings, details = _inspect_ooxml(data, "word/media/",
+                                                         "DOCX")
+    budget = [0]
+    part_findings = _inspect_docx_parts(data, budget)
+    if part_findings:
+        findings = findings + part_findings
+        details["docx_parts_findings"] = len(part_findings)
+    return has_c2pa, has_ai, findings, details
 
 
 def inspect_pptx(data):
