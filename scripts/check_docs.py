@@ -88,7 +88,7 @@ TOP_LEVEL_MANIFEST = frozenset((
  # (Glama и подобные) индексируют серверы по этому файлу.
  "server.json",
  # 2026-09-04: лицензии зависимостей/корпусов и реестр действий владельца.
- "LICENSES.md", "OWNER-ACTIONS.md", "OWNER-TODO.md", "POSITIONING.md",
+ "LICENSES.md", "OWNER-ACTIONS.md", "OWNER-TODO.md", "POSITIONING.md", "assets",
 ))
 
 def _tracked_top_levels(root):
