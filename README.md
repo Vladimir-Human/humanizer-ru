@@ -49,6 +49,7 @@ humanizer-markers --scan primer.txt
 ## Почему можно доверять
 
 - [Методология и бенчмарк: числа с доверительными интервалами](research/F8-UMBRELLA-2026.md).
+- [Публичный бенчмарк: таблица с CI, командами воспроизведения и колонкой «где мы хуже»](demo/benchmark/index.html).
 - [Модель угроз и границы детектора](docs/THREAT-MODEL.md).
 - [Парити-гейт Python и JS правил](.github/workflows/regex-check.yml).
 - [Самоаудит: числа, статусы и эррата](eval/facts/self-audit.v1.json).
@@ -58,7 +59,7 @@ humanizer-markers --scan primer.txt
 
 - 58 паттернов машинного письма и 40 regex-маркеров (классы A и B).
 - Записи доказательств: 38 из 40 маркеров (реестр research/fixtures/marker-sources.json).
-- Гейты: 127 гейтов полного check_all (116 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
+- Гейты: 129 гейтов полного check_all (118 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
 
 Почему так называется: имя унаследовано от первой функции, снимавшей
 слой копипасты после чат-бота и возвращавшей тексту человеческий вид.

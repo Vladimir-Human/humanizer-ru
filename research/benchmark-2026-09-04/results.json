@@ -1,0 +1,103 @@
+{
+  "date": "2026-09-04",
+  "rows": [
+    {
+      "id": "fp-light",
+      "metric": "Ложные срабатывания на человеческих текстах (лёгкий домен)",
+      "value": "8/12354 = 0.0006",
+      "ci95": [
+        0.0003,
+        0.0013
+      ],
+      "source": "research/fp-corpus-2026-09/result.json",
+      "reproduce": "python tools/fp_corpus_measure.py (предрег f16-fp-corpus-prereg-2026-09, один проход)",
+      "worse": "тяжёлый домен (юридика, канцелярит, OCR) даёт FP на порядок выше — см. fp-heavy"
+    },
+    {
+      "id": "S1-machine-21-22_vs_human_all",
+      "metric": "AUC мягких сигналов, поколение 2021-22 против human",
+      "value": 0.6068,
+      "ci95": [
+        0.602,
+        0.6119
+      ],
+      "source": "research/f8-2026-09/result.json",
+      "reproduce": "python tools/f8_measure.py (предрег f8-umbrella-prereg-2026-09)",
+      "worse": "да: мягкие признаки не разделяют машинность (AUC около 0.6), вердиктов по ним нет"
+    },
+    {
+      "id": "S2-machine-24-26_vs_human_all",
+      "metric": "AUC мягких сигналов, поколение 2024-26 против human",
+      "value": 0.6487,
+      "ci95": [
+        0.6081,
+        0.6933
+      ],
+      "source": "research/f8-2026-09/result.json",
+      "reproduce": "python tools/f8_measure.py (предрег f8-umbrella-prereg-2026-09)",
+      "worse": "да: мягкие признаки не разделяют машинность (AUC около 0.6), вердиктов по ним нет"
+    },
+    {
+      "id": "ret-zero-width",
+      "metric": "Retention сигнатур после оператора zero-width (глубина 3)",
+      "value": 0.5789,
+      "ci95": null,
+      "source": "research/adversarial-2026-09/result.json",
+      "reproduce": "python tools/f3v2_measure.py (предрег f3-adversarial-prereg-v2-2026-09)",
+      "worse": "да: невидимые символы и гомоглифы снижают удержание сигнатур"
+    },
+    {
+      "id": "ret-homoglyph",
+      "metric": "Retention сигнатур после оператора homoglyph (глубина 3)",
+      "value": 0.3684,
+      "ci95": null,
+      "source": "research/adversarial-2026-09/result.json",
+      "reproduce": "python tools/f3v2_measure.py (предрег f3-adversarial-prereg-v2-2026-09)",
+      "worse": "да: невидимые символы и гомоглифы снижают удержание сигнатур"
+    },
+    {
+      "id": "ret-markup",
+      "metric": "Retention сигнатур после оператора markup (глубина 3)",
+      "value": 0.9474,
+      "ci95": null,
+      "source": "research/adversarial-2026-09/result.json",
+      "reproduce": "python tools/f3v2_measure.py (предрег f3-adversarial-prereg-v2-2026-09)",
+      "worse": "да: невидимые символы и гомоглифы снижают удержание сигнатур"
+    },
+    {
+      "id": "lr-weak",
+      "metric": "Маркеры без доказательной силы на машинных текстах (LR слабое)",
+      "value": "38 из 40",
+      "ci95": null,
+      "source": "research/marker-lr-2026-09/result.json",
+      "reproduce": "python tools/marker_lr_measure.py (предрег f17-lr-prereg-2026-09)",
+      "worse": "да: маркеры копипасты молчат на чистых машинных текстах — это граница, а не детектор машинности"
+    },
+    {
+      "id": "fact-loss-showcase",
+      "metric": "Потеря фактов авторских категорий на витринных парах",
+      "value": "S1 core 0.00/0.00; S1 все 0.125/0.125; S2 lost 0.5699, added 0.3441; S3 lost 0.8333, added 1.00; CI в отчёте; инструмент",
+      "ci95": null,
+      "source": "eval/facts/facts.v1.json",
+      "reproduce": "python scripts/check_facts_diff.py + предрег factloss",
+      "worse": "да: на слепом переписывании потери существенны — правка без fact-loss не рекомендуется"
+    }
+  ],
+  "competitors": [
+    {
+      "repo": "Imalwayshere/Open-Detector",
+      "stars": 238,
+      "status": "не удалось воспроизвести: BERT-модель обучена на английском академическом тексте, русского корпуса и публичного API для русского нет; см. методику"
+    },
+    {
+      "repo": "talkstream/ru-text",
+      "stars": 223,
+      "status": "не удалось воспроизвести количественно: набор правил для агентов без исполняемой скоринг-процедуры; качественное пересечение тем учтено в THREAT-MODEL"
+    },
+    {
+      "repo": "smixs/humanizer-ru",
+      "stars": 148,
+      "status": "форк самого проекта, не независимый конкурент"
+    }
+  ]
+}
