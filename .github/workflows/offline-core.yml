@@ -32,7 +32,7 @@ jobs:
 
       - name: Ядро без сети (unshare -n)
         run: |
-          sudo unshare -n bash -c '
+          sudo -E unshare -n env PYTHONPATH="$PWD/src" PATH="$PATH" bash -c '
             set -euxo pipefail
             python3 -m unittest tests/test_mcp_conformance.py tests/test_facts_diff.py tests/test_markers_cases.py
             python3 -c "import sys; from humanizer_ru import cli; sys.exit(cli.markers_main(['--scan', '--json', 'tests/fixtures/ref-name-search.txt']))" > /tmp/markers.json
