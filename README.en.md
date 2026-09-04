@@ -1,5 +1,5 @@
 # Humanizer-ru — normalization and diagnostics for Russian text
-
+Finds machine-text traces in Russian and explains them
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=release&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
@@ -253,7 +253,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 121 gates in the full checklist (110 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 123 gates in the full checklist (112 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
