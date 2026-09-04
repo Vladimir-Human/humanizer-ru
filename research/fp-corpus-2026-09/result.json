@@ -1,0 +1,49 @@
+{
+  "prereg_sha256": "88901C2A5C58287B689C92B469A3213FE6EB15F95C092E90CC97C01BE006A428",
+  "strata": [
+    {
+      "stratum": "coat-human-mix",
+      "n": 12314,
+      "fp": 8,
+      "fp_share": 0.0006,
+      "wilson95": [
+        0.0003,
+        0.0013
+      ],
+      "soft_median": 0,
+      "excluded": false
+    },
+    {
+      "stratum": "taiga-social+news",
+      "n": 0,
+      "excluded": true,
+      "reason": "Content-Length непрозрачен или выше 1 ГБ",
+      "sizes": {
+        "taiga-social": 54931,
+        "taiga-news": 2377473291
+      }
+    },
+    {
+      "stratum": "registry-40",
+      "n": 40,
+      "fp": 0,
+      "fp_share": 0.0,
+      "wilson95": [
+        0.0,
+        0.0876
+      ],
+      "soft_median": 0,
+      "excluded": false
+    }
+  ],
+  "overall": {
+    "n": 12354,
+    "fp": 8,
+    "fp_share": 0.0006,
+    "wilson95": [
+      0.0003,
+      0.0013
+    ],
+    "target_upper_le": 0.02
+  }
+}

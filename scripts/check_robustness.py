@@ -63,11 +63,13 @@ def _hits(text):
 def selftest():
     checks = []
     rng = random.Random(20260904)
-    for kind in ("homoglyph", "zero-width", "punctuation", "linebreak",
+    for kind in ("homoglyph", "punctuation", "linebreak",
                  "nfc-nfkc", "translit", "word-smart", "html-convert",
                  "telegram-pdf"):
-        checks.append(("мутация чистого текста не создаёт находок: %s" % kind,
+        checks.append(("мутация без артефактов не создаёт находок: %s" % kind,
                        not _hits(_mut(kind, CLEAN, rng))))
+    checks.append(("zero-width мутация ловится (невидимый = артефакт)",
+                   _hits(_mut("zero-width", CLEAN, rng))))
     src = json_samples()
     pos = 0
     for name, sample in src.items():

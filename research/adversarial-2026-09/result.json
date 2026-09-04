@@ -1,0 +1,62 @@
+{
+  "prereg_sha256": "7C1EF06C628E5E128697B95217ED134BAE4571A3E2F1F01D79235DEA74D2EEC8",
+  "n_markers": 38,
+  "matrix": {
+    "homoglyph": {
+      "d1": 0.2895,
+      "d2": 0.2632,
+      "d3": 0.2105
+    },
+    "zero-width": {
+      "d1": 0.2632,
+      "d2": 0.1316,
+      "d3": 0.1316
+    },
+    "punctuation": {
+      "d1": 0.6842,
+      "d2": 0.6842,
+      "d3": 0.6842
+    },
+    "linebreak": {
+      "d1": 0.4737,
+      "d2": 0.4737,
+      "d3": 0.4737
+    },
+    "nfc-nfkc": {
+      "d1": 1.0,
+      "d2": 1.0,
+      "d3": 1.0
+    },
+    "translit": {
+      "d1": 0.2632,
+      "d2": 0.2632,
+      "d3": 0.2632
+    },
+    "word-smart": {
+      "d1": 0.9737,
+      "d2": 0.9737,
+      "d3": 0.9737
+    },
+    "html-convert": {
+      "d1": 0.9211,
+      "d2": 0.9211,
+      "d3": 0.9211
+    },
+    "telegram-pdf": {
+      "d1": 0.8421,
+      "d2": 0.7368,
+      "d3": 0.6579
+    }
+  },
+  "remove_table": {
+    "homoglyph": 1.0,
+    "zero-width": 1.0,
+    "punctuation": 1.0,
+    "linebreak": 1.0,
+    "nfc-nfkc": 1.0,
+    "translit": 1.0,
+    "word-smart": 1.0,
+    "html-convert": 1.0,
+    "telegram-pdf": 1.0
+  }
+}

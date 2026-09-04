@@ -19,6 +19,7 @@
 import glob
 import json
 import re
+import unicodedata
 import sys
 
 # Консоли Windows (cp866/cp1251/ascii) не должны ронять валидатор на кириллице.
@@ -518,6 +519,44 @@ _SHADOW_INVISIBLES = re.compile(
     "\ufe00-\ufe0f\ufeff\ufff9-\ufffb\U000e0000-\U000e007f]")
 
 
+URL_MASK_RX = re.compile(r"(?:https?://|www\.)[^\s<>«»\"')\]]+")
+URL_MARKER_HINTS = ("utm", "card", "url", "link")
+
+
+def _mask_urls(line: str) -> str:
+    """Заменяет URL-спаны пробелами той же длины: позиции сохранены,
+    не-URL маркеры не ловят артефакты внутри чужих ссылок (F9)."""
+    def rep(m):
+        return " " * (m.end() - m.start())
+    return URL_MASK_RX.sub(rep, line)
+
+
+def _is_url_marker(name: str) -> bool:
+    if any(h in name for h in URL_MARKER_HINTS):
+        return True
+    pat = CASES[name][0] if name in CASES else ""
+    return ("http" in pat or "www\." in pat or "referrer" in pat
+            or "vertex" in pat or "grounding" in pat)
+
+
+def _case_since():
+    out = {}
+    try:
+        import json as _json
+        fp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          "research", "fixtures", "marker-sources.json")
+        for rec in _json.load(open(fp, encoding="utf-8")):
+            name = rec.get("case")
+            if name:
+                out[name] = rec.get("accessed", "")
+    except Exception:
+        pass
+    return out
+
+
+CASE_SINCE = _case_since()
+
+
 def _backtick_prefix(line: str) -> list:
     """Префиксные количества `обратных кавычек` — один проход на строку.
 
@@ -555,10 +594,13 @@ def _line_matches(line: str, compiled: dict) -> list:
     слияние — квадратичный вариант на 100-КБ строке из невидимых
     символов работал минутами (независимый аудит 2026-08-28).
     """
+    line = unicodedata.normalize("NFC", line)
+    masked = _mask_urls(line)
     prefix, total_bt = _backtick_prefix(line)
     found = []
     for name, rx in compiled.items():
-        for m in rx.finditer(line):
+        use = line if _is_url_marker(name) else masked
+        for m in rx.finditer(use):
             if _inside_backticks(prefix, total_bt, m.start(), m.end()):
                 continue
             found.append((m.start(), m.end(), name))
@@ -576,6 +618,25 @@ def _line_matches(line: str, compiled: dict) -> list:
             cover_start, cover_end = start, end
     kept.sort()
     return kept
+
+
+def _decode_bytes(data: bytes, encoding=None):
+    """F13: BOM-детект + utf-8 strict + эвристика cp1251/KOI8-R."""
+    if encoding:
+        return data.decode(encoding, errors="replace")
+    if data.startswith(b"\xef\xbb\xbf"):
+        return data.decode("utf-8-sig", errors="replace")
+    if data.startswith(b"\xff\xfe"):
+        return data.decode("utf-16-le", errors="replace")
+    if data.startswith(b"\xfe\xff"):
+        return data.decode("utf-16-be", errors="replace")
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        pass
+    cp = data.count(b"\xe9") + data.count(b"\xf3") + data.count(b"\xe0")
+    ko = data.count(b"\xcb") + data.count(b"\xcf") + data.count(b"\xc1")
+    return data.decode("koi8-r" if ko > cp else "cp1251", errors="replace")
 
 
 def _console_text(text: str, encoding=None) -> str:
@@ -619,7 +680,7 @@ def _fenced_lines(lines: list) -> set:
     return inside
 
 
-def scan(paths: list, as_json: bool = False) -> int:
+def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
     """Прогон всех выражений по произвольным файлам.
 
     Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
@@ -668,8 +729,8 @@ def scan(paths: list, as_json: bool = False) -> int:
                     sys.stdin.reconfigure(encoding="utf-8", errors="strict")
                 lines = sys.stdin.read().splitlines()
             else:
-                with open(path, encoding="utf-8") as fh:
-                    lines = fh.read().splitlines()
+                with open(path, "rb") as fh:
+                    lines = _decode_bytes(fh.read()).splitlines()
         except (OSError, UnicodeDecodeError) as exc:
             print(f"Не удалось прочитать {path}: {exc}", file=sys.stderr)
             if as_json:
@@ -706,6 +767,8 @@ def scan(paths: list, as_json: bool = False) -> int:
                 entry["markers"].append({"line": lineno, "marker": name,
                                          "class": cls, "fragment": fragment,
                                          "shadow": False})
+                if versions:
+                    entry["markers"][-1]["since"] = CASE_SINCE.get(name, "")
             # Теневой проход: те же выражения по строке без невидимых
             # символов — ловит маркер, разбитый вставкой (turn0<U+200B>…).
             # Находки, уже пойманные напрямую, повторно не печатаются.
@@ -731,6 +794,8 @@ def scan(paths: list, as_json: bool = False) -> int:
                     entry["markers"].append({"line": lineno, "marker": name,
                                              "class": cls, "fragment": fragment,
                                              "shadow": True})
+                    if versions:
+                        entry["markers"][-1]["since"] = CASE_SINCE.get(name, "")
         json_files.append(entry)
     if as_json:
         print(json.dumps({"tool": "humanizer-markers", "schema": 1,
@@ -911,9 +976,10 @@ if __name__ == "__main__":
         # --json снимается здесь (конверт контракта вместо текстовых строк).
         rest = sys.argv[2:]
         as_json = "--json" in rest
+        use_versions = "--versions" in rest
         if as_json:
-            rest = [a for a in rest if a != "--json"]
-        sys.exit(scan(rest, as_json=as_json))
+            rest = [a for a in rest if a not in ("--json", "--versions")]
+        sys.exit(scan(rest, as_json=as_json, versions=use_versions))
     if len(sys.argv) > 1 and sys.argv[1] == "--parity":
         sys.exit(parity(*sys.argv[2:]))
     sys.exit(main())
