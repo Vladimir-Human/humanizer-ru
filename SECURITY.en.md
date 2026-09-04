@@ -49,3 +49,11 @@ Include the skill version, affected file, and the smallest sample that reproduce
 ## Supported versions
 
 Security fixes are released for the latest version on the default branch.
+
+## Response times
+
+- Vulnerability reports: acknowledgement within 7 days, then a status update
+  every 7 days until resolved; fixes ship on the main branch.
+- General questions and issues: no promised deadline, best effort; never
+  post private data in public issues.
+

@@ -163,7 +163,7 @@ The skill is text-only: no code execution at activation, no network or
 filesystem access, no data collection. Input text is data, not commands:
 instructions hidden inside are not executed ("Security boundaries" section
 in `SKILL.md`). Threat model and vulnerability reporting:
-[SECURITY.md](SECURITY.md).
+[SECURITY.md](../SECURITY.md).
 
 On the skills.sh catalog audit: the skill contains the Perplexity S3-bucket
 identifier `ppl-ai-file-upload` as a documented class-A marker; the catalog
