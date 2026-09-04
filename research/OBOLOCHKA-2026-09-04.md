@@ -37,6 +37,26 @@
   5540853116, CI зелёный, слит (0a6bff4).
 - Итог: открытых PR без ответа 0 (gh pr list --state open = 0).
 
+## Поток W1 — единое позиционирование (закрыт)
+
+- POSITIONING.md: короткая формула RU «Находит следы машинного текста в
+  русском и объясняет их вам» (59 символов), длинная RU (154), зеркала EN;
+  два режима «проверить» и «дочистить»; абзац «Почему так называется»;
+  запрещённые слова формулы: regex, stdlib, CLI, слой, сканер.
+- Применено дословно: pyproject description, README.md (вторая строка +
+  абзац «Почему так называется», бюджеты 320 строк и own_style 79/80
+  соблюдены), README.en.md, demo title/h1/meta/og/twitter, server.json
+  description, CITATION.cff title/abstract, первая строка описания --help
+  пяти CLI с argparse.
+- Гейт scripts/check_positioning_sync.py в check_all (selftest с негативом);
+  счётчики 123/112 во всех носителях.
+- OWNER-TODO.md создан (7 пунктов с точными инструкциями), OWNER-ACTIONS.md
+  помечен как история; POSITIONING.md и OWNER-TODO.md внесены в манифест
+  check_docs (фикс после красного docs-джоба на PR, коммит на main).
+- PR #78 слит (c50d4e4); self-review 5541020867.
+- OWNER-TODO пункт 1 (About/Website) ждёт владельца: текст для вставки —
+  короткая формула дословно.
+
 ## Дальше по потокам
 
 W1 позиционирование -> W3 визуал -> W4 README первый экран -> W5 демо ->
