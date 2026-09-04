@@ -49,6 +49,7 @@ humanizer-markers --scan primer.txt
 ## Why you can trust it
 
 - [Methodology and benchmark: numbers with confidence intervals](research/F8-UMBRELLA-2026.md).
+- [Public benchmark: table with CIs, reproduction commands and a where-we-are-worse column](demo/benchmark/index.html).
 - [Threat model and detector boundaries](docs/THREAT-MODEL.md).
 - [Python-JS parity gate for the rules](.github/workflows/regex-check.yml).
 - [Self-audit: numbers, statuses, errata](eval/facts/self-audit.v1.json).
@@ -57,7 +58,7 @@ humanizer-markers --scan primer.txt
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
 - Proof records: 38 of 40 markers (registry research/fixtures/marker-sources.json).
-- Gates: 127 gates in the full check_all (116 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
+- Gates: 129 gates in the full check_all (118 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
 
 ## More
 
