@@ -54,6 +54,13 @@ humanizer-markers --scan primer.txt
 - [Python-JS parity gate for the rules](.github/workflows/regex-check.yml).
 - [Self-audit: numbers, statuses, errata](eval/facts/self-audit.v1.json).
 
+## Installing the skill in browser clients
+
+- The demo needs no install: https://vladimir-human.github.io/humanizer-ru/ — your text never leaves the browser.
+- Claude.ai and Claude Code: add the skill from `dsh/skills/humanizer-ru` following the install steps in [docs/USAGE.en.md](docs/USAGE.en.md#install-in-30-seconds).
+- Agent clients supporting agentskills.io (opencode, DeepSeek Harness): unpack the text bundle from the release archive.
+- A browser extension was declined: a new surface (permissions, store review) does not pay off; idea queue — [research/BACKLOG.md](research/BACKLOG.md).
+
 ## Project in numbers
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
