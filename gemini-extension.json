@@ -1,5 +1,5 @@
 {
   "name": "humanizer-ru",
-  "version": "3.30.0",
+  "version": "3.31.0",
   "description": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком. | Reads Russian text, finds traces of machine generation and, on explicit request, rewrites it to sound natural."
 }
