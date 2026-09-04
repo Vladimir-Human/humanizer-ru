@@ -99,3 +99,22 @@ jobs:
           name: link-check-state
           path: research/fixtures/link-check-state.json
           if-no-files-found: ignore
+
+  # Nightly проверка мёртвых ссылок по всем .md и docs (stdlib urllib,
+  # таймаут 10 с). Не входит в PR-гейты: сетевые проверки живут только
+  # в scheduled-прогоне.
+  md-links:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 1
+
+      - name: Проверка мёртвых ссылок
+        run: python3 scripts/check_links.py
+
