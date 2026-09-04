@@ -30,7 +30,8 @@
       "humanizer-markers",
       "humanizer-polish",
       "humanizer-detect",
-      "humanizer-facts"
+      "humanizer-facts",
+      "humanizer-report"
     ]
   },
   "claims_forbidden": [

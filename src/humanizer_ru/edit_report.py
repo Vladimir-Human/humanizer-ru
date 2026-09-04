@@ -98,6 +98,38 @@ def _strip_markers(text):
     return text
 
 
+METRIC_NAMES = ["tokens.keep", "tokens.add", "tokens.delete",
+                "sari_adapted.keep", "sari_adapted.add",
+                "sari_adapted.delete", "edit_types", "facts.lost",
+                "facts.changed", "mtld"]
+
+
+def mtld(text, threshold=0.72):
+    """MTLD (lexical diversity): среднее факторов TTR ниже порога по
+    прямой и обратной последовательностям токенов; stdlib-реализация,
+    вариант частичного фактора документирован в METRICS.md."""
+    toks = re.findall(r"[a-zа-яё]+", text.lower())
+    if len(toks) < 10:
+        return None
+    vals = []
+    for seq in (toks, toks[::-1]):
+        factors = 0.0
+        n = 0
+        uniq = {}
+        for i, tk in enumerate(seq, 1):
+            uniq[tk] = uniq.get(tk, 0) + 1
+            n = i
+            ttr = len(uniq) / n
+            if ttr < threshold:
+                factors += (1 - ttr) / (1 - threshold)
+                uniq = {}
+                n = 0
+        if n:
+            factors += 1
+        vals.append(len(seq) / factors if factors else 0.0)
+    return round(sum(vals) / 2.0, 4)
+
+
 def facts_part(before, after):
     try:
         from humanizer_ru import facts_diff as fd
@@ -119,6 +151,8 @@ def report(before_path, after_path):
         after = fh.read()
     body = compute(before, after)
     body["facts"] = facts_part(before, after)
+    mb, ma = mtld(before), mtld(after)
+    body["mtld"] = {"before": mb, "after": ma}
     return {"tool": "humanizer-report", "schema": 1,
             "files": [{"before": before_path, "after": after_path, **body}]}
 
