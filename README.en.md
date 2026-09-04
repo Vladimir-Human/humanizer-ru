@@ -12,10 +12,9 @@
 A skill and a command set for Russian text: finds copy-paste artifacts and machine-generation traces, normalizes typography without touching meaning.
 Rewriting of machine-flavoured text happens on explicit request, with no quality claims attached. Not for non-Russian text, source code, legal documents, fiction or poetry.
 
-In practice: text pasted from a chatbot carries service marks, invisible
-characters and machine typography. The skill removes that layer and shows
-where it was. Project numbers live in the fact registry `eval/facts/`; the
-machine interface is described in `contract.v1.json`.
+In practice: text pasted from a chatbot carries service marks, invisible characters
+and machine typography; the skill removes that layer and shows where it was.
+Project numbers live in the fact registry `eval/facts/`; the machine interface is in `contract.v1.json`.
 
 **Before:**
 
@@ -165,6 +164,10 @@ Package commands:
   `--remove` strips invisible marks by risk class: safe automatically,
   ambiguous only with `--include-ambiguous` and a warning, dangerous is
   reported and never removed (table: `references/removal-matrix.md`).
+- The project deterministically removes copy-paste traces of chat interfaces
+  (contentReference, utm tags, invisible characters) with zero false positives on 40
+  non-carrier control texts (fact registry; number updates after the F16 measurement).
+  The market sells this as detector evasion; here evasion is neither promised nor measured: prohibited_uses.
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
 - `humanizer-facts` — fact diff of two text versions (numbers, dates, URLs, names, quotes, negations, modals): lost/added/changed with positions; exit 1 on lost or inverted fact; no authorship or quality verdicts.
 

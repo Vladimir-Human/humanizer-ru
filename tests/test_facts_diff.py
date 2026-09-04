@@ -45,6 +45,20 @@ class FactsDiffTest(unittest.TestCase):
         self.assertEqual(d["lost"], [])
         self.assertEqual(d["added"], [])
 
+    def test_numword_equals_digits(self):
+        d = facts_diff.diff("пятнадцать процентов роста", "15 % роста")
+        self.assertEqual((d["lost"], d["added"]), ([], []))
+
+    def test_year_words_equals_digits(self):
+        d = facts_diff.diff("две тысячи двадцать шесть год", "2026 год")
+        self.assertEqual((d["lost"], d["added"]), ([], []))
+
+    def test_protect_term(self):
+        d = facts_diff.diff("термин КвантовыйОтжиг важен", "важен",
+                            protect=["КвантовыйОтжиг"])
+        self.assertTrue(any(i["category"] == "protected"
+                            for i in d["lost"]))
+
     def test_envelope(self):
         env = facts_diff.envelope("x 5", "x 5")
         self.assertEqual(env["tool"], "humanizer-facts")
