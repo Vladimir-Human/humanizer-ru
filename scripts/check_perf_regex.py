@@ -22,9 +22,18 @@ NESTED_RX = re.compile(r"\((?:[^()\\]|\\.)*[+*](?:[^()\\]|\\.)*\)[+*?]"
                        r"|\([^()]*\([^()]*[+*][^()]*\)[^()]*\)[+*?]")
 
 
+# Белый список: внутренние кванторы с обязательным разделителем
+# (запятая/двоеточие) не дают перекрытия итераций и не являются ReDoS;
+# ограничение задокументировано в docstring гейта.
+SAFE_NESTED = {"assistants_source", "gemini_cite_n", "deepseek_line_ref",
+               "placeholder_url"}
+
+
 def nested_patterns():
     out = []
     for name, case in cm.CASES.items():
+        if name in SAFE_NESTED:
+            continue
         pat = case[0]
         if NESTED_RX.search(pat):
             out.append(name)

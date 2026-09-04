@@ -1,0 +1,84 @@
+{
+  "lengths": {
+    "n": 12314,
+    "median": 132,
+    "share_lt200": 0.7024,
+    "share_lt500": 0.8525,
+    "max": 2512,
+    "lt200_n": 8649,
+    "lt500_n": 10498
+  },
+  "fp_rows": [
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "invisible_layout"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "zero_width"
+      ]
+    },
+    {
+      "classes": [
+        "B"
+      ],
+      "markers": [
+        "invisible_layout"
+      ]
+    }
+  ],
+  "fp_by_marker": {
+    "zero_width": 6,
+    "invisible_layout": 2
+  },
+  "fp_by_class": {
+    "B": 8
+  }
+}

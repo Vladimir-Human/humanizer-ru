@@ -15,8 +15,12 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RUN = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ROOT))),
-                   "measurement", "fp-corpus-2026-09")
+# Агрегаты опубликованы в репозитории (CI-воспроизводимость); приватный
+# run-dir остаётся каноническим местом прогона, копия в репо = публикация.
+RUN = os.path.join(ROOT, "research", "fp-corpus-2026-09")
+if not os.path.isdir(RUN):
+    RUN = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ROOT))),
+                       "measurement", "fp-corpus-2026-09")
 
 
 def load():

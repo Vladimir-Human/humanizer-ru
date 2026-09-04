@@ -253,7 +253,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 110 gates in the full checklist (99 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 114 gates in the full checklist (103 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
