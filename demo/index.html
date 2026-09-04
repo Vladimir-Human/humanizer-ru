@@ -42,11 +42,14 @@
   summary { cursor:pointer; font-weight:bold; }
 </style>
   <meta name="twitter:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <link rel="stylesheet" href="brand.css">
 </head>
 <body>
 <header>
   <h1>Находит следы машинного текста в русском и объясняет их вам</h1>
-  <p class="note">40 выражений загружаются из статического <code>markers.js</code> (генератор — <code>generate_js_rules.py</code> из <code>markers.v1.json</code>). Текст анализируется только в браузере и никуда не отправляется. Исходники и полный скилл — в <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории на GitHub</a>.</p>
+  <p class="note">Текст анализируется только в браузере и никуда не отправляется. Каждый флаг сопровождается причиной и советом. Исходники и полный скилл — в <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории на GitHub</a>.</p>
 </header>
 <main>
   <div class="controls">
@@ -54,16 +57,20 @@
     <label><input type="checkbox" id="showAll" checked> показывать полный текст с подсветкой</label>
     <button id="run">Проверить</button>
     <button id="insertSample" type="button" title="Реальная вставка из чат-интерфейса: contentReference, utm-метка, невидимый символ">Вставить образец</button>
+    <button id="ownText" type="button">Проверить свой</button>
+    <button id="copyReport" type="button">Скопировать отчёт</button>
+    <button id="shareBtn" type="button">Поделиться</button>
+    <span id="counts" class="note"></span>
     <span id="summary" class="note" aria-live="polite"></span>
   </div>
   <div class="cols">
     <section>
       <h2>Текст</h2>
-      <textarea id="text" placeholder="Вставьте русский текст для проверки…">Вставьте сюда русский текст: страница проверит его по 40 правилам и подсветит служебные следы чат-ботов.</textarea>
+      <textarea id="text" placeholder="Вставьте текст — проверим за 2 секунды. Текст не покидает браузер."></textarea>
     </section>
     <section>
       <h2>Совпадения</h2>
-      <div id="matches"></div>
+      <div id="matches" aria-live="polite"></div>
     </section>
   </div>
   <section id="previewSection">
@@ -86,19 +93,17 @@
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
   const rules = ((DATA && DATA.rules) || []).map(r => ({
     id: r.id, class: r.class, description: r.description,
-    source: r.source, flags: r.flags
+    source: r.source, flags: r.flags, explain: r.explain || null
   }));
   const descById = {};
-  for (const r of rules) { descById[r.id] = r.description; }
+  const explainById = {};
+  for (const r of rules) { descById[r.id] = r.description; explainById[r.id] = r.explain; }
 
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
   function findMatches(text) {
-    // Общий движок demo/engine.js: семантика CLI (построчно, fenced-блоки и
-    // бэктики пропускаются, вложенные дубли одного артефакта схлопываются).
-    // Паритет с humanizer-markers сверяет scripts/check_demo_parity.py.
     if (typeof HumanizerEngine === "undefined") return [];
     const out = HumanizerEngine.scanText(text, rules);
     const filtered = onlyA.checked ? out.filter(m => m.cls === "A") : out;
@@ -139,10 +144,23 @@
     preview.innerHTML = html;
   }
 
+  function sentencesOf(text) {
+    return (text.match(/[^.!?]+[.!?]?/g) || []).filter(s => s.trim()).length;
+  }
+
   function renderList(matches) {
+    const text = textarea.value;
+    if (!text.trim()) {
+      matchesBox.innerHTML = '<p class="note">Вставьте текст — проверим за 2 ' +
+        'секунды. Текст не покидает браузер.</p>';
+      summary.textContent = "";
+      return;
+    }
     if (!matches.length) {
       matchesBox.innerHTML = '<p class="note">Совпадений не найдено.</p>';
-      if (!rules.length) { summary.textContent = "Правила не загрузились — проверьте markers.js"; return; } summary.textContent = "Совпадений: 0";
+      if (!rules.length) { summary.textContent = "Правила не загрузились — проверьте markers.js"; return; }
+      summary.textContent = "Найдено 0 следов в " + sentencesOf(text) +
+        " предложениях. Это не приговор — смотрите объяснения.";
       return;
     }
     const byId = {};
@@ -153,13 +171,18 @@
       const div = document.createElement("div");
       div.className = "result " + first.cls.toLowerCase();
       const snippet = escapeHtml(first.text.length > 160 ? first.text.slice(0, 160) + "…" : first.text);
+      const ex = explainById[id];
       div.innerHTML = '<span class="badge ' + first.cls.toLowerCase() + '">' + first.cls + '</span> ' +
-        '<strong>' + escapeHtml(id) + '</strong> <span class="rule">(' + list.length + ')</span><br>' +
+        '<strong>' + escapeHtml(ex ? ex.name : id) + '</strong> <span class="rule">(' + escapeHtml(id) + ', ' + list.length + ')</span><br>' +
         '<span class="rule">' + escapeHtml(first.description) + '</span><br>' +
-        '<span class="match">…' + snippet + '…</span>';
+        '<span class="match">…' + snippet + '…</span>' +
+        (ex ? '<details><summary>почему это след и что сделать</summary>' +
+          '<p class="rule">' + escapeHtml(ex.why) + '</p>' +
+          '<p class="rule">Что сделать: ' + escapeHtml(ex.advice) + '</p></details>' : '');
       matchesBox.appendChild(div);
     }
-    summary.textContent = "Совпадений: " + matches.length + " (уникальных правил: " + Object.keys(byId).length + ")";
+    summary.textContent = "Найдено " + matches.length + " следов в " +
+      sentencesOf(text) + " предложениях. Это не приговор — смотрите объяснения.";
   }
 
   function run() {
@@ -177,21 +200,74 @@
     textarea.value = HUMANIZER_SAMPLE;
     run();
   });
+  function updateCounts() {
+    const text = textarea.value;
+    const words = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
+    counts.textContent = text.trim() ? ("Слов: " + words + " · Символов: " + text.length) : "";
+  }
+
+  document.getElementById("ownText").addEventListener("click", () => {
+    textarea.value = "";
+    textarea.focus();
+    updateCounts();
+    run();
+  });
+  document.getElementById("copyReport").addEventListener("click", () => {
+    const text = textarea.value;
+    const matches = findMatches(text);
+    const lines = matches.map(m => m.cls + " " + m.rule + ": " + m.text.slice(0, 120));
+    const report = summary.textContent + "\n" + lines.join("\n") +
+      "\n\nJSON: " + JSON.stringify({ tool: "humanizer-demo", schema: 1,
+        matches: matches.map(m => ({ rule: m.rule, class: m.cls,
+          start: m.start, end: m.end })) });
+    if (navigator.clipboard) { navigator.clipboard.writeText(report); }
+  });
+  document.getElementById("shareBtn").addEventListener("click", () => {
+    const text = textarea.value;
+    if (text.length > 8192) {
+      summary.textContent = "Текст длиннее 8 КБ — ссылка не создаётся.";
+      return;
+    }
+    location.hash = encodeURIComponent(text);
+    summary.textContent = "Ссылка содержит ваш текст — не делитесь ею публично.";
+  });
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
+  });
   let _timer;
   textarea.addEventListener("input", () => {
     clearTimeout(_timer);
+    updateCounts();
     _timer = setTimeout(run, 250);
   });
+  if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js"); }
+  updateCounts();
   run();
 })();
 </script>
+<details id="dev" style="max-width:1100px;margin:0 auto;padding:8px 20px;">
+  <summary>Для разработчиков</summary>
+  <p class="rule">40 выражений загружаются из статического markers.js
+  (генератор generate_js_rules.py из markers.v1.json); паритет Python и JS
+  сверяет check_demo_parity.py; детектор связок и переписывание — в
+  репозитории и в пакете PyPI.</p>
+</details>
 <footer style="border-top:1px solid var(--line);background:#fff;padding:10px 20px;color:#666;font-size:13px;">
+  <span id="buildinfo" class="rule"></span>
   humanizer-ru v3.30.0 · демо детерминированного regex-слоя; переписывание и детектор связок — в
   <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории</a> и
   <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>. Машинные файлы:
   <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt">llms.txt</a> ·
   <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/contract.v1.json">contract.v1.json</a> ·
-  <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md">ERRATA.md</a>.
+  <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md">  ERRATA.md</a>.
+  <script>
+    if (typeof HUMANIZER_MARKERS !== "undefined" && HUMANIZER_MARKERS.meta) {
+      document.getElementById("buildinfo").textContent =
+        "правила v" + HUMANIZER_MARKERS.meta.rules_version +
+        " · маркеров: " + HUMANIZER_MARKERS.meta.markers_count +
+        " · сборка " + HUMANIZER_MARKERS.meta.build_date;
+    }
+  </script>
 </footer>
 </body>
 </html>

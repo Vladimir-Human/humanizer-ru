@@ -1,0 +1,11 @@
+{
+  "name": "humanizer-ru",
+  "short_name": "humanizer-ru",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

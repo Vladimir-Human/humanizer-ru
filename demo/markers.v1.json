@@ -268,7 +268,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Служебная метка ссылки ChatGPT",
+        "why": "Внутренний токен ответа ассистента, который интерфейс не снял при копировании; в рукописном тексте таких меток не бывает.",
+        "advice": "Снимите метку полировкой или удалите токен вручную."
+      }
     },
     {
       "id": "oai_citation",
@@ -292,7 +297,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Сноска ответа ассистента",
+        "why": "Формат цитирования из чат-интерфейса, человек так сноски не оформляет.",
+        "advice": "Удалите сноску или оформите по своему стилю."
+      }
     },
     {
       "id": "oaicite_short",
@@ -315,7 +325,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Усечённая сноска ассистента",
+        "why": "Короткая форма служебной цитаты ответа модели.",
+        "advice": "Удалите токен вместе с квадратными скобками."
+      }
     },
     {
       "id": "turn_search",
@@ -343,7 +358,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Метка поискового хода агента",
+        "why": "След агентного поиска в ответе: человек не нумерует ходы поиска.",
+        "advice": "Удалите метку хода."
+      }
     },
     {
       "id": "turn_fetch",
@@ -366,7 +386,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Метка загрузки источника агентом",
+        "why": "Служебная отметка шага агента по чтению страницы.",
+        "advice": "Удалите метку шага."
+      }
     },
     {
       "id": "turn_file",
@@ -394,7 +419,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Метка файлового хода агента",
+        "why": "Служебная отметка обращения агента к файлу.",
+        "advice": "Удалите метку обращения."
+      }
     },
     {
       "id": "ref_name_search",
@@ -425,7 +455,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Именованная ссылка поискового ответа",
+        "why": "Именованный токен ссылки из поискового ответа ассистента.",
+        "advice": "Замените на обычную ссылку или удалите."
+      }
     },
     {
       "id": "utm_chatgpt",
@@ -451,7 +486,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "utm-метка провайдера чата",
+        "why": "Ссылка помечена параметром источника трафика чат-интерфейса.",
+        "advice": "Уберите utm-параметры из ссылки."
+      }
     },
     {
       "id": "utm_openai",
@@ -474,7 +514,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "utm-метка OpenAI",
+        "why": "Параметр ссылки выдаёт вставку из интерфейса OpenAI.",
+        "advice": "Уберите utm-параметры."
+      }
     },
     {
       "id": "utm_copilot",
@@ -499,7 +544,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "utm-метка Copilot",
+        "why": "Параметр ссылки выдаёт вставку из Copilot.",
+        "advice": "Уберите utm-параметры."
+      }
     },
     {
       "id": "grok_referrer",
@@ -524,7 +574,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "provenance"
+      "evidence_class": "provenance",
+      "explain_ru": {
+        "name": "Реферер Grok в ссылке",
+        "why": "Ссылка несёт служебный реферер интерфейса Grok.",
+        "advice": "Удалите параметр реферера."
+      }
     },
     {
       "id": "attached_file",
@@ -543,7 +598,12 @@
         "multi": null
       },
       "evidence_status": "fixture-only",
-      "evidence_class": null
+      "evidence_class": null,
+      "explain_ru": {
+        "name": "Метка прикреплённого файла",
+        "why": "След вставки из прикреплённого документа в чате.",
+        "advice": "Удалите метку вставки."
+      }
     },
     {
       "id": "grok_card",
@@ -562,7 +622,12 @@
         "multi": null
       },
       "evidence_status": "fixture-only",
-      "evidence_class": null
+      "evidence_class": null,
+      "explain_ru": {
+        "name": "Карточка ответа Grok",
+        "why": "Служебная карточка интерфейса Grok, попавшая в текст.",
+        "advice": "Удалите карточку."
+      }
     },
     {
       "id": "grok_render_json",
@@ -588,7 +653,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "JSON-блок рендера Grok",
+        "why": "Технический блок рендера ответа Grok.",
+        "advice": "Удалите технический блок."
+      }
     },
     {
       "id": "vertexaisearch",
@@ -612,7 +682,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Ссылка заземления Vertex AI",
+        "why": "Служебный адрес заземления поиска Gemini/Vertex.",
+        "advice": "Удалите служебный адрес."
+      }
     },
     {
       "id": "attributableIndex",
@@ -636,7 +711,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Индекс атрибуции ответа",
+        "why": "Служебный индекс атрибуции из ответа модели.",
+        "advice": "Удалите индекс."
+      }
     },
     {
       "id": "citation_n",
@@ -659,7 +739,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Нумерованная цитата ответа",
+        "why": "Нумерация цитат из ответа ассистента, не рукописная.",
+        "advice": "Переделайте сноски под свой стиль."
+      }
     },
     {
       "id": "copilot_caret",
@@ -686,7 +771,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Каретный токен Copilot",
+        "why": "Служебный символ-маркер интерфейса Copilot.",
+        "advice": "Удалите токен."
+      }
     },
     {
       "id": "assistants_source",
@@ -710,7 +800,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Блок источника Answers",
+        "why": "Служебный блок источника из интерфейса ассистента.",
+        "advice": "Удалите блок источника."
+      }
     },
     {
       "id": "cite_turn",
@@ -737,7 +832,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Цитата с номером хода",
+        "why": "Связка цитаты и хода диалога, характерная только для чат-вывода.",
+        "advice": "Удалите связку."
+      }
     },
     {
       "id": "sandbox_link",
@@ -763,7 +863,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Ссылка песочницы",
+        "why": "Адрес временной песочницы ассистента, вне чата бесполезен.",
+        "advice": "Удалите ссылку песочницы."
+      }
     },
     {
       "id": "openai_pua",
@@ -791,7 +896,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Символ приватной области OpenAI",
+        "why": "Символ из приватной области, которым интерфейс помечает блоки.",
+        "advice": "Удалите невидимый символ."
+      }
     },
     {
       "id": "openai_pua_short",
@@ -820,7 +930,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Короткая форма PUA-метки",
+        "why": "Усечённый служебный символ разметки ответа.",
+        "advice": "Удалите символ."
+      }
     },
     {
       "id": "think_tag",
@@ -849,7 +964,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Тег размышления модели",
+        "why": "След внутреннего рассуждения модели, попавший в вывод.",
+        "advice": "Удалите тег."
+      }
     },
     {
       "id": "source_plus_chain",
@@ -883,7 +1003,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Цепочка источников ответа",
+        "why": "Служебная цепочка источников агентного ответа.",
+        "advice": "Удалите цепочку."
+      }
     },
     {
       "id": "gemini_cite_start",
@@ -911,7 +1036,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Начало цитаты Gemini",
+        "why": "Служебная граница цитирования ответа Gemini.",
+        "advice": "Удалите границу."
+      }
     },
     {
       "id": "gemini_cite_n",
@@ -941,7 +1071,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Нумерация цитат Gemini",
+        "why": "Служебные номера цитат ответа Gemini.",
+        "advice": "Удалите номера."
+      }
     },
     {
       "id": "gemini_span",
@@ -971,7 +1106,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Пролёт цитирования Gemini",
+        "why": "Служебный пролёт цитирования ответа Gemini.",
+        "advice": "Удалите пролёт."
+      }
     },
     {
       "id": "zero_width",
@@ -1004,7 +1144,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Невидимый символ нулевой ширины",
+        "why": "Невидимые символы часто остаются при копировании из чатов и PDF; читатель их не видит, а след остаётся.",
+        "advice": "Снимите невидимые символы полировкой."
+      }
     },
     {
       "id": "writing_block",
@@ -1034,7 +1179,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Блок письменного вывода",
+        "why": "Служебная обёртка блока письменного вывода модели.",
+        "advice": "Удалите обёртку."
+      }
     },
     {
       "id": "deepseek_line_ref",
@@ -1064,7 +1214,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Построчная ссылка ответа",
+        "why": "Служебные построчные ссылки ответа DeepSeek.",
+        "advice": "Удалите построчные ссылки."
+      }
     },
     {
       "id": "grok_card_tag",
@@ -1089,7 +1244,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Тег карточки Grok",
+        "why": "Служебный тег карточки интерфейса Grok.",
+        "advice": "Удалите тег."
+      }
     },
     {
       "id": "turn_other",
@@ -1119,7 +1279,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Метка прочего хода",
+        "why": "Служебная метка прочего шага агентного ответа.",
+        "advice": "Удалите метку."
+      }
     },
     {
       "id": "attached_web_bracket",
@@ -1147,7 +1312,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Скобка веб-вставки",
+        "why": "Служебная скобка вставки из веб-источника в чате.",
+        "advice": "Удалите скобку вставки."
+      }
     },
     {
       "id": "perplexity_s3",
@@ -1172,7 +1342,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Адрес хранилища Perplexity",
+        "why": "Служебный адрес временного хранилища ответа Perplexity.",
+        "advice": "Удалите адрес хранилища."
+      }
     },
     {
       "id": "generated_ref_id",
@@ -1195,7 +1370,12 @@
         "multi": null
       },
       "evidence_status": "confirmed",
-      "evidence_class": "secondary"
+      "evidence_class": "secondary",
+      "explain_ru": {
+        "name": "Сгенерированный идентификатор ссылки",
+        "why": "Сгенерированный идентификатор ссылки из ответа модели.",
+        "advice": "Удалите идентификатор."
+      }
     },
     {
       "id": "placeholder_url",
@@ -1224,7 +1404,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Заглушка ссылки",
+        "why": "Заглушка вида INSERT_SOURCE_URL: модель не подставила адрес, а след остался.",
+        "advice": "Подставьте реальный источник или удалите заглушку."
+      }
     },
     {
       "id": "placeholder_date",
@@ -1257,7 +1442,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "secondary"
+      "evidence_class": "secondary",
+      "explain_ru": {
+        "name": "Заглушка даты",
+        "why": "Заглушка даты из шаблона ответа модели.",
+        "advice": "Подставьте реальную дату или удалите заглушку."
+      }
     },
     {
       "id": "invisible_layout",
@@ -1297,7 +1487,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Невидимые символы разметки",
+        "why": "Невидимые управляющие символы разметки (направления письма, переносы): законны в редких случаях, но после чатов обычно случайны.",
+        "advice": "Проверьте происхождение текста и снимите символы полировкой."
+      }
     },
     {
       "id": "unicode_tags",
@@ -1326,7 +1521,12 @@
         }
       },
       "evidence_status": "confirmed",
-      "evidence_class": "primary"
+      "evidence_class": "primary",
+      "explain_ru": {
+        "name": "Unicode-теги",
+        "why": "Символы блока Tags: почти всегда след инструментальной обработки текста.",
+        "advice": "Удалите теговые символы."
+      }
     }
   ]
 }
