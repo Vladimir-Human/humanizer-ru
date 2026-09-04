@@ -15,19 +15,17 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Агрегаты опубликованы в репозитории (CI-воспроизводимость); приватный
-# run-dir остаётся каноническим местом прогона, копия в репо = публикация.
-RUN = os.path.join(ROOT, "research", "fp-corpus-2026-09")
-if not os.path.isdir(RUN):
-    RUN = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ROOT))),
-                       "measurement", "fp-corpus-2026-09")
+# Агрегаты опубликованы в репозитории (CI-воспроизводимость);
+# приватный run-dir остаётся каноническим местом прогона,
+# копия в репо = публикация снимка.
+AGG = os.path.join(ROOT, "research", "fp-corpus-2026-09")
 
 
 def load():
     rep = open(os.path.join(ROOT, "research", "FP-CORPUS-2026.md"),
                encoding="utf-8").read()
-    res = json.load(open(os.path.join(RUN, "result.json"), encoding="utf-8"))
-    ex = json.load(open(os.path.join(RUN, "extras.json"), encoding="utf-8"))
+    res = json.load(open(os.path.join(AGG, "result.json"), encoding="utf-8"))
+    ex = json.load(open(os.path.join(AGG, "extras.json"), encoding="utf-8"))
     return rep, res, ex
 
 
