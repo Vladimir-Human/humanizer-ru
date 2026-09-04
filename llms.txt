@@ -88,3 +88,4 @@
 - [Методология проверяемости](https://github.com/Vladimir-Human/humanizer-ru/blob/main/docs/FRAMEWORK.md) и
   [эррата](https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md)
   — датированные отзывы опубликованных чисел.
+- Границы честности: что проект структурно не ловит и почему — docs/THREAT-MODEL.md; проверенная библиография — research/BIBLIOGRAPHY.md.
