@@ -535,7 +535,7 @@ def _is_url_marker(name: str) -> bool:
     if any(h in name for h in URL_MARKER_HINTS):
         return True
     pat = CASES[name][0] if name in CASES else ""
-    return ("http" in pat or "www\." in pat or "referrer" in pat
+    return ("http" in pat or "www" in pat or "referrer" in pat
             or "vertex" in pat or "grounding" in pat)
 
 
