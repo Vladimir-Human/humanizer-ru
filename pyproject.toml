@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "humanizer-ru"
 dynamic = ["version"]
-description = "CLI-сканеры следов машинной генерации русского текста (только stdlib)"
+description = "Находит следы машинного текста в русском и объясняет их вам"
 readme = "README.pypi.md"
 requires-python = ">=3.9"
 license = "MIT"

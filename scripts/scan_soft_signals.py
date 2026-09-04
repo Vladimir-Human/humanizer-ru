@@ -1240,6 +1240,9 @@ def scope_note(text):
     return ""
 
 
+SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Счётчик мягких признаков; вердикта об авторстве не выносит.",
@@ -1265,6 +1268,7 @@ def main(argv=None):
                          "(0 — выключено; по дереву решений одна категория — "
                          "стилистическая особенность, не машинный след)")
     ap.add_argument("--selftest", action="store_true")
+    ap.description = SHORT_RU + "\n\n" + (ap.description or "")
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
