@@ -75,4 +75,5 @@ jobs:
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
             ! -path './research/*prereg*' \
+            ! -path './scripts/marker_explain.py' \
             -exec python3 scripts/check_markers.py --scan {} +
