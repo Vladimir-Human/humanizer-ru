@@ -35,6 +35,8 @@ import argparse
 import glob
 import importlib.util
 import json
+
+from marker_explain import EXPLAIN_RU
 import os
 import re
 import sys
@@ -274,6 +276,9 @@ def build_document(root=ROOT):
             },
             "evidence_status": evidence_status,
             "evidence_class": evidence_class,
+            "explain_ru": (lambda ex: None if ex is None else
+                {"name": ex[0], "why": ex[1], "advice": ex[2]})(
+                EXPLAIN_RU.get(name)),
         }
         markers.append(marker)
 
