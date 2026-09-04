@@ -426,6 +426,9 @@ def envelope(before: str, after: str, files=None) -> dict:
 
 # ---------------------------------------------------------------- CLI
 
+SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog=TOOL, description="Сверка фактов двух версий текста (F1).")
@@ -440,6 +443,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         help="файл терминов/имён (по строке), потеря "
                              "которых = ошибка (category protected)")
     parser.add_argument("--selftest", action="store_true")
+    parser.description = SHORT_RU + "\n\n" + (parser.description or "")
     args = parser.parse_args(argv)
 
     if args.selftest:

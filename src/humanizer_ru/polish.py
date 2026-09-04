@@ -431,6 +431,9 @@ def _diff_text(before: str, after: str, label: str) -> str:
     return "".join(lines)
 
 
+SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="Типографическая нормализация русского текста. "
@@ -468,6 +471,7 @@ def main(argv=None) -> int:
                     help="режим гейта: проверить инварианты по файлам/каталогу")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка с негативными кейсами")
+    ap.description = SHORT_RU + "\n\n" + (ap.description or "")
     args = ap.parse_args(argv)
 
     if args.selftest:
