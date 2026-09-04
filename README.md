@@ -134,7 +134,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.28.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.29.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
