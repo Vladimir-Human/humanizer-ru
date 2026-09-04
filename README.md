@@ -134,7 +134,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.26.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.26.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -248,7 +248,7 @@ $ humanizer-scan --json notes.txt
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 - `METRICS.md`, `RELEASE.md`, `identity.v1.json`, `server.json` — витрина измерений, регламент выпусков, машиночитаемая идентичность и метаданные MCP-реестра.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 116 гейтов полного чек-листа (105 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 117 гейтов полного чек-листа (106 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 

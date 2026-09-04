@@ -93,6 +93,8 @@ def _gates(quick, tmpdir):
          "--selftest"], [], {0}),
         ("marker-lr: числа отчёта равны снимку", [PY,
          "scripts/check_marker_lr.py"], [], {0}),
+        ("report: самопроверка отчёта правки", [PY,
+         "scripts/check_report.py", "--selftest"], [], {0}),
         ("facts-diff: selftest модуля (F1)", [PY, "scripts/check_facts_diff.py", "--selftest"], [], {0}),
         ("facts-diff: CLI-коды и продукт (F1)", [PY, "scripts/check_facts_diff.py"], [], {0}),
         ("readme-parity: самопроверка", [PY, "scripts/check_readme_parity.py", "--selftest"], [], {0}),

@@ -46,6 +46,9 @@ SYNCED = [
 ]
 ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
                 "facts_diff.py",
+                # F2: пакетный CLI отчёта правки; MCP-контур и contract
+                # подключаются при закрытии пункта по П11 поправки V2.
+                "edit_report.py",
               "scan_soft_signals.py", "polish.py", "detect_conj.py",
               "mcp_server.py", "text_layer.py"}
 SYNCED_DATA = ["contract.v1.json", "markers.v1.json", "identity.v1.json"]
