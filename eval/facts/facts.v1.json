@@ -488,6 +488,44 @@
       "assumptions": [
         "prereg-frozen"
       ]
+    },
+    {
+      "fact_id": "adversarial-robustness-v2-2026-09",
+      "claim": "adversarial-кривая v2: self-attack (--remove ratio и SKILL-rewrite FPR), FPR-кривая на human-мутантах, recall на двух поколениях машинных, retention сигнатур, McNemar и бутстрэп по замороженному предрегу f3-adversarial-prereg-v2",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": [
+        "0.0067",
+        "0.03",
+        "0.0333",
+        "0.04",
+        "0.0526",
+        "0.0789",
+        "0.1053",
+        "0.1316",
+        "0.1579",
+        "0.2632",
+        "0.3158",
+        "0.3684",
+        "0.4211",
+        "0.4474",
+        "0.5789",
+        "0.6579",
+        "0.7368",
+        "0.7632",
+        "0.8158",
+        "0.8421",
+        "0.9211",
+        "0.9474"
+      ],
+      "value_note": "self-attack --remove ratio 0.1579 (порог 0.5 не достигнут, интерпретация в отчёте); FPR 0.0 во всех точках; recall на машинных около нуля (граница продукта); retention деградирует монотонно у zero-width/homoglyph/typo",
+      "artifact": "research/ADVERSARIAL-ROBUSTNESS-V2-2026.md",
+      "reproduce": "tools/mutants_build.py + tools/f3v2_measure.py + tools/f3v2_rewrite_measure.py (один проход; предрег read-only после прохода)",
+      "date": "2026-09-04",
+      "note": "выводы по классам операторов не смешиваются; регенерация не читается как устойчивость",
+      "assumptions": [
+        "prereg-frozen"
+      ]
     }
   ]
 }

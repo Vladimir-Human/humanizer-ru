@@ -1,28 +1,143 @@
 {
-  "prereg_sha256": "7C1EF06C628E5E128697B95217ED134BAE4571A3E2F1F01D79235DEA74D2EEC8",
-  "n_markers": 38,
-  "matrix": {
+  "prereg_sha256": "17CC780F6BFC758DDADACB5A94FD7D8F3B09E126ACB49EC8C3D843E27BB08191",
+  "self_attack_remove": {
+    "E_recall_before": 1.0,
+    "E_recall_after_remove": 0.1579,
+    "ratio": 0.1579,
+    "H_fpr_before": 0.0,
+    "H_fpr_after_remove": 0.0
+  },
+  "fpr_curve": {
     "homoglyph": {
-      "d1": 0.2895,
-      "d2": 0.2632,
-      "d3": 0.2105
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
     },
-    "zero-width": {
-      "d1": 0.2632,
-      "d2": 0.1316,
-      "d3": 0.1316
-    },
-    "punctuation": {
-      "d1": 0.6842,
-      "d2": 0.6842,
-      "d3": 0.6842
+    "html-escape": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
     },
     "linebreak": {
-      "d1": 0.4737,
-      "d2": 0.4737,
-      "d3": 0.4737
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
     },
-    "nfc-nfkc": {
+    "markup": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "punctuation": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "synonym-swap": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "translit": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "typo": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "whitespace": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "zero-width": {
+      "d1": 1.0,
+      "d2": 1.0,
+      "d3": 1.0
+    }
+  },
+  "recall": {
+    "homoglyph": {
+      "d1": 0.0333,
+      "d2": 0.03,
+      "d3": 0.0067
+    },
+    "html-escape": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "linebreak": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "markup": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "punctuation": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "synonym-swap": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "translit": {
+      "d1": 0.0,
+      "d2": 0.0,
+      "d3": 0.0
+    },
+    "typo": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "whitespace": {
+      "d1": 0.04,
+      "d2": 0.04,
+      "d3": 0.04
+    },
+    "zero-width": {
+      "d1": 1.0,
+      "d2": 1.0,
+      "d3": 1.0
+    }
+  },
+  "retention": {
+    "homoglyph": {
+      "d1": 0.5,
+      "d2": 0.3684,
+      "d3": 0.3684
+    },
+    "html-escape": {
+      "d1": 0.9211,
+      "d2": 0.9211,
+      "d3": 0.9211
+    },
+    "linebreak": {
+      "d1": 0.8158,
+      "d2": 0.6579,
+      "d3": 0.6579
+    },
+    "markup": {
+      "d1": 0.9211,
+      "d2": 1.0,
+      "d3": 0.9474
+    },
+    "punctuation": {
+      "d1": 0.7368,
+      "d2": 0.7368,
+      "d3": 0.7368
+    },
+    "synonym-swap": {
       "d1": 1.0,
       "d2": 1.0,
       "d3": 1.0
@@ -32,31 +147,81 @@
       "d2": 0.2632,
       "d3": 0.2632
     },
-    "word-smart": {
-      "d1": 0.9737,
-      "d2": 0.9737,
-      "d3": 0.9737
-    },
-    "html-convert": {
-      "d1": 0.9211,
-      "d2": 0.9211,
-      "d3": 0.9211
-    },
-    "telegram-pdf": {
-      "d1": 0.8421,
-      "d2": 0.7368,
+    "typo": {
+      "d1": 0.9474,
+      "d2": 0.6579,
       "d3": 0.6579
+    },
+    "whitespace": {
+      "d1": 1.0,
+      "d2": 1.0,
+      "d3": 1.0
+    },
+    "zero-width": {
+      "d1": 0.8421,
+      "d2": 0.7632,
+      "d3": 0.5789
     }
   },
-  "remove_table": {
-    "homoglyph": 1.0,
-    "zero-width": 1.0,
-    "punctuation": 1.0,
-    "linebreak": 1.0,
-    "nfc-nfkc": 1.0,
-    "translit": 1.0,
-    "word-smart": 1.0,
-    "html-convert": 1.0,
-    "telegram-pdf": 1.0
+  "mcnemar": {
+    "typo_vs_synonym-swap": {
+      "n01": 0,
+      "n10": 0,
+      "chi2_cc": 1.0
+    },
+    "homoglyph_vs_translit": {
+      "n01": 0,
+      "n10": 0,
+      "chi2_cc": 1.0
+    }
+  },
+  "bootstrap": {
+    "homoglyph": [
+      -0.0526,
+      0.3158
+    ],
+    "html-escape": [
+      -0.1053,
+      0.1053
+    ],
+    "linebreak": [
+      0.0,
+      0.3158
+    ],
+    "markup": [
+      -0.1316,
+      0.0789
+    ],
+    "punctuation": [
+      -0.1579,
+      0.1579
+    ],
+    "synonym-swap": [
+      0.0,
+      0.0
+    ],
+    "translit": [
+      -0.1579,
+      0.1579
+    ],
+    "typo": [
+      0.1579,
+      0.4474
+    ],
+    "whitespace": [
+      0.0,
+      0.0
+    ],
+    "zero-width": [
+      0.1053,
+      0.4211
+    ]
+  },
+  "skill_rewrite": {
+    "n": 50,
+    "identical_pairs": 2,
+    "fpr_before": 0.0,
+    "fpr_after": 0.0,
+    "note": "SKILL-rewrite не вносит артефактов и не снимает несуществующие: детектор на human-текстах молчит до и после"
   }
 }
