@@ -1,24 +1,18 @@
 # Humanizer-ru — нормализация и диагностика русского текста
 Находит следы машинного текста в русском и объясняет их вам
+![Терминал humanizer-markers подсвечивает следы машинного текста и объясняет причину каждого флага](assets/hero.svg)
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
-[![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
-[![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
-[![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
-[![Догфудинг](https://img.shields.io/badge/%D1%81%D0%B2%D0%BE%D0%B8_%D0%B4%D0%B5%D1%82%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D1%8B-%D0%BE%D1%82%D1%87%D1%91%D1%82-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/self-audit.v1.json)
-
+[![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg?branch=main)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
 **[English version → README.en.md](README.en.md)** (документация; продукт русскоязычный)
-
 Почему так называется: имя унаследовано от первой функции, снимавшей
 слой копипасты после чат-бота и возвращавшей тексту человеческий вид.
 Вторая функция продукта: диагностика, подсветить машинные следы и
 объяснить причину каждого флага, без вердиктов об авторстве. Обе
 функции работают офлайн, текст не покидает вашу машину.
 
-Что это на практике: текст, вставленный из чат-бота, несёт служебные метки,
-невидимые символы и машинную типографику; скилл снимает этот слой и
-показывает, где он был. Числа проекта — в реестре фактов `eval/facts/`,
-машинный интерфейс — в `contract.v1.json`.
+Что это на практике: текст из чат-бота несёт служебные метки, невидимые
+символы и машинную типографику; скилл снимает слой и показывает, где он был.
 
 **До:**
 
@@ -318,3 +312,9 @@ Perplexity `ppl-ai-file-upload` как документированную при
 ## Лицензия
 
 MIT
+
+## Статус проекта
+[![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
+[![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
+[![Догфудинг](https://img.shields.io/badge/%D1%81%D0%B2%D0%BE%D0%B8_%D0%B4%D0%B5%D1%82%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D1%8B-%D0%BE%D1%82%D1%87%D1%91%D1%82-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/self-audit.v1.json)
+
