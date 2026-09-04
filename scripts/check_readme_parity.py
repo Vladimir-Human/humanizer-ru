@@ -31,6 +31,8 @@ SECTIONS = [
     (u"Попробовать за 30 секунд", u"Try it in 30 seconds"),
     (u"Что это НЕ делает", u"What it does NOT do"),
     (u"Почему можно доверять", u"Why you can trust it"),
+    (u"Установка скилла в браузерные клиенты",
+     u"Installing the skill in browser clients"),
     (u"Цифры проекта", u"Project in numbers"),
     (u"Подробнее", u"More"),
     (u"Regex-маркеры", u"Regex markers"),
@@ -219,6 +221,7 @@ GOOD_RU = u"""# Скилл
 ## Попробовать за 30 секунд
 ## Что это НЕ делает
 ## Почему можно доверять
+## Установка скилла в браузерные клиенты
 ## Цифры проекта
 ## Подробнее
 ## Regex-маркеры: классы A и B
@@ -233,6 +236,7 @@ Currently 36 of 38 markers have a full record.
 ## Try it in 30 seconds
 ## What it does NOT do
 ## Why you can trust it
+## Installing the skill in browser clients
 ## Project in numbers
 ## More
 ## Regex markers: classes A and B

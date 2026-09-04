@@ -55,6 +55,13 @@ humanizer-markers --scan primer.txt
 - [Самоаудит: числа, статусы и эррата](eval/facts/self-audit.v1.json).
 - Статус последнего успешного прогона main: [docs/status.json](docs/status.json) (обновляется только зелёным прогоном).
 
+## Установка скилла в браузерные клиенты
+
+- Демо работает без установки: https://vladimir-human.github.io/humanizer-ru/ — текст не покидает браузер.
+- Claude.ai и Claude Code: добавьте скилл из каталога `dsh/skills/humanizer-ru` по инструкции установки в [docs/USAGE.md](docs/USAGE.md#установка-за-30-секунд).
+- Агентные клиенты с поддержкой agentskills.io (opencode, DeepSeek Harness): распакуйте текстовый бандл из архива релиза.
+- Браузерное расширение отклонено: новый поверхностный контур (permissions, store review) не окупается; очередь идей — [research/BACKLOG.md](research/BACKLOG.md).
+
 ## Цифры проекта
 
 - 58 паттернов машинного письма и 40 regex-маркеров (классы A и B).
