@@ -35,11 +35,11 @@ jobs:
           sudo unshare -n bash -c '
             set -euxo pipefail
             python3 -m unittest tests/test_mcp_conformance.py tests/test_facts_diff.py tests/test_markers_cases.py
-            humanizer-markers --scan --json tests/fixtures/ref-name-search.txt > /tmp/markers.json
+            python3 -c "import sys; from humanizer_ru import cli; sys.exit(cli.markers_main(['--scan', '--json', 'tests/fixtures/ref-name-search.txt']))" > /tmp/markers.json
             test -s /tmp/markers.json
-            humanizer-detect --json tests/fixtures/ref-name-search.txt > /tmp/detect.json
+            python3 -c "import sys; from humanizer_ru import cli; sys.exit(cli.detect_main(['--json', 'tests/fixtures/ref-name-search.txt']))" > /tmp/detect.json
             test -s /tmp/detect.json
-            humanizer-polish --remove tests/fixtures/ref-name-search.txt > /tmp/polished.txt
+            python3 -c "import sys; from humanizer_ru import cli; sys.exit(cli.polish_main(['--remove', 'tests/fixtures/ref-name-search.txt']))" > /tmp/polished.txt
             test -s /tmp/polished.txt
             python3 scripts/check_facts.py
           '
