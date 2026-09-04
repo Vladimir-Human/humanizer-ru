@@ -23,6 +23,11 @@ from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILEMARKS = os.path.join(ROOT, "scripts", "filemarks")
+if not os.path.isdir(FILEMARKS):
+    # sdist вне дерева репозитория: файловый слой меток не входит в
+    # pip-пакет (contract.v1.json), тесты слоя честно пропускаются.
+    raise unittest.SkipTest("scripts/filemarks/ отсутствует (sdist): "
+                            "файловые метки вне pip-пакета")
 for p in (os.path.join(ROOT, "scripts"), FILEMARKS):
     if p not in sys.path:
         sys.path.insert(0, p)
