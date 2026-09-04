@@ -532,6 +532,28 @@ def check_repo(root):
     "поднимите потолок в scripts/check_docs.py"
     % (_rel18, "символов" if _unit18 == "chars" else "строк", _n18, _limit18))
 
+ # I.19: THREAT-MODEL: каждый тезис раздела «структурно не ловим» несёт
+ # ссылку на проверенную библиографию (поправка 53, F4+F14).
+ _tm = os.path.join(root, "docs", "THREAT-MODEL.md")
+ if os.path.isfile(_tm):
+  _tt = text(os.path.join("docs", "THREAT-MODEL.md"))
+  if "research/BIBLIOGRAPHY.md" not in _tt:
+   errors.append("I.19: THREAT-MODEL не ссылается на research/BIBLIOGRAPHY.md")
+  _sec = _tt.split("## Что структурно не ловим", 1)
+  if len(_sec) == 2:
+   _body = _sec[1].split("\n## ", 1)[0]
+   _block = ""
+   for _ln in _body.splitlines() + [""]:
+    if _ln.startswith("- ") or _ln == "":
+     if _block and "[bib:" not in _block:
+      errors.append("I.19: тезис без ссылки на библиографию: %s"
+                    % _block[:60])
+     _block = _ln
+    elif _ln.startswith(" "):
+     _block += " " + _ln.strip()
+    else:
+     _block = ""
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -787,6 +809,16 @@ def selftest():
                    open(os.path.join(r, "SKILL.md"), encoding="utf-8").read()
                    + "наполнитель " * 3000),
       "I.18")
+ case("THREAT-MODEL тезис без ссылки -> FAIL",
+       lambda r: _w(r, "docs/THREAT-MODEL.md",
+                    "# TM\nresearch/BIBLIOGRAPHY.md\n"
+                    "## Что структурно не ловим\n- парафраз без ссылки\n"),
+       "I.19")
+ case("THREAT-MODEL тезис со ссылкой -> OK",
+       lambda r: _w(r, "docs/THREAT-MODEL.md",
+                    "# TM\nresearch/BIBLIOGRAPHY.md\n"
+                    "## Что структурно не ловим\n- парафраз [bib:sadasivan2023]\n"),
+       None)
  case("README.md сверх построчного бюджета -> FAIL",
       lambda r: _w(r, "README.md",
                    open(os.path.join(r, "README.md"), encoding="utf-8").read()
