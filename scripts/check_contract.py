@@ -52,6 +52,7 @@ EXPECTED_TOOLS = {
     "humanizer-markers": ("scripts", "check_markers.py"),
     "humanizer-scan": ("scripts", "scan_soft_signals.py"),
     "humanizer-facts": ("src/humanizer_ru", "facts_diff.py"),
+    "humanizer-report": ("src/humanizer_ru", "edit_report.py"),
 }
 
 # Честная граница polish: фраза-маркер обязана быть в каждом носителе.
