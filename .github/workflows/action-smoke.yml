@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: action-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   action-fix-smoke:
     name: Экшен в fix-режиме чистит и перечисляет остаток

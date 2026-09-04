@@ -52,6 +52,7 @@ humanizer-markers --scan primer.txt
 - [Модель угроз и границы детектора](docs/THREAT-MODEL.md).
 - [Парити-гейт Python и JS правил](.github/workflows/regex-check.yml).
 - [Самоаудит: числа, статусы и эррата](eval/facts/self-audit.v1.json).
+- Статус последнего успешного прогона main: [docs/status.json](docs/status.json) (обновляется только зелёным прогоном).
 
 ## Цифры проекта
 
