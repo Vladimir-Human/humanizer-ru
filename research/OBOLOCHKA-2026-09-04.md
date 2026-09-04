@@ -57,6 +57,24 @@
 - OWNER-TODO пункт 1 (About/Website) ждёт владельца: текст для вставки —
   короткая формула дословно.
 
+## Поток W3 — визуал «за 3 секунды» (закрыт)
+
+- assets/hero.svg (3053 байта, цикл 12 с): генерируется
+  scripts/build_hero_svg.py из РЕАЛЬНОГО вывода humanizer-markers на
+  образце; терминал с подсветкой находок и строкой «почему»; вставлен в
+  README сразу под слоганом.
+- Первый экран README по схеме: H1, слоган, hero, три бейджа (License,
+  PyPI, CI main с ?branch=main); остальные бейджи в секции «Статус
+  проекта» внизу; бюджет 320 строк сохранён.
+- assets/social-preview.png 1280x640 (Pillow, детерминированно) +
+  social-preview.svg; demo/og-image.png тем же дизайном; demo: link rel
+  icon, og:image и twitter:image абсолютные на Pages-домен.
+- assets/demo-screenshot.png: реальный скриншот демо headless-браузером
+  (образец вставлен и проверен, 1280x800).
+- PR #79 слит (f501f07); self-review 5541207822; красные self-scan на
+  ветках починены fix-коммитами на main (литералы маркеров в build-скриптах
+  экранированы, invalid escape в check_markers исправлен, зеркало синхронно).
+
 ## Дальше по потокам
 
 W1 позиционирование -> W3 визуал -> W4 README первый экран -> W5 демо ->
