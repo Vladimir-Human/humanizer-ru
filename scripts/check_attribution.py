@@ -68,6 +68,11 @@ def committer_needs_mark(name: str) -> bool:
         return False
     if BOT_MARK in name:
         return False  # бот-идентичность сама является атрибуцией
+    if name == "humanizer-ru-ci":
+        return False  # CI-бот workflow status.yml: инфраструктурный коммит
+        # docs/status.json и demo/status.json с фиксированным сообщением и
+        # [skip ci]; исключение документировано, правило пометки агентских
+        # коммитов не меняется.
     return True
 
 
@@ -180,6 +185,8 @@ def selftest() -> int:
          not committer_needs_mark("GitHub"))
     case("бот-идентичность не требует пометки",
          not committer_needs_mark("dependabot[bot]"))
+    case("CI-бот status.yml не требует пометки",
+         not committer_needs_mark("humanizer-ru-ci"))
     case("не-человек без пометки требует пометки (негатив)",
          committer_needs_mark("some-agent")
          and committer_needs_mark("prime-agent"))

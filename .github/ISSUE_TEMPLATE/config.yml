@@ -3,3 +3,7 @@ contact_links:
   - name: Чувствительная уязвимость
     url: https://github.com/Vladimir-Human/humanizer-ru/blob/main/SECURITY.md
     about: Порядок сообщения об уязвимости описан в SECURITY.md. Не публикуйте секреты и личные данные в открытом issue.
+contact_links:
+  - name: Обсуждения
+    url: https://github.com/Vladimir-Human/humanizer-ru/discussions
+    about: Вопросы и идеи без issue.

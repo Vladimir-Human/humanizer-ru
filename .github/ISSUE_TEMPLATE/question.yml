@@ -1,0 +1,16 @@
+name: Вопрос
+description: Вопрос по использованию, границам или интеграции
+title: "question: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Демо: https://vladimir-human.github.io/humanizer-ru/
+        Обсуждения: https://github.com/Vladimir-Human/humanizer-ru/discussions
+  - type: textarea
+    id: question
+    attributes:
+      label: Вопрос
+    validations:
+      required: true

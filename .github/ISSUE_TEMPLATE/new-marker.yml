@@ -1,0 +1,38 @@
+name: Новый маркер
+description: Предложить регулярное выражение для следа чат-интерфейса или модели
+title: "marker: "
+labels: ["enhancement", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Маркер принимается только с доказательствами: ссылка на живой пример,
+        три положительных примера, три отрицательных и граница.
+  - type: textarea
+    id: pattern
+    attributes:
+      label: Регулярное выражение
+      description: Python re, экранированные контрольные символы
+    validations:
+      required: true
+  - type: textarea
+    id: positive
+    attributes:
+      label: Три примера «за»
+      description: Реальные вставки, где маркер обязан сработать
+    validations:
+      required: true
+  - type: textarea
+    id: negative
+    attributes:
+      label: Три примера «против»
+      description: Человеческий текст, где маркер обязан молчать
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Источник примера
+      description: URL живого примера с датой просмотра
+    validations:
+      required: true
