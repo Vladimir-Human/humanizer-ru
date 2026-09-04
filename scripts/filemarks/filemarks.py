@@ -490,6 +490,27 @@ def _selftest():
     png_media = mk_png([(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)),
                         (b"caBX", b"c2pa manifest data"),
                         (b"IDAT", zlib.compress(b"\x00"))])
+    # гиперлинк-фикстура: rels-target с utm-меткой провайдера чата
+    hl = __import__("io").BytesIO()
+    with zipfile.ZipFile(hl, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml",
+                    '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>')
+        zf.writestr("word/_rels/document.xml.rels",
+                    '<?xml version="1.0"?><Relationships '
+                    'xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" '
+                    'Target="https://example.com/r?utm_source=chatgpt.com" TargetMode="External"/>'
+                    '</Relationships>')
+        zf.writestr("word/document.xml",
+                    '<?xml version="1.0"?><w:document '
+                    'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                    '<w:body><w:p><w:r><w:t>Ссылка в тексте</w:t></w:r></w:p></w:body></w:document>')
+    hl_path = tmp / "hl.docx"
+    hl_path.write_bytes(hl.getvalue())
+    rep_hl = inspect_container(hl_path)
+    case("DOCX: rels-target с utm-меткой виден",
+         any("rels-target" in f for f in rep_hl["findings"]),
+         str(rep_hl["findings"][:2]))
     docx_media = __import__("io").BytesIO()
     with zipfile.ZipFile(docx_media, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("word/document.xml", "<w:document><w:p>текст\u200b</w:p></w:document>")
