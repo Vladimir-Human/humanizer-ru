@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="294" viewBox="0 0 880 294" role="img" aria-label="Терминал: команда humanizer-markers подсвечивает следы машинного текста и объясняет причину">
+<rect width="880" height="294" rx="14" fill="#0d1117"/>
+<circle cx="26" cy="26" r="6" fill="#ff5f56"/>
+<circle cx="46" cy="26" r="6" fill="#ffbd2e"/>
+<circle cx="66" cy="26" r="6" fill="#27c93f"/>
+<text x="26" y="64" fill="#e6edf3" font-family="monospace" font-size="15">humanizer-ru — проверка русского текста</text>
+<text x="26" y="118" fill="#e6edf3" font-family="monospace" font-size="15" opacity="0">$ humanizer-markers --scan primer.txt<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.05;0.08;1" dur="12s" repeatCount="indefinite"/></text>
+<rect x="20" y="132" width="840" height="22" rx="5" fill="#2f6feb" opacity="0.18"><animate attributeName="opacity" values="0;0.18;0.18;0.10;0.18" dur="12s" repeatCount="indefinite"/></rect>
+<text x="26" y="148" fill="#e6edf3" font-family="monospace" font-size="15" opacity="0">primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:12]{index=<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.18;0.22;1" dur="12s" repeatCount="indefinite"/></text>
+<rect x="20" y="158" width="840" height="22" rx="5" fill="#8250df" opacity="0.18"><animate attributeName="opacity" values="0;0.18;0.18;0.10;0.18" dur="12s" repeatCount="indefinite"/></rect>
+<text x="26" y="174" fill="#e6edf3" font-family="monospace" font-size="15" opacity="0">primer.txt:2 [utm_chatgpt] Согласно отчёту :contentReference[oaicite:12]{index=<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.32;0.35;1" dur="12s" repeatCount="indefinite"/></text>
+<rect x="20" y="184" width="840" height="22" rx="5" fill="#8250df" opacity="0.18"><animate attributeName="opacity" values="0;0.18;0.18;0.10;0.18" dur="12s" repeatCount="indefinite"/></rect>
+<text x="26" y="200" fill="#e6edf3" font-family="monospace" font-size="15" opacity="0">primer.txt:3 [zero_width] Данные подтверждены ассистентом​, подробности см. в <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.45;0.48;1" dur="12s" repeatCount="indefinite"/></text>
+<text x="26" y="234" fill="#9da7b3" font-family="monospace" font-size="15" opacity="0">почему: служебная метка вставки из ответа ассистента; utm-метка провайдера в ссылке из чат-интерфейса<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.58;0.62;1" dur="12s" repeatCount="indefinite"/></text>
+<text x="26" y="260" fill="#9da7b3" font-family="monospace" font-size="15" opacity="0">это не приговор — смотрите объяснения каждого флага<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.72;0.75;1" dur="12s" repeatCount="indefinite"/></text>
+</svg>
