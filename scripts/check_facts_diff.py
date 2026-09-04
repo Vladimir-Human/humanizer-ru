@@ -23,6 +23,8 @@ import os
 import subprocess
 import sys
 import tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
+from humanizer_ru import facts_diff  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -36,12 +38,42 @@ def _run(args):
     return subprocess.run([sys.executable, "-X", "utf8", "-m",
                            "humanizer_ru.facts_diff"] + args,
                           capture_output=True, text=True, env=ENV,
+                          encoding="utf-8", errors="replace",
                           timeout=120)
 
 
 def check():
     errors = []
     tmp = tempfile.mkdtemp(prefix="factsdiff-gate-")
+    # Негативный контроль (поправка AMENDMENT): собственная типографическая
+    # правка не должна терять и инвертировать авторские факты ни на одном
+    # fixture; иначе F1 ловит собственную типографику проекта.
+    import glob as _glob
+    import subprocess as _sp
+    fix = sorted(_glob.glob(os.path.join(ROOT, "tests", "fixtures", "*.txt")))
+    if not fix:
+        errors.append("негативный контроль: нет fixtures/*.txt")
+    for f in fix:
+        proc = _sp.run([sys.executable, "-X", "utf8", "-m",
+                        "humanizer_ru.polish", "--typographic", f],
+                       capture_output=True, text=True,
+                       env=dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src")),
+                       encoding="utf-8", errors="replace",
+                       timeout=120)
+        if proc.returncode not in (0, 1):
+            errors.append("негативный контроль: polish не запустился на %s"
+                          % os.path.basename(f))
+            continue
+        with open(f, encoding="utf-8") as fh:
+            before = fh.read()
+        fd = facts_diff.diff(before, proc.stdout)
+        bad = [i for i in fd["lost"] + fd["changed"]
+               if i["category"] in ("numbers", "dates", "names", "modals",
+                                    "protected")]
+        if bad:
+            errors.append("негативный контроль: polish typographic на %s "
+                          "дал lost/changed: %s"
+                          % (os.path.basename(f), bad[:3]))
     try:
         b = os.path.join(tmp, "b.txt")
         a = os.path.join(tmp, "a.txt")
