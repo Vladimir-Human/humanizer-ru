@@ -128,6 +128,37 @@
 - PR #81 слит (398460f); self-review 5542079280; self-scan после фикса
   зелёный; счётчики 127/116 во всех носителях.
 
+## Поток W6 — честный бейдж и честный CI (закрыт)
+
+- workflow status.yml: docs/status.json и demo/status.json обновляются
+  ТОЛЬКО после зелёных тестов и паритета main; упавший прогон файл не
+  трогает, демо продолжает показывать дату последнего успеха; commit из CI
+  с [skip ci] исключает рекурсию; permissions contents:write только у этого
+  workflow; concurrency с cancel-in-progress.
+- Демо показывает «проверено: дата, коммит» в футере (fetch status.json с
+  обработкой отказа); README несёт ссылку на статус в секции доверия.
+- Бейджи первого экрана: только License, PyPI и CI main с ?branch=main
+  (сделано в W3); матричных и nightly-бейджей на первом экране нет.
+- concurrency добавлен в action-smoke.yml; аудит: все workflow несут
+  permissions и concurrency, все uses пинованы по SHA; невалидный пин
+  setup-python убран из status.yml (раннер python3, как в остальных).
+- CI-нюанс: коммит status.json из CI двигает main — учтён pull --rebase в
+  локальном потоке; журнал и фиксы self-scan (бэктики вокруг литерала)
+  закрыты fix-коммитами, все джобы main зелёные на d1bbc41.
+
+## Поток W7 — PyPI (закрыт)
+
+- pyproject: keywords человеческие (русский текст, машинный текст,
+  редактура, проверка текста, ИИ-текст, артефакты копипасты, markdown);
+  classifiers (Natural Language Russian, End Users/Desktop и Developers,
+  Topic Text Processing Linguistic, Python 3.9-3.13); project.urls: Demo,
+  Documentation, Changelog, Issues, Benchmark, Source.
+- README.pypi: слоган второй строкой; команды дополнены humanizer-facts и
+  humanizer-report; относительных изображений нет (hero не в PyPI-README,
+  абсолютные ссылки не требуются).
+- python -m build --sdist + twine check: PASSED локально.
+- PR #82 слит (5b7c17c); self-review 5542232514.
+
 ## Дальше по потокам
 
 W1 позиционирование -> W3 визуал -> W4 README первый экран -> W5 демо ->
