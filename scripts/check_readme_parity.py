@@ -27,24 +27,18 @@ CIRCLES = (u"\U0001F534", u"\U0001F7E1", u"\U0001F7E2")
 CIRCLE_NAMES = dict(zip(CIRCLES, (u"красный", u"жёлтый", u"зелёный")))
 
 SECTIONS = [
-    (u"Что ему давать", u"What to give it"),
-    (u"Установка за 30 секунд", u"Install in 30 seconds"),
-    (u"Установка вручную", u"Manual install"),
-    (u"Использование", u"Usage"),
-    (u"Что делает", u"What it does"),
+    (u"Кому это нужно", u"Who needs it"),
+    (u"Попробовать за 30 секунд", u"Try it in 30 seconds"),
+    (u"Что это НЕ делает", u"What it does NOT do"),
+    (u"Почему можно доверять", u"Why you can trust it"),
+    (u"Цифры проекта", u"Project in numbers"),
+    (u"Подробнее", u"More"),
     (u"Regex-маркеры", u"Regex markers"),
-    (u"Архитектура", u"Architecture"),
-    (u"Безопасность", u"Security"),
-    (u"Источники", u"Sources"),
     (u"История изменений", u"Changelog"),
     (u"Лицензия", u"License"),
+    (u"Статус проекта", u"Project status"),
 ]
-RU_ONLY = [
-    u"Содержательные паттерны", u"Языковые паттерны",
-    u"Структурные и стилевые паттерны", u"Коммуникативные паттерны",
-    u"Подлог источников", u"Границы ложного срабатывания",
-    u"Отпечатки моделей", u"Отличия от английской версии",
-]
+RU_ONLY = []
 
 PATTERNS_RX = re.compile(u"(\\d+)\\s+(?:паттернов|patterns)", re.I)
 MARKERS_RX = re.compile(
@@ -221,32 +215,30 @@ RU_ONLY_SAMPLE = u"\n".join(u"### " + name for name in RU_ONLY)
 GOOD_RU = u"""# Скилл
 38 паттернов и 38 regex-маркеров.
 Запись доказательств есть у 36 из 38 маркеров.
-## Что ему давать
-## Установка за 30 секунд
-## Установка вручную
-## Использование
-## Что делает
-### Архитектура
-### Regex-маркеры: классы A и B
-## Безопасность
-## Источники
+## Кому это нужно
+## Попробовать за 30 секунд
+## Что это НЕ делает
+## Почему можно доверять
+## Цифры проекта
+## Подробнее
+## Regex-маркеры: классы A и B
 ## История изменений
 ## Лицензия
+## Статус проекта
 """ + RU_ONLY_SAMPLE + u"\n"
 GOOD_EN = u"""# Skill
 38 patterns and 38 regex markers.
 Currently 36 of 38 markers have a full record.
-## What to give it
-## Install in 30 seconds
-## Manual install
-## Usage
-## What it does
-## Architecture
+## Who needs it
+## Try it in 30 seconds
+## What it does NOT do
+## Why you can trust it
+## Project in numbers
+## More
 ## Regex markers: classes A and B
-## Security
-## Sources
 ## Changelog
 ## License
+## Project status
 """
 GOOD_SKILL = u"# Карта\nКритичность: высокая, средняя, низкая.\n"
 EXPECTED = (36, 38)
@@ -288,16 +280,16 @@ def selftest():
         u"Запись доказательств есть у 36 из 38 маркеров.\n", u"")
     results.append(_case(u"Умолчание о покрытии отклоняется",
                          _has(check_all(bad, EXPECTED), u"не заявлено покрытие")))
-    bad = dict(base); bad[EN] = GOOD_EN.replace(u"## Security", u"Security")
+    bad = dict(base); bad[EN] = GOOD_EN.replace(u"## Project status", u"Project status")
     results.append(_case(u"Обычный текст вместо заголовка отклоняется",
-                         _has(check_all(bad, EXPECTED), u"Security")))
-    bad = dict(base); bad[EN] = GOOD_EN.replace(u"## Security", u"###### Security")
+                         _has(check_all(bad, EXPECTED), u"Project status")))
+    bad = dict(base); bad[EN] = GOOD_EN.replace(u"## Project status", u"###### Project status")
     results.append(_case(u"H6 вместо H2/H3 отклоняется",
-                         _has(check_all(bad, EXPECTED), u"Security")))
+                         _has(check_all(bad, EXPECTED), u"Project status")))
     bad = dict(base); bad[RU] = GOOD_RU.replace(
-        u"### Содержательные паттерны", u"### Другое")
+        u"## Цифры проекта", u"## Другое")
     results.append(_case(u"Пропавший русский раздел отклоняется",
-                         _has(check_all(bad, EXPECTED), u"Содержательные паттерны")))
+                         _has(check_all(bad, EXPECTED), u"Цифры проекта")))
     bad = dict(base); bad[RU] = GOOD_RU + CIRCLES[0] + u"\n"
     results.append(_case(u"Кружок в README отклоняется",
                          _has(check_all(bad, EXPECTED), u"кружок критичности")))

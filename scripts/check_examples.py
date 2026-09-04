@@ -65,7 +65,7 @@ def _loss_text(text):
     return MARKER_PAYLOAD_RX.sub(" ", _strip_markup(text))
 
 
-TARGETS = ["SKILL.md", "README.md", "README.en.md",
+TARGETS = ["SKILL.md", "README.md", "README.en.md", "docs/USAGE.md",
            os.path.join("tests", "test-fixtures-pairs.md"),
            os.path.join("tests", "test-fixtures-cases.md")]
 
@@ -570,7 +570,7 @@ def _readme_first_pair_detected():
     бэктиков не содержит, поэтому перед подсчётом они снимаются.
     Возвращает (ok, count).
     """
-    path = os.path.join(ROOT, "README.md")
+    path = os.path.join(ROOT, "docs", "USAGE.md")
     try:
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
