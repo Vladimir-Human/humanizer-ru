@@ -266,6 +266,13 @@
         "правила v" + HUMANIZER_MARKERS.meta.rules_version +
         " · маркеров: " + HUMANIZER_MARKERS.meta.markers_count +
         " · сборка " + HUMANIZER_MARKERS.meta.build_date;
+      fetch("status.json").then((r) => r.ok ? r.json() : null)
+        .then((st) => {
+          if (st) {
+            document.getElementById("buildinfo").textContent +=
+              " · проверено: " + st.date + ", коммит " + st.commit;
+          }
+        }).catch(() => {});
     }
   </script>
 </footer>
