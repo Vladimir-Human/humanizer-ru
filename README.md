@@ -248,7 +248,7 @@ $ humanizer-scan --json notes.txt
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 - `METRICS.md`, `RELEASE.md`, `identity.v1.json`, `server.json` — витрина измерений, регламент выпусков, машиночитаемая идентичность и метаданные MCP-реестра.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 108 гейтов полного чек-листа (97 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 110 гейтов полного чек-листа (99 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
