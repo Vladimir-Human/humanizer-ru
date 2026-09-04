@@ -1,0 +1,35 @@
+/* brand.css — токены бренда humanizer-ru: два акцента, нейтральная палитра,
+   системная шрифтовая пара; тёмная и светлая темы по prefers-color-scheme. */
+:root {
+  --accent1: #2f6feb;
+  --accent2: #8250df;
+  --bg: #f6f5f2;
+  --fg: #1f1d1a;
+  --line: #d9d5cc;
+  --panel: #ffffff;
+  --muted: #555555;
+  --font-body: Georgia, "Times New Roman", serif;
+  --font-mono: "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent1: #79b8ff;
+    --accent2: #d2a8ff;
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --line: #30363d;
+    --panel: #161b22;
+    --muted: #9da7b3;
+  }
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); }
+header, footer { background: var(--panel); }
+textarea, #preview, .result { background: var(--panel); color: var(--fg); border-color: var(--line); }
+.rule, .note { color: var(--muted); }
+button { background: var(--accent1); }
+@media (prefers-color-scheme: dark) {
+  mark.a { background: #5c2b29; outline-color: #ff8f88; }
+  mark.b { background: #4d3b00; outline-color: #e3b341; }
+  .badge.a { background: #b3261e; }
+  .badge.b { background: #8a6d00; }
+}
