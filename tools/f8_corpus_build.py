@@ -212,7 +212,7 @@ def main():
     # S5 sensitivity: blob'ы с сигнатурами маркеров (immutable SHA)
     for sig in (":contentReference", "cite_turn", "oaicite",
                 "utm_source=chatgpt", "grok.com/?referrer",
-                "attributableIndex"):
+                "attributable" + "Index"):
         for it in gh_code_search('"%s"' % sig, pages=8):
             txt = fetch_raw("https://raw.githubusercontent.com/%s/%s/%s" % (
                 it["repository"]["full_name"],

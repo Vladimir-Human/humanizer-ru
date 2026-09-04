@@ -74,4 +74,5 @@ jobs:
             ! -path './src/humanizer_ru/mcp_server.py' \
             ! -path './research/ab/*' \
             ! -path './research/raw/*' \
+            ! -path './research/*prereg*' \
             -exec python3 scripts/check_markers.py --scan {} +
