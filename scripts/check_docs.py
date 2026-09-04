@@ -87,6 +87,8 @@ TOP_LEVEL_MANIFEST = frozenset((
  # (схема modelcontextprotocol.io 2025-12-11); каталоги MCP
  # (Glama и подобные) индексируют серверы по этому файлу.
  "server.json",
+ # 2026-09-04: лицензии зависимостей/корпусов и реестр действий владельца.
+ "LICENSES.md", "OWNER-ACTIONS.md",
 ))
 
 def _tracked_top_levels(root):

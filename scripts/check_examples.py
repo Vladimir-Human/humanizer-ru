@@ -43,7 +43,8 @@ from humanizer_ru import facts_diff  # noqa: E402
 # редакция вправе объединять и укорачивать цитаты, не теряя атомарных фактов.
 # В CLI humanizer-facts urls, emails и quotes видны как lost всегда: решение
 # оставляет человек, глядя на список.
-AUTHOR_FACT_CATS = ("numbers", "numwords", "dates", "names", "modals")
+AUTHOR_FACT_CATS = ("numbers", "dates", "names", "modals",
+                    "protected")
 # Нормативные модальности — факт («нельзя публиковать»); hedge-модальности
 # («можно сказать», «следует отметить») — стилевой шум, который правка
 # убирает законно: в гейте примеров они не считаются потерей. В CLI

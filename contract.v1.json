@@ -491,7 +491,8 @@
       "modes": [
         "diff <до> <после>",
         "--json",
-        "--selftest"
+        "--selftest",
+        "--protect terms.txt"
       ],
       "output_schema": {
         "type": "object",
