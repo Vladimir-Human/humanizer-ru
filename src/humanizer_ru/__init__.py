@@ -7,4 +7,4 @@ check_markers.py, scan_soft_signals.py, polish.py и detect_conj.py.
 Копии байтово синхронизируются гейтом scripts/check_pkg_sync.py.
 """
 __all__ = ["__version__"]
-__version__ = "3.22.0"
+__version__ = "3.23.0"
