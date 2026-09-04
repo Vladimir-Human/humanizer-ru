@@ -159,6 +159,32 @@
 - python -m build --sdist + twine check: PASSED локально.
 - PR #82 слит (5b7c17c); self-review 5542232514.
 
+## Поток W8 — от звезды к вкладу (закрыт)
+
+- ISSUE_TEMPLATE: new-marker.yml (регулярка, три примера «за», три
+  «против», источник с датой просмотра) и question.yml; config.yml с
+  contact_links Discussions (включаются владельцем, OWNER-TODO пункт 2).
+- CONTRIBUTING: раздел «Добавить маркер за 10 минут» (семь шагов конвейера:
+  CASES/CLASS_OF, фикстуры и секция, реестр доказательств и
+  REGISTERED_CASES, строка references, регенерация markers.v1.json и
+  markers.js, гейты, PR); формат строки references уточнен примером после
+  верификации.
+- Верификация инструкции временным маркером test_temp_marker: дошла до
+  парсера таблиц references (unpack 4 колонок), откат полный
+  (git checkout по списку плюс удаление фикстур); сквозная верификация
+  отложена до внешнего контрибьютора, заметка в BACKLOG.
+- OWNER-TODO.md создан (About/Website, Discussions, pin, Glama, PyPI
+  trusted publisher, MultiSocial, личная GPG-подпись акта) — единственный
+  канал к владельцу.
+- PULL_REQUEST_TEMPLATE: чек-лист unittest, parity, бюджеты обеих README
+  поверх классов A/B/C и Главного правила.
+- check_attribution: исключение CI-бота humanizer-ru-ci с selftest-кейсом
+  (инфраструктурный коммитер status.yml; правило агентских пометок цело).
+- good-first-issues #83-#88 созданы с меткой good first issue (отмена
+  2026-09-03 снята приказом оболочки 2026-09-04, заметка в BACKLOG);
+  черновики прошли check_outward 0 FAIL.
+- PR #89 слит (eff4e28); self-review 5542888917; все checks зелёные.
+
 ## Дальше по потокам
 
 W1 позиционирование -> W3 визуал -> W4 README первый экран -> W5 демо ->
