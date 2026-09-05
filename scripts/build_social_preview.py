@@ -9,7 +9,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
 URL = "vladimir-human.github.io/humanizer-ru"
 BG = (13, 17, 23)
 FG = (230, 237, 243)
