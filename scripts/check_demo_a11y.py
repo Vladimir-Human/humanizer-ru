@@ -42,6 +42,8 @@ def check(html=None, css=None):
         errs.append("brand.css: нет тёмной темы")
     if 'rel="manifest"' not in html:
         errs.append("demo: нет manifest")
+    if 'id="copyStatus" role="status"' not in html:
+        errs.append("demo: нет aria-live статуса результата копирования")
     if "serviceWorker.register" not in html:
         errs.append("demo: нет регистрации service worker")
     if "ctrlKey || e.metaKey" not in html:

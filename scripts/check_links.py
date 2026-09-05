@@ -54,6 +54,44 @@ def links_of(path):
     return sorted(seen)
 
 
+def slug(head):
+    """Slug заголовка по правилам GitHub: нижний регистр, пробелы в дефисы,
+    пунктуация снимается (кроме дефисов и подчёркиваний)."""
+    import re as _re
+    s = head.strip().lower()
+    s = s.replace("`", "")
+    s = _re.sub(r"[^\w\s-]", "", s, flags=_re.U)
+    s = _re.sub(r"\s+", "-", s.strip())
+    return s
+
+
+def headings_of(path):
+    out = set()
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for ln in fh:
+                m = re.match(r"^(#{1,6})\s+(.*)$", ln)
+                if m:
+                    out.add(slug(m.group(2)))
+    except OSError:
+        pass
+    return out
+
+
+def _check_paths(pairs):
+    dead = []
+    for path, link in pairs:
+        if "#" in link and not link.startswith("#"):
+            fpart, anchor = link.split("#", 1)
+            if fpart and not fpart.startswith("http"):
+                fpath = os.path.normpath(os.path.join(
+                    os.path.dirname(path), fpart))
+                if os.path.isfile(fpath) and anchor:
+                    if anchor not in headings_of(fpath):
+                        dead.append((path, link, "битый якорь"))
+    return dead
+
+
 def check(dead_only=False):
     dead = []
     warns = []
@@ -78,6 +116,15 @@ def check(dead_only=False):
                 except Exception as e:  # таймаут, DNS, 429 — предупреждение
                     warns.append((path, link, type(e).__name__))
             else:
+                if "#" in link and not link.startswith("#"):
+                    fpart, anchor = link.split("#", 1)
+                    if fpart and not fpart.startswith("http"):
+                        fpath = os.path.normpath(os.path.join(
+                            os.path.dirname(path), fpart))
+                        if os.path.isfile(fpath) and anchor:
+                            if anchor not in headings_of(fpath):
+                                dead.append((path, link, "битый якорь"))
+                        continue
                 target = link.split("#")[0]
                 if not target:
                     continue
@@ -91,11 +138,43 @@ def check(dead_only=False):
     return dead, warns
 
 
+def selftest():
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        a = os.path.join(td, "a.md")
+        b = os.path.join(td, "b.md")
+        with open(a, "w", encoding="utf-8") as fh:
+            fh.write("[ссылка](b.md#нет-такого)\n")
+        with open(b, "w", encoding="utf-8") as fh:
+            fh.write("# Заголовок\n\nтекст\n")
+        neg_ok = any(reason == "битый якорь"
+                     for _p, _l, reason in _check_paths([(a, "b.md#нет-такого")]))
+    with tempfile.TemporaryDirectory() as td2:
+        a2 = os.path.join(td2, "a.md")
+        b2 = os.path.join(td2, "b.md")
+        with open(a2, "w", encoding="utf-8") as fh:
+            fh.write("[ссылка](b.md#заголовок)\n")
+        with open(b2, "w", encoding="utf-8") as fh:
+            fh.write("# Заголовок\n\nтекст\n")
+        pos_ok = _check_paths([(a2, "b.md#заголовок")]) == []
+    checks = [("битый якорь ловится", neg_ok),
+              ("живой якорь не ловится", pos_ok)]
+    fails = 0
+    for name, ok in checks:
+        print("%s: %s" % ("PASS" if ok else "FAIL", name))
+        fails += 0 if ok else 1
+    print("САМОПРОВЕРКА links: %d FAIL" % fails)
+    return 1 if fails else 0
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--offline", action="store_true",
                     help="проверять только локальные относительные ссылки")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
     dead, warns = check(dead_only=args.offline)
     for path, link, code in warns:
         print("WARN %s: %s (%s)" % (os.path.relpath(path, ROOT), link, code))
