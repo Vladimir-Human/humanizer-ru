@@ -117,7 +117,12 @@ def _gates(quick, tmpdir):
          "scripts/check_demo_a11y.py"], [], {0}),
         
         
-        ("bib-keys: самопроверка", [PY,
+        
+        ("dated-absolutes: самопроверка", [PY,
+         "scripts/check_dated_absolutes.py", "--selftest"], [], {0}),
+        ("dated-absolutes: абсолюты THREAT-MODEL датированы", [PY,
+         "scripts/check_dated_absolutes.py"], [], {0}),
+("bib-keys: самопроверка", [PY,
          "scripts/check_bib_keys.py", "--selftest"], [], {0}),
         ("bib-keys: разрешённость ключей", [PY,
          "scripts/check_bib_keys.py"], [], {0}),
