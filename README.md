@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
-[![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg?branch=main)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/Vladimir-Human/humanizer-ru/regex-check.yml?branch=main&label=CI)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml?query=branch%3Amain)
 
 ## Кому это нужно
 
@@ -64,6 +64,17 @@ humanizer-markers --scan primer.txt
 - Агентные клиенты с поддержкой agentskills.io (opencode, DeepSeek Harness): распакуйте текстовый бандл из архива релиза.
 - Браузерное расширение отклонено: новый поверхностный контур (permissions, store review) не окупается; очередь идей — [research/BACKLOG.md](research/BACKLOG.md).
 
+## Одноимённые проекты
+
+На GitHub есть скиллы с тем же именем и другим содержанием. Снимок 2026-09-05
+(проверка: `gh repo view <владелец>/humanizer-ru --json stargazerCount`):
+
+- [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) — 284 звезды: позиционирование «убирает признаки нейросети», публичного реестра чисел нет.
+- [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) — 148 звёзд: детерминированный линтер; единственный тёзка, включённый в [LEADERBOARD.md](LEADERBOARD.md) как кандидат (парный прогон 2026-09-03).
+- Этот проект — проверяемая гигиена вставки из чат-интерфейсов: каждое число из детерминированных снимков и [реестра фактов](eval/facts/facts.v1.json), границы — в [THREAT-MODEL](docs/THREAT-MODEL.md), ложные срабатывания — в [бенчмарке](demo/benchmark/index.html).
+
+Пришли по имени — выбирайте по способу проверки, а не по звёздам.
+
 ## Цифры проекта
 
 - 58 паттернов машинного письма и 40 regex-маркеров (классы A и B).
@@ -109,3 +120,5 @@ MIT
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)
 [![Догфудинг](https://img.shields.io/badge/%D1%81%D0%B2%D0%BE%D0%B8_%D0%B4%D0%B5%D1%82%D0%B5%D0%BA%D1%82%D0%BE%D1%80%D1%8B-%D0%BE%D1%82%D1%87%D1%91%D1%82-brightgreen)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/eval/facts/self-audit.v1.json)
+
+Догфудинг — проект проверяет собственные тексты собственными правилами: порог маркеров стиля в файлах поставки сверяется гейтом `scripts/check_own_style.py` (текущий максимум выводится в его запуске).

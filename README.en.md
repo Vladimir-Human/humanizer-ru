@@ -5,7 +5,7 @@ Finds machine-text traces in Russian and explains them
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/humanizer-ru?label=PyPI&color=blue)](https://pypi.org/project/humanizer-ru/)
-[![Regex checks](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml/badge.svg?branch=main)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/Vladimir-Human/humanizer-ru/regex-check.yml?branch=main&label=CI)](https://github.com/Vladimir-Human/humanizer-ru/actions/workflows/regex-check.yml?query=branch%3Amain)
 
 ## Who needs it
 
@@ -63,6 +63,17 @@ humanizer-markers --scan primer.txt
 - Agent clients supporting agentskills.io (opencode, DeepSeek Harness): unpack the text bundle from the release archive.
 - A browser extension was declined: a new surface (permissions, store review) does not pay off; idea queue — [research/BACKLOG.md](research/BACKLOG.md).
 
+## Same-name projects
+
+GitHub hosts skills with the same name and different content. Snapshot 2026-09-05
+(check: `gh repo view <owner>/humanizer-ru --json stargazerCount`):
+
+- [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) — 284 stars: positioned as "removes neural-network signs", no public numbers registry.
+- [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) — 148 stars: a deterministic linter; the only same-name project included in [LEADERBOARD.md](LEADERBOARD.md) as a candidate (paired run 2026-09-03).
+- This project — verifiable chat-paste hygiene: every number comes from deterministic snapshots and the [facts registry](eval/facts/facts.v1.json), boundaries in the [THREAT-MODEL](docs/THREAT-MODEL.md), false positives in the [benchmark](demo/benchmark/index.html).
+
+Arrived by name — choose by the verification method, not by stars.
+
 ## Project in numbers
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
@@ -97,6 +108,8 @@ Full history: [CHANGELOG.md](CHANGELOG.md) and
 MIT
 
 ## Project status
+
+Dogfooding means the project checks its own texts with its own rules: the style-marker threshold for shipped files is enforced by `scripts/check_own_style.py` (its run prints the current maximum).
 
 [![Версия](https://img.shields.io/github/v/release/Vladimir-Human/humanizer-ru?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=blue)](https://github.com/Vladimir-Human/humanizer-ru/releases)
 [![Skills.sh](https://img.shields.io/badge/skills.sh-%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3-blueviolet)](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru)

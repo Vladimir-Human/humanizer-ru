@@ -585,6 +585,27 @@ def check_repo(root):
                    % (_d, _prev_date))
     _prev_date = _d
 
+ # I.21: голая дробь «38 из 40» без квалификатора запрещена в публичных
+ # файлах (приказ 2026-09-05): одна дробь, два разных смысла (записи
+ # доказательств против маркеров без доказательной силы) — только с явным
+ # квалификатором в той же строке.
+ _frac_files = ["README.md", "README.en.md", "llms.txt", "docs/USAGE.md",
+                "docs/USAGE.en.md", "research/BENCHMARK.md", "LEADERBOARD.md",
+                "demo/benchmark/index.html"]
+ _frac_rx = re.compile(r"38\s+(?:из|of)\s+40")
+ _qual_rx = re.compile(r"доказательств|доказательной|не срабатывают|молчат|"
+                       r"границ|копипаст|records|evidence|proof", re.I)
+ for _ff in _frac_files:
+  _fp = os.path.join(root, _ff)
+  if not os.path.isfile(_fp):
+   continue
+  with open(_fp, encoding="utf-8", errors="replace") as _fh:
+   for _n, _ln in enumerate(_fh.read().splitlines(), 1):
+    if _frac_rx.search(_ln) and not _qual_rx.search(_ln):
+     errors.append("I.21: %s:%d: дробь «38 из 40» без квалификатора "
+                   "(смысла: записи доказательств или граница класса)"
+                   % (_ff, _n))
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -877,6 +898,10 @@ def selftest():
                    "## 3.3.5 — 2026-01-03\n\nтекущая\n\n"
                    "## 3.1.0 — 2026-01-02\n\nстарая\n"),
       None)
+
+ case("голая дробь 38 из 40 ловится -> FAIL",
+      lambda r: _w(r, "llms.txt", "Покрытие: 38 из 40 подробно.\n"),
+      "I.21")
 
  passed = 0
  for name, mutate, expect_token in cases:
