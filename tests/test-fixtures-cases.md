@@ -497,3 +497,12 @@
 | Отрицательный | `обычный текст без невидимых символов` | не срабатывает |
 | Граничный | две метки `{TAG(AB)} и {TAG(CD)}` в одной строке | срабатывает два раза |
 
+### Отрицательные фикстуры невидимых символов (#84)
+
+| Тип | Файл | Ожидание |
+|---|---|---|
+| Отрицательный | `tests/fixtures/zero-width-negative-human.txt` | ноль находок zero_width |
+| Отрицательный | `tests/fixtures/invisible-negative-human.txt` | ноль находок invisible_layout |
+
+Проверка: `python -m unittest discover -s tests -p "test_invisible_negatives.py"`.
+
