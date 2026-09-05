@@ -59,6 +59,7 @@
     <button id="insertSample" type="button" title="Реальная вставка из чат-интерфейса: contentReference, utm-метка, невидимый символ">Вставить образец</button>
     <button id="ownText" type="button">Проверить свой</button>
     <button id="copyReport" type="button">Скопировать отчёт</button>
+    <span id="copyStatus" role="status" aria-live="polite"></span>
     <button id="shareBtn" type="button">Поделиться</button>
     <span id="counts" class="note"></span>
     <span id="summary" class="note" aria-live="polite"></span>
@@ -236,7 +237,14 @@
       "\n\nJSON: " + JSON.stringify({ tool: "humanizer-demo", schema: 1,
         matches: matches.map(m => ({ rule: m.rule, class: m.cls,
           start: m.start, end: m.end })) });
-    if (navigator.clipboard) { navigator.clipboard.writeText(report); }
+    const st = document.getElementById("copyStatus");
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(report).then(
+        () => { st.textContent = "отчёт скопирован"; },
+        () => { st.textContent = "не удалось скопировать"; });
+    } else {
+      st.textContent = "буфер обмена недоступен";
+    }
   });
   document.getElementById("shareBtn").addEventListener("click", () => {
     const text = textarea.value;
