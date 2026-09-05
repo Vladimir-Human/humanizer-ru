@@ -186,20 +186,29 @@ def apply_edits(args, dry):
     for prel, ptext in plan:
         _write(prel, ptext)
         print("записан %s" % prel)
-    # 6) регенерация markers.v1.json и demo
-    for cmd in ([sys.executable, "-X", "utf8", "scripts/export_markers.py"],
-                [sys.executable, "-X", "utf8", "demo/generate_js_rules.py"]):
-        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace")
-        print((r.stdout or r.stderr).strip().splitlines()[-1:])
-        if r.returncode != 0:
-            print("ПРОВАЛ регенерации: %s" % cmd)
-            return 1
+    # 6) регенерация markers.v1.json и demo: сначала экспорт и копирование
+    # реестра в demo/ и src/, затем генерация JS-правил — иначе markers.js
+    # соберётся из устаревшей копии demo/markers.v1.json.
+    cmd = [sys.executable, "-X", "utf8", "scripts/export_markers.py"]
+    r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    print((r.stdout or r.stderr).strip().splitlines()[-1:])
+    if r.returncode != 0:
+        print("ПРОВАЛ регенерации: %s" % cmd)
+        return 1
     shutil.copyfile(os.path.join(ROOT, "markers.v1.json"),
                     os.path.join(ROOT, "demo", "markers.v1.json"))
     shutil.copyfile(os.path.join(ROOT, "markers.v1.json"),
                     os.path.join(ROOT, "src", "humanizer_ru", "markers.v1.json"))
     print("markers.v1.json скопирован в demo/ и src/")
+    r = subprocess.run([sys.executable, "-X", "utf8",
+                        "demo/generate_js_rules.py"], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
+    print((r.stdout or r.stderr).strip().splitlines()[-1:])
+    if r.returncode != 0:
+        print("ПРОВАЛ регенерации demo/markers.js")
+        return 1
     # 7) профильные гейты
     fails = 0
     for gate in ([sys.executable, "scripts/check_markers.py"],
