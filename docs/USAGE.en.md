@@ -47,6 +47,15 @@ or `demo/index.html` offline — text is processed in the browser and never
 leaves the machine. The demo shows only the deterministic artifact-search
 layer; rewriting is done by the agent with the skill, not by the browser.
 
+## Bundle install (the standard way)
+
+The skill text bundle is 17 files: `SKILL.md`, `references/`,
+`knowledge/corrections.md` (a ready copy lives in `dsh/skills/humanizer-ru/`).
+You do not need to clone the whole repository (nearly a thousand files with
+development scripts and AGENTS.md) to install the skill: copy the bundle directory into
+your agent's skills directory. Bundle freshness against the latest release
+tag is enforced by `scripts/check_bundle_fresh.py`.
+
 ## Manual install
 
 Install a release from the **Releases** page (the `humanizer-ru.zip` asset;

@@ -118,7 +118,12 @@ def _gates(quick, tmpdir):
         
         
         
-        ("dated-absolutes: самопроверка", [PY,
+        
+        ("bundle-fresh: самопроверка", [PY,
+         "scripts/check_bundle_fresh.py", "--selftest"], [], {0}),
+        ("bundle-fresh: версия бандла == последний тег", [PY,
+         "scripts/check_bundle_fresh.py"], [], {0}),
+("dated-absolutes: самопроверка", [PY,
          "scripts/check_dated_absolutes.py", "--selftest"], [], {0}),
         ("dated-absolutes: абсолюты THREAT-MODEL датированы", [PY,
          "scripts/check_dated_absolutes.py"], [], {0}),
