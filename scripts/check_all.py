@@ -119,7 +119,12 @@ def _gates(quick, tmpdir):
         
         
         
-        ("bundle-fresh: самопроверка", [PY,
+        
+        ("selftest-coverage: самопроверка", [PY,
+         "scripts/check_selftest_coverage.py", "--selftest"], [], {0}),
+        ("selftest-coverage: все гейты умеют падать", [PY,
+         "scripts/check_selftest_coverage.py"], [], {0}),
+("bundle-fresh: самопроверка", [PY,
          "scripts/check_bundle_fresh.py", "--selftest"], [], {0}),
         ("bundle-fresh: версия бандла == последний тег", [PY,
          "scripts/check_bundle_fresh.py"], [], {0}),
