@@ -157,6 +157,21 @@ runs the same scripts, inputs `fail-on: class-a` or `soft-threshold`,
 `action/action.yml`.
 
 
+## Architecture
+
+Short map; details live in the directories themselves:
+
+- `SKILL.md` + `references/` — the skill's text core (map, 12 references across 15 files).
+- `scripts/` — validators and tools: polish, detectors, gates (e.g.
+  `check_docs.py`); full list in the directory and in `contract.v1.json`.
+- `src/humanizer_ru/` — PyPI package (script mirrors, entry points).
+- `eval/` — evaluation harnesses: neutral corpus, blind runs, fact registry.
+- `research/` — marker evidence registry, fixtures, protocols.
+- `tests/fixtures/` — marker and polish fixtures.
+- `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
+
+The full checklist runs in one command: `python scripts/check_all.py` — 123 gates in the full checklist (112 in --quick). Unit tests: `python -m unittest discover -s tests`.
+
 ## Security
 
 The skill is text-only: no code execution at activation, no network or

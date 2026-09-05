@@ -21,8 +21,9 @@
 ```text
 pip install humanizer-ru
 humanizer-markers --scan primer.txt
-  C:\Users\vovap\AppData\Local\Temp\tmptqz0s_vb.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост за неделю 12%:
-  C:\Users\vovap\AppData\Local\Temp\tmptqz0s_vb.txt:2 [utm_chatgpt] https://example.com/r?utm_source=chatgpt.com
+  primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок за неделю 12%: https://
+  primer.txt:1 [utm_chatgpt] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок за неделю 12%: https://
+  primer.txt:2 [zero_width] Данные подтверждены ассистентом​, подробности в чате.
 ```
 
 ### MCP одной конфигурацией
@@ -66,7 +67,7 @@ humanizer-markers --scan primer.txt
 
 - 58 паттернов машинного письма и 40 regex-маркеров (классы A и B).
 - Записи доказательств: 38 из 40 маркеров (реестр research/fixtures/marker-sources.json).
-- Гейты: 131 гейт полного check_all (120 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
+- Гейты: 133 гейта полного check_all (122 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
 
 Почему так называется: имя унаследовано от первой функции, снимавшей
 слой копипасты после чат-бота и возвращавшей тексту человеческий вид.
