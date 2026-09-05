@@ -811,42 +811,70 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
     return 0
 
 
-def main() -> int:
-    fails = 0
-    # Целостность CLASS_OF ↔ CASES: для каждого кейса есть класс, и в
-    # CLASS_OF нет лишних ключей. Рассинхрон — явный ПРОВАЛ гейта.
-    missing_class = [name for name in CASES if name not in CLASS_OF]
-    extra_class = [name for name in CLASS_OF if name not in CASES]
-    bad_value = [name for name, cls in CLASS_OF.items()
-                 if name in CASES and cls not in ("A", "B")]
-    for name in missing_class:
-        print(f"ПРОВАЛ CLASS_OF: нет класса для кейса {name}")
-        fails += 1
-    for name in extra_class:
-        print(f"ПРОВАЛ CLASS_OF: лишний ключ {name} (нет в CASES)")
-        fails += 1
-    for name in bad_value:
-        print(f"ПРОВАЛ CLASS_OF: кейс {name} имеет недопустимый класс {CLASS_OF[name]!r}")
-        fails += 1
-    for name, (pattern, positives, negatives, multi) in CASES.items():
+def _check_cases(cases, class_of):
+    """Консистентность реестра кейсов: CLASS_OF ↔ CASES, прямые и
+    отрицательные образцы, пустая строка, многократный образец.
+    Возвращает список строк-провалов (пуст — всё согласно)."""
+    out = []
+    for name in cases:
+        if name not in class_of:
+            out.append(f"ПРОВАЛ CLASS_OF: нет класса для кейса {name}")
+    for name in class_of:
+        if name not in cases:
+            out.append(f"ПРОВАЛ CLASS_OF: лишний ключ {name} (нет в CASES)")
+    for name, cls in class_of.items():
+        if name in cases and cls not in ("A", "B"):
+            out.append(f"ПРОВАЛ CLASS_OF: кейс {name} имеет недопустимый класс {cls!r}")
+    for name, (pattern, positives, negatives, multi) in cases.items():
         rx = re.compile(pattern)
         for s in positives:
             if not rx.search(s):
-                print(f"ПРОВАЛ {name}: прямой образец не пойман: {s!r}")
-                fails += 1
+                out.append(f"ПРОВАЛ {name}: прямой образец не пойман: {s!r}")
         for s in negatives:
             if rx.search(s):
-                print(f"ПРОВАЛ {name}: ложное срабатывание на: {s!r}")
-                fails += 1
+                out.append(f"ПРОВАЛ {name}: ложное срабатывание на: {s!r}")
         if rx.search(""):
-            print(f"ПРОВАЛ {name}: срабатывание на пустой строке")
-            fails += 1
+            out.append(f"ПРОВАЛ {name}: срабатывание на пустой строке")
         if multi is not None:
             text, expected = multi
             got = len(rx.findall(text))
             if got != expected:
-                print(f"ПРОВАЛ {name}: многократный образец — ожидалось {expected}, найдено {got}")
-                fails += 1
+                out.append(f"ПРОВАЛ {name}: многократный образец — ожидалось {expected}, найдено {got}")
+    return out
+
+
+def selftest() -> int:
+    passed = failed = 0
+
+    def case(name, ok):
+        nonlocal passed, failed
+        print(("PASS: " if ok else "FAIL: ") + name)
+        passed += 1 if ok else 0
+        failed += 0 if ok else 1
+
+    case("живой реестр CASES/CLASS_OF согласован",
+         _check_cases(CASES, CLASS_OF) == [])
+    case("непойманный прямой образец ловится",
+         _check_cases({"zz": (r"foo", ["bar"], [], None)}, {"zz": "A"}) != [])
+    case("ложное срабатывание на отрицательном ловится",
+         _check_cases({"zz": (r"foo", ["foo"], ["foo x"], None)},
+                      {"zz": "A"}) != [])
+    case("пропущенный класс ловится",
+         _check_cases({"zz": (r"foo", ["foo"], [], None)}, {}) != [])
+    case("расхождение многократного образца ловится",
+         _check_cases({"zz": (r"foo", ["foo"], [], ("foo foo", 3))},
+                      {"zz": "B"}) != [])
+    print("САМОПРОВЕРКА check_markers: %d/%d PASS" % (passed, passed + failed))
+    return 0 if failed == 0 else 1
+
+
+def main() -> int:
+    fails = 0
+    # Целостность CLASS_OF ↔ CASES и образцы (вынесено в _check_cases:
+    # та же логика используется selftest-негативами).
+    for msg in _check_cases(CASES, CLASS_OF):
+        print(msg)
+        fails += 1
 
     if _console_text("\ufeff", "ascii") != r"\ufeff":
         print("ПРОВАЛ scan: невидимый символ не экранируется для ASCII-консоли")
@@ -971,6 +999,8 @@ def parity(*md_paths: str) -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--selftest":
+        sys.exit(selftest())
     if len(sys.argv) > 1 and sys.argv[1] == "--scan":
         # scan() разбирает --class {a|all} сам, поэтому передаём весь хвост;
         # --json снимается здесь (конверт контракта вместо текстовых строк).

@@ -18,15 +18,18 @@ humanizer-ru — скилл Agent Skills: находит и снимает сл�
    зеркалируются в `src/humanizer_ru/` (`check_pkg_sync.py`).
 2. **Переносы строк — LF.** Windows-агенты: не оставляй CRLF в текстовых
    файлах; релизный гейт отвергает CR в архиве.
-3. **Новый regex-маркер** — полный конвейер: запись в `CASES` +
-   `CLASS_OF` (A/B) + три образца (прямой/отрицательный/граничный) +
-   строка в `references/chatbot-artifacts-*.md` (для паритета) + секция в
+3. **Новый regex-маркер** — полный конвейер одной командой:
+   `python3 scripts/add_marker.py` (запись в `CASES` + `CLASS_OF` (A/B) +
+   три образца (прямой/отрицательный/граничный) + строка в
+   `references/chatbot-artifacts-*.md` (для паритета) + секция в
    `tests/test-fixtures-cases.md` + запись в
    `research/fixtures/marker-sources.json` (source_url, accessed,
-   verbatim_sample, fixture в `tests/fixtures/`) + имя в
-   `REGISTERED_CASES` (`scripts/check_fixture_sources.py`) + регенерация
+   verbatim_sample, fixture в `tests/fixtures/`) + регенерация
    `markers.v1.json` (`scripts/export_markers.py`) и демо
-   (`demo/markers.v1.json` + `demo/generate_js_rules.py`).
+   (`demo/markers.v1.json` + `demo/generate_js_rules.py`) + зеркало
+   пакета). Область действия гейта доказательств выводится из реестра
+   `marker-sources.json` (список `REGISTERED_CASES` отменён 2026-09-05);
+   новый case без записи в реестре — сирота, гейт падает.
 4. **Витринные числа — гейты.** Счётчики паттернов и гейтов в README RU/EN,
    CHANGELOG, release-check сверяются машинно (`check_docs.py`, секция I.17):
    меняешь число — меняй факт, не только текст.
@@ -41,7 +44,7 @@ humanizer-ru — скилл Agent Skills: находит и снимает сл�
 ## Полный чек-лист одной командой
 
 ```sh
-python scripts/check_all.py        # 139 гейтов (128 в --quick)
+python scripts/check_all.py        # 141 гейт (130 в --quick)
 python -m unittest discover -s tests
 ```
 
@@ -49,7 +52,7 @@ python -m unittest discover -s tests
 ~2,5 минуты, `--sdist-test` и compatibility-тест с чистыми venv). Таймаут вызова
 меньше 12 минут обрывает зелёный прогон и выглядит как падение гейтов: при
 автоматическом запуске закладывай таймаут >= 12 минут или используй `--quick`
-(128 гейтов, ~2 минуты) для быстрой проверки.
+(130 гейтов, ~2 минуты) для быстрой проверки.
 
 Перед сдачей правки оба прогона обязаны быть зелёными.
 

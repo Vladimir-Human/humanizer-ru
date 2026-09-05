@@ -294,8 +294,11 @@
       fetch("status.json").then((r) => r.ok ? r.json() : null)
         .then((st) => {
           if (st) {
-            document.getElementById("buildinfo").textContent +=
-              " · проверено: " + st.date + ", коммит " + st.commit;
+            let line = " · проверено: " + st.date + ", коммит " + st.commit;
+            if (typeof st.lag_commits === "number" && st.lag_commits > 0) {
+              line += " · main впереди релиза на " + st.lag_commits + " коммитов";
+            }
+            document.getElementById("buildinfo").textContent += line;
           }
         }).catch(() => {});
     }

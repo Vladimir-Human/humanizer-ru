@@ -48,23 +48,24 @@ except Exception:  # noqa: BLE001 — fallback, если запуск из др�
         _MARKER_CASES = {}
 
 # Реестр охватывает маркеры, которым нужна доказательная цепочка.
-# Всякий case из check_markers.CASES обязан быть либо в REGISTERED_CASES
-# (требует записи в реестре), либо автоматически попадает в LEGACY_EXEMPT
-# (проверяется только fixtures). Иначе гейт падает — это защищает от
-# добавления regex без evidence chain.
-REGISTERED_CASES = {
-    "utm_copilot", "grok_referrer", "grok_render_json", "grok_card_tag",
-    "unicode_tags",
-    "turn_other", "attached_web_bracket", "generated_ref_id",
-    "placeholder_url", "placeholder_date", "deepseek_line_ref",
-    "openai_pua_short", "ref_name_search", "gemini_span", "perplexity_s3",
-    "gemini_cite_n", "source_plus_chain", "oai_citation", "writing_block",
-    "attributableIndex", "oaicite_short", "contentReference", "openai_pua",
-    "turn_search", "utm_chatgpt", "zero_width", "citation_n",
-    "vertexaisearch", "utm_openai", "copilot_caret", "gemini_cite_start",
-    "assistants_source", "cite_turn", "turn_fetch", "turn_file",
-    "sandbox_link", "think_tag", "invisible_layout",
-}
+# Область действия выводится из research/fixtures/marker-sources.json
+# (единственный источник; приказ 2026-09-05, L6: ручной список
+# REGISTERED_CASES отменён). Всякий case из check_markers.CASES обязан
+# либо иметь запись в реестре, либо входить в LEGACY_EXEMPT (проверяются
+# только fixtures). Новый case без записи попадает в сироты и гейт падает —
+# защита от добавления regex без evidence chain сохранена.
+def _registered_from_registry():
+    reg = os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "research", "fixtures",
+        "marker-sources.json")
+    try:
+        with open(reg, encoding="utf-8") as fh:
+            return {rec.get("case") for rec in json.load(fh) if rec.get("case")}
+    except (OSError, ValueError):
+        return set()
+
+
+REGISTERED_CASES = _registered_from_registry()
 SCOPE = {name: _MARKER_CASES[name][0] for name in REGISTERED_CASES if name in _MARKER_CASES}
 
 # CASES без записи в реестре: проверяются только fixtures в check_markers.py.
