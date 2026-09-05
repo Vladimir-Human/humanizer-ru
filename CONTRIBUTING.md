@@ -52,6 +52,26 @@
 7. PR: шаблон заполнен, CHANGELOG дописан, обе README проверены на бюджет
    строк и own_style.
 
+## Быстрый прогон
+
+Целевые команды по типу правки (полный прогон ~9 минут нужен только перед
+merge; таймаут вызова check_all — не меньше 12 минут, иначе обрыв выглядит
+как падение гейтов):
+
+- Текст скилла или references: `python3 scripts/check_bundle_sync.py` и
+  `python3 scripts/check_spec.py SKILL.md`.
+- Маркеры и фикстуры: `python3 scripts/check_markers.py`,
+  `python3 scripts/check_markers.py --parity`,
+  `python3 scripts/check_fixture_sources.py`.
+- Демо: `python3 scripts/check_demo_parity.py` и
+  `python3 scripts/check_demo_a11y.py`.
+- Документация и витрина: `python3 scripts/check_docs.py`,
+  `python3 scripts/check_readme_parity.py`,
+  `python3 scripts/check_outward.py README.md README.en.md SKILL.md llms.txt docs/USAGE.md POSITIONING.md`.
+- Пакет и контракт: `python3 scripts/check_pkg_sync.py`,
+  `python3 scripts/check_contract.py`, `python3 scripts/check_mcp.py`.
+- Быстрый срез всего: `python3 scripts/check_all.py --quick` (~2 минуты).
+
 ## Как взять issue
 
 1. Выберите issue с меткой `good-first-issue` или `help-wanted`.
