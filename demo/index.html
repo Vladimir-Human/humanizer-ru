@@ -49,7 +49,7 @@
 <body>
 <header>
   <h1>Находит следы машинного текста в русском и объясняет их вам</h1>
-  <p class="note">Текст анализируется только в браузере и никуда не отправляется. Каждый флаг сопровождается причиной и советом. Исходники и полный скилл — в <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории на GitHub</a>.</p>
+  <p class="note">Вставьте текст, скопированный из чата с ИИ, — покажем следы и объясним каждый. Текст анализируется только в браузере и никуда не отправляется. Исходники и полный скилл — в <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории на GitHub</a>.</p>
 </header>
 <main>
   <div class="controls">
@@ -66,7 +66,7 @@
   <div class="cols">
     <section>
       <h2>Текст</h2>
-      <textarea id="text" placeholder="Вставьте текст — проверим за 2 секунды. Текст не покидает браузер."></textarea>
+      <textarea id="text" placeholder="Вставьте текст, скопированный из чата с ИИ, — покажем следы и объясним каждый. Текст не покидает браузер."></textarea>
     </section>
     <section>
       <h2>Совпадения</h2>
@@ -148,19 +148,33 @@
     return (text.match(/[^.!?]+[.!?]?/g) || []).filter(s => s.trim()).length;
   }
 
+  function plural(n, one, few, many) {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+
+  function verdictLine(matches, text) {
+    const m = sentencesOf(text);
+    return "Найдено " + matches + " " + plural(matches, "след", "следа", "следов") +
+      " в " + m + " " + plural(m, "предложении", "предложениях", "предложениях") +
+      ". Это не приговор — смотрите объяснения.";
+  }
+
   function renderList(matches) {
     const text = textarea.value;
     if (!text.trim()) {
-      matchesBox.innerHTML = '<p class="note">Вставьте текст — проверим за 2 ' +
-        'секунды. Текст не покидает браузер.</p>';
+      matchesBox.innerHTML = '<p class="note">Вставьте текст, скопированный ' +
+        'из чата с ИИ, — покажем следы и объясним каждый. Текст не покидает ' +
+        'браузер. Есть готовый пример — кнопка «Вставить образец».</p>';
       summary.textContent = "";
       return;
     }
     if (!matches.length) {
       matchesBox.innerHTML = '<p class="note">Совпадений не найдено.</p>';
       if (!rules.length) { summary.textContent = "Правила не загрузились — проверьте markers.js"; return; }
-      summary.textContent = "Найдено 0 следов в " + sentencesOf(text) +
-        " предложениях. Это не приговор — смотрите объяснения.";
+      summary.textContent = verdictLine(0, text);
       return;
     }
     const byId = {};
@@ -181,8 +195,7 @@
           '<p class="rule">Что сделать: ' + escapeHtml(ex.advice) + '</p></details>' : '');
       matchesBox.appendChild(div);
     }
-    summary.textContent = "Найдено " + matches.length + " следов в " +
-      sentencesOf(text) + " предложениях. Это не приговор — смотрите объяснения.";
+    summary.textContent = verdictLine(matches.length, text);
   }
 
   function run() {
@@ -190,6 +203,9 @@
     const matches = findMatches(text);
     renderList(matches);
     renderPreview(text, matches);
+    if (location.hash.length > 1 && text.trim()) {
+      summary.textContent += " Текст загружен из ссылки — проверьте его происхождение.";
+    }
   }
 
   onlyA.addEventListener("change", run);
@@ -240,6 +256,15 @@
     updateCounts();
     _timer = setTimeout(run, 250);
   });
+  if (location.hash.length > 1) {
+    // Текст из ссылки «Поделиться»: декодируем и проверяем с предупреждением.
+    try {
+      const shared = decodeURIComponent(location.hash.slice(1));
+      if (shared && shared.length <= 65536) {
+        textarea.value = shared;
+      }
+    } catch (e) { /* битый hash игнорируется */ }
+  }
   if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js"); }
   updateCounts();
   run();

@@ -140,6 +140,13 @@ $ humanizer-scan --json notes.txt
 Machine interface (output schemas, exit codes, when not to use):
 `contract.v1.json`; agent entry point: `llms.txt`.
 
+## Method boundary: code and documentation
+
+The deterministic layer skips fragments inside backticks and fenced blocks:
+documentation and code are never highlighted. A paste trace wrapped in code
+format is not flagged — a deliberate boundary (otherwise checks of technical
+texts break). Full boundary list — docs/THREAT-MODEL.md.
+
 ## What it does
 
 Runs Russian text through 58 patterns of machine writing (25 base and 33
