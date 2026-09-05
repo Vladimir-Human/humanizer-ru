@@ -4,7 +4,7 @@
 
 ## 2026-09-05 — базовая линия и внешние снимки
 
-- HEAD на старте: e6c881a (origin/main, полный клон C:\Users\vovap\tmp\hr-review-origin сверен; рабочий клон подтянут до того же коммита).
+- HEAD на старте: e6c881a (origin/main, полный клон вне репозитория сверен; рабочий клон подтянут до того же коммита).
 - Базовая линия: `python scripts/check_all.py` → 131 гейт, FAIL 1 (self-audit устарел после изменения README разделом браузерных клиентов); `python -m unittest discover -s tests` → OK.
 - fix(baseline): self-audit перегенерирован (`python scripts/self_audit.py`), коммит в main; после — `--quick` 120/120 FAIL 0, unittest OK.
 - Внешние снимки (2026-09-05, gh API + PyPI JSON API + страница skills.sh):
@@ -153,7 +153,7 @@
   решение за мейнтейнером списка).
 - Черновики контент-юнитов готовы и прошли check_outward 0 FAIL: тред
   Discussions «Покажите текст после ChatGPT», рецепт батч-скана, короткий
-  пост «Три следа копипасты» (drafts/l5/ в ран-каталоге).
+  пост «Три следа копипасты» (drafts/l5/ вне репозитория).
 - Заготовка scripts/scan_folder.py (батч-скан папки, MD/CSV, шапка
   «не вердикт об авторстве», stdlib) — в drafts/l5/.
 
