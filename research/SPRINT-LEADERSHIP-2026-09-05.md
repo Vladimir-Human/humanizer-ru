@@ -86,3 +86,24 @@
   contract/triggers/polish-modes/docs 2c зелёные; self-audit
   перегенерирован (style max 79/80 — запас один маркер, учитывать в
   следующих правках SKILL).
+
+### Слияние L1+L2
+
+- PR #93 слит в main (d97b5dd); self-review 5550391340; полный check_all
+  139/139 FAIL 0 и unittest OK на HEAD ветки перед merge; все джобы main
+  зелёные после merge (docs, regex, markers, self-scan, anglicisms,
+  offline-core, Pages, status, smoke, validators).
+- Счётчики витрины: 139 гейтов полного check_all, 128 в --quick.
+
+### Дальше по потокам
+
+- L3 (честность витрин): два «38 из 40» с квалификаторами + гейт голой
+  дроби; раздел «Одноимённые проекты» (ilyautov 284★, снимок 2026-09-05)
+  и живая ссылка из MAINTENANCE-MODE; PRIVACY_POLICY — путь данных
+  CLI/MCP/Action; LICENSES.md — секция marker-sources.json; LEADERBOARD —
+  даты и критерии включения.
+- L4: бейдж CI на первом экране, «Догфудинг» вниз с расшифровкой,
+  онбординг демо, hash-share (реализовать чтение или убрать), граница
+  backtick/fenced в THREAT-MODEL/USAGE.
+- L5–L10 по порядку приказа; L7 — ветка release-3.31.1 (тег — владелец).
+
