@@ -1,7 +1,7 @@
 {
   "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
   "schema": "facts.schema.v1.json",
-  "updated": "2026-09-03",
+  "updated": "2026-09-05",
   "entries": [
     {
       "fact_id": "fp-zero-snap-2026-08-25",
@@ -579,6 +579,19 @@
       "assumptions": [
         "prereg-frozen"
       ]
+    },
+    {
+      "fact_id": "external-contributors-2026-09",
+      "claim": "внешние участники на 2026-09-05: внешних issues 0 из 12 открытых и закрытых (все от проекта); 1 внешний автор PR — inquilabee, PR 41, 2026-07-29, закрыт без слияния; KPI 30 дней — первый внешний пользователь с issue или обсуждением",
+      "status": "limited",
+      "publication_approved": true,
+      "tokens": [
+        "0/12"
+      ],
+      "artifact": "research/SPRINT-LEADERSHIP-2026-09-05.md",
+      "date": "2026-09-05",
+      "reproduce": "gh pr list --state all --json number,author; gh issue list --state all --json number,author",
+      "note": "публикация по приказу рывка N1-N40 от 2026-09-05 (пункт L5: счётчик внешних участников в реестре фактов с датой); обновление счётчика — новым снимком, не правкой этой записи"
     }
   ]
 }
