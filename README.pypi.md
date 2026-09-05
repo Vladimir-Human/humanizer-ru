@@ -32,7 +32,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 или клон тега выпуска:
 
 ```sh
-git clone --branch v3.31.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.32.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Попробовать без установки: [онлайн-демо](https://vladimir-human.github.io/humanizer-ru/) —
@@ -56,11 +56,6 @@ git clone --branch v3.31.1 --depth 1 https://github.com/Vladimir-Human/humanizer
 - `humanizer-scan` — счётчик мягких признаков; калибрует объём правки,
   вердикта об авторстве не даёт.
 
-Запрещённые использования (полный список — блок `prohibited_uses` в
-контракте): сдача работ там, где ИИ запрещён; обход систем антиплагиата и
-атрибуции; сокрытие факта использования ИИ, когда раскрытие обязательно;
-снятие водяных знаков с чужого контента; приписывание машинного текста
-другому лицу. Легитимная область — свой текст и честный отчёт.
 
 Машинный интерфейс:
 [contract.v1.json](https://github.com/Vladimir-Human/humanizer-ru/blob/main/contract.v1.json);

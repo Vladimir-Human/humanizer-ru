@@ -43,7 +43,6 @@ humanizer-markers --scan primer.txt
 - Короткий текст: сигналов меньше, чем слов, водяной знак и статистика требуют длины [bib:anthropic2026wm], [bib:synthid2024].
 - Водяные знаки без ключа: distortion-free знак не виден стороннему наблюдателю по построению [bib:kuditipudi2023]; криптографическая неотличимость без ключа [bib:cgz2023]; детектор SynthID-Text требует ключ разработчика [bib:synthid2024]; Anthropic подтверждает: без ключа знак не проверяется, детектор-API в закрытом preview [bib:anthropic2026wm].
 
-- Не помогает там, где ИИ запрещён: сдача работ там, где ИИ запрещён (экзамены, учебные задания, конкурсы «только человек»); полный список — prohibited_uses в contract.v1.json.
 
 - Ключи [bib:…] раскрыты в [research/BIBLIOGRAPHY.md](research/BIBLIOGRAPHY.md).
 - polish не запускать на Markdown и разметке: снимает ##, **, ёлочки, тире; для разметки — режим --preserve-markup.
