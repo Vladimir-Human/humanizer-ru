@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: "Если вы ссылаетесь на этот скилл или его базу маркеров, используйте эти данные."
-title: "humanizer-ru: Находит следы машинного текста в русском и объясняет их вам"
+title: "humanizer-ru: Проверяемая гигиена вставки из чата для русского текста"
 abstract: >-
-  Находит следы машинного текста в русском и объясняет их вам: офлайн, без
-  отправки текста, каждый флаг с причиной и советом, правила расширяются
-  свободно.
+  Проверяемая гигиена вставки из чата для русского текста:
+  детерминированно, с реестром фактов, офлайн, каждый флаг с причиной и
+  советом.
 authors:
   - name: "Vladimir-Human"
     alias: Vladimir-Human
@@ -13,7 +13,7 @@ repository-code: "https://github.com/Vladimir-Human/humanizer-ru"
 url: "https://github.com/Vladimir-Human/humanizer-ru"
 license: MIT
 version: 3.31.1
-date-released: "2026-09-03"
+date-released: "2026-09-05"
 keywords:
   - agent-skills
   - russian

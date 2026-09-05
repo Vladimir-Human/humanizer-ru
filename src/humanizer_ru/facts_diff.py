@@ -426,7 +426,7 @@ def envelope(before: str, after: str, files=None) -> dict:
 
 # ---------------------------------------------------------------- CLI
 
-SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:

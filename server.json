@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Vladimir-Human/humanizer-ru",
   "title": "humanizer-ru",
-  "description": "Находит следы машинного текста в русском и объясняет их вам: офлайн, без отправки текста, каждый флаг с причиной и советом, правила расширяются свободно.",
+  "description": "Проверяемая гигиена вставки из чата для русского текста: детерминированно, с реестром фактов, офлайн, каждый флаг с причиной и советом.",
   "version": "3.31.1",
   "websiteUrl": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": {

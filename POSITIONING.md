@@ -4,16 +4,16 @@
 сверяет дословное присутствие короткой и длинной формул в каждом месте.
 
 ## Короткая формула (RU, <= 60 символов)
-Находит следы машинного текста в русском и объясняет их вам
+Проверяемая гигиена вставки из чата для русского текста
 
 ## Длинная формула (RU, <= 160 символов)
-Находит следы машинного текста в русском и объясняет их вам: офлайн, без отправки текста, каждый флаг с причиной и советом, правила расширяются свободно.
+Проверяемая гигиена вставки из чата для русского текста: детерминированно, с реестром фактов, офлайн, каждый флаг с причиной и советом.
 
 ## Короткая формула (EN)
-Finds machine-text traces in Russian and explains them
+Verifiable chat-paste hygiene for Russian text
 
 ## Длинная формула (EN)
-Finds machine-text traces in Russian and explains them to you: offline, no text leaves your machine, every flag with a reason and a fix, rules extend freely.
+Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix.
 
 ## Два режима продукта
 

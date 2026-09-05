@@ -157,7 +157,7 @@ def report(before_path, after_path):
             "files": [{"before": before_path, "after": after_path, **body}]}
 
 
-SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
+SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
 
 
 def main(argv=None):

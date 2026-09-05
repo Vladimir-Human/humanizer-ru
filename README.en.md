@@ -1,5 +1,5 @@
 # humanizer-ru
-Finds machine-text traces in Russian and explains them
+Verifiable chat-paste hygiene for Russian text
 
 ![The humanizer-markers terminal highlights machine-text traces and explains the reason behind each flag](assets/hero.svg)
 
