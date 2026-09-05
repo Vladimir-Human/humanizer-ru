@@ -352,3 +352,25 @@ GPG-подпись FRONTIER-ACT; Glama; Smithery + pin профиля.
   содержательных» относится к вычищенной истории до рывка, новые выпуски
   добавляются по решению владельца, история не переписывается.
 
+### Аудиты skills.sh (владелец указал три страницы, 2026-09-06)
+
+- Снимок 2026-09-05 17:58-18:00: Gen Agent Trust Hub — Fail/CRITICAL
+  (INDIRECT_PROMPT_INJECTION — суть продукта плюс Read/Grep/Glob;
+  DYNAMIC_EXECUTION — eval/run_eval.py --candidate, bench-харнес dev-only;
+  EXTERNAL_DOWNLOADS — eval/ainl_calibration.py, легитимные датасеты;
+  COMMAND_EXECUTION — subprocess в scripts/eval, dev/CI; рекомендации про
+  api.github.com и «2 malicious URL» — сигнатуры детекции входных
+  артефактов, не адреса загрузок). Socket — Warn, 3 LOW: check_compatibility
+  (CI-харнес), rewrite_text shell=True, dsh/cordis.patch.yml (вендор dsh).
+  Snyk — Pass.
+- Устранено реально: shell=True в exec-бэкенде rewrite_text.py заменён на
+  shlex.split + shell=False с подстановкой {INPUT} в каждый аргумент
+  (PR #102, bc9ab81); selftest 1/1; операторам с shell-метасимволами —
+  обёртка-скрипт (задокументировано).
+- Интерпретация всех находок — SECURITY.md «Каталоги и их аудиты»:
+  dev/CI-скрипты не входят в бандл скилла (17 файлов); аудиты сканируют
+  весь репозиторий.
+- Аудиты пересканируют репозиторий по своему расписанию; следующий снимок
+  зафиксируется здесь же с датой; карточка skills.sh и её аудиты не
+  влияют на гейты репозитория.
+
