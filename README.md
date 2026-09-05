@@ -45,6 +45,7 @@ humanizer-markers --scan primer.txt
 
 - Не помогает там, где ИИ запрещён: сдача работ там, где ИИ запрещён (экзамены, учебные задания, конкурсы «только человек»); полный список — prohibited_uses в contract.v1.json.
 
+- Ключи [bib:…] раскрыты в [research/BIBLIOGRAPHY.md](research/BIBLIOGRAPHY.md).
 - polish не запускать на Markdown и разметке: снимает ##, **, ёлочки, тире; для разметки — режим --preserve-markup.
 
 ## Почему можно доверять
@@ -67,7 +68,7 @@ humanizer-markers --scan primer.txt
 
 - 58 паттернов машинного письма и 40 regex-маркеров (классы A и B).
 - Записи доказательств: 38 из 40 маркеров (реестр research/fixtures/marker-sources.json).
-- Гейты: 133 гейта полного check_all (122 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
+- Гейты: 135 гейтов полного check_all (124 в --quick); фикстуры в tests/fixtures/, документация сверяется check_docs.py, персона описана в PERSONA.md.
 
 Почему так называется: имя унаследовано от первой функции, снимавшей
 слой копипасты после чат-бота и возвращавшей тексту человеческий вид.
