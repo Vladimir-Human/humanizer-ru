@@ -65,7 +65,7 @@ RUNLOG прогона и строке снимка). Первый запуск �
 ## История снимков
 
 - 2026-09-03 — первый снимок (таблица выше); источник регламента —
-  решение владельца о финальном финальный релизный цикле (батч 3, RR-04).
+  решение владельца о финальном релизном цикле (батч 3, RR-04).
 
 ## Снимок 2026-09-04 (3.31.0)
 
@@ -80,3 +80,28 @@ RUNLOG прогона и строке снимка). Первый запуск �
 - Публичный бенчмарк: demo/benchmark/index.html, гейт check_benchmark.
 - Проект в режиме поддержки; следующий снимок — по регламенту или при
   новом релизе.
+
+## Снимок 2026-09-05 (рывок N1–N40, поток L1)
+
+Источник: gh API, PyPI JSON API, страница skills.sh — все запросы 2026-09-05.
+
+| Показатель | Значение | Команда проверки |
+|---|---|---|
+| Звёзды GitHub | 123 | gh repo view Vladimir-Human/humanizer-ru --json stargazerCount |
+| Форки | 9 | gh repo view Vladimir-Human/humanizer-ru --json forkCount |
+| Issues (всего / открытых) | 12 / 1 | gh issue list --state all --limit 100 --json number |
+| Релизов на странице | 9 | gh release list --limit 30 |
+| Версия PyPI | 3.31.0 | python -c "import json,urllib.request;print(json.load(urllib.request.urlopen('https://pypi.org/pypi/humanizer-ru/json'))['info']['version'])" |
+| Установок skills.sh | 599 (карточка, снимок страницы 2026-09-05) | https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru |
+| Тёзка ilyautov/humanizer-ru | 284 звезды, 21 форк | gh repo view ilyautov/humanizer-ru --json stargazerCount,forkCount |
+| Гейты check_all | 137 полных, 126 в --quick | python scripts/check_all.py --quick |
+| Внешние участники | 1 внешний автор PR (inquilabee, PR #41, 2026-07-29, закрыт без слияния); внешних issues и discussions — 0 | gh pr list --state all --json author; gh issue list --state all --json author |
+
+Примечания: счётчик skills.sh на карточке показывает 599 установок и
+устаревший слепок SKILL.md (v3.27.0) — refresh карточки после 3.31.1
+(открытая заявка, L5). Security-аудиты skills.sh от 2026-09-04: Gen Agent
+Trust Hub — Fail/CRITICAL по скану ВСЕГО репозитория (maintenance-скрипты
+с subprocess и сетевые вызовы dev-инструментов; текстовый бандл скилла
+анализ признаёт защищённым), Socket — Warn, 3 LOW (dev-скрипты); ответ —
+установка бандлом 17 файлов вместо клона репозитория (L2, N13/N39).
+
