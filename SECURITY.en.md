@@ -17,9 +17,10 @@ Design guarantees:
 **Legal framing of label removal.** The removal layer (`scripts/filemarks/`,
 `references/removal-matrix.md`) works on content the user owns; responsibility
 for how the result is used rests with the user. The project is not positioned
-as a tool for submitting work where AI is prohibited, and it does not promise
-detector bypass: only relative before/after detectability deltas are
-published, without absolute percentages. Plagiarism checks are out of scope:
+Usage-scenario restrictions (the prohibited_uses block) were removed by
+project policy on 2026-09-05: the tool does not evaluate the purpose of
+use. Detector bypass is not promised: only relative before/after
+detectability deltas are published, without absolute percentages. Plagiarism checks are out of scope:
 rewriting does not remove matches against a database of borrowings.
 
 > The optional `npx skills add ...` installation command runs the third-party Skills CLI. Review that tool separately, or use the manual installation method in the README if you want installation to consist only of inspected file copies.

@@ -68,7 +68,7 @@ nothing executable at install time). Upload into Claude.ai via
 Clone pinned to a tag:
 
 ```sh
-git clone --branch v3.31.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.32.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
@@ -215,13 +215,6 @@ scanner once treated the marker description as a download link (a false
 positive, a case class known from YARA rules and the EICAR string). The
 marker cannot be removed: that would be a hole in the detector.
 
-Prohibited uses (full list in the `prohibited_uses` block of
-`contract.v1.json`): submitting work where AI is prohibited (exams,
-coursework, professional certification); evading plagiarism or attribution
-systems; concealing AI use where disclosure is required; stripping
-watermarks from content the user does not own; attributing machine text to
-another person. The legitimate area is your own text and honest reporting
-without authorship verdicts.
 
 ## Sources
 
