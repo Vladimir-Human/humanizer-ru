@@ -452,3 +452,35 @@ def remove_invisible(text, include_ambiguous=False):
         report["reported"].append(rec)
         i += 1
     return "".join(out), report
+
+def _selftest() -> int:
+    passed = failed = 0
+
+    def case(name, ok):
+        nonlocal passed, failed
+        print(("PASS: " if ok else "FAIL: ") + name)
+        passed += 1 if ok else 0
+        failed += 0 if ok else 1
+
+    def _clean(s):
+        out = clean_text_layer(s)
+        return out[0] if isinstance(out, tuple) else out
+
+    clean = "Обычный русский текст без служебных символов."
+    once = _clean(clean)
+    case("обработка идемпотентна и не ломает чистый текст",
+         _clean(once) == once and "Обычный русский текст" in once)
+    dirty = "Текст с невидимым\u200b символом"
+    case("невидимый символ снимается", "\u200b" not in _clean(dirty))
+    case("parity снятия и детектора без расхождений",
+         removal_parity_errors() == [])
+    print("САМОПРОВЕРКА text_layer: %d/%d PASS" % (passed, passed + failed))
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    import sys as _sys
+    if "--selftest" in _sys.argv:
+        _sys.exit(_selftest())
+    _sys.exit(0)
+

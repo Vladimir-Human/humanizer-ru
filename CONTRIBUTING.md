@@ -33,14 +33,29 @@
 
 ## Добавить маркер за 10 минут
 
+Быстрый путь — мастер полного конвейера (делает шаги 1–5 одной командой и
+прогоняет профильные гейты; доказательства — source_url и дословный образец —
+подготовьте заранее):
+
+```sh
+python3 scripts/add_marker.py --id мой_маркер --class B \
+    --pattern 'мой\s+паттерн' --description "Что это" \
+    --source-url https://example.com/page --platform "модель/площадка" \
+    --positive "пример, где срабатывает" \
+    --negative "пример, где молчит" \
+    --multi "два мой паттерн" --multi-count 2
+```
+
+Ручной путь (если мастер не подходит):
+
 1. Файл `scripts/check_markers.py`: добавьте ключ в `CASES` (Python re,
    экранированные контрольные символы) и класс в `CLASS_OF` (A — улика
    вставки, B — невидимый или разметочный след).
 2. Образцы: три строки в `tests/fixtures/` (положительный, отрицательный,
    граничный) и секция в `tests/test-fixtures-cases.md`.
 3. Доказательство: запись в `research/fixtures/marker-sources.json`
-   (source_url, accessed, verbatim_sample) и имя кейса в `REGISTERED_CASES`
-   внутри `scripts/check_fixture_sources.py`.
+   (source_url, accessed, verbatim_sample); область действия гейта
+   выводится из реестра автоматически — отдельный список не правится.
 4. Описание: строка в `references/chatbot-artifacts-*.md` с пометкой
    класса; формат строки копируйте с соседней строки таблицы того же
    файла (парсер таблиц ожидает фиксированное число колонок).
