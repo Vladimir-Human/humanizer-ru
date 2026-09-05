@@ -95,9 +95,10 @@ def build_js(doc):
             json.dumps(data, ensure_ascii=False, indent=2) + ";" + NL + 'window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;' + NL)
 
 
-def build_sw(js_text):
+def build_sw(js_text, index_text=""):
     import hashlib
-    digest = hashlib.sha256(js_text.encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha256(
+        (js_text + index_text).encode("utf-8")).hexdigest()[:12]
     return (
         "/* Автогенерация generate_js_rules.py: кэш версионируется хэшем правил. */\n"
         "const CACHE = \"humanizer-ru-" + digest + "\";\n"
@@ -129,9 +130,14 @@ def main():
     out = build_js(doc)
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(out)
+    index_text = ""
+    index_path = os.path.join(HERE, "index.html")
+    if os.path.isfile(index_path):
+        with open(index_path, encoding="utf-8") as fh:
+            index_text = fh.read()
     with open(os.path.join(HERE, "sw.js"), "w", encoding="utf-8",
               newline="\n") as fh:
-        fh.write(build_sw(out))
+        fh.write(build_sw(out, index_text))
     print("Записан %s: правил %d" % (OUT, doc["count"]))
 
 
