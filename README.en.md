@@ -46,7 +46,6 @@ humanizer-markers --scan primer.txt
 - [bib:…] keys are defined in [research/BIBLIOGRAPHY.md](research/BIBLIOGRAPHY.md).
 - do not run on Markdown or markup: polish strips ##, **, guillemets, dashes; for markup use --preserve-markup.
 
-- It does not help submitting work where AI is prohibited: exams, coursework, human-only contests; the full list lives in prohibited_uses of contract.v1.json.
 
 ## Why you can trust it
 
