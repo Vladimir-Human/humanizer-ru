@@ -125,7 +125,7 @@ skills-каталог вашего агента. Свежесть бандла �
 Клон с закреплением на теге:
 
 ```sh
-git clone --branch v3.31.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.32.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
@@ -293,9 +293,6 @@ docs/THREAT-MODEL.md.
 безопасности» в `SKILL.md`). Модель угроз и порядок сообщения об
 уязвимостях — в [SECURITY.md](../SECURITY.md).
 
-Запрещённые использования перечислены в блоке `prohibited_uses` файла
-`contract.v1.json`: сдача работ там, где ИИ запрещён, обход антиплагиата
-и атрибуции, сокрытие факта использования ИИ, снятие водяных знаков с чужого контента. Легитимная область: свой текст и честный отчёт.
 
 Про аудит каталога skills.sh: скилл содержит идентификатор S3-бакета
 Perplexity `ppl-ai-file-upload` как документированную примету класса A;
