@@ -2,7 +2,7 @@
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
   "version": "3.31.0",
   "date": "2026-09-05",
-  "measured_commit": "e6c881a8d79640c9da1c2eb7a5852598e292350b",
+  "measured_commit": "4a3fd725e528108a91ba980ae83ce027bf9efe9d",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
   "scope_files": 41,
   "methods": {
@@ -25,7 +25,7 @@
   "totals": {
     "markers_class_a": 0,
     "markers_class_b": 0,
-    "own_style_max": 67,
+    "own_style_max": 79,
     "own_style_max_file": "SKILL.md",
     "scan_max_features": 11,
     "detect": {
@@ -78,7 +78,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 67,
+      "style_total": 79,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -245,7 +245,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 60,
+      "style_total": 59,
       "detect_status": "not-validated",
       "detect_genre": "prose",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -267,7 +267,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 14,
+      "style_total": 15,
       "detect_status": "not-validated",
       "detect_genre": "prose",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -278,7 +278,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 41,
+      "style_total": 56,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -289,7 +289,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 48,
+      "style_total": 76,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"

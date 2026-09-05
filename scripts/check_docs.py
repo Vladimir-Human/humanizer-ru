@@ -554,6 +554,37 @@ def check_repo(root):
     else:
      _block = ""
 
+ # I.20: монотонность CHANGELOG (приказ 2026-09-05, поток L1):
+ # Unreleased наверху, версии строго по убыванию, даты не возрастают.
+ _cl = os.path.join(root, "CHANGELOG.md")
+ if os.path.isfile(_cl):
+  import re as _re20
+  _heads = [ln[3:].strip() for ln in text("CHANGELOG.md").splitlines()
+            if ln.startswith("## ")]
+  _ver20 = _re20.compile(r"^(\d+)\.(\d+)\.(\d+)")
+  _date20 = _re20.compile(r"(\d{4}-\d{2}-\d{2})\s*$")
+  _prev_ver = None
+  _prev_date = None
+  for _h in _heads:
+   if _h == "Unreleased":
+    if _prev_ver is not None or _prev_date is not None:
+     errors.append("I.20: Unreleased не наверху CHANGELOG")
+    continue
+   _mv = _ver20.match(_h)
+   _md = _date20.search(_h)
+   if _mv:
+    _v = tuple(int(x) for x in _mv.groups())
+    if _prev_ver is not None and _v >= _prev_ver:
+     errors.append("I.20: версии CHANGELOG не по убыванию: %s после %s"
+                   % (_h[:24], ".".join(map(str, _prev_ver))))
+    _prev_ver = _v
+   if _md:
+    _d = _md.group(1)
+    if _prev_date is not None and _d > _prev_date:
+     errors.append("I.20: даты CHANGELOG возрастают: %s после %s"
+                   % (_d, _prev_date))
+    _prev_date = _d
+
  return errors
 
 # ------------------------------------------------------------------ selftest
@@ -824,6 +855,28 @@ def selftest():
                    open(os.path.join(r, "README.md"), encoding="utf-8").read()
                    + "".join("строка %d\n" % i for i in range(400))),
       "I.18")
+
+ case("CHANGELOG версии не по убыванию -> FAIL",
+      lambda r: _w(r, "CHANGELOG.md",
+                   "# История\n\n## 3.1.0 — 2026-01-02\n\nстарая\n\n"
+                   "## 3.2.0 — 2026-01-01\n\nновая\n"),
+      "I.20")
+ case("CHANGELOG даты возрастают -> FAIL",
+      lambda r: _w(r, "CHANGELOG.md",
+                   "# История\n\n## 3.2.0 — 2026-01-01\n\nранняя\n\n"
+                   "## 3.1.0 — 2026-01-05\n\nпоздняя дата у младшей версии\n"),
+      "I.20")
+ case("CHANGELOG Unreleased не наверху -> FAIL",
+      lambda r: _w(r, "CHANGELOG.md",
+                   "# История\n\n## 3.1.0 — 2026-01-02\n\nрелиз\n\n"
+                   "## Unreleased\n\nкопится\n"),
+      "I.20")
+ case("CHANGELOG порядок верный -> OK",
+      lambda r: _w(r, "CHANGELOG.md",
+                   "# История\n\n## Unreleased\n\nкопится\n\n"
+                   "## 3.3.5 — 2026-01-03\n\nтекущая\n\n"
+                   "## 3.1.0 — 2026-01-02\n\nстарая\n"),
+      None)
 
  passed = 0
  for name, mutate, expect_token in cases:

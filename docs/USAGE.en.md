@@ -47,6 +47,15 @@ or `demo/index.html` offline — text is processed in the browser and never
 leaves the machine. The demo shows only the deterministic artifact-search
 layer; rewriting is done by the agent with the skill, not by the browser.
 
+## Bundle install (the standard way)
+
+The skill text bundle is 17 files: `SKILL.md`, `references/`,
+`knowledge/corrections.md` (a ready copy lives in `dsh/skills/humanizer-ru/`).
+You do not need to clone the whole repository (nearly a thousand files with
+development scripts and AGENTS.md) to install the skill: copy the bundle directory into
+your agent's skills directory. Bundle freshness against the latest release
+tag is enforced by `scripts/check_bundle_fresh.py`.
+
 ## Manual install
 
 Install a release from the **Releases** page (the `humanizer-ru.zip` asset;
@@ -156,6 +165,21 @@ runs the same scripts, inputs `fail-on: class-a` or `soft-threshold`,
 `permissions: contents: read`, text never leaves the runner. Example:
 `action/action.yml`.
 
+
+## Architecture
+
+Short map; details live in the directories themselves:
+
+- `SKILL.md` + `references/` — the skill's text core (map, 12 references across 15 files).
+- `scripts/` — validators and tools: polish, detectors, gates (e.g.
+  `check_docs.py`); full list in the directory and in `contract.v1.json`.
+- `src/humanizer_ru/` — PyPI package (script mirrors, entry points).
+- `eval/` — evaluation harnesses: neutral corpus, blind runs, fact registry.
+- `research/` — marker evidence registry, fixtures, protocols.
+- `tests/fixtures/` — marker and polish fixtures.
+- `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
+
+The full checklist runs in one command: `python scripts/check_all.py` — 123 gates in the full checklist (112 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 

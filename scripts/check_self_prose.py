@@ -62,6 +62,61 @@ def prose(text: str) -> str:
     return "\n".join(out)
 
 
+REPEAT_RX = None
+
+
+def _levenshtein(a, b):
+    if abs(len(a) - len(b)) > 3:
+        return 99
+    prev = list(range(len(b) + 1))
+    for ia, ca in enumerate(a, 1):
+        cur = [ia]
+        for ib, cb in enumerate(b, 1):
+            cur.append(min(prev[ib] + 1, cur[ib - 1] + 1,
+                           prev[ib - 1] + (0 if ca == cb else 1)))
+        prev = cur
+    return prev[-1]
+
+
+def find_repeats(text: str):
+    """Повтор соседних лексем: два слова подряд (регистронезависимо) с
+    общим началом корня (первые 5 символов) и редакционным расстоянием <=3.
+    Ловит «в финальном финальный релизный цикле» и «от записанных —
+    записанные числа». Не ловит: пары разных инструментов с общим префиксом
+    (humanizer-markers humanizer-report — расстояние больше 3), файловые
+    дубли регистра (persona in PERSONA.md), ссылки и бэктики (снимаются до
+    токенизации), пары через короткое слово (Claude.ai и Claude Code)."""
+    import re
+    out = []
+    for ln in prose(text).splitlines():
+        # содержимое бэктиков, бейджей и URL — не проза: не токенизируется
+        ln = re.sub(r"\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)", " ", ln)
+        ln = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", ln)
+        ln = re.sub(r"\[([^\]]*)\]\([^)]*\)", r" \1 ", ln)
+        ln = re.sub(r"`[^`]*`", " ", ln)
+        ln = re.sub(r"https?://\S+", " ", ln)
+        ln = re.sub(r"\]\([^)]*\)?", " ", ln)
+        # токенизация с сохранением коротких слов: они разрывают adjacency;
+        # граница предложения или клаузы (. ! ? : ;) пару тоже разрывает:
+        # новое предложение легитимно начинается с того же корня
+        matches = list(re.finditer(r"[\wёЁ]+(?:-[\wёЁ]+)*", ln))
+        for ma, mb in zip(matches, matches[1:]):
+            a, b = ma.group(0), mb.group(0)
+            gap = ln[ma.end():mb.start()]
+            if re.search(r"[.!?::;]", gap):
+                continue
+            la, lb = a.lower(), b.lower()
+            if len(la) < 6 or len(lb) < 6:
+                continue
+            if any(c.isdigit() for c in la) or any(c.isdigit() for c in lb):
+                continue  # даты, версии, числа — легитимные соседи
+            if la == lb and a != b:
+                continue  # файловый дубликат регистра (persona PERSONA)
+            if la[:5] == lb[:5] and _levenshtein(la, lb) <= 3:
+                out.append("%s %s" % (a, b))
+    return out
+
+
 def _import_scanner():
     import importlib.util
     spec = importlib.util.spec_from_file_location(
@@ -95,6 +150,11 @@ def check_baselines(scanner, files=None):
         except (OSError, ValueError) as exc:
             problems.append("%s: не читается: %s" % (rel, exc))
             continue
+        if not rel.endswith("CHANGELOG.md"):
+            # журнал изменений append-only: исторические секции не
+            # переписываются, детектор повторов применяется к текущей витрине
+            for rep in find_repeats(text):
+                problems.append("%s: повтор соседних лексем: «%s»" % (rel, rep))
         report = scanner.analyze(prose(text), "neutral", plain_text=True)
         feats, cats, findings = _non_structural(report)
         print("%-22s признаков=%d категорий=%d (не-структурные)"
@@ -167,6 +227,25 @@ def selftest():
         f5, c5, _ = _non_structural(probe)
         case("слоп под структурной формой ловится (%d/%d)" % (f5, c5),
              f5 >= FAIL_FEATURES and c5 >= FAIL_CATEGORIES)
+        # 6. детектор повтора соседних лексем
+        case("повтор соседних лексем ловится",
+             find_repeats("решение о финальном финальный релизный цикле") != [])
+        case("повтор через тире ловится",
+             find_repeats("может отличаться от записанных — записанные числа") != [])
+        case("живая проза без повторов лексем",
+             find_repeats(clean) == [])
+        case("пары инструментов с общим префиксом не ловятся",
+             find_repeats("команды humanizer-markers humanizer-report работают") == [])
+        case("файловый дубль регистра не ловится",
+             find_repeats("persona in PERSONA.md описана подробно") == [])
+        case("пара через короткое слово не ловится",
+             find_repeats("Claude.ai и Claude Code поддерживают скилл") == [])
+        case("граница предложения разрывает пару",
+             find_repeats("следы в русском тексте. Текстовое ядро исполняет агент") == [])
+        case("двоеточие разрывает пару",
+             find_repeats("не пересказывать в промпте исполнителя: исполнитель читает сам") == [])
+        case("соседние даты и версии не ловятся",
+             find_repeats("протокол от 2025-06-18 и протокол от 2025-03-26 рядом") == [])
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 
