@@ -1,0 +1,24 @@
+name: Мелкая задача
+description: Небольшая изолированная правка с ясной приёмкой
+title: "task: "
+labels: ["good first issue"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что сделать
+      description: Один файл или один гейт, без связанной архитектуры
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Приёмка
+      description: Команда, которая падает до правки и зеленеет после
+    validations:
+      required: true
+  - type: input
+    id: files
+    attributes:
+      label: Затронутые файлы
+      description: Перечислите через запятую
