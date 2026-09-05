@@ -43,6 +43,7 @@ humanizer-markers --scan primer.txt
 - Short text: fewer signals than words; watermarks and statistics need length.
 - Watermarks without the key: a distortion-free mark is undetectable to a third party by construction.
 
+- [bib:…] keys are defined in [research/BIBLIOGRAPHY.md](research/BIBLIOGRAPHY.md).
 - do not run on Markdown or markup: polish strips ##, **, guillemets, dashes; for markup use --preserve-markup.
 
 - It does not help submitting work where AI is prohibited: exams, coursework, human-only contests; the full list lives in prohibited_uses of contract.v1.json.
@@ -66,7 +67,7 @@ humanizer-markers --scan primer.txt
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
 - Proof records: 38 of 40 markers (registry research/fixtures/marker-sources.json).
-- Gates: 133 gates in the full check_all (122 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
+- Gates: 135 gates in the full check_all (124 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
 
 ## More
 

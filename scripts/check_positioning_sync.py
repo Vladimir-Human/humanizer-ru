@@ -30,9 +30,47 @@ def formulas(pos_text):
             grab("## Длинная формула (EN)"))
 
 
+FORBIDDEN_SHORT = ("regex", "stdlib", "CLI", "слой", "сканер")
+
+
+def forbidden_in(text):
+    """Слова, запрещённые в короткой формуле позиционирования
+    (POSITIONING.md: «regex, stdlib, CLI, слой, сканер — не используются»).
+    Регистр учитывается для аббревиатур, остальные — регистронезависимо."""
+    hits = []
+    for w in FORBIDDEN_SHORT:
+        if w in ("regex", "stdlib", "слой", "сканер"):
+            if w.lower() in text.lower():
+                hits.append(w)
+        elif w in text:
+            hits.append(w)
+    return hits
+
+
 def read(rel):
     with open(os.path.join(ROOT, rel), encoding="utf-8") as fh:
         return fh.read()
+
+
+def check_formula_words(pos_text=None):
+    """Короткая формула не содержит запрещённых слов (regex, stdlib, CLI,
+    слой, сканер) — POSITIONING.md:39 заявляет это как проверенное гейтом."""
+    errs = []
+    if pos_text is None:
+        with open(os.path.join(ROOT, "POSITIONING.md"), encoding="utf-8") as fh:
+            pos_text = fh.read()
+    import re
+    for label, pat in (("RU", r"## Короткая формула \(RU[^)]*\)\n([^\n]+)"),
+                       ("EN", r"## Короткая формула \(EN\)\n([^\n]+)")):
+        m = re.search(pat, pos_text)
+        if not m:
+            errs.append("POSITIONING: короткая формула %s не найдена" % label)
+            continue
+        hits = forbidden_in(m.group(1))
+        if hits:
+            errs.append("POSITIONING: короткая формула %s содержит запрещённые "
+                        "слова: %s" % (label, ", ".join(hits)))
+    return errs
 
 
 def check(pos_text=None):
@@ -94,6 +132,16 @@ def selftest():
     pos = read("POSITIONING.md")
     bad = pos.replace("объясняет их вам", "объясняет их кому-то")
     checks.append(("расхождение формулы ловится", check(bad) != []))
+    formula_bad = check_formula_words(
+        "## Короткая формула (RU, <= 60 символов)\nСканер слоя regex\n\n"
+        "## Короткая формула (EN)\nFinds machine-text traces\n")
+    checks.append(("запрещённые слова в формуле ловятся", formula_bad != []))
+    formula_ok = check_formula_words(
+        "## Короткая формула (RU, <= 60 символов)\nНаходит следы машинного "
+        "текста в русском и объясняет их вам\n\n"
+        "## Короткая формула (EN)\nFinds machine-text traces in Russian and "
+        "explains them\n")
+    checks.append(("чистая формула проходит проверку слов", formula_ok == []))
     fails = 0
     for name, ok in checks:
         print("%s: %s" % ("PASS" if ok else "FAIL", name))
@@ -108,7 +156,7 @@ def main():
     args = ap.parse_args()
     if args.selftest:
         return selftest()
-    errs = check()
+    errs = check() + check_formula_words()
     for e in errs:
         print("[FAIL] %s" % e)
     if errs:

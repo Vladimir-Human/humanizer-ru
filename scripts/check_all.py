@@ -116,7 +116,12 @@ def _gates(quick, tmpdir):
         ("demo-a11y: доступность и чистота первого экрана", [PY,
          "scripts/check_demo_a11y.py"], [], {0}),
         
-        ("outward-vitrine: самопроверка", [PY,
+        
+        ("bib-keys: самопроверка", [PY,
+         "scripts/check_bib_keys.py", "--selftest"], [], {0}),
+        ("bib-keys: разрешённость ключей", [PY,
+         "scripts/check_bib_keys.py"], [], {0}),
+("outward-vitrine: самопроверка", [PY,
          "scripts/check_outward.py", "--selftest"], [], {0}),
         ("outward-vitrine: витрина без внутренних ролей и путей", [PY,
          "scripts/check_outward.py", "README.md", "README.en.md",
