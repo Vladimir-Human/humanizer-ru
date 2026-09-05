@@ -13,6 +13,7 @@ Backend по умолчанию — print-prompt: печатает промпт,
 """
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -183,7 +184,8 @@ def main():
 def _exec_backend(prompt):
     """Opt-in вывод: запустить внешнюю переписывающую команду. Команда берётся из окружения HUMANIZER_REWRITE_CMD и
     обязана содержать плейсхолдер {INPUT} — он заменяется путём к временному
-    файлу с промптом; ответ команды читается из stdout. Жёсткий таймаут из
+    файлу с промптом в каждом аргументе; ответ команды читается из stdout.
+    Команда разбирается shlex.split без shell: метасимволы не интерпретируются. Жёсткий таймаут из
     HUMANIZER_REWRITE_TIMEOUT_S (по умолчанию 300 с): зависшая команда
     убивается, висеть этот хук не умеет по построению. Только stdlib,
     дефолт остаётся print-prompt. Коды: 0 — ответ напечатан; 3 — команда
@@ -205,10 +207,15 @@ def _exec_backend(prompt):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(prompt)
-        # shell=True осознанно: шаблон команды задаёт сам оператор
-        # (как core.editor в git); привилегий она не повышает.
+        # Шаблон команды задаёт оператор (как core.editor в git), но shell
+        # не используется: шаблон разбирается shlex.split, плейсхолдер
+        # {INPUT} подставляется в каждый аргумент. Shell-метасимволы в
+        # шаблоне больше не интерпретируются (харденинг по находке аудита
+        # Socket, skills.sh, 2026-09-06); операторам, которым нужны
+        # конвейеры, следует обернуть команду в свой скрипт.
+        argv = [part.replace("{INPUT}", tmp) for part in shlex.split(cmd)]
         proc = subprocess.run(
-            cmd.replace("{INPUT}", tmp), shell=True,
+            argv, shell=False,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             timeout=timeout, encoding="utf-8", errors="replace")
     except subprocess.TimeoutExpired:
