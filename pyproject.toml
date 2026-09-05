@@ -14,8 +14,9 @@ authors = [
 ]
 keywords = [
   "русский текст", "машинный текст", "редактура", "проверка текста",
-  "ИИ-текст", "артефакты копипасты", "russian", "ai-text", "humanizer",
-  "agent-skills",
+  "ИИ-текст", "артефакты копипасты", "следы вставки", "копипаста из чата",
+  "contentReference", "utm_source", "невидимые символы",
+  "russian", "ai-text", "humanizer", "agent-skills",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
