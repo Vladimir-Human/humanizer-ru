@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Формулы позиционирования (единственный источник для кода)."""
 
-SHORT_RU = "Находит следы машинного текста в русском и объясняет их вам"
-LONG_RU = "Находит следы машинного текста в русском и объясняет их вам: офлайн, без отправки текста, каждый флаг с причиной и советом, правила расширяются свободно."
-SHORT_EN = "Finds machine-text traces in Russian and explains them"
-LONG_EN = "Finds machine-text traces in Russian and explains them to you: offline, no text leaves your machine, every flag with a reason and a fix, rules extend freely."
+SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
+LONG_RU = "Проверяемая гигиена вставки из чата для русского текста: детерминированно, с реестром фактов, офлайн, каждый флаг с причиной и советом."
+SHORT_EN = "Verifiable chat-paste hygiene for Russian text"
+LONG_EN = "Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix."

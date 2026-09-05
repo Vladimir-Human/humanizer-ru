@@ -130,7 +130,7 @@ def check(pos_text=None):
 def selftest():
     checks = [("все поверхности несут формулы дословно", check() == [])]
     pos = read("POSITIONING.md")
-    bad = pos.replace("объясняет их вам", "объясняет их кому-то")
+    bad = pos.replace("гигиена вставки из чата", "гигиена вставки из почты")
     checks.append(("расхождение формулы ловится", check(bad) != []))
     formula_bad = check_formula_words(
         "## Короткая формула (RU, <= 60 символов)\nСканер слоя regex\n\n"
