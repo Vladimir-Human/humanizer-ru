@@ -33,6 +33,7 @@ SECTIONS = [
     (u"Почему можно доверять", u"Why you can trust it"),
     (u"Установка скилла в браузерные клиенты",
      u"Installing the skill in browser clients"),
+    (u"Одноимённые проекты", u"Same-name projects"),
     (u"Цифры проекта", u"Project in numbers"),
     (u"Подробнее", u"More"),
     (u"Regex-маркеры", u"Regex markers"),
@@ -222,6 +223,7 @@ GOOD_RU = u"""# Скилл
 ## Что это НЕ делает
 ## Почему можно доверять
 ## Установка скилла в браузерные клиенты
+## Одноимённые проекты
 ## Цифры проекта
 ## Подробнее
 ## Regex-маркеры: классы A и B
@@ -237,6 +239,7 @@ Currently 36 of 38 markers have a full record.
 ## What it does NOT do
 ## Why you can trust it
 ## Installing the skill in browser clients
+## Same-name projects
 ## Project in numbers
 ## More
 ## Regex markers: classes A and B
