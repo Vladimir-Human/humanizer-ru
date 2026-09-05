@@ -120,7 +120,12 @@ def _gates(quick, tmpdir):
         
         
         
-        ("selftest-coverage: самопроверка", [PY,
+        
+        ("pypi-metadata: самопроверка", [PY,
+         "scripts/check_pypi_metadata.py", "--selftest"], [], {0}),
+        ("pypi-metadata: PKG-INFO равен pyproject", [PY,
+         "scripts/check_pypi_metadata.py"], [], {0, 2}),
+("selftest-coverage: самопроверка", [PY,
          "scripts/check_selftest_coverage.py", "--selftest"], [], {0}),
         ("selftest-coverage: все гейты умеют падать", [PY,
          "scripts/check_selftest_coverage.py"], [], {0}),
