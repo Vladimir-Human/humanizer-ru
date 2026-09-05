@@ -67,7 +67,7 @@ humanizer-markers --scan primer.txt
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
 - Proof records: 38 of 40 markers (registry research/fixtures/marker-sources.json).
-- Gates: 135 gates in the full check_all (124 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
+- Gates: 137 gates in the full check_all (126 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
 
 ## More
 
