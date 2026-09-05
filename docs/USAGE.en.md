@@ -140,6 +140,19 @@ $ humanizer-scan --json notes.txt
 Machine interface (output schemas, exit codes, when not to use):
 `contract.v1.json`; agent entry point: `llms.txt`.
 
+## Batch-scan a folder with one command
+
+Check a pile of .md/.txt files (teacher and editor scenario):
+
+```sh
+python3 scripts/scan_folder.py ./folder --format md --out report.md
+```
+
+The report is a table "file — paste markers — soft signals — examples" with
+the header "findings are not an authorship verdict"; `--format csv` gives a
+spreadsheet variant. Standard library only, no network: files never leave
+your machine.
+
 ## Method boundary: code and documentation
 
 The deterministic layer skips fragments inside backticks and fenced blocks:
