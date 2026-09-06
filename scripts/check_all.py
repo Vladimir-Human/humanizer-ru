@@ -6,20 +6,26 @@
 запускались по памяти; пропуск любой из них CI ловил только после пуша. Здесь
 тот же набор гейтов собран в один прогон с итоговой таблицей.
 
-Скрипт честно различает три исхода:
-- PASS — гейт прошёл;
-- FAIL — гейт упал (итоговый код возврата 1);
-- SKIP — гейта нет в этой поставке. Архив скилла не содержит research/,
-  tests/ и eval/ (см. check_release.py), поэтому в нём корпусные гейты
-  пропускаются с пояснением, а не имитируют успех.
+Скрипт честно различает исходы:
+- PASS — гейт прошёл, либо гейт вернул ожидаемый отказ: ненулевой код из
+  списка допустимых И содержание отказа сверено с объявленным образцом
+  (пятый элемент спецификации гейта: {код: подстрока вывода});
+- FAIL — гейт упал, либо ожидаемый отказ пришёл с другим содержанием
+  (итоговый код возврата 1);
+- SKIP — гейта нет в этой поставке, либо допустимый ненулевой код не
+  объявлен как ожидаемый отказ (проверить содержание нечем). Архив скилла
+  не содержит research/, tests/ и eval/ (см. check_release.py), поэтому в
+  нём корпусные гейты пропускаются с пояснением, а не имитируют успех.
 
 Запуск из корня репозитория:
     python3 scripts/check_all.py            # полный прогон
     python3 scripts/check_all.py --quick    # без перф-гейта, полного eval
                                             # и сборки архива
+    python3 scripts/check_all.py --strict   # успех только если все гейты PASS
     python3 scripts/check_all.py --selftest
 
-Код возврата: 0 — ни одного FAIL, 1 — есть FAIL или провал самопроверки,
+Код возврата: 0 — ни одного FAIL (в --strict — ни одного FAIL и SKIP),
+1 — есть FAIL/SKIP по правилам режима или провал самопроверки,
 2 — ошибка запуска. Только стандартная библиотека.
 """
 import argparse
@@ -279,8 +285,10 @@ def _gates(quick, tmpdir):
     gates += [
         # Без парных прогонов гарнесс обязан отказать кодом 2 (fail-closed);
         # при собранных данных законен и код 0 — оба исхода не ошибка.
+        # Отказ кодом 2 засчитывается PASS только со сверкой содержания:
+        # текст отказа обязан совпасть с объявленным образцом.
         ("blind-eval: отказ без данных", [PY, "eval/blind_eval.py"],
-         ["eval/blind_eval.py"], {0, 2}),
+         ["eval/blind_eval.py"], {0, 2}, {2: "Парных прогонов пока нет"}),
         # Детектор-харнес «до/после». В CI — только selftest:
         # реальный прогон требует живого демона Ollama (его в CI нет), поэтому
         # гейт запускает детерминированную самопроверку агрегации и FP-блока.
@@ -398,9 +406,17 @@ def _gates(quick, tmpdir):
 
 
 def run_gates(gates, root):
-    """Выполняет гейты; возвращает (строки отчёта, число FAIL, число SKIP)."""
+    """Выполняет гейты; возвращает (строки отчёта, число FAIL, число SKIP).
+
+    Спецификация гейта: (метка, argv, обязательные пути, допустимые коды,
+    необязательно {ожидаемый ненулевой код: подстрока вывода}). Ожидаемый
+    отказ засчитывается PASS только когда сверены и код, и содержание;
+    допустимый код без объявленного образца остаётся честным SKIP.
+    """
     rows, fails, skips = [], 0, 0
-    for label, argv, needs, ok_codes in gates:
+    for spec in gates:
+        label, argv, needs, ok_codes = spec[0], spec[1], spec[2], spec[3]
+        expect = spec[4] if len(spec) > 4 else None
         script = argv[1] if len(argv) > 1 and argv[1].endswith(".py") else None
         missing = [p for p in needs if not os.path.exists(os.path.join(root, p))]
         if script and not os.path.exists(os.path.join(root, script)):
@@ -417,24 +433,56 @@ def run_gates(gates, root):
             fails += 1
             continue
         took = time.time() - started
+        output = (proc.stdout or "") + "\n" + (proc.stderr or "")
         if proc.returncode in ok_codes:
             if proc.returncode == 0:
                 rows.append(("PASS", label, "", took))
+            elif expect and proc.returncode in expect:
+                needle = expect[proc.returncode]
+                if needle in output:
+                    # Ожидаемый отказ подтверждён содержимым: это PASS.
+                    rows.append(("PASS", label,
+                                 "ожидаемый отказ: код %d, содержание "
+                                 "сверено (%r)" % (proc.returncode,
+                                                   needle[:60]), took))
+                else:
+                    fails += 1
+                    tail = output.strip().splitlines()
+                    detail = "; ".join(tail[-3:]) if tail else "код %d" % proc.returncode
+                    rows.append(("FAIL", label,
+                                 "ожидаемый отказ код %d не подтверждён "
+                                 "содержанием (нет %r): %s"
+                                 % (proc.returncode, needle[:60],
+                                    detail[:200]), took))
             else:
                 # N47: отказ среды или неполный режим — это SKIP с причиной,
                 # а не PASS: приёмка релиза такие состояния не пропускает.
                 skips += 1
-                tail = (proc.stdout + "\n" + proc.stderr).strip().splitlines()
+                tail = output.strip().splitlines()
                 detail = "; ".join(tail[-2:]) if tail else ""
                 rows.append(("SKIP", label,
                              "код %d, не PASS: %s" % (proc.returncode,
                                                       detail[:200]), took))
         else:
             fails += 1
-            tail = (proc.stdout + "\n" + proc.stderr).strip().splitlines()
+            tail = output.strip().splitlines()
             detail = "; ".join(tail[-3:]) if tail else "код %d" % proc.returncode
             rows.append(("FAIL", label, "код %d: %s" % (proc.returncode, detail[:220]), took))
     return rows, fails, skips
+
+
+def acceptance(fails, skips, strict):
+    """Итоговая приёмка: 0 — принять, 1 — отклонить.
+
+    Обычный режим отклоняет только FAIL; строгий (--strict) блокирует
+    успех при любом FAIL или SKIP (непроверенное состояние не является
+    успехом: приёмка выпуска обязана видеть полный зелёный набор).
+    """
+    if fails:
+        return 1
+    if strict and skips:
+        return 1
+    return 0
 
 
 def render(rows, fails, skips):
@@ -462,6 +510,14 @@ def selftest():
     ok_gate = ("зелёный гейт", [PY, "-c", "print('ok')"], [], {0})
     bad_gate = ("красный гейт", [PY, "-c", "import sys; sys.exit(3)"], [], {0})
     code2_gate = ("контролируемый отказ", [PY, "-c", "import sys; sys.exit(2)"], [], {0, 2})
+    code2_expect = ("ожидаемый отказ с образцом",
+                    [PY, "-X", "utf8", "-c",
+                     "import sys; print('парных прогонов нет'); sys.exit(2)"],
+                    [], {0, 2}, {2: "парных прогонов нет"})
+    code2_wrong = ("ожидаемый отказ с чужим текстом",
+                   [PY, "-X", "utf8", "-c",
+                    "import sys; print('совсем другое'); sys.exit(2)"],
+                   [], {0, 2}, {2: "парных прогонов нет"})
     missing_gate = ("гейт без файла", [PY, "scripts/нет_такого_скрипта.py"], [], {0})
 
     rows, fails, skips = run_gates([ok_gate], ROOT)
@@ -472,11 +528,30 @@ def selftest():
          fails == 1 and rows[1][0] == "FAIL")
 
     rows, fails, skips = run_gates([code2_gate], ROOT)
-    case("допустимый код 2 не считается провалом", fails == 0 and rows[0][0] == "PASS")
+    case("допустимый код без образца — SKIP, а не PASS и не FAIL",
+         fails == 0 and skips == 1 and rows[0][0] == "SKIP")
+
+    rows, fails, skips = run_gates([code2_expect], ROOT)
+    case("ожидаемый отказ со сверенным содержанием — PASS",
+         fails == 0 and skips == 0 and rows[0][0] == "PASS")
+
+    rows, fails, skips = run_gates([code2_wrong], ROOT)
+    case("ожидаемый отказ с несверенным содержанием — FAIL",
+         fails == 1 and rows[0][0] == "FAIL")
 
     rows, fails, skips = run_gates([missing_gate], ROOT)
     case("отсутствующий скрипт даёт SKIP, а не ложный PASS/FAIL",
          skips == 1 and rows[0][0] == "SKIP" and fails == 0)
+
+    # Итоговая приёмка: обычный режим блокирует FAIL, строгий — и SKIP.
+    case("приёмка: ноль FAIL ноль SKIP — успех в обоих режимах",
+         acceptance(0, 0, False) == 0 and acceptance(0, 0, True) == 0)
+    case("приёмка: FAIL блокирует в обоих режимах",
+         acceptance(1, 0, False) == 1 and acceptance(1, 0, True) == 1)
+    case("приёмка: SKIP без строгого режима не блокирует",
+         acceptance(0, 1, False) == 0)
+    case("приёмка: строгий режим блокирует любой SKIP",
+         acceptance(0, 1, True) == 1)
 
     with tempfile.TemporaryDirectory() as td:
         quick = {g[0] for g in _gates(True, td)}
@@ -491,6 +566,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Все гейты проекта одной командой.")
     ap.add_argument("--quick", action="store_true",
                     help="без перф-гейта, полного eval и сборки архива")
+    ap.add_argument("--strict", action="store_true",
+                    help="успех только когда все гейты PASS: любой FAIL или "
+                         "SKIP блокирует приёмку (непроверенное состояние "
+                         "не считается успехом)")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -502,7 +581,11 @@ def main(argv=None):
     with tempfile.TemporaryDirectory(prefix="humanizer-check-all-") as td:
         rows, fails, skips = run_gates(_gates(args.quick, td), ROOT)
     print(render(rows, fails, skips))
-    return 1 if fails else 0
+    rc = acceptance(fails, skips, args.strict)
+    if rc and args.strict and skips and not fails:
+        print("СТРОГИЙ РЕЖИМ: успех заблокирован — SKIP: %d "
+              "(непроверенные состояния)" % skips)
+    return rc
 
 
 if __name__ == "__main__":
