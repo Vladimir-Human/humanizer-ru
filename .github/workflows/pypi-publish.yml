@@ -37,6 +37,11 @@ jobs:
       - name: Собрать sdist и wheel
         run: python3 -m build
 
+      - name: Metadata публикуемых артефактов
+        # Приёмка выпуска: metadata сверяются у ТЕХ ЖЕ dist-файлов, которые
+        # уйдут на PyPI; ненулевой код блокирует публикацию (аудит N47).
+        run: python3 scripts/check_pypi_metadata.py --sdist dist/humanizer_ru-*.tar.gz --wheel dist/humanizer_ru-*.whl
+
       - name: sdist -> чистое venv -> тесты + CLI-зонды
         run: python3 scripts/check_release.py --sdist-test dist/humanizer_ru-*.tar.gz
 
