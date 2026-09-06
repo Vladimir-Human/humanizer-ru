@@ -258,8 +258,35 @@ def _skill_version_file(root: Path) -> str | None:
 
 
 def _tag_object_signed(tag_text: str) -> bool:
-    """Объект тега несёт блок GPG-подписи."""
+    """Объект тега несёт блок GPG-подписи (предварительная textual-проверка).
+
+    Наличие маркера — необходимое, но НЕ достаточное условие: подпись
+    обязана подтверждаться криптографически (git verify-tag), а не текстом.
+    """
     return GPG_SIG_MARKER in tag_text
+
+
+def verify_tag(root: Path, tag: str, env=None):
+    """Криптографическая проверка подписи тега: git verify-tag.
+
+    Возвращает True (подпись действительна), False (неподписан/подпись
+    невалидна) или None (проверка невозможна: git/gpg недоступны — это
+    отказ среды, а не «подпись есть»).
+    """
+    try:
+        proc = subprocess.run(["git", "verify-tag", tag], cwd=root, env=env,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              timeout=60, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    err = (proc.stderr or "") + (proc.stdout or "")
+    if proc.returncode == 0:
+        return True
+    # gpg сам не запустился (нет бинаря/ключа в связке) — отказ среды.
+    if ("gpg: " in err and ("not found" in err or "No such file" in err
+                            or "не найден" in err)):
+        return None
+    return False
 
 
 def _repo_slug_from_url(url: str) -> str | None:
@@ -270,13 +297,7 @@ def _repo_slug_from_url(url: str) -> str | None:
     return "%s/%s" % (m.group(1), m.group(2))
 
 
-def _release_status(slug: str, tag: str) -> int:
-    """GET /releases/tags/<tag>: HTTP-код (200 опубликован, 404 нет).
-
-    Сетевой отказ (URLError и прочее OSError) пробрасывается вызывающему —
-    это код 2 «проверка невозможна», а не «Release отсутствует».
-    """
-    url = "https://api.github.com/repos/%s/releases/tags/%s" % (slug, tag)
+def _api_request(url: str) -> urllib.request.Request:
     req = urllib.request.Request(url, headers={
         "Accept": "application/vnd.github+json",
         "User-Agent": "humanizer-ru-check-release",
@@ -284,11 +305,129 @@ def _release_status(slug: str, tag: str) -> int:
     token = os.environ.get("GITHUB_TOKEN")
     if token:
         req.add_header("Authorization", "Bearer " + token)
+    return req
+
+
+def _get_json(url: str):
+    """GET JSON с GitHub API. Сетевой отказ пробрасывается (OSError) —
+    это состояние UNAVAILABLE, а не «данных нет»."""
+    with urllib.request.urlopen(_api_request(url), timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _release_status(slug: str, tag: str) -> int:
+    """GET /releases/tags/<tag>: HTTP-код (200 опубликован, 404 нет).
+
+    Сетевой отказ (URLError и прочее OSError) пробрасывается вызывающему —
+    это код 2 «проверка невозможна», а не «Release отсутствует».
+    """
+    url = "https://api.github.com/repos/%s/releases/tags/%s" % (slug, tag)
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(_api_request(url), timeout=20) as resp:
             return resp.status
     except urllib.error.HTTPError as exc:
         return exc.code
+
+
+# ---- Интервал выпусков: не менее 24 часов между публикациями ---------------
+
+MIN_RELEASE_INTERVAL = 86400
+
+
+def _parse_published(value: str):
+    """ISO-8601 с Z в datetime (UTC); None при неразборе."""
+    import datetime as _dt
+    try:
+        return _dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=_dt.timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def interval_errors(prev_published: str, new_published: str,
+                    min_seconds: int = MIN_RELEASE_INTERVAL) -> list:
+    """Нарушения интервала между двумя публикациями (по published_at).
+
+    Возвращает список ошибок; пуст — интервал соблюдён. Неразборчивая дата
+    — ошибка (непроверенное состояние не считается успехом).
+    """
+    prev_dt = _parse_published(prev_published)
+    new_dt = _parse_published(new_published)
+    if prev_dt is None or new_dt is None:
+        return ["published_at не разобран: %r -> %r"
+                % (prev_published, new_published)]
+    gap = (new_dt - prev_dt).total_seconds()
+    if gap < min_seconds:
+        return ["интервал между публикациями %.0f с < %d с "
+                "(%s -> %s): слишком ранний выпуск"
+                % (gap, min_seconds, prev_published, new_published)]
+    return []
+
+
+def pre_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
+    """Проверка ДО публикации: прошёл ли минимум с последнего Release.
+
+    Возвращает (rc, сообщение): rc 0 — публиковать можно (или выпусков ещё
+    нет), 1 — слишком рано, 2 — проверка невозможна (сеть/API).
+    """
+    import datetime as _dt
+    try:
+        releases = _get_json(
+            "https://api.github.com/repos/%s/releases?per_page=10" % slug)
+    except (OSError, ValueError) as exc:
+        return 2, "проверка интервала невозможна (сеть/API): %r" % (exc,)
+    dated = [(_parse_published(r.get("published_at")), r.get("tag_name"))
+             for r in releases if not r.get("draft")]
+    dated = [(d, t) for d, t in dated if d is not None]
+    if not dated:
+        return 0, "опубликованных выпусков нет — интервал не применим"
+    latest_dt, latest_tag = max(dated, key=lambda pair: pair[0])
+    now = _dt.datetime.now(_dt.timezone.utc)
+    gap = (now - latest_dt).total_seconds()
+    if gap < min_seconds:
+        return 1, ("слишком ранний выпуск: с публикации %s (%s) прошло "
+                   "%.0f с < %d с" % (latest_tag,
+                                      latest_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                      gap, min_seconds))
+    return 0, ("интервал соблюдён: с публикации %s прошло %.0f с (>= %d)"
+               % (latest_tag, gap, min_seconds))
+
+
+# ---- Приёмка статуса поставки: утверждения только из результата прогона ----
+
+def status_acceptance_errors(status, run_result, deploy_sha=None) -> list:
+    """Приёмка status.json против результата реального прогона.
+
+    status — содержимое статус-файла (dict); run_result — результат прогона
+    проверок для этого SHA (dict или None); deploy_sha — SHA развёрнутого
+    кода, против которого статус сверяется. Возвращает список ошибок; пуст —
+    приёмка пройдена. Отсутствие результата — ошибка: статус не может
+    утверждать непроверенное.
+    """
+    errors = []
+    if not isinstance(status, dict):
+        return ["статус не является объектом: %r" % type(status).__name__]
+    if run_result is None:
+        errors.append("результат прогона отсутствует: статус не может "
+                      "утверждать tests_passed/parity без выполненной "
+                      "проверки для этого SHA")
+        run_result = {}
+    if not isinstance(run_result, dict):
+        errors.append("результат прогона не является объектом")
+        run_result = {}
+    if status.get("tests_passed") is True and run_result.get("tests_passed") is not True:
+        errors.append("ложное tests_passed: статус утверждает true, "
+                      "результат прогона этого не подтверждает")
+    if status.get("parity") == "ok" and run_result.get("parity") != "ok":
+        errors.append("ложное parity: статус утверждает ok, результат "
+                      "прогона этого не подтверждает")
+    if deploy_sha:
+        commit = str(status.get("commit") or "")
+        if not commit or not (deploy_sha.startswith(commit)
+                              or commit.startswith(deploy_sha)):
+            errors.append("чужой SHA: статус записан для %r, развёрнутый "
+                          "код — %s" % (commit, deploy_sha))
+    return errors
 
 
 def release_contract(root: Path) -> int:
@@ -338,6 +477,17 @@ def release_contract(root: Path) -> int:
     if not _tag_object_signed(obj.stdout):
         print("[FAIL] RELEASE-КОНТРАКТ: тег %s не подписан GPG (GOVERNANCE п.2)" % tag)
         return 1
+    # Подпись проверяется криптографически, а не по наличию текста маркера.
+    verdict = verify_tag(root, tag)
+    if verdict is False:
+        print("[FAIL] RELEASE-КОНТРАКТ: подпись тега %s не подтверждена "
+              "криптографически (git verify-tag)" % tag)
+        return 1
+    if verdict is None:
+        print("RELEASE-КОНТРАКТ: криптографическая проверка подписи "
+              "невозможна (git/gpg недоступны) — UNAVAILABLE, не PASS",
+              file=sys.stderr)
+        return 2
     try:
         remote = _git("config", "remote.origin.url")
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -544,6 +694,141 @@ def selftest() -> None:
             "git@github.com:Vladimir-Human/humanizer-ru.git")
             == "Vladimir-Human/humanizer-ru"), "ssh remote не разобран"
         assert _repo_slug_from_url("https://example.com/repo") is None
+        passed += 1
+        total += 1
+
+        # Криптографическая проверка подписи: неподписанный annotated-тег
+        # во временном репозитории обязан дать False (а не «подпись есть»
+        # по тексту). Положительная ветка — только при доступном gpg:
+        # одноразовый ключ в изолированном GNUPGHOME, без ключей проекта.
+        git_ok = subprocess.run(["git", "--version"], capture_output=True).returncode == 0
+        if git_ok:
+            import shutil as _shutil
+            repo = base / "tagrepo"
+            repo.mkdir()
+            env = dict(os.environ)
+
+            def _git2(*a, check=True):
+                p = subprocess.run(["git", *a], cwd=str(repo), env=env,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+                if check:
+                    assert p.returncode == 0, (a, p.stderr[-200:])
+                return p
+            _git2("init", "-q")
+            _git2("config", "user.email", "t@example.invalid")
+            _git2("config", "user.name", "T")
+            _git2("config", "commit.gpgsign", "false")
+            (repo / "f.txt").write_text("x\n", encoding="utf-8", newline="\n")
+            _git2("add", "f.txt")
+            _git2("commit", "-q", "-m", "c")
+            _git2("tag", "-a", "vtest", "-m", "unsigned annotated")
+            assert verify_tag(repo, "vtest") is False, \
+                "неподписанный тег прошёл криптографическую проверку"
+            passed += 1
+            total += 1
+            if _shutil.which("gpg"):
+                # Одноразовый ключ в изолированном GNUPGHOME, без ключей
+                # проекта. GnuPG-сборки различаются в принятии путей:
+                # Windows-путь пробуем первым, затем POSIX-форму того же
+                # каталога; если ни одна не сработала — честный пропуск
+                # положительной ветки (негатив уже выполнен).
+                gnupg = base / "gnupg"
+                gnupg.mkdir()
+                variants = [str(gnupg)]
+                if os.name == "nt" and len(variants[0]) > 2 \
+                        and variants[0][1] == ":":
+                    variants.append("/" + variants[0][0].lower()
+                                    + variants[0][2:].replace("\\", "/"))
+                keygen = None
+                for home in variants:
+                    env_try = dict(env)
+                    env_try["GNUPGHOME"] = home
+                    p = subprocess.run(
+                        ["gpg", "--batch", "--pinentry-mode", "loopback",
+                         "--passphrase", "", "--quick-gen-key",
+                         "Test Key <t@example.invalid>", "default",
+                         "default", "7d"],
+                        env=env_try, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE, timeout=120)
+                    if p.returncode == 0:
+                        keygen = env_try
+                        break
+                if keygen is None:
+                    print("САМОПРОВЕРКА: gpg есть, но одноразовый ключ не "
+                          "создан — положительная ветка verify_tag "
+                          "пропущена (негатив выполнен)")
+                else:
+                    env = keygen
+                    fp = subprocess.run(
+                        ["gpg", "--list-keys", "--with-colons"],
+                        env=env, stdout=subprocess.PIPE).stdout.decode()
+                    fpr = next((ln.split(":")[9] for ln in fp.splitlines()
+                                if ln.startswith("fpr:")), None)
+                    assert fpr, "отпечаток одноразового ключа не найден"
+                    _git2("config", "user.signingkey", fpr)
+                    _git2("config", "commit.gpgsign", "true")
+                    _git2("config", "gpg.program", _shutil.which("gpg"))
+                    _git2("tag", "-s", "vsigned", "-m", "signed")
+                    assert verify_tag(repo, "vsigned", env=env) is True, \
+                        "действительная подпись не подтверждена"
+                    # Подпись проверяется ключом из изолированного GNUPGHOME:
+                    # без него (чужое окружение) git verify-tag не даст True.
+                    assert verify_tag(repo, "vsigned") is not True or \
+                        os.environ.get("GNUPGHOME") == env.get("GNUPGHOME"), \
+                        "подпись подтвердилась без доступа к ключу"
+                    passed += 1
+                    total += 1
+            else:
+                print("САМОПРОВЕРКА: gpg недоступен — положительная ветка "
+                      "verify_tag пропущена (негатив выполнен)")
+        else:
+            print("САМОПРОВЕРКА: git недоступен — ветка verify_tag пропущена")
+
+        # Настоящая сетевая ошибка — это исключение (UNAVAILABLE), а не
+        # «Release отсутствует» и не PASS: unreachable-порт обязан бросить.
+        try:
+            _get_json("https://127.0.0.1:9/unreachable")
+        except OSError:
+            passed += 1
+        else:
+            raise AssertionError("сетевая ошибка проглочена вместо проброса")
+        total += 1
+
+        # Интервал публикаций: слишком ранний выпуск ловится, законный — нет.
+        assert interval_errors("2026-09-05T21:04:31Z", "2026-09-06T08:47:06Z"), \
+            "интервал 11:42:35 не пойман"
+        assert interval_errors("2026-09-05T08:47:07Z", "2026-09-06T08:47:06Z"), \
+            "интервал 86399 с не пойман"
+        assert not interval_errors("2026-09-05T08:47:06Z",
+                                   "2026-09-06T08:47:06Z"), \
+            "ровно 86400 с отвергнуто (правило: не менее 24 ч)"
+        assert not interval_errors("2026-09-05T08:47:05Z",
+                                   "2026-09-06T08:47:06Z"), \
+            "интервал > 24 ч отвергнут"
+        assert interval_errors("не-дата", "2026-09-06T08:47:06Z"), \
+            "неразборчивая дата принята"
+        passed += 1
+        total += 1
+
+        # Приёмка статуса: ложный true, чужой SHA, отсутствие результата.
+        good_status = {"commit": "abc1234", "tests_passed": True,
+                       "parity": "ok"}
+        good_result = {"tests_passed": True, "parity": "ok"}
+        assert status_acceptance_errors(good_status, good_result,
+                                        "abc1234def") == [], \
+            "согласованный статус отвергнут"
+        assert status_acceptance_errors(good_status, None, "abc1234def"), \
+            "отсутствие результата прогона не поймано"
+        assert status_acceptance_errors(good_status, {}, "abc1234def"), \
+            "ложный tests_passed=true без подтверждения не пойман"
+        assert status_acceptance_errors(
+            {"commit": "abc1234", "tests_passed": True, "parity": "ok"},
+            {"tests_passed": True, "parity": "fail"}, "abc1234def"), \
+            "ложный parity=ok не пойман"
+        assert status_acceptance_errors(good_status, good_result,
+                                        "ffff999"), \
+            "чужой SHA деплоя не пойман"
         passed += 1
         total += 1
     # --sdist-test, негатив: несуществующий sdist — отказ среды (код 2),
@@ -773,6 +1058,25 @@ def main(argv: list[str] | None = None) -> int:
                         help="sdist -> чистое venv -> тесты + CLI-зонды "
                              "(без значения: взять/собрать dist/*.tar.gz; "
                              "0 — пройдено, 1 — провал, 2 — отказ среды)")
+    parser.add_argument("--pre-release-interval", action="store_true",
+                        help="проверка ДО публикации: с последнего "
+                             "опубликованного Release прошло не менее "
+                             "86400 с (по published_at GitHub API); "
+                             "0 — можно публиковать, 1 — слишком рано, "
+                             "2 — проверка невозможна (сеть/API)")
+    parser.add_argument("--acceptance", action="store_true",
+                        help="приёмка статуса поставки: утверждения "
+                             "status.json сверяются с результатом прогона "
+                             "и SHA деплоя; требует --status")
+    parser.add_argument("--status", type=Path, metavar="JSON",
+                        help="файл status.json для --acceptance")
+    parser.add_argument("--run-result", type=Path, metavar="JSON",
+                        help="файл результата прогона проверок для "
+                             "--acceptance; отсутствие файла — ошибка "
+                             "приёмки (статус не может утверждать "
+                             "непроверенное)")
+    parser.add_argument("--deploy-sha", metavar="SHA",
+                        help="SHA развёрнутого кода для --acceptance")
     args = parser.parse_args(argv)
     try:
         if args.selftest:
@@ -795,11 +1099,69 @@ def main(argv: list[str] | None = None) -> int:
         rc_sdist = 0
         if args.sdist_test is not None:
             rc_sdist = sdist_test(args.root or Path("."), args.sdist_test)
+        rc_interval = 0
+        if args.pre_release_interval:
+            root = args.root or Path(".")
+            try:
+                remote = subprocess.run(
+                    ["git", "config", "remote.origin.url"], cwd=root,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=60, encoding="utf-8", errors="replace")
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                print("ИНТЕРВАЛ: git недоступен: %r" % (exc,), file=sys.stderr)
+                rc_interval = 2
+            else:
+                slug = (_repo_slug_from_url(remote.stdout)
+                        if remote.returncode == 0 else None)
+                if slug is None:
+                    print("ИНТЕРВАЛ: репозиторий не определён из "
+                          "remote.origin.url", file=sys.stderr)
+                    rc_interval = 2
+                else:
+                    rc_interval, msg = pre_release_interval(slug)
+                    prefix = {0: "ИНТЕРВАЛ", 1: "[FAIL] ИНТЕРВАЛ",
+                              2: "ИНТЕРВАЛ (UNAVAILABLE)"}[rc_interval]
+                    print("%s: %s" % (prefix, msg),
+                          file=sys.stderr if rc_interval else sys.stdout)
+        rc_accept = 0
+        if args.acceptance:
+            if not args.status:
+                parser.error("--acceptance требует --status")
+            status = None
+            try:
+                with open(args.status, encoding="utf-8") as fh:
+                    status = json.load(fh)
+            except (OSError, ValueError) as exc:
+                print("[FAIL] ПРИЁМКА: статус не читается: %r" % (exc,),
+                      file=sys.stderr)
+                rc_accept = 1
+            if rc_accept == 0:
+                run_result = None
+                if args.run_result and args.run_result.is_file():
+                    try:
+                        with open(args.run_result, encoding="utf-8") as fh:
+                            run_result = json.load(fh)
+                    except (OSError, ValueError) as exc:
+                        print("[FAIL] ПРИЁМКА: результат прогона не "
+                              "читается: %r" % (exc,), file=sys.stderr)
+                        rc_accept = 1
+                if rc_accept == 0:
+                    errs = status_acceptance_errors(
+                        status, run_result, args.deploy_sha)
+                    for e in errs:
+                        print("[FAIL] ПРИЁМКА: " + e, file=sys.stderr)
+                    if errs:
+                        rc_accept = 1
+                    else:
+                        print("ПРИЁМКА: статус подтверждён результатом "
+                              "прогона и SHA деплоя")
         if not any((args.selftest, args.root, args.build, args.verify,
-                    args.release_contract, args.sdist_test is not None)):
+                    args.release_contract, args.sdist_test is not None,
+                    args.pre_release_interval, args.acceptance)):
             parser.error("выберите --selftest, --root/--build, --verify, "
-                         "--release-contract или --sdist-test")
-        return rc_contract or rc_sdist
+                         "--release-contract, --sdist-test, "
+                         "--pre-release-interval или --acceptance")
+        return rc_contract or rc_sdist or rc_interval or rc_accept
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1
