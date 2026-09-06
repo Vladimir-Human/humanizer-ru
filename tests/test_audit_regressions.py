@@ -284,3 +284,54 @@ class BatchCliTests(unittest.TestCase):
             self.assertIn("с ошибками проверки: 0", r.stdout)
             self.assertIn("| ok |", r.stdout)
 
+
+class SkillBoundaryTests(unittest.TestCase):
+    """L4 (N34/N48/N13): профили полномочий, запрет вердикта по следам
+    вставки, установка без клона dev-репозитория, инъекции как данные."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.skill = open(os.path.join(ROOT, "SKILL.md"),
+                         encoding="utf-8").read()
+
+    def test_two_profiles_documented(self):
+        self.assertIn("Read-only профиль", self.skill)
+        self.assertIn("Машинный профиль", self.skill)
+        self.assertIn("детерминированная проверка не выполнялась", self.skill)
+        self.assertIn("общий Bash-доступ не решение задачи", self.skill)
+
+    def test_no_authorship_verdict_from_traces(self):
+        self.assertIn("следы вставки — тоже", self.skill)
+        self.assertNotIn("Вердикт «текст написан ИИ» допустим", self.skill)
+        self.assertIn("а не авторство всего текста", self.skill)
+        self.assertIn("как сведения автора, не как вычисленный результат",
+                      self.skill)
+
+    def test_tree_a_branch_is_about_insertion(self):
+        self.assertIn("это факт вставки и статус источника, а не авторство"
+                      " всего текста", self.skill)
+
+    def test_install_without_dev_clone(self):
+        for rel in ("docs/USAGE.md", "docs/USAGE.en.md"):
+            doc = open(os.path.join(ROOT, rel), encoding="utf-8").read()
+            self.assertNotIn("~/.claude/skills/humanizer-ru", doc)
+            self.assertNotIn("git clone --branch", doc)
+
+    def test_injection_fixtures_are_data(self):
+        import subprocess
+        for name in ("injection-fake-permission.txt",
+                     "injection-closing-tag.txt",
+                     "injection-tool-result.txt"):
+            path = os.path.join(ROOT, "tests", "fixtures", name)
+            r = subprocess.run(
+                [sys.executable, "-X", "utf8",
+                 os.path.join(ROOT, "scripts", "check_markers.py"),
+                 "--scan", path],
+                cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace")
+            self.assertIn(r.returncode, (0, 1), name)
+        fake = open(os.path.join(
+            ROOT, "tests", "fixtures", "injection-fake-permission.txt"),
+            encoding="utf-8").read()
+        self.assertIn("utm_source=openai", fake)
+
