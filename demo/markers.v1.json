@@ -466,7 +466,7 @@
       "id": "utm_chatgpt",
       "class": "A",
       "live_status": "live",
-      "pattern": "[?&]utm_source=chatgpt\\.com",
+      "pattern": "[?&]utm_source=chatgpt\\.com(?![A-Za-z0-9_.-])",
       "description": "OpenAI ChatGPT (веб и приложение)",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&oldid=1296028135",
@@ -481,7 +481,9 @@
         ],
         "negative": [
           "utm_source=chatgpt.com упомянут в статье об отслеживании",
-          "https://example.com/?utm_source=other.com"
+          "https://example.com/?utm_source=other.com",
+          "https://example.com/r?utm_source=chatgpt.com.example",
+          "https://chatgpt.com.example/share/abc"
         ],
         "multi": null
       },
@@ -497,7 +499,7 @@
       "id": "utm_openai",
       "class": "A",
       "live_status": "live",
-      "pattern": "[?&]utm_source=openai",
+      "pattern": "[?&]utm_source=openai(?![A-Za-z0-9_.-])",
       "description": "Инструменты OpenAI (общий формат API)",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Valencia_High_School_(Santa_Clarita,_California)&oldid=1368000622",
@@ -506,10 +508,13 @@
       },
       "fixtures": {
         "positive": [
-          "https://docs.example.com/?utm_source=openai"
+          "https://docs.example.com/?utm_source=openai",
+          "https://example.com/r?utm_source=openai&x=1"
         ],
         "negative": [
-          "OpenAI utm_source без знака ? или &"
+          "OpenAI utm_source без знака ? или &",
+          "https://example.com/r?utm_source=openair",
+          "https://example.com/r?utm_source=openai.community"
         ],
         "multi": null
       },
@@ -525,7 +530,7 @@
       "id": "utm_copilot",
       "class": "A",
       "live_status": "live",
-      "pattern": "[?&]utm_source=copilot\\.com",
+      "pattern": "[?&]utm_source=copilot\\.com(?![A-Za-z0-9_.-])",
       "description": "Microsoft Copilot",
       "source": {
         "url": "https://github.com/tectijuana/interfaz/blob/cdc97fc53f6b3030aa14285da456eef7a329d60a/entregas/2026a/research/Arquitecturas%20ARM%20aplicadas%20a%20sistemas%20multimedia/readme.md",
@@ -535,11 +540,13 @@
       "fixtures": {
         "positive": [
           "https://example.com/?utm_source=copilot.com",
-          "https://example.com/?id=7&utm_source=copilot.com"
+          "https://example.com/?id=7&utm_source=copilot.com",
+          "https://example.com/?utm_source=copilot.com&next=2"
         ],
         "negative": [
           "utm_source=copilot.com упомянут в статье об отслеживании",
-          "https://example.com/?utm_source=chatgpt.com"
+          "https://example.com/?utm_source=chatgpt.com",
+          "https://example.com/r?utm_source=copilot.community"
         ],
         "multi": null
       },

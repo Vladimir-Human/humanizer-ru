@@ -87,26 +87,33 @@ CASES = {
     ),
     # --- A.3. Метки UTM от чат-ботов ---
     "utm_chatgpt": (
-        r"[?&]utm_source=chatgpt\.com",
+        r"[?&]utm_source=chatgpt\.com(?![A-Za-z0-9_.-])",
         ["https://example.com/article?utm_source=chatgpt.com",
          "https://example.com/?id=5&utm_source=chatgpt.com",
          "?utm_source=chatgpt.com&other=1"],
         ["utm_source=chatgpt.com упомянут в статье об отслеживании",
-         "https://example.com/?utm_source=other.com"],
+         "https://example.com/?utm_source=other.com",
+         "https://example.com/r?utm_source=chatgpt.com.example",
+         "https://chatgpt.com.example/share/abc"],
         None,
     ),
     "utm_openai": (
-        r"[?&]utm_source=openai",
-        ["https://docs.example.com/?utm_source=openai"],
-        ["OpenAI utm_source без знака ? или &"],
+        r"[?&]utm_source=openai(?![A-Za-z0-9_.-])",
+        ["https://docs.example.com/?utm_source=openai",
+         "https://example.com/r?utm_source=openai&x=1"],
+        ["OpenAI utm_source без знака ? или &",
+         "https://example.com/r?utm_source=openair",
+         "https://example.com/r?utm_source=openai.community"],
         None,
     ),
     "utm_copilot": (
-        r"[?&]utm_source=copilot\.com",
+        r"[?&]utm_source=copilot\.com(?![A-Za-z0-9_.-])",
         ["https://example.com/?utm_source=copilot.com",
-         "https://example.com/?id=7&utm_source=copilot.com"],
+         "https://example.com/?id=7&utm_source=copilot.com",
+         "https://example.com/?utm_source=copilot.com&next=2"],
         ["utm_source=copilot.com упомянут в статье об отслеживании",
-         "https://example.com/?utm_source=chatgpt.com"],
+         "https://example.com/?utm_source=chatgpt.com",
+         "https://example.com/r?utm_source=copilot.community"],
         None,
     ),
     "grok_referrer": (
@@ -557,26 +564,51 @@ def _case_since():
 CASE_SINCE = _case_since()
 
 
-def _backtick_prefix(line: str) -> list:
-    """Префиксные количества `обратных кавычек` — один проход на строку.
+def _code_spans(line: str) -> list:
+    """Code spans строки: пары (начало_содержимого, конец_спана).
 
-    Возвращает (prefix, total): prefix[i] — число бэктиков в line[:i];
-    проверка «совпадение внутри кавычек» сводится к двум чтениям массива
-    вместо пересчёта срезов на каждое совпадение (раньше — квадратично
-    на минифицированных однострочниках из десятков тысяч совпадений).
+    Семантика документирована и едина с demo/engine.js (N42, аудит
+    2026-09-06): серия из N обратных кавычек ОТКРЫВАЕТ спан и закрывается
+    следующей серией ровно из N кавычек; серии другой длины внутри спана —
+    содержимое, а не ограничители; незакрытая серия тянет спан до конца
+    строки (упрощение CommonMark в пределах строки). Fenced-блоки (``` и
+    ~~~ с начала строки) обрабатываются отдельно на уровне абзаца.
     """
-    prefix = [0] * (len(line) + 1)
-    count = 0
-    for i, ch in enumerate(line):
-        if ch == "`":
-            count += 1
-        prefix[i + 1] = count
-    return prefix, count
+    runs = []
+    i = 0
+    n = len(line)
+    while i < n:
+        if line[i] == "`":
+            j = i
+            while j < n and line[j] == "`":
+                j += 1
+            runs.append((i, j - i))
+            i = j
+        else:
+            i += 1
+    spans = []
+    k = 0
+    while k < len(runs):
+        length = runs[k][1]
+        closer = None
+        for t in range(k + 1, len(runs)):
+            if runs[t][1] == length:
+                closer = t
+                break
+        if closer is None:
+            spans.append((runs[k][0] + length, n))
+            break
+        spans.append((runs[k][0] + length, runs[closer][0]))
+        k = closer + 1
+    return spans
 
 
-def _inside_backticks(prefix: list, total: int, start: int, end: int) -> bool:
-    """Совпадение внутри `обратных кавычек` — это документация, не артефакт."""
-    return prefix[start] % 2 == 1 and (total - prefix[end]) >= 1
+def _inside_code_span(spans: list, start: int, end: int) -> bool:
+    """Совпадение внутри code span — это документация, не артефакт."""
+    for s, e in spans:
+        if start < e and end > s:
+            return True
+    return False
 
 
 def _line_matches(line: str, compiled: dict) -> list:
@@ -596,12 +628,12 @@ def _line_matches(line: str, compiled: dict) -> list:
     """
     line = unicodedata.normalize("NFC", line)
     masked = _mask_urls(line)
-    prefix, total_bt = _backtick_prefix(line)
+    spans = _code_spans(line)
     found = []
     for name, rx in compiled.items():
         use = line if _is_url_marker(name) else masked
         for m in rx.finditer(use):
-            if _inside_backticks(prefix, total_bt, m.start(), m.end()):
+            if _inside_code_span(spans, m.start(), m.end()):
                 continue
             found.append((m.start(), m.end(), name))
     # Сортировка по началу, при равном начале — более длинное первым:
@@ -864,6 +896,24 @@ def selftest() -> int:
     case("расхождение многократного образца ловится",
          _check_cases({"zz": (r"foo", ["foo"], [], ("foo foo", 3))},
                       {"zz": "B"}) != [])
+    import re as _re
+    _span_id = next(k for k in CASES if "oaicite" in k)
+    _compiled = {_span_id: _re.compile(CASES[_span_id][0])}
+    _art = ":contentReference[oaicite:1]{index=1}"
+
+    def _hits(line):
+        return len(_line_matches(line, _compiled))
+
+    case("code span: одинарный ограничитель скрывает артефакт",
+         _hits("x `" + _art + "` y") == 0 and _hits("x " + _art + " y") == 1)
+    case("code span: двойной ограничитель скрывает артефакт",
+         _hits("x ``" + _art + "`` y") == 0)
+    case("code span: незакрытый ограничитель тянет спан до конца строки",
+         _hits("x `" + _art + " y") == 0)
+    case("code span: серия другой длины внутри спана — содержимое",
+         _hits("x ``a ` " + _art + " b`` y") == 0)
+    case("code span: закрытый спан не прячет текст после себя",
+         _hits("x ``a`` " + _art + " y") == 1)
     print("САМОПРОВЕРКА check_markers: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 
