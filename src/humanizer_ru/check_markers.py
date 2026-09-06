@@ -71,7 +71,7 @@ CASES = {
         ("fileciteturn0file2turn0file6", 2),
     ),
     "ref_name_search": (
-        r"<ref\b[^>]{0,500}\bname=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
+        r"<ref(?![A-Za-z0-9_])[^>]{0,500}(?<![A-Za-z0-9_])name=[\"']\d+(?:search|fetch|file|image|news|video|ref)\d+[\"']",
         [
             '<ref name="0search12">',
             '<ref name="2file0">',
@@ -155,9 +155,15 @@ CASES = {
         None,
     ),
     # --- A.5. Прочие маркеры разметки ---
+    # Граница токена — явные lookaround-классы [A-Za-z0-9_] вместо \b:
+    # семантика одинакова в Python и JavaScript (JS \b — ASCII навсегда,
+    # Python \b — Unicode; явный класс устраняет расхождение). Токен
+    # латинский, поэтому склейка с кириллицей («вставкаattributableIndex»)
+    # остаётся находкой: граница определяется латинским словом.
     "attributableIndex": (
-        r"\battributableIndex\b",
-        ['{"attributableIndex": 0}'],
+        r"(?<![A-Za-z0-9_])attributableIndex(?![A-Za-z0-9_])",
+        ['{"attributableIndex": 0}',
+         "вставкаattributableIndex вставка"],
         ["слово attributable в обычном тексте о праве и атрибуции",
          "attributableIndexes (с окончанием)"],
         None,
@@ -324,7 +330,7 @@ CASES = {
     ),
     # --- A.4 доп. Grok XML-тег (v3.1) ---
     "grok_card_tag": (
-        r"<grok-card\b[^>]*\bcitation_card\b",
+        r"<grok-card(?![A-Za-z0-9_])[^>]*(?<![A-Za-z0-9_])citation_card(?![A-Za-z0-9_])",
         ['<grok-card data-id="e8ff4f" data-type="citation_card">',
          '\u0422\u0435\u043a\u0441\u0442...<grok-card data-id="abc" data-type="citation_card">'],
         ["<grok-card> \u0431\u0435\u0437 \u0430\u0442\u0440\u0438\u0431\u0443\u0442\u0430 citation_card",
@@ -370,7 +376,7 @@ CASES = {
     ),
     # --- A.5 доп. placeholder URLs (v3.1) ---
     "placeholder_url": (
-        r"\b(?:INSERT_SOURCE_URL(?:_\d+)?|URL_HERE|PASTE_\w+_URL_HERE)\b",
+        r"(?<![A-Za-z0-9_])(?:INSERT_SOURCE_URL(?:_\d+)?|URL_HERE|PASTE_\w+_URL_HERE)(?![A-Za-z0-9_])",
         ["\u0412\u0441\u0442\u0430\u0432\u044c\u0442\u0435 INSERT_SOURCE_URL_30 \u0441\u044e\u0434\u0430.", "\u0421\u043c. URL_HERE \u0432 \u0448\u0430\u0431\u043b\u043e\u043d\u0435.", "PASTE_SPOTIFY_TRACK_URL_HERE"],
         ["insert source url \u0432 \u043e\u0431\u044b\u0447\u043d\u043e\u0439 \u0444\u0440\u0430\u0437\u0435", "\u0432\u0441\u0442\u0430\u0432\u044c\u0442\u0435 URL \u0441\u044e\u0434\u0430"],
         ("INSERT_SOURCE_URL URL_HERE PASTE_TRACK_URL_HERE", 3),
@@ -380,7 +386,7 @@ CASES = {
     # товарные номера вида «1234-56-xx», «3985-77-XX» под выражение больше не
     # попадают; невозможный месяц («2025-13-XX») тоже отсекается.
     "placeholder_date": (
-        r"\b(?:19|20)\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}\b",
+        r"(?<![A-Za-z0-9_])(?:19|20)\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}(?![A-Za-z0-9_])",
         ["дата обращения: 2025-XX-XX.",
          "|date=2022-11-XX |publisher=…",
          "access-date=2025-xx-xx"],
@@ -783,7 +789,7 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
             if lineno in blocked:
                 continue
             direct = _line_matches(line, compiled)
-            for _start, _end, name in direct:
+            for start, end, name in direct:
                 cls = CLASS_OF.get(name, "A")
                 fragment = _console_text(line.strip()[:90])
                 if class_filter == "a" and cls == "B":
@@ -796,9 +802,13 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
                     entry["count"] += 1
                     if not as_json:
                         print(f"{label}:{lineno} [{name}] {fragment}")
+                # Координаты start/end — в кодовых точках внутри строки
+                # (NFC-нормализованной, как в _line_matches); аддитивное
+                # поле --json для сверки паритета с демо по координатам.
                 entry["markers"].append({"line": lineno, "marker": name,
                                          "class": cls, "fragment": fragment,
-                                         "shadow": False})
+                                         "shadow": False,
+                                         "start": start, "end": end})
                 if versions:
                     entry["markers"][-1]["since"] = CASE_SINCE.get(name, "")
             # Теневой проход: те же выражения по строке без невидимых
@@ -807,7 +817,7 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
             shadow = _SHADOW_INVISIBLES.sub("", line)
             if shadow != line:
                 direct_names = {n for _s, _e, n in direct}
-                for _start, _end, name in _line_matches(shadow, compiled):
+                for start, end, name in _line_matches(shadow, compiled):
                     if name in direct_names:
                         continue
                     cls = CLASS_OF.get(name, "A")
@@ -823,9 +833,12 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
                         entry["count"] += 1
                         if not as_json:
                             print(f"{label}:{lineno} [{name}] (теневой) {fragment}")
+                    # Координаты теневой находки — внутри теневой строки
+                    # (без невидимых символов); shadow:true это документирует.
                     entry["markers"].append({"line": lineno, "marker": name,
                                              "class": cls, "fragment": fragment,
-                                             "shadow": True})
+                                             "shadow": True,
+                                             "start": start, "end": end})
                     if versions:
                         entry["markers"][-1]["since"] = CASE_SINCE.get(name, "")
         json_files.append(entry)

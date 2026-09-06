@@ -269,6 +269,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Служебная метка ссылки ChatGPT",
         "why": "Внутренний токен ответа ассистента, который интерфейс не снял при копировании; в рукописном тексте таких меток не бывает.",
@@ -298,6 +299,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Сноска ответа ассистента",
         "why": "Формат цитирования из чат-интерфейса, человек так сноски не оформляет.",
@@ -326,6 +328,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Усечённая сноска ассистента",
         "why": "Короткая форма служебной цитаты ответа модели.",
@@ -359,6 +362,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Метка поискового хода агента",
         "why": "След агентного поиска в ответе: человек не нумерует ходы поиска.",
@@ -387,6 +391,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Метка загрузки источника агентом",
         "why": "Служебная отметка шага агента по чтению страницы.",
@@ -420,6 +425,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Метка файлового хода агента",
         "why": "Служебная отметка обращения агента к файлу.",
@@ -430,7 +436,7 @@
       "id": "ref_name_search",
       "class": "B",
       "live_status": "live",
-      "pattern": "<ref\\b[^>]{0,500}\\bname=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
+      "pattern": "<ref(?![A-Za-z0-9_])[^>]{0,500}(?<![A-Za-z0-9_])name=[\\\"']\\d+(?:search|fetch|file|image|news|video|ref)\\d+[\\\"']",
       "description": "Имя сноски в вики-разметке: числовой префикс + имя внутреннего инструмента. Оно может остаться при копировании ответа агента с веб-поиском",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Dan_Morehead&oldid=1363966174",
@@ -456,6 +462,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Именованная ссылка поискового ответа",
         "why": "Именованный токен ссылки из поискового ответа ассистента.",
@@ -489,6 +496,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "utm-метка провайдера чата",
         "why": "Ссылка помечена параметром источника трафика чат-интерфейса.",
@@ -520,6 +528,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "utm-метка OpenAI",
         "why": "Параметр ссылки выдаёт вставку из интерфейса OpenAI.",
@@ -552,6 +561,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "utm-метка Copilot",
         "why": "Параметр ссылки выдаёт вставку из Copilot.",
@@ -582,6 +592,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "provenance",
+      "url_marker": true,
       "explain_ru": {
         "name": "Реферер Grok в ссылке",
         "why": "Ссылка несёт служебный реферер интерфейса Grok.",
@@ -606,6 +617,7 @@
       },
       "evidence_status": "fixture-only",
       "evidence_class": null,
+      "url_marker": false,
       "explain_ru": {
         "name": "Метка прикреплённого файла",
         "why": "След вставки из прикреплённого документа в чате.",
@@ -630,6 +642,7 @@
       },
       "evidence_status": "fixture-only",
       "evidence_class": null,
+      "url_marker": true,
       "explain_ru": {
         "name": "Карточка ответа Grok",
         "why": "Служебная карточка интерфейса Grok, попавшая в текст.",
@@ -661,6 +674,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "JSON-блок рендера Grok",
         "why": "Технический блок рендера ответа Grok.",
@@ -690,6 +704,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "Ссылка заземления Vertex AI",
         "why": "Служебный адрес заземления поиска Gemini/Vertex.",
@@ -700,7 +715,7 @@
       "id": "attributableIndex",
       "class": "A",
       "live_status": "live",
-      "pattern": "\\battributableIndex\\b",
+      "pattern": "(?<![A-Za-z0-9_])attributableIndex(?![A-Za-z0-9_])",
       "description": "Внутренние поля разметки в JSON-ответах при использовании инструментов",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&oldid=1358429496",
@@ -709,7 +724,8 @@
       },
       "fixtures": {
         "positive": [
-          "{\"attributableIndex\": 0}"
+          "{\"attributableIndex\": 0}",
+          "вставкаattributableIndex вставка"
         ],
         "negative": [
           "слово attributable в обычном тексте о праве и атрибуции",
@@ -719,6 +735,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Индекс атрибуции ответа",
         "why": "Служебный индекс атрибуции из ответа модели.",
@@ -747,6 +764,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Нумерованная цитата ответа",
         "why": "Нумерация цитат из ответа ассистента, не рукописная.",
@@ -779,6 +797,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Каретный токен Copilot",
         "why": "Служебный символ-маркер интерфейса Copilot.",
@@ -808,6 +827,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Блок источника Answers",
         "why": "Служебный блок источника из интерфейса ассистента.",
@@ -840,6 +860,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Цитата с номером хода",
         "why": "Связка цитаты и хода диалога, характерная только для чат-вывода.",
@@ -871,6 +892,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "Ссылка песочницы",
         "why": "Адрес временной песочницы ассистента, вне чата бесполезен.",
@@ -904,6 +926,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Символ приватной области OpenAI",
         "why": "Символ из приватной области, которым интерфейс помечает блоки.",
@@ -938,6 +961,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Короткая форма PUA-метки",
         "why": "Усечённый служебный символ разметки ответа.",
@@ -972,6 +996,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Тег размышления модели",
         "why": "След внутреннего рассуждения модели, попавший в вывод.",
@@ -1011,6 +1036,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Цепочка источников ответа",
         "why": "Служебная цепочка источников агентного ответа.",
@@ -1044,6 +1070,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Начало цитаты Gemini",
         "why": "Служебная граница цитирования ответа Gemini.",
@@ -1079,6 +1106,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Нумерация цитат Gemini",
         "why": "Служебные номера цитат ответа Gemini.",
@@ -1114,6 +1142,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Пролёт цитирования Gemini",
         "why": "Служебный пролёт цитирования ответа Gemini.",
@@ -1152,6 +1181,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Невидимый символ нулевой ширины",
         "why": "Невидимые символы часто остаются при копировании из чатов и PDF; читатель их не видит, а след остаётся.",
@@ -1187,6 +1217,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Блок письменного вывода",
         "why": "Служебная обёртка блока письменного вывода модели.",
@@ -1222,6 +1253,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Построчная ссылка ответа",
         "why": "Служебные построчные ссылки ответа DeepSeek.",
@@ -1232,7 +1264,7 @@
       "id": "grok_card_tag",
       "class": "A",
       "live_status": "live",
-      "pattern": "<grok-card\\b[^>]*\\bcitation_card\\b",
+      "pattern": "<grok-card(?![A-Za-z0-9_])[^>]*(?<![A-Za-z0-9_])citation_card(?![A-Za-z0-9_])",
       "description": "xAI Grok: XML-тег карточки цитирования после сноски",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Draft:Mehak_Malik&oldid=1323207968",
@@ -1252,6 +1284,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "Тег карточки Grok",
         "why": "Служебный тег карточки интерфейса Grok.",
@@ -1287,6 +1320,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Метка прочего хода",
         "why": "Служебная метка прочего шага агентного ответа.",
@@ -1320,6 +1354,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Скобка веб-вставки",
         "why": "Служебная скобка вставки из веб-источника в чате.",
@@ -1350,6 +1385,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Адрес хранилища Perplexity",
         "why": "Служебный адрес временного хранилища ответа Perplexity.",
@@ -1378,6 +1414,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "secondary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Сгенерированный идентификатор ссылки",
         "why": "Сгенерированный идентификатор ссылки из ответа модели.",
@@ -1388,7 +1425,7 @@
       "id": "placeholder_url",
       "class": "B",
       "live_status": "live",
-      "pattern": "\\b(?:INSERT_SOURCE_URL(?:_\\d+)?|URL_HERE|PASTE_\\w+_URL_HERE)\\b",
+      "pattern": "(?<![A-Za-z0-9_])(?:INSERT_SOURCE_URL(?:_\\d+)?|URL_HERE|PASTE_\\w+_URL_HERE)(?![A-Za-z0-9_])",
       "description": "Placeholder-URL из шаблонных ответов: ИИ выдаёт структуру ссылки, которую пользователь должен заполнить, но публикует без правки",
       "source": {
         "url": "https://en.wikipedia.org/w/index.php?title=Nishikant_Dubey&oldid=1367957147",
@@ -1412,6 +1449,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": true,
       "explain_ru": {
         "name": "Заглушка ссылки",
         "why": "Заглушка вида INSERT_\" + \"SOURCE_URL: модель не подставила адрес, а след остался.",
@@ -1422,7 +1460,7 @@
       "id": "placeholder_date",
       "class": "B",
       "live_status": "live",
-      "pattern": "\\b(?:19|20)\\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}\\b",
+      "pattern": "(?<![A-Za-z0-9_])(?:19|20)\\d{2}-(?:0[1-9]|1[0-2]|[Xx]{2})-[Xx]{2}(?![A-Za-z0-9_])",
       "description": "Placeholder-дата из шаблонных ответов: ИИ подставляет заглушку вместо неизвестной даты (чаще всего — «дата обращения» в списке литературы)",
       "source": {
         "url": "https://github.com/Deupaxx/EveryDay-Writer/blob/cb1e6ae33884a22348b73ed3efdc3c5c4c27fc35/core/ai_slop_commandments.md",
@@ -1450,6 +1488,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "secondary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Заглушка даты",
         "why": "Заглушка даты из шаблона ответа модели.",
@@ -1495,6 +1534,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Невидимые символы разметки",
         "why": "Невидимые управляющие символы разметки (направления письма, переносы): законны в редких случаях, но после чатов обычно случайны.",
@@ -1529,6 +1569,7 @@
       },
       "evidence_status": "confirmed",
       "evidence_class": "primary",
+      "url_marker": false,
       "explain_ru": {
         "name": "Unicode-теги",
         "why": "Символы блока Tags: почти всегда след инструментальной обработки текста.",
