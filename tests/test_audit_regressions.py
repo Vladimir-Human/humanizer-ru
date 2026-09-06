@@ -21,11 +21,14 @@ REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
 SKIP_OUTSIDE = unittest.skipUnless(
     REPO_ONLY, "вне репозитория (sdist): интеграционные тесты не запускаются")
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
+sys.path.insert(0, os.path.join(ROOT, "src"))
 
 try:
     import check_markers as cm  # noqa: E402
 except ImportError:  # вне репозитория (sdist): scripts/ не поставлен
     cm = None
+
+from humanizer_ru import text_layer as tl  # noqa: E402
 
 UTM = ("utm_openai", "utm_chatgpt", "utm_copilot")
 
@@ -485,4 +488,97 @@ class ReleaseAcceptanceTests(unittest.TestCase):
                    encoding="utf-8").read()
         self.assertIn('rows.append(("SKIP", label,', src)
         self.assertIn("не PASS", src)
+
+
+class CleanerSafetyTests(unittest.TestCase):
+    """Границы очистителя согласованы с детектором; защищённые области целы."""
+
+    def test_utm_in_markdown_link_keeps_structure(self):
+        out, n = tl._clean_utm(
+            "См. [Сайт](https://example.org/?utm_source=openai) тут")
+        self.assertEqual(out, "См. [Сайт](https://example.org/) тут")
+        self.assertEqual(n, 1)
+
+    def test_utm_openair_not_removed(self):
+        src = "См. [Сайт](https://example.org/?utm_source=openair) тут"
+        self.assertEqual(tl._clean_utm(src), (src, 0))
+
+    def test_utm_chatgpt_example_not_removed(self):
+        src = "https://example.com/r?utm_source=chatgpt.com.example"
+        self.assertEqual(tl._clean_utm(src), (src, 0))
+
+    def test_utm_inside_inline_code_not_removed(self):
+        src = "пример кода: `?utm_source=openai` внутри"
+        self.assertEqual(tl._clean_utm(src), (src, 0))
+        self.assertEqual(tl.clean_markup(src), (src, 0))
+
+    def test_utm_inside_fenced_block_not_removed(self):
+        src = "```md\n?utm_source=openai\n```"
+        self.assertEqual(tl._clean_utm(src), (src, 0))
+
+    def test_utm_param_with_rest_keeps_query_start(self):
+        out, n = tl._clean_utm(
+            "обычный ?utm_source=openai&feature=share хвост")
+        self.assertEqual(out, "обычный ?feature=share хвост")
+        self.assertEqual(n, 1)
+
+    def test_markup_marker_inside_url_not_removed(self):
+        src = "см. https://example.org/turn0search1 в ссылке"
+        out, _n = tl.clean_markup(src)
+        self.assertEqual(out, src)
+
+    def test_markup_marker_in_prose_removed(self):
+        out, n = tl.clean_markup("текст turn0search1 в прозе")
+        self.assertNotIn("turn0search1", out)
+        self.assertGreaterEqual(n, 1)
+
+    def test_markup_marker_inside_inline_code_not_removed(self):
+        src = "документация `turn0search1` пример"
+        out, _n = tl.clean_markup(src)
+        self.assertEqual(out, src)
+
+
+@SKIP_OUTSIDE
+class CleanerRouteTests(unittest.TestCase):
+    """Штатные маршруты автофикса не портят markdown-ссылку и инлайн-код."""
+
+    def _fix(self, content):
+        import shutil
+        import subprocess
+        import tempfile
+        d = tempfile.mkdtemp()
+        try:
+            p = os.path.join(d, "doc.md")
+            with open(p, "w", encoding="utf-8", newline="") as fh:
+                fh.write(content)
+            env = dict(os.environ)
+            env["GITHUB_WORKSPACE"] = d
+            r = subprocess.run(
+                [sys.executable, "-X", "utf8",
+                 os.path.join(ROOT, "scripts", "action_fix.py"), p],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", cwd=ROOT, env=env)
+            with open(p, encoding="utf-8") as fh:
+                after = fh.read()
+            return r.returncode, r.stdout, after
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def test_action_fix_markdown_link(self):
+        _rc, out, after = self._fix(
+            "См. [Сайт](https://example.org/?utm_source=openai) тут.\n")
+        self.assertIn("CHANGED", out)
+        self.assertEqual(after, "См. [Сайт](https://example.org/) тут.\n")
+
+    def test_action_fix_code_span_intact(self):
+        src = "пример кода: `?utm_source=openai` внутри.\n"
+        _rc, out, after = self._fix(src)
+        self.assertIn("CLEAN", out)
+        self.assertEqual(after, src)
+
+    def test_action_fix_openair_intact(self):
+        src = "См. [Сайт](https://example.org/?utm_source=openair) тут.\n"
+        _rc, out, after = self._fix(src)
+        self.assertIn("CLEAN", out)
+        self.assertEqual(after, src)
 

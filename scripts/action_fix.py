@@ -148,6 +148,29 @@ def _selftest():
         if st4 != "UNFIXED":
             print("ПРОВАЛ selftest: sandbox_link не UNFIXED (%s)" % st4)
             fails += 1
+        # utm-параметр внутри markdown-ссылки: параметр снимается,
+        # структура ссылки не разрушается (закрывающая скобка цела).
+        utm_link = os.path.join(d, "utm.md")
+        with open(utm_link, "w", encoding="utf-8") as fh:
+            fh.write("См. [Сайт](https://example.org/?utm_source=openai) тут.\n")
+        st5, _ = fix_file(utm_link)
+        with open(utm_link, encoding="utf-8") as fh:
+            after5 = fh.read()
+        if st5 != "CHANGED" or "](https://example.org/)" not in after5:
+            print("ПРОВАЛ selftest: utm в markdown-ссылке (%s): %r"
+                  % (st5, after5))
+            fails += 1
+        # Маркер внутри инлайн-кода не снимается (документированный
+        # пример): файл побайтно цел, статус CLEAN.
+        code = os.path.join(d, "code.md")
+        with open(code, "w", encoding="utf-8") as fh:
+            fh.write("пример кода: `?utm_source=openai` внутри.\n")
+        st6, _ = fix_file(code)
+        with open(code, encoding="utf-8") as fh:
+            after6 = fh.read()
+        if st6 != "CLEAN" or after6 != "пример кода: `?utm_source=openai` внутри.\n":
+            print("ПРОВАЛ selftest: инлайн-код (%s): %r" % (st6, after6))
+            fails += 1
     finally:
         if old_ws is None:
             os.environ.pop("GITHUB_WORKSPACE", None)
@@ -157,7 +180,7 @@ def _selftest():
     if fails:
         print("САМОПРОВЕРКА: провалов %d" % fails)
         return 1
-    print("САМОПРОВЕРКА: 4/4 PASS")
+    print("САМОПРОВЕРКА: 6/6 PASS")
     return 0
 
 
