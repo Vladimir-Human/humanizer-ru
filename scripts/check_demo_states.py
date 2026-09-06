@@ -8,7 +8,10 @@
 - переход к своему тексту очищает share-state;
 - лимит ссылки считается в байтах после кодирования;
 - футер различает null-lag (сведений о релизе нет) и нулевой лаг;
-- write_status отдаёт null-lag при отсутствии тегов и целое при наличии.
+- write_status выводит утверждения только из результата реального прогона
+  (--run-result обязателен; чужой SHA и непройденные проверки отвергаются),
+  отдаёт null-lag при отсутствии тегов, целое при наличии, а
+  published_commit — целевой коммит annotated-тега, не SHA объекта тега.
 
 Коды: 0 — проверки пройдены; 1 — есть нарушение; 2 — ошибка запуска.
 Только стандартная библиотека.
@@ -61,27 +64,72 @@ def check_status_gen():
         subprocess.run(["git", "init", "-q", td], check=True, env=env)
         subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "x"],
                        cwd=td, check=True, env=env)
-        r = subprocess.run([sys.executable, os.path.join(HERE,
-                            "write_status.py"), "--root", td, "--sha", "abc"],
-                           capture_output=True, text=True)
+        ws = os.path.join(HERE, "write_status.py")
+        rr = os.path.join(td, "run-result.json")
+        head = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                              cwd=td, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace").stdout.strip()
+
+        def _ws(*extra):
+            return subprocess.run([sys.executable, ws, "--root", td,
+                                   "--sha", head] + list(extra),
+                                  capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace")
+
+        def _write_rr(doc):
+            with open(rr, "w", encoding="utf-8") as fh:
+                json.dump(doc, fh)
+
+        status_path = os.path.join(docs, "status.json")
+        # Негатив: без результата прогона статус не пишется.
+        r = _ws()
+        if r.returncode == 0 or os.path.exists(status_path):
+            errs.append("write_status: прогон без --run-result обязан "
+                        "отказать и не писать статус")
+        # Негатив: чужой SHA результата прогона.
+        _write_rr({"sha": "deadbee", "tests_passed": True, "parity": "ok"})
+        if _ws("--run-result", rr).returncode == 0:
+            errs.append("write_status: чужой SHA результата прогона принят")
+        # Негатив: непройденные проверки не публикуют статус.
+        _write_rr({"sha": head, "tests_passed": False, "parity": "ok"})
+        if _ws("--run-result", rr).returncode == 0:
+            errs.append("write_status: непройденные тесты дали статус")
+        _write_rr({"sha": head, "tests_passed": True, "parity": "fail"})
+        if _ws("--run-result", rr).returncode == 0:
+            errs.append("write_status: проваленный паритет дал статус")
+        # Позитив: зелёный результат, тегов нет — null-lag.
+        _write_rr({"sha": head, "tests_passed": True, "parity": "ok"})
+        r = _ws("--run-result", rr)
         if r.returncode != 0:
             return ["write_status не запустился на пустом репозитории: "
                     + r.stderr.strip()[:120]]
-        data = json.load(open(os.path.join(docs, "status.json"),
-                              encoding="utf-8"))
+        data = json.load(open(status_path, encoding="utf-8"))
         if data.get("lag_commits") is not None:
             errs.append("write_status: без тегов lag_commits обязан быть null")
         if data.get("published_commit") is not None:
             errs.append("write_status: без тегов published_commit обязан быть null")
-        subprocess.run(["git", "tag", "v%d.%d.%d" % (1, 0, 0)], cwd=td,
+        if data.get("tests_passed") is not True or data.get("parity") != "ok":
+            errs.append("write_status: tests_passed/parity не выведены из "
+                        "результата прогона")
+        # Annotated-тег: published_commit — ЦЕЛЕВОЙ КОММИТ, не объект тега.
+        tagname = "v%d.%d.%d" % (1, 0, 0)
+        subprocess.run(["git", "tag", "-a", tagname, "-m", "t"], cwd=td,
                        check=True, env=env)
-        subprocess.run([sys.executable, os.path.join(HERE, "write_status.py"),
-                        "--root", td],
-                       capture_output=True, text=True, check=True)
-        data = json.load(open(os.path.join(docs, "status.json"),
-                              encoding="utf-8"))
+        subprocess.run([sys.executable, ws, "--root", td, "--sha", head,
+                        "--run-result", rr],
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace", check=True)
+        data = json.load(open(status_path, encoding="utf-8"))
         if not isinstance(data.get("lag_commits"), int):
             errs.append("write_status: с тегом lag_commits обязан быть целым")
+        target = subprocess.run(
+            ["git", "rev-parse", "--short", tagname + "^{commit}"],
+            cwd=td, capture_output=True, text=True, encoding="utf-8",
+            errors="replace").stdout.strip()
+        if data.get("published_commit") != target:
+            errs.append("write_status: published_commit не равен целевому "
+                        "коммиту тега (%r != %r)"
+                        % (data.get("published_commit"), target))
     return errs
 
 
@@ -112,7 +160,8 @@ def selftest():
     bad2 = bad2.replace("if (!engineReady())", "if (false)")
     case("скрытая ветвь отказа движка ловится",
          any("движка" in e for e in check_html(bad2)))
-    case("генератор статуса: null без тегов, целое с тегом",
+    case("генератор статуса: отказ без результата, null без тегов, целое "
+         "с тегом, published_commit = целевой коммит",
          check_status_gen() == [])
     print("САМОПРОВЕРКА demo-states: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
