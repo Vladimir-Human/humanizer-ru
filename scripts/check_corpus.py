@@ -23,12 +23,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 try:
-    from check_markers import (CASES, _backtick_prefix, _console_text,
-                               _inside_backticks)
+    from check_markers import (CASES, _code_spans, _console_text,
+                               _inside_code_span)
 except Exception:  # noqa: BLE001
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from check_markers import (CASES, _backtick_prefix, _console_text,
-                               _inside_backticks)
+    from check_markers import (CASES, _code_spans, _console_text,
+                               _inside_code_span)
 
 import re
 
@@ -69,10 +69,10 @@ def _scan_file(path, compiled):
     except OSError as exc:
         return [(0, "read-error", str(exc))]
     for lineno, line in enumerate(lines, 1):
-        prefix, total_bt = _backtick_prefix(line)
+        spans = _code_spans(line)
         for name, rx in compiled.items():
             for m in rx.finditer(line):
-                if _inside_backticks(prefix, total_bt, m.start(), m.end()):
+                if _inside_code_span(spans, m.start(), m.end()):
                     continue
                 hits.append((lineno, name, _console_text(line.strip()[:80])))
     return hits

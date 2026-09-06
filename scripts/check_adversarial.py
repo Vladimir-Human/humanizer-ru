@@ -51,10 +51,10 @@ def _word_count(text):
 def _marker_hits(text, compiled, cm):
     hits = []
     for lineno, line in enumerate(text.splitlines(), 1):
-        prefix, total_bt = cm._backtick_prefix(line)
+        spans = cm._code_spans(line)
         for name, rx in compiled.items():
             for m in rx.finditer(line):
-                if cm._inside_backticks(prefix, total_bt, m.start(), m.end()):
+                if cm._inside_code_span(spans, m.start(), m.end()):
                     continue
                 hits.append((lineno, name, line.strip()[:90]))
     return hits

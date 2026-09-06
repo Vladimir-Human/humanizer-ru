@@ -96,7 +96,7 @@ const HUMANIZER_MARKERS = {
       "id": "utm_chatgpt",
       "class": "A",
       "description": "OpenAI ChatGPT (веб и приложение)",
-      "source": "[?&]utm_source=chatgpt\\.com",
+      "source": "[?&]utm_source=chatgpt\\.com(?![A-Za-z0-9_.-])",
       "flags": "g",
       "explain": {
         "name": "utm-метка провайдера чата",
@@ -108,7 +108,7 @@ const HUMANIZER_MARKERS = {
       "id": "utm_openai",
       "class": "A",
       "description": "Инструменты OpenAI (общий формат API)",
-      "source": "[?&]utm_source=openai",
+      "source": "[?&]utm_source=openai(?![A-Za-z0-9_.-])",
       "flags": "g",
       "explain": {
         "name": "utm-метка OpenAI",
@@ -120,7 +120,7 @@ const HUMANIZER_MARKERS = {
       "id": "utm_copilot",
       "class": "A",
       "description": "Microsoft Copilot",
-      "source": "[?&]utm_source=copilot\\.com",
+      "source": "[?&]utm_source=copilot\\.com(?![A-Za-z0-9_.-])",
       "flags": "g",
       "explain": {
         "name": "utm-метка Copilot",
