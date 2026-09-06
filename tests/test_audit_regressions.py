@@ -490,6 +490,53 @@ class ReleaseAcceptanceTests(unittest.TestCase):
         self.assertIn("не PASS", src)
 
 
+class WhitespaceCollapseTests(unittest.TestCase):
+    """Съём невидимок схлопывает зазор в точке съёма, а не по всему тексту."""
+
+    def test_no_double_space_after_safe_removal(self):
+        out, _rep = tl.remove_invisible("слово \u200b слово и ещё \u2060 одно")
+        self.assertEqual(out, "слово слово и ещё одно")
+        self.assertNotIn("  ", out)
+
+    def test_no_double_space_via_layer_a(self):
+        out, _n = tl.clean_text_layer("слово \u200b слово")
+        self.assertEqual(out, "слово слово")
+
+    def test_opt_in_to_space_no_triple(self):
+        out, _rep = tl.remove_invisible("слово \u00a0 слово", True)
+        self.assertEqual(out, "слово слово")
+        self.assertNotIn("  ", out)
+
+    def test_opt_in_removal_no_double(self):
+        out, _rep = tl.remove_invisible("слово \u200e слово", True)
+        self.assertNotIn("  ", out)
+
+    def test_author_typography_untouched(self):
+        src = "авторский  текст без невидимок"
+        out, _rep = tl.remove_invisible(src)
+        self.assertEqual(out, src)
+        out2, _n = tl.clean_text_layer(src)
+        self.assertEqual(out2, src)
+
+    def test_mn_diacritics_preserved_all_modes(self):
+        mn = "й\u0301 о\u0308"
+        for mode in (False, True):
+            out, _rep = tl.remove_invisible(mn, mode)
+            self.assertEqual(out.encode("utf-8"), mn.encode("utf-8"))
+
+    def test_polish_safe_modes_collapse_at_removal_point(self):
+        import sys as _sys
+        _root_src = os.path.join(ROOT, "src")
+        if _root_src not in _sys.path:
+            _sys.path.insert(0, _root_src)
+        from humanizer_ru import polish as _P
+        out = _P.polish("слово \u200b слово\n", preserve_markup=True)
+        self.assertEqual(out, "слово слово\n")
+        out2 = _P.polish("слово \u200b слово и \"цитата\"...\n",
+                         typographic=True)
+        self.assertNotIn("  ", out2)
+
+
 class CleanerSafetyTests(unittest.TestCase):
     """Границы очистителя согласованы с детектором; защищённые области целы."""
 

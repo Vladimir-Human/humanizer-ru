@@ -243,17 +243,40 @@ def remove_invisibles(seg: str, mapping: dict) -> str:
     ZWJ в эмодзи-контексте (zwj_is_protected) сохраняется независимо от
     mapping: разрушение составного эмодзи — потеря смысла, а не снятие
     машинного слоя.
+
+    Зазор схлопывается В ТОЧКЕ СЪЁМА: снятие нулевой ширины между двумя
+    пробелами не оставляет двойной пробел, замена на пробел рядом с
+    существующим пробелом суммарно даёт один. Авторская типографика вне
+    точек съёма не трогается (схлопывающей подстановки по всему тексту
+    нет).
     """
     out = []
     n = len(seg)
-    for i, ch in enumerate(seg):
-        if ch in mapping:
-            if ch == ZWJ and zwj_is_protected(seg, i):
-                out.append(ch)
+    i = 0
+    while i < n:
+        ch = seg[i]
+        if ch in mapping and not (ch == ZWJ and zwj_is_protected(seg, i)):
+            repl = mapping[ch]
+            left = out[-1] if out else ""
+            right = seg[i + 1] if i + 1 < n else ""
+            if left == " " and right == " ":
+                i += 2          # зазор схлопнут: правый пробел поглощён
                 continue
-            out.append(mapping[ch])
-        else:
-            out.append(ch)
+            if repl == "":
+                i += 1          # снятие без следа
+                continue
+            if left == " ":
+                i += 1          # пробел уже есть слева — замена не дописывается
+                continue
+            if right == " ":
+                out.append(" ")
+                i += 2          # замена поставлена, правый пробел поглощён
+                continue
+            out.append(repl)
+            i += 1
+            continue
+        out.append(ch)
+        i += 1
     return "".join(out)
 
 
@@ -323,6 +346,14 @@ def selftest() -> int:
          remove_invisibles(family, mapping) == family)
     case("незащищённый ZWJ снимается",
          remove_invisibles(cyr, mapping) == "слово")
+    case("схлопывание в точке съёма: двойного пробела нет",
+         remove_invisibles("слово \u200b слово", mapping) == "слово слово")
+    case("замена NBSP рядом с пробелом даёт один пробел",
+         remove_invisibles("a\u00a0 b", mapping) == "a b"
+         and remove_invisibles("a \u00a0b", mapping) == "a b"
+         and remove_invisibles("a \u00a0 b", mapping) == "a b")
+    case("авторский двойной пробел вне точек съёма сохранён",
+         remove_invisibles("авторский  текст", mapping) == "авторский  текст")
 
     # protected_texts.
     doc = 'Проза `код "x"` и https://e.org/a...b и <a href="q">ссылка</a> ' + family
