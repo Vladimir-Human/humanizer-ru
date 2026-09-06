@@ -169,6 +169,7 @@ def _preserve_regions_once(t: str) -> str:
     lines = t.split("\n")
     fenced = PR.fenced_line_indices(lines)
     front = PR.frontmatter_line_indices(lines)
+    by_line = PR.protected_spans_by_line(t)
     out = []
     for i, line in enumerate(lines):
         if i in fenced or i in front:
@@ -176,7 +177,7 @@ def _preserve_regions_once(t: str) -> str:
             continue
         pieces = []
         last = 0
-        for s, e in PR.protected_line_spans(line):
+        for s, e in by_line[i]:
             pieces.append(PR.remove_invisibles(line[last:s], _INVIS))
             pieces.append(line[s:e])
             last = e
@@ -235,18 +236,20 @@ def _typographic_once(text: str) -> str:
     lines = t.split("\n")
     fenced = PR.fenced_line_indices(lines)
     front = PR.frontmatter_line_indices(lines)
+    by_line = PR.protected_spans_by_line(t)
     out = []
     for i, line in enumerate(lines):
         if i in fenced or i in front:
             out.append(line)
             continue
-        if ("`" not in line and '"' not in line and "..." not in line
+        if (not by_line[i]
+                and "`" not in line and '"' not in line and "..." not in line
                 and not any(ch in line for ch in _INVIS)):
             out.append(line)
             continue
         pieces = []
         last = 0
-        for s, e in PR.protected_line_spans(line):
+        for s, e in by_line[i]:
             pieces.append(_typo_prose(line[last:s]))
             pieces.append(line[s:e])
             last = e
