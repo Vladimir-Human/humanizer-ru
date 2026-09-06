@@ -96,6 +96,72 @@ def compare(pkg, proj, dynamic_version=False):
     return errs
 
 
+def extract_wheel_metadata(wheel_path):
+    import zipfile
+    with zipfile.ZipFile(wheel_path) as zf:
+        names = [n for n in zf.namelist()
+                 if n.endswith(".dist-info/METADATA")]
+        if not names:
+            return None
+        return zf.read(names[0]).decode("utf-8", errors="replace")
+
+
+def live_compare():
+    """Сверка живых metadata PyPI с pyproject (после публикации)."""
+    import urllib.request
+    proj = read_pyproject()
+    try:
+        with urllib.request.urlopen(
+                "https://pypi.org/pypi/humanizer-ru/json", timeout=30) as r:
+            info = json.load(r)["info"]
+    except Exception as exc:  # noqa: BLE001
+        print("UNAVAILABLE (SKIP): PyPI недоступен: %s" % str(exc)[:120])
+        return 2
+    errs = []
+    if info.get("version") != proj.get("version"):
+        errs.append("PyPI version %r != pyproject %r (публикация ещё не "
+                    "догнала дерево — это не провал metadata)"
+                    % (info.get("version"), proj.get("version")))
+    if info.get("summary") != proj.get("description"):
+        errs.append("PyPI summary != pyproject description")
+    kw = [k.strip() for k in (info.get("keywords") or "").split(",")
+          if k.strip()]
+    if kw != proj.get("keywords"):
+        errs.append("PyPI keywords != pyproject keywords")
+    for key, val in proj.get("urls", {}).items():
+        if (info.get("project_urls") or {}).get(key) != val:
+            errs.append("PyPI project_urls[%s] != pyproject" % key)
+    for e in errs:
+        print("[FAIL] %s" % e)
+    if errs:
+        return 1
+    print("LIVE: PyPI metadata совпадают с pyproject (%s)"
+          % info.get("version"))
+    return 0
+
+
+def read_pyproject():
+    import re as _re
+    text = open(os.path.join(ROOT, "pyproject.toml"), encoding="utf-8").read()
+    kw = _re.search(r"keywords\s*=\s*\[(.*?)\]", text, _re.S)
+    kws = _re.findall(r'"([^"]+)"', kw.group(1)) if kw else []
+    urls = dict(_re.findall(r'^(\w[\w ]*)\s*=\s*"(https?://[^"]+)"',
+                            text, _re.M))
+    desc = _re.search(r'^description\s*=\s*"([^"]*)"', text, _re.M)
+    ver = _re.search(r'^version\s*=\s*"([^"]+)"', text, _re.M)
+    if ver is None:
+        init = open(os.path.join(ROOT, "src", "humanizer_ru", "__init__.py"),
+                    encoding="utf-8").read()
+        m = _re.search(r'__version__\s*=\s*"([^"]+)"', init)
+        ver = m
+    return {"name": "humanizer-ru",
+            "version": ver.group(1) if ver else None,
+            "description": desc.group(1) if desc else None,
+            "keywords": kws,
+            "urls": {k: v for k, v in sorted(urls.items())},
+            "classifiers": []}
+
+
 def build_sdist(outdir):
     r = subprocess.run([sys.executable, "-m", "build", "--sdist",
                         "--outdir", outdir], cwd=ROOT, capture_output=True,
@@ -117,16 +183,21 @@ def extract_pkginfo(sdist_path):
     return None
 
 
-def check(sdist_arg=None):
+def check(sdist_arg=None, wheel_arg=None):
     tmp = tempfile.mkdtemp(prefix="pypi-meta-")
     try:
         sdist = sdist_arg
         if not sdist:
             sdist = build_sdist(tmp)
         if not sdist or not os.path.isfile(sdist):
-            print("ОТКАЗ СРЕДЫ: нет модуля build или сборка не удалась "
-                  "(код 2, не провал)")
+            print("UNAVAILABLE (SKIP): нет модуля build или сборка не "
+                  "удалась; metadata не проверены (код 2, не PASS)")
             return 2
+        if wheel_arg:
+            wmeta = extract_wheel_metadata(wheel_arg)
+            if wmeta is None:
+                print("UNAVAILABLE (SKIP): в wheel нет METADATA")
+                return 2
         pkginfo = extract_pkginfo(sdist)
         if pkginfo is None:
             print("[FAIL] в sdist нет PKG-INFO")
@@ -145,6 +216,9 @@ def check(sdist_arg=None):
         else:
             errs = compare(pkg, proj, dynamic_version=True)
             errs.append("не найден __version__ в src/humanizer_ru/__init__.py")
+        if wheel_arg:
+            werrs = compare(parse_pkginfo(wmeta), proj)
+            errs += ["wheel: " + e for e in werrs]
         for e in errs:
             print("[FAIL] %s" % e)
         if errs:
@@ -187,11 +261,18 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--sdist", default=None)
+    ap.add_argument("--sdist", default=None,
+                    help="metadata именно этого sdist")
+    ap.add_argument("--wheel", default=None,
+                    help="metadata именно этого wheel")
+    ap.add_argument("--live", action="store_true",
+                    help="сверить живые metadata PyPI с pyproject")
     args = ap.parse_args()
     if args.selftest:
         return selftest()
-    return check(args.sdist)
+    if args.live:
+        return live_compare()
+    return check(args.sdist, args.wheel)
 
 
 if __name__ == "__main__":

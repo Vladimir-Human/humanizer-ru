@@ -419,3 +419,54 @@ class BenchmarkEvidenceTests(unittest.TestCase):
         self.assertIn("Проверка и очистка следов вставки из чата в русском "
                       "тексте", self.proposal)
 
+
+class ReleaseAcceptanceTests(unittest.TestCase):
+    """L9 (N47): metadata проверяются у публикуемых артефактов; отказ среды
+    помечен UNAVAILABLE/SKIP, а не PASS; приёмка блокирует публикацию."""
+
+    def _run(self, *args):
+        import subprocess
+        return subprocess.run(
+            [sys.executable, "-X", "utf8",
+             os.path.join(ROOT, "scripts", "check_pypi_metadata.py"), *args],
+            cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+            errors="replace")
+
+    def test_wrong_keywords_in_sdist_fail(self):
+        import io
+        import tarfile
+        import tempfile
+        ver = "%d.%d.%d" % (0, 0, 1)
+        with tempfile.TemporaryDirectory() as td:
+            sd = os.path.join(td, "humanizer_ru-%s.tar.gz" % ver)
+            with tarfile.open(sd, "w:gz") as tf:
+                data = ("Metadata-Version: 2.1\nName: humanizer-ru\n"
+                        "Version: %s\nKeywords: wrong, keywords\n" % ver
+                        ).encode("utf-8")
+                info = tarfile.TarInfo("humanizer_ru-%s/PKG-INFO" % ver)
+                info.size = len(data)
+                tf.addfile(info, io.BytesIO(data))
+            r = self._run("--sdist", sd)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("keywords", r.stdout)
+
+    def test_wheel_without_metadata_is_unavailable(self):
+        import tempfile
+        import zipfile
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import check_pypi_metadata as cpm
+        ver = "%d.%d.%d" % (0, 0, 1)
+        with tempfile.TemporaryDirectory() as td:
+            wh = os.path.join(td, "humanizer_ru-%s-py3-none-any.whl" % ver)
+            with zipfile.ZipFile(wh, "w") as zf:
+                zf.writestr("humanizer_ru/__init__.py", "")
+            self.assertIsNone(cpm.extract_wheel_metadata(wh))
+        src = open(cpm.__file__, encoding="utf-8").read()
+        self.assertIn("UNAVAILABLE (SKIP)", src)
+
+    def test_skip_label_not_pass_in_check_all(self):
+        src = open(os.path.join(ROOT, "scripts", "check_all.py"),
+                   encoding="utf-8").read()
+        self.assertIn('rows.append(("SKIP", label,', src)
+        self.assertIn("не PASS", src)
+

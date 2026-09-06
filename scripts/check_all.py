@@ -418,7 +418,17 @@ def run_gates(gates, root):
             continue
         took = time.time() - started
         if proc.returncode in ok_codes:
-            rows.append(("PASS", label, "", took))
+            if proc.returncode == 0:
+                rows.append(("PASS", label, "", took))
+            else:
+                # N47: отказ среды или неполный режим — это SKIP с причиной,
+                # а не PASS: приёмка релиза такие состояния не пропускает.
+                skips += 1
+                tail = (proc.stdout + "\n" + proc.stderr).strip().splitlines()
+                detail = "; ".join(tail[-2:]) if tail else ""
+                rows.append(("SKIP", label,
+                             "код %d, не PASS: %s" % (proc.returncode,
+                                                      detail[:200]), took))
         else:
             fails += 1
             tail = (proc.stdout + "\n" + proc.stderr).strip().splitlines()

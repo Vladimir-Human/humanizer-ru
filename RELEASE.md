@@ -71,3 +71,17 @@
 Единица бюджета витрины: гейт `check_docs.py` (I.18) меряет СИМВОЛЫ: SKILL.md ≤ 15750 символов (≈4500 токенов при оценке 3.5 символа/токен), README.md ≤ 320 строк, README.en.md ≤ 300, GOVERNANCE.md ≤ 98.
 
 Trusted Publishing: доверенный издатель настроен владельцем 2026-09-04 (owner Vladimir-Human, repo humanizer-ru, workflow pypi-publish.yml, environment pypi); работоспособность доказана сухим прогоном workflow_dispatch 2026-09-04 (run 33794879701): OIDC-авторизация успешна, существующие файлы пропущены (skip-existing). twine остаётся запасным путём на случай отказа OIDC.
+
+## Приёмка выпуска (обязательна, отсутствие проверки блокирует публикацию)
+
+1. `python3 scripts/check_pypi_metadata.py --sdist <тот же sdist> --wheel
+   <тот же wheel>` — metadata публикуемых артефактов, не повторной сборки;
+   ненулевой код — выпуск не публикуется.
+2. `python3 scripts/check_release.py --sdist-test <sdist>` — чистое venv,
+   тесты и CLI-зонды из публикуемого sdist.
+3. После публикации: `python3 scripts/check_pypi_metadata.py --live` —
+   живые metadata PyPI против pyproject; недоступность PyPI — SKIP с
+   причиной, не PASS и не провал.
+4. Полный `python3 scripts/check_all.py` и `python -m unittest discover -s
+   tests` перед тегом; SKIP-состояния в отчёте не считаются зелёными.
+
