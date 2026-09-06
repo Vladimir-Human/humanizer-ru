@@ -8,9 +8,12 @@
 ## Маршрутизатор задач
 
 - Проверить текст на следы машинного происхождения: `humanizer-detect`
-- Сверить факты двух версий текста (потери, добавления, инверсии): `humanizer-facts diff`
-  (частота связок, статус домена обязателен в выводе) и `humanizer-markers`
-  (артефакты копипасты и чат-интерфейсов).
+  (частота связок, статус домена обязателен в выводе; вердикта об
+  авторстве не даёт) и `humanizer-markers` (артефакты копипасты и
+  чат-интерфейсов).
+- Сверить факты двух версий текста (потери, добавления, инверсии):
+  `humanizer-facts diff`; машиночитаемый отчёт правки —
+  `humanizer-report до.md после.md --json`.
 - Найти артефакты копипасты и разметки: `humanizer-markers` (показывает
   совпадения с классом и строкой). Снятие невидимых меток текстового
   слоя: `humanizer-markers --remove` — safe снимается автоматически,
@@ -49,7 +52,9 @@
 - MCP-сервер (Model Context Protocol, stdio): `pip install humanizer-ru`,
   в конфигурации MCP-клиента команда `humanizer-mcp` (без аргументов;
   JSON-RPC 2.0, newline-delimited). Инструменты `humanizer_scan`,
-  `humanizer_markers`, `humanizer_polish`, `humanizer_detect`; их схемы
+  `humanizer_markers`, `humanizer_polish`, `humanizer_detect`,
+  `humanizer_facts`, `humanizer_report` — шесть, как в contract.v1.json и
+  в ответе `tools/list`; их схемы
   генерируются из contract.v1.json, находка возвращается как успешный
   tool result (isError false), ошибка входа — isError true с конвертом.
   Проверено: conformance-гейт `scripts/check_mcp.py` и протокол в
@@ -63,6 +68,30 @@
   или лента [releases.atom](https://github.com/Vladimir-Human/humanizer-ru/releases.atom);
   машиночитаемая сверка версии — `humanizer-scan --contract`
   (product.version, блок install).
+
+## Воспроизводимый минимальный пример
+
+Самодостаточная проверка (bash; пакет установлен pip). Команда сама
+создаёт тестовый файл; вывод и код возврата получены фактическим
+запуском установленной версии:
+
+```text
+printf 'Согласно :contentReference[oaicite:3]{index=3}, рост заявок.\n' > hr-example.txt
+humanizer-markers --scan hr-example.txt; echo "rc=$?"
+```
+
+Фактический вывод:
+
+```text
+hr-example.txt:1 [contentReference] Согласно :contentReference[oaicite:3]{index=3}, рост заявок.
+Найдено маркеров: 1.
+rc=1
+```
+
+На чистом тексте («Обычный русский текст без дефектов.») вывод
+«Маркеров не найдено.» и rc=0. Коды возврата: 0 — чисто, 1 — найдены
+маркеры, 2 — вход не читается (с --json конверт ошибки печатается в
+stdout).
 
 ## Чего этот проект не делает
 

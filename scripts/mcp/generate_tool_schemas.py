@@ -45,11 +45,16 @@ def selftest() -> int:
 
     contract = humanizer_mcp.load_contract()
     defs = humanizer_mcp.generate_tool_defs(contract)
-    case("четыре инструмента из контракта", len(defs) == 4)
+    # Состав не зашивается: инструменты = команды канонического контракта
+    # (раньше здесь был список из четырёх имён, и он устарел молча, когда
+    # контракт вырос до шести).
+    expected_names = {t["command"].replace("-", "_")
+                      for t in contract["tools"]}
+    case("набор инструментов = команды контракта",
+         len(defs) == len(contract["tools"])
+         and {d["name"] for d in defs} == expected_names)
     by = {d["name"]: d for d in defs}
-    case("имена — команды с подчёркиванием",
-         set(by) == {"humanizer_scan", "humanizer_markers",
-                     "humanizer_polish", "humanizer_detect"})
+    case("имена — команды с подчёркиванием", set(by) == expected_names)
     case("outputSchema = output_schema контракта без изменений",
          all(by[t["command"].replace("-", "_")]["outputSchema"]
              == t["output_schema"] for t in contract["tools"]))
