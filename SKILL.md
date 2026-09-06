@@ -7,8 +7,8 @@ compatibility: DeepSeek Harness (dsh), Claude.ai, Claude Code, opencode и др�
 metadata:
   author: Vladimir-Human
   version: "3.32.0"
-  last_reviewed: "2026-09-05"
-  next_review_due: "2026-11-13"
+  last_reviewed: "2026-09-06"
+  next_review_due: "2026-11-14"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
   support: "https://github.com/Vladimir-Human/humanizer-ru/issues"
