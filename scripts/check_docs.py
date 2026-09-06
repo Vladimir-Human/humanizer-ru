@@ -172,6 +172,37 @@ def _read(path):
  with open(path, "rb") as f:
   return f.read()
 
+def check_tool_claims(root):
+    """I.22: упомянутые в llms.txt и README команды humanizer-* совпадают
+    с [project.scripts] pyproject и командами контракта (программно)."""
+    import re as _re
+    errs = []
+    need = ("pyproject.toml", "contract.v1.json", "llms.txt", "README.md")
+    if not all(os.path.isfile(os.path.join(root, n)) for n in need):
+        return errs
+    pyproject = open(os.path.join(root, "pyproject.toml"),
+                      encoding="utf-8").read()
+    scripts = set(_re.findall(r"^(humanizer-[a-z-]+)\s*=", pyproject,
+                              _re.M))
+    contract = json.load(open(os.path.join(root, "contract.v1.json"),
+                              encoding="utf-8"))
+    cmds = {c.replace("_", "-") for c in
+            (t_.get("command") for t_ in contract["tools"])}
+    for rel in ("llms.txt", "README.md"):
+        text = open(os.path.join(root, rel), encoding="utf-8").read()
+        mentioned = {m for m in _re.findall(r"humanizer-[a-z-]+", text)
+                     if m != "humanizer-ru"}
+        unknown = mentioned - scripts - {"humanizer-mcp"}
+        if unknown:
+            errs.append("%s: упомянуты команды вне [project.scripts]: %s"
+                        % (rel, ", ".join(sorted(unknown))))
+        missing_cli = cmds - mentioned
+        if rel == "llms.txt" and missing_cli:
+            errs.append("%s: не упомянуты команды контракта: %s"
+                        % (rel, ", ".join(sorted(missing_cli))))
+    return errs
+
+
 def check_repo(root):
  errors = []
 
@@ -606,6 +637,7 @@ def check_repo(root):
                    "(смысла: записи доказательств или граница класса)"
                    % (_ff, _n))
 
+ errors += check_tool_claims(root)
  return errors
 
 # ------------------------------------------------------------------ selftest

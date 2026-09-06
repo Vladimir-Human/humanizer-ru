@@ -87,13 +87,26 @@ def validate(args, cases):
 def build_case_entry(args):
     lines = ['    "%s": (' % args.id,
              "        %r," % args.pattern]
-    pos = ",\n".join("            %r," % s for s in args.positive)
-    neg = ",\n".join("            %r," % s for s in args.negative)
-    lines.append("        [\n%s\n        ]," % pos.rstrip(","))
-    lines.append("        [\n%s\n        ]," % neg.rstrip(","))
+    pos = ",\n".join("            %r" % s for s in args.positive)
+    neg = ",\n".join("            %r" % s for s in args.negative)
+    lines.append("        [\n%s\n        ]," % pos)
+    lines.append("        [\n%s\n        ]," % neg)
     lines.append("        (%r, %d)," % (args.multi, args.multi_count))
     lines.append("    ),")
-    return "\n".join(lines)
+    entry = "\n".join(lines)
+    validate_entry(entry)
+    return entry
+
+
+def validate_entry(entry):
+    """Сгенерированный фрагмент CASES обязан компилироваться ДО записи в
+    дерево (аудит N45): SyntaxError прерывает мастер до любых правок."""
+    try:
+        compile("CASES = {\n" + entry + "\n}\n", "<add_marker>", "exec")
+    except SyntaxError as exc:
+        raise SystemExit("Сгенерированный фрагмент CASES не компилируется: "
+                         "%s (строка %s); дерево не изменено"
+                         % (exc.msg, exc.lineno))
 
 
 def build_fixtures_section(args):
@@ -267,6 +280,25 @@ def selftest():
          ("r'zz" not in entry) and (", 2)," in entry))
     row = build_refs_row(argparse.Namespace(**dict(vars(ns), cls="B")))
     case("строка references для класса B несёт пометку", "(класс B)" in row)
+    import types
+    ns = types.SimpleNamespace(
+        id="zz_multi2", pattern=r"zz\s+multi", description="описание",
+        positive=["zz multi раз", "ещё zz multi два"],
+        negative=["обычный текст один", "обычный текст два"],
+        multi="zz multi и ещё zz multi", multi_count=2)
+    entry = build_case_entry(ns)
+    try:
+        compile("CASES = {\n" + entry + "\n}\n", "<selftest>", "exec")
+        ok_multi = True
+    except SyntaxError:
+        ok_multi = False
+    case("несколько positive/negative дают компилируемый CASES", ok_multi)
+    try:
+        validate_entry("    \"zz\": (\n        'x',,\n    ),")
+        ok_bad = False
+    except SystemExit:
+        ok_bad = True
+    case("валидатор прерывает мастер на битом фрагменте", ok_bad)
     print("САМОПРОВЕРКА add_marker: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 
