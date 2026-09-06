@@ -6,8 +6,8 @@
 
 | Канал | URL | Статус на 2026-09-06 | Что подтверждает |
 |---|---|---|---|
-| skills.sh (каталог скиллов) | https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru | листинг жив, карточка SKILL v3.32.0, 600 установок (снимок 2026-09-05) | установка одной командой npx skills add |
-| Glama (каталог MCP) | https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru | листинг жив (страница 200, заголовок «humanizer-ru by Vladimir-Human»), размещён владельцем 2026-09-06 | MCP-конфигурация из каталога |
+| skills.sh (каталог скиллов) | https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru | листинг жив, счётчик установок 603 (снимок 2026-09-06); карточка показывает SKILL v3.31.1 при актуальном SKILL.md 3.32.1 в репозитории — сторонний индексатор отстаёт, на стороне проекта источник корректен; сторонние статусы безопасности на карточке (Trust Hub Fail, Socket Warn, Snyk Pass) — данные сторонних сканеров, причина статуса Trust Hub не установлена, уязвимостью проекта не считается | установка одной командой npx skills add |
+| Glama (каталог MCP) | https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru | листинг жив (страница 200, заголовок «humanizer-ru by Vladimir-Human»), размещён владельцем 2026-09-06; карточка несёт все шесть MCP-инструментов (scan, markers, polish, detect, facts, report) — состав совпадает с contract.v1.json и tools/list (снимок 2026-09-06) | MCP-конфигурация из каталога |
 | awesome-mcp-servers | https://github.com/punkpeye/awesome-mcp-servers/pull/13565 | заявка отправлена, OPEN | внешняя витрина MCP; принятие не требуется для работы |
 | awesome-ai-plugins | https://github.com/hashgraph-online/awesome-ai-plugins | приглашение через issue #119 (2026-09-06); решение: отправить заявку самостоятельно после проверки гайда, описание — по документированному позиционированию проекта; личный вход владельца не требуется | внешняя витрина плагинов; принятие не требуется для работы |
 | Smithery | https://smithery.ai | заявка не отправлена: публикация требует OAuth-входа сопровождающего (OWNER-TODO) | — |

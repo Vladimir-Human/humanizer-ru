@@ -155,11 +155,13 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
   наборе из 40 текстов-неносителей и 0 случаев на 12314 текстов-неносителей
   класса A (F16, замер 2026-09-04, реестр фактов; класс B: 8 случаев на
   12314, Wilson 95% CI от 0.0003 до 0.0013, exploratory). Рынок продаёт это как обход детекторов; здесь обход не обещается и не измеряется: prohibited_uses контракта. Границы: docs/THREAT-MODEL.md; библиография: research/BIBLIOGRAPHY.md. Классовая разбивка FP, exploratory, вне предрега F16: класс A: 0 случаев на 12314 текстов-неносителей; класс B: 8 случаев на 12314, то есть 0.00065, Wilson 95% CI от 0.0003 до 0.0013; контрольный набор 40 текстов: флагов 0; тяжёлый домен S4 legal и official, n=381, дефицит объёма зафиксирован в предреге: 18 случаев на 381, то есть 0.0472, Wilson 95% CI от 0.0301 до 0.0734; знаменатели: 12354 полный корпус F16, 12314 validation-страта.
-- MCP-сервер `humanizer-mcp`, stdio и JSON-RPC 2.0, — те же четыре инструмента
+- MCP-сервер `humanizer-mcp`, stdio и JSON-RPC 2.0, — те же шесть инструментов
   для MCP-клиентов: `humanizer_scan`, `humanizer_markers`, `humanizer_polish`,
-  `humanizer_detect`; имена CLI дефис / MCP подчёркивание, conformance сверяет `scripts/check_mcp.py`.
+  `humanizer_detect`, `humanizer_facts`, `humanizer_report`; имена CLI дефис / MCP подчёркивание, conformance сверяет `scripts/check_mcp.py`.
 
-Все четыре команды читают stdin через «-». Пример вывода (маркеры на
+Команды humanizer-scan, humanizer-markers, humanizer-polish и
+humanizer-detect читают stdin через «-»; humanizer-facts и humanizer-report
+принимают два файла. Пример вывода (маркеры на
 строке из чат-интерфейса):
 
 ```sh
