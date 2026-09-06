@@ -4,9 +4,9 @@
   "language": "ru",
   "product": {
     "name": "humanizer-ru",
-    "version": "3.32.0",
+    "version": "3.31.1",
     "install": {
-      "pip": "pip install humanizer-ru==3.32.0",
+      "pip": "pip install humanizer-ru==3.31.1",
       "requires_python": ">=3.9",
       "freshness": "сверьте версию с https://github.com/Vladimir-Human/humanizer-ru/releases/latest или лентой releases.atom"
     },
@@ -18,12 +18,6 @@
       "юридические документы",
       "художественная проза и поэзия"
     ]
-  },
-  "prohibited_uses": {
-    "status": "withdrawn",
-    "since": "3.32.0",
-    "note": "Политика ограниченных сценариев снята 2026-09-05; блок сохранён пустым исключительно для совместимости чтения contract.v1 и не восстанавливает политику.",
-    "list": []
   },
   "output_envelope": {
     "format": "json",
@@ -46,6 +40,17 @@
     "rule": "на любом входе ответ не пустой: минимум типографика и список артефактов копипасты; детектор связок добавляет статус домена",
     "out_of_scope": "пустой вход и текст не на русском: механика отрабатывает, но ответ несёт status out-of-scope и scope_note — область скилла русский текст, «правка не требуется» таким входам не адресуется",
     "empty_response_is": "дефект дизайна, а не честность"
+  },
+  "prohibited_uses": {
+    "rule": "проект не помогает в перечисленном; агентный слой (SKILL.md) отказывает таким просьбам, документация их не скрывает",
+    "list": [
+      "сдача работ там, где ИИ запрещён: экзамены, учебные задания, служебная аттестация",
+      "обход систем антиплагиата и атрибуции: перезапись не устраняет совпадение с базой и не создаёт авторство",
+      "сокрытие факта использования ИИ, когда его раскрытие требуется законом или правилами площадки",
+      "снятие водяных знаков и меток с чужого контента, которым пользователь не владеет",
+      "приписывание машинного текста другому лицу"
+    ],
+    "legitimate": "свой текст: правка и диагностика собственных материалов, снятие следов копипасты из своих вставок, честный отчёт без вердиктов об авторстве"
   },
   "genres": {
     "dictionary": [
@@ -567,122 +572,63 @@
         "required": [
           "tool",
           "schema",
-          "files"
+          "files",
+          "counts",
+          "diff"
         ],
         "properties": {
           "tool": {
             "type": "string",
             "enum": [
-              "humanizer-report"
+              "humanizer-facts"
             ]
           },
           "schema": {
             "type": "integer",
             "const": 1
           },
+          "counts": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "integer"
+              },
+              "added": {
+                "type": "integer"
+              },
+              "changed": {
+                "type": "integer"
+              }
+            }
+          },
+          "diff": {
+            "type": "object",
+            "required": [
+              "lost",
+              "added",
+              "changed"
+            ],
+            "properties": {
+              "lost": {
+                "type": "array"
+              },
+              "added": {
+                "type": "array"
+              },
+              "changed": {
+                "type": "array"
+              }
+            }
+          },
           "files": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "before",
-                "after",
-                "tokens",
-                "sari_adapted",
-                "edit_types",
-                "facts",
-                "mtld"
-              ],
-              "properties": {
-                "before": {
-                  "type": "string"
-                },
-                "after": {
-                  "type": "string"
-                },
-                "tokens": {
-                  "type": "object",
-                  "properties": {
-                    "keep": {
-                      "type": "integer"
-                    },
-                    "add": {
-                      "type": "integer"
-                    },
-                    "delete": {
-                      "type": "integer"
-                    }
-                  }
-                },
-                "sari_adapted": {
-                  "type": "object",
-                  "properties": {
-                    "keep": {
-                      "type": "number"
-                    },
-                    "add": {
-                      "type": "number"
-                    },
-                    "delete": {
-                      "type": "number"
-                    }
-                  }
-                },
-                "edit_types": {
-                  "type": "object",
-                  "properties": {
-                    "invisible": {
-                      "type": "integer"
-                    },
-                    "markup": {
-                      "type": "integer"
-                    },
-                    "punctuation": {
-                      "type": "integer"
-                    },
-                    "whitespace": {
-                      "type": "integer"
-                    },
-                    "casing": {
-                      "type": "integer"
-                    },
-                    "lexical": {
-                      "type": "integer"
-                    }
-                  }
-                },
-                "facts": {
-                  "type": "object",
-                  "properties": {
-                    "lost": {
-                      "type": "integer"
-                    },
-                    "changed": {
-                      "type": "integer"
-                    },
-                    "unchanged": {
-                      "type": "boolean"
-                    }
-                  }
-                },
-                "mtld": {
-                  "type": "object",
-                  "properties": {
-                    "before": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    },
-                    "after": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
-                    }
-                  }
-                }
-              }
+              "type": "string"
             }
           }
         }
