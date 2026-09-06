@@ -42,8 +42,58 @@ _EMOJI_CH_RX = re.compile("[" + EMOJI_CONTEXT + "]")
 # URL-спан: то же выражение, что URL_MASK_RX детектора.
 URL_RX = re.compile(r"(?:https?://|www\.)[^\s<>«»\"')\]]+")
 
-# HTML-тег: открывающий/закрывающий/комментарий/doctype целиком.
+# HTML-тег: открывающий/закрывающий/комментарий/doctype. Выражение —
+# ориентир для документации; фактические границы считает сканер
+# html_tag_spans: кавычки атрибутов защищают «>» внутри значения,
+# перевод строки внутри тега допустим (многострочные конструкции).
 HTML_TAG_RX = re.compile(r"<[a-zA-Z!/][^>\n]*>")
+_TAG_OPEN_RX = re.compile(r"<[a-zA-Z!/]")
+
+
+def html_tag_spans(text: str) -> list:
+    """Интервалы (start, end) HTML-тегов в тексте (многострочные).
+
+    Границы: открывающий символ «<» с ASCII-буквой, «!» или «/» далее;
+    конец — первый «>» ВНЕ кавычек атрибута («"» и «'»); перевод строки
+    внутри тега допустим. Незакрытая кавычка: неуверенность трактуется в
+    пользу сохранения — область защищается до конца строки. «>» без
+    закрывающей кавычки и без кавычек вообще тегом не считается.
+    """
+    spans = []
+    n = len(text)
+    i = 0
+    while i < n:
+        m = _TAG_OPEN_RX.search(text, i)
+        if m is None:
+            break
+        pos = m.end()
+        quote = ""
+        closed_at = -1
+        line_end = text.find("\n", pos)
+        if line_end < 0:
+            line_end = n
+        while pos < n:
+            ch = text[pos]
+            if quote:
+                if ch == quote:
+                    quote = ""
+            elif ch in "\"'":
+                quote = ch
+            elif ch == ">":
+                closed_at = pos
+                break
+            pos += 1
+        if closed_at >= 0:
+            spans.append((m.start(), closed_at + 1))
+            i = closed_at + 1
+            continue
+        if quote:
+            # незакрытая кавычка атрибута: сохраняем участок до конца строки
+            spans.append((m.start(), line_end))
+            i = line_end
+            continue
+        i = m.start() + 1
+    return spans
 
 ZWJ = "\u200d"
 
@@ -170,11 +220,6 @@ def url_spans(text: str) -> list:
     return [(m.start(), m.end()) for m in URL_RX.finditer(text)]
 
 
-def html_tag_spans(text: str) -> list:
-    """Интервалы (start, end) HTML-тегов в тексте."""
-    return [(m.start(), m.end()) for m in HTML_TAG_RX.finditer(text)]
-
-
 def merge_spans(spans: list) -> list:
     """Слияние перекрывающихся интервалов; результат отсортирован."""
     merged = []
@@ -191,10 +236,68 @@ def protected_line_spans(line: str) -> list:
 
     inline-code + URL + HTML-теги (слитно, отсортировано). Межстрочные
     области (fenced-блоки, frontmatter) вызываются отдельно по индексам
-    строк — они защищают строки целиком.
+    строк — они защищают строки целиком. Для многострочных конструкций
+    пользуйтесь protected_text_spans / protected_spans_by_line.
     """
     return merge_spans(code_spans(line) + url_spans(line)
                        + html_tag_spans(line))
+
+
+def _line_offsets(text: str) -> list:
+    offs = []
+    start = 0
+    for line in text.split("\n"):
+        offs.append((start, start + len(line)))
+        start += len(line) + 1
+    return offs
+
+
+def protected_text_spans(text: str, protect_urls: bool = True,
+                         protect_html: bool = True) -> list:
+    """Абсолютные защищённые интервалы всего текста (слитно, сортировано).
+
+    fenced-блоки и frontmatter — строки целиком; в остальных строках
+    инлайн-код и URL; HTML-теги — по всему тексту, включая многострочные
+    (кавычки атрибутов и перевод строки внутри тега уважаются).
+    """
+    lines = text.split("\n")
+    offs = _line_offsets(text)
+    fenced = fenced_line_indices(lines)
+    front = frontmatter_line_indices(lines)
+    spans = []
+    for i, line in enumerate(lines):
+        s, _e = offs[i]
+        if i in fenced or i in front:
+            spans.append((s, s + len(line)))
+            continue
+        for cs, ce in code_spans(line):
+            spans.append((s + cs, s + ce))
+        if protect_urls:
+            for us, ue in url_spans(line):
+                spans.append((s + us, s + ue))
+    if protect_html:
+        spans.extend(html_tag_spans(text))
+    return merge_spans(spans)
+
+
+def protected_spans_by_line(text: str, protect_urls: bool = True,
+                            protect_html: bool = True) -> list:
+    """Проекция protected_text_spans на строки: список по индексу строки.
+
+    Многострочная область покрывает свои строки целиком по части:
+    преобразование вне защит не видит её содержимое ни на одной строке.
+    """
+    offs = _line_offsets(text)
+    spans = protected_text_spans(text, protect_urls, protect_html)
+    out = [[] for _ in offs]
+    for s, e in spans:
+        for i, (ls, le) in enumerate(offs):
+            if e <= ls:
+                break
+            if s >= le:
+                continue
+            out[i].append((max(s, ls) - ls, min(e, le) - ls))
+    return [merge_spans(x) for x in out]
 
 
 def protected_regions(text: str) -> list:
@@ -202,8 +305,9 @@ def protected_regions(text: str) -> list:
 
     Виды: fenced, frontmatter, code, url, html, zwj. Порядок
     детерминирован: по строкам сверху вниз (fenced/frontmatter — строки
-    целиком, затем code/url/html внутри строки), затем ZWJ-пары по
-    позициям. Используется инвариантами сохранения: каждый элемент обязан
+    целиком, затем code/url внутри строки), затем HTML-теги по тексту
+    (многострочный тег — одна область), затем ZWJ-пары по позициям.
+    Используется инвариантами сохранения: каждый элемент обязан
     присутствовать в результате преобразования неизменным.
     """
     lines = text.split("\n")
@@ -224,8 +328,9 @@ def protected_regions(text: str) -> list:
                 out.append(("code", line[s:e]))
         for s, e in url_spans(line):
             out.append(("url", line[s:e]))
-        for s, e in html_tag_spans(line):
-            out.append(("html", line[s:e]))
+    # HTML-теги — по всему тексту: многострочный тег — одна область.
+    for s, e in html_tag_spans(text):
+        out.append(("html", text[s:e]))
     for pos in sorted(zwj_protected_positions(text)):
         out.append(("zwj", text[max(0, pos - 1):pos + 2]))
     return out
@@ -328,6 +433,26 @@ def selftest() -> int:
     tags = html_tag_spans('<a href="x">текст</a>')
     case("HTML-тег целиком с кавычками атрибутов",
          len(tags) == 2 and '<a href="x">' == '<a href="x">текст</a>'[tags[0][0]:tags[0][1]])
+    src = 'Проза <span title="a > b..." data-x="q">текст</span>.'
+    tags = html_tag_spans(src)
+    case("«>» внутри кавычек атрибута не закрывает тег",
+         len(tags) == 2
+         and src[tags[0][0]:tags[0][1]] == '<span title="a > b..." data-x="q">')
+    src2 = 'Проза <span\n title="x...">текст</span>.\n'
+    tags2 = html_tag_spans(src2)
+    case("многострочный тег защищён целиком",
+         len(tags2) == 2
+         and src2[tags2[0][0]:tags2[0][1]] == '<span\n title="x...">')
+    src3 = 'Проза <span title="незакрытая\nдалее текст'
+    tags3 = html_tag_spans(src3)
+    case("незакрытая кавычка атрибута: сохранение до конца строки",
+         len(tags3) == 1
+         and src3[tags3[0][0]:tags3[0][1]] == '<span title="незакрытая')
+    case("проза без тега не защищается",
+         html_tag_spans("a < b и c > d") == [])
+    by_line = protected_spans_by_line(src2)
+    case("проекция многострочного тега покрывает его строки",
+         len(by_line) >= 2 and bool(by_line[0]) and bool(by_line[1]))
 
     # ZWJ.
     family = "\U0001F468\u200d\U0001F469\u200d\U0001F467"
