@@ -146,8 +146,8 @@ def read_pyproject():
     text = open(os.path.join(ROOT, "pyproject.toml"), encoding="utf-8").read()
     kw = _re.search(r"keywords\s*=\s*\[(.*?)\]", text, _re.S)
     kws = _re.findall(r'"([^"]+)"', kw.group(1)) if kw else []
-    urls = dict(_re.findall(r'^(\w[\w ]*)\s*=\s*"(https?://[^"]+)"',
-                            text, _re.M))
+    urls = {k.strip(): v for k, v in _re.findall(
+        r'^(\w[\w ]*)\s*=\s*"(https?://[^"]+)"', text, _re.M)}
     desc = _re.search(r'^description\s*=\s*"([^"]*)"', text, _re.M)
     ver = _re.search(r'^version\s*=\s*"([^"]+)"', text, _re.M)
     if ver is None:
