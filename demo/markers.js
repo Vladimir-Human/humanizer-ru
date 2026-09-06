@@ -389,7 +389,7 @@ const HUMANIZER_MARKERS = {
       "id": "writing_block",
       "class": "A",
       "description": "Writing-разметка; атрибуция версии не подтверждена",
-      "source": ":::[\\p{L}\\p{N}\\p{M}_]+\\{variant",
+      "source": ":::[\\p{L}\\p{N}_]+\\{variant",
       "flags": "gu",
       "url_marker": false,
       "explain": {
@@ -480,7 +480,7 @@ const HUMANIZER_MARKERS = {
       "id": "placeholder_url",
       "class": "B",
       "description": "Placeholder-URL из шаблонных ответов: ИИ выдаёт структуру ссылки, которую пользователь должен заполнить, но публикует без правки",
-      "source": "(?<![A-Za-z0-9_])(?:INSERT_SOURCE_URL(?:_\\p{Nd}+)?|URL_HERE|PASTE_[\\p{L}\\p{N}\\p{M}_]+_URL_HERE)(?![A-Za-z0-9_])",
+      "source": "(?<![A-Za-z0-9_])(?:INSERT_SOURCE_URL(?:_\\p{Nd}+)?|URL_HERE|PASTE_[\\p{L}\\p{N}_]+_URL_HERE)(?![A-Za-z0-9_])",
       "flags": "gu",
       "url_marker": true,
       "explain": {
