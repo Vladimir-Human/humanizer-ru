@@ -29,25 +29,34 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Релизный тег (ref или последний v*)
+        id: tag
+        run: |
+          if [[ "$GITHUB_REF_NAME" == v* ]]; then T="$GITHUB_REF_NAME"; else T=$(git tag --sort=-v:refname | head -1); fi
+          echo "value=$T" >> "$GITHUB_OUTPUT"
+
       - name: Тег annotated (не lightweight)
         run: |
-          TYPE=$(git cat-file -t "$GITHUB_REF_NAME" 2>/dev/null || echo "")
+          TAGREF="${{ steps.tag.outputs.value }}"
+          TYPE=$(git cat-file -t "$TAGREF" 2>/dev/null || echo "")
           if [ "$TYPE" != "tag" ]; then
-            echo "FAIL: тег $GITHUB_REF_NAME не annotated ($TYPE)"
+            echo "FAIL: тег $TAGREF не annotated ($TYPE)"
             exit 1
           fi
-          echo "OK: annotated tag"
+          echo "OK: annotated tag $TAGREF"
 
       - name: Версия тега == version в SKILL.md metadata
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          TAGREF="${{ steps.tag.outputs.value }}"
+          TAG="${TAGREF#v}"
           META=$(grep -oP 'version:\s*"?\K\d+\.\d+\.\d+' SKILL.md | head -1)
           echo "tag=$TAG meta=$META"
           [ "$TAG" = "$META" ] || { echo "FAIL: тег $TAG != metadata $META"; exit 1; }
 
       - name: CHANGELOG содержит запись для версии
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
+          TAGREF="${{ steps.tag.outputs.value }}"
+          TAG="${TAGREF#v}"
           grep -qE "^##\s+${TAG}\b" CHANGELOG.md || {
             echo "FAIL: в CHANGELOG.md нет записи ## ${TAG}"
             exit 1
