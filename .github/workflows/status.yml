@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: status-${{ github.ref }}
@@ -31,16 +31,15 @@ jobs:
         run: python3 scripts/check_demo_parity.py
 
       - name: Записать status.json
-        run: python3 scripts/write_status.py
+        # Самоподдерживающийся цикл status-коммитов снят (аудит N4):
+        # статус живёт артефактом прогона, а для Pages генерируется в
+        # demo-pages.yml из точного SHA деплоя.
+        run: python3 scripts/write_status.py --sha ${{ github.sha }}
 
-      - name: Опубликовать status.json
-        run: |
-          git config user.name "humanizer-ru-ci"
-          git config user.email "humanizer-ru-ci@users.noreply.github.com"
-          git add docs/status.json demo/status.json
-          if git diff --cached --quiet; then
-            echo "status.json без изменений"
-          else
-            git commit -m "ci: статус прогона main [skip ci]"
-            git push
-          fi
+      - name: Артефакт status.json
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b45822a43468149 # v4
+        with:
+          name: status-json
+          path: |
+            docs/status.json
+            demo/status.json

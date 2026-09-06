@@ -63,6 +63,7 @@
     <button id="shareBtn" type="button">Поделиться</button>
     <span id="counts" class="note"></span>
     <span id="summary" class="note" aria-live="polite"></span>
+<span id="scanState" class="rule" role="status" aria-live="polite"></span>
   </div>
   <div class="cols">
     <section>
@@ -104,8 +105,12 @@
     return s.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
+  function engineReady() {
+    return typeof HumanizerEngine !== "undefined" && rules.length > 0;
+  }
+
   function findMatches(text) {
-    if (typeof HumanizerEngine === "undefined") return [];
+    if (!engineReady()) return [];
     const out = HumanizerEngine.scanText(text, rules);
     const filtered = onlyA.checked ? out.filter(m => m.cls === "A") : out;
     return filtered.map(m => ({
@@ -201,6 +206,19 @@
 
   function run() {
     const text = textarea.value;
+    const state = document.getElementById("scanState");
+    if (!engineReady()) {
+      // N46: отсутствие движка или правил — явный отказ, не «чисто».
+      state.textContent = "состояние: ошибка загрузки; проверка не выполнялась";
+      summary.textContent = "Движок или правила не загрузились: проверка не " +
+        "выполнялась, результат ниже пустой и не означает чистый текст.";
+      matchesBox.textContent = "";
+      renderPreview(text, []);
+      return;
+    }
+    state.textContent = text.trim()
+      ? "состояние: проверено, находок " + findMatches(text).length
+      : "состояние: готово к проверке";
     const matches = findMatches(text);
     renderList(matches);
     renderPreview(text, matches);
@@ -225,6 +243,8 @@
 
   document.getElementById("ownText").addEventListener("click", () => {
     textarea.value = "";
+    // N33: переход к своему тексту очищает share-state в URL.
+    history.replaceState(null, "", location.pathname + location.search);
     textarea.focus();
     updateCounts();
     run();
@@ -248,12 +268,18 @@
   });
   document.getElementById("shareBtn").addEventListener("click", () => {
     const text = textarea.value;
-    if (text.length > 8192) {
-      summary.textContent = "Текст длиннее 8 КБ — ссылка не создаётся.";
+    // N33: лимит считаем в байтах ПОСЛЕ кодирования, не в символах.
+    const bytes = new TextEncoder().encode(encodeURIComponent(text)).length;
+    if (bytes > 65536) {
+      summary.textContent = "Текст после кодирования длиннее 64 КиБ — " +
+        "ссылка не создаётся.";
       return;
     }
+    // Предупреждение ДО помещения текста в URL.
+    summary.textContent = "Ссылка получит ваш текст: история браузера, " +
+      "синхронизация и пересылка ссылки раскрывают его; fragment не " +
+      "отправляется серверу, но остаётся в истории и копируется ссылкой.";
     location.hash = encodeURIComponent(text);
-    summary.textContent = "Ссылка содержит ваш текст — не делитесь ею публично.";
   });
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
@@ -303,8 +329,12 @@
         .then((st) => {
           if (st) {
             let line = " · проверено: " + st.date + ", коммит " + st.commit;
-            if (typeof st.lag_commits === "number" && st.lag_commits > 0) {
+            if (st.lag_commits === null || st.lag_commits === undefined) {
+              line += " · сведений о релизе нет";
+            } else if (st.lag_commits > 0) {
               line += " · main впереди релиза на " + st.lag_commits + " коммитов";
+            } else {
+              line += " · main совпадает с релизом";
             }
             document.getElementById("buildinfo").textContent += line;
           }

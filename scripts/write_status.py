@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Пишет docs/status.json: commit, date, tests_passed, markers_count, parity.
-Вызывается только из workflow status.yml после зелёных тестов и паритета,
-поэтому файл обновляется исключительно успешным прогоном main."""
+"""Пишет status.json (docs/ и demo/): commit, date, tests_passed,
+markers_count, parity, main_commit, published_commit, published_tag,
+lag_commits. Вызывается из workflow: status.yml (артефакт прогона) и
+demo-pages.yml (деплой-артефакт с точным SHA деплоя, --sha).
+
+Семантика полей: lag_commits — число коммитов main после релизного тега;
+null, если тегов нет вовсе (неизвестный релиз НЕ равен нулевому лагу);
+published_commit/published_tag — null при отсутствии тега."""
 import datetime
 import json
 import os
@@ -12,11 +17,19 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def main():
-    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                            capture_output=True, text=True,
-                            cwd=ROOT).stdout.strip()
-    markers = json.load(open(os.path.join(ROOT, "markers.v1.json"),
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sha", default=None,
+                    help="SHA деплоя/прогона вместо git HEAD")
+    ap.add_argument("--root", default=ROOT,
+                    help="корень репозитория (для самопроверок)")
+    args = ap.parse_args(argv)
+    root = args.root
+    commit = args.sha or subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        capture_output=True, text=True, cwd=root).stdout.strip()
+    markers = json.load(open(os.path.join(root, "markers.v1.json"),
                              encoding="utf-8"))
     # L8: статус-лаг — main против последнего релизного тега. Тег берётся
     # максимумом версий среди v*, а не git describe: релизный тег может не
@@ -26,7 +39,7 @@ def main():
     tag = ""
     tags_out = subprocess.run(["git", "tag", "-l", "v*"],
                               capture_output=True, text=True,
-                              cwd=ROOT).stdout.split()
+                              cwd=root).stdout.split()
     best = None
     for tg in tags_out:
         m = _re.match(r"^v(\d+)\.(\d+)\.(\d+)$", tg.strip())
@@ -36,16 +49,17 @@ def main():
                 best = (ver, tg.strip())
     if best:
         tag = best[1]
-    published = ""
-    lag = 0
+    published = None
+    lag = None
     if tag:
         published = subprocess.run(["git", "rev-parse", "--short", tag],
                                    capture_output=True, text=True,
-                                   cwd=ROOT).stdout.strip()
+                                   cwd=root).stdout.strip()
+        head = args.sha or "HEAD"
         cnt = subprocess.run(["git", "rev-list", "--count",
-                              "%s..HEAD" % tag], capture_output=True,
-                             text=True, cwd=ROOT).stdout.strip()
-        lag = int(cnt) if cnt.isdigit() else 0
+                              "%s..%s" % (tag, head)], capture_output=True,
+                             text=True, cwd=root).stdout.strip()
+        lag = int(cnt) if cnt.isdigit() else None
     data = {
         "commit": commit,
         "date": datetime.date.today().isoformat(),
@@ -58,7 +72,7 @@ def main():
         "lag_commits": lag,
     }
     for rel in ("docs", "demo"):
-        out = os.path.join(ROOT, rel, "status.json")
+        out = os.path.join(root, rel, "status.json")
         with open(out, "w", encoding="utf-8", newline="\n") as fh:
             json.dump(data, fh, ensure_ascii=False, indent=2)
             fh.write("\n")
