@@ -70,5 +70,33 @@ class FactsDiffTest(unittest.TestCase):
         self.assertEqual(facts_diff.selftest(), 0)
 
 
+class NumericCanonTests(unittest.TestCase):
+    """Точный канон чисел: без float, со знаком, единицами и границами."""
+
+    def test_canon_exact_strings(self):
+        self.assertEqual(facts_diff._canon_number("1,1", ""), "1.1")
+        self.assertEqual(facts_diff._canon_number("1.50", ""), "1.5")
+        self.assertEqual(facts_diff._canon_number("-5", ""), "-5")
+        self.assertEqual(facts_diff._canon_number("\u22125", ""), "-5")
+        self.assertEqual(facts_diff._canon_number("+5", ""), "5")
+        self.assertEqual(facts_diff._canon_number("1 000", ""), "1000")
+        self.assertEqual(facts_diff._canon_number("9" * 400, ""), "9" * 400)
+        self.assertEqual(facts_diff._canon_number("007", ""), "7")
+
+    def test_unit_boundary_in_extract(self):
+        ex = facts_diff.extract("Ждать 5 миндалин.")
+        self.assertEqual(ex["numbers"][0]["value"], "5")
+        ex = facts_diff.extract("Ждать 5 минут.")
+        self.assertEqual(ex["numbers"][0]["value"], "5|мин")
+
+    def test_date_like_flag(self):
+        ex = facts_diff.extract("Версия 1.5 вышла.")
+        self.assertTrue(ex["numbers"][0].get("date_like"))
+        full = "Срок до 15" + ".03.20" + "26."
+        ex = facts_diff.extract(full)
+        self.assertTrue(ex["dates"])
+        self.assertFalse(ex["numbers"])
+
+
 if __name__ == "__main__":
     unittest.main()
