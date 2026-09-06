@@ -19,6 +19,12 @@
       "художественная проза и поэзия"
     ]
   },
+  "prohibited_uses": {
+    "status": "withdrawn",
+    "since": "3.32.0",
+    "note": "Политика ограниченных сценариев снята 2026-09-05; блок сохранён пустым исключительно для совместимости чтения contract.v1 и не восстанавливает политику.",
+    "list": []
+  },
   "output_envelope": {
     "format": "json",
     "fields": {
@@ -561,63 +567,122 @@
         "required": [
           "tool",
           "schema",
-          "files",
-          "counts",
-          "diff"
+          "files"
         ],
         "properties": {
           "tool": {
             "type": "string",
             "enum": [
-              "humanizer-facts"
+              "humanizer-report"
             ]
           },
           "schema": {
             "type": "integer",
             "const": 1
           },
-          "counts": {
-            "type": "object",
-            "required": [
-              "lost",
-              "added",
-              "changed"
-            ],
-            "properties": {
-              "lost": {
-                "type": "integer"
-              },
-              "added": {
-                "type": "integer"
-              },
-              "changed": {
-                "type": "integer"
-              }
-            }
-          },
-          "diff": {
-            "type": "object",
-            "required": [
-              "lost",
-              "added",
-              "changed"
-            ],
-            "properties": {
-              "lost": {
-                "type": "array"
-              },
-              "added": {
-                "type": "array"
-              },
-              "changed": {
-                "type": "array"
-              }
-            }
-          },
           "files": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "object",
+              "required": [
+                "before",
+                "after",
+                "tokens",
+                "sari_adapted",
+                "edit_types",
+                "facts",
+                "mtld"
+              ],
+              "properties": {
+                "before": {
+                  "type": "string"
+                },
+                "after": {
+                  "type": "string"
+                },
+                "tokens": {
+                  "type": "object",
+                  "properties": {
+                    "keep": {
+                      "type": "integer"
+                    },
+                    "add": {
+                      "type": "integer"
+                    },
+                    "delete": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "sari_adapted": {
+                  "type": "object",
+                  "properties": {
+                    "keep": {
+                      "type": "number"
+                    },
+                    "add": {
+                      "type": "number"
+                    },
+                    "delete": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "edit_types": {
+                  "type": "object",
+                  "properties": {
+                    "invisible": {
+                      "type": "integer"
+                    },
+                    "markup": {
+                      "type": "integer"
+                    },
+                    "punctuation": {
+                      "type": "integer"
+                    },
+                    "whitespace": {
+                      "type": "integer"
+                    },
+                    "casing": {
+                      "type": "integer"
+                    },
+                    "lexical": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "facts": {
+                  "type": "object",
+                  "properties": {
+                    "lost": {
+                      "type": "integer"
+                    },
+                    "changed": {
+                      "type": "integer"
+                    },
+                    "unchanged": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "mtld": {
+                  "type": "object",
+                  "properties": {
+                    "before": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "after": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
             }
           }
         }

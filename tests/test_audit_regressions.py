@@ -9,6 +9,7 @@ code span обрабатывался иначе, чем одинарный (чё
 После исправлений тесты ниже проходят; они же падают на возвращении
 старых паттернов или чётностной семантики.
 """
+import json
 import os
 import re
 import sys
@@ -94,3 +95,150 @@ class CodeSpanSemanticsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+MCP_ROOT = os.path.join(ROOT, "scripts", "mcp")
+
+
+class MachineContractTests(unittest.TestCase):
+    """L2 (N43/N49/N50): типы name, изоляция serve, структура конверта,
+    схема report, совместимость v1 с сохранённым контрактом предыдущего релиза (fixtures/contract-3311.json)."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, MCP_ROOT)
+        import humanizer_mcp as m
+        cls.mcp = m
+        cls.defs = m.generate_tool_defs(m.load_contract())
+        cls.state = {}
+        m.handle_message(json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"}}), cls.state, cls.defs)
+
+    def _call(self, name):
+        return self.mcp.handle_message(json.dumps({
+            "jsonrpc": "2.0", "id": 99, "method": "tools/call",
+            "params": {"name": name, "arguments": {}}}), self.state,
+            self.defs)
+
+    def test_bad_name_types_rejected(self):
+        for bad in ([], {"x": 1}, None, 7):
+            r = self._call(bad)
+            self.assertEqual(r.get("error", {}).get("code"), -32602, bad)
+
+    def test_session_survives_bad_name(self):
+        self._call([])
+        r = self.mcp.handle_message(
+            '{"jsonrpc": "2.0", "id": 100, "method": "tools/list"}',
+            self.state, self.defs)
+        self.assertIn("result", r)
+
+    def test_serve_isolates_bad_request(self):
+        import io
+        inp = io.StringIO(json.dumps({
+            "jsonrpc": "2.0", "id": 29, "method": "initialize",
+            "params": {"protocolVersion": "2025-06-18"}}) + "\n"
+            + json.dumps({"jsonrpc": "2.0", "id": 30, "method": "tools/call",
+                          "params": {"name": [], "arguments": {}}}) + "\n"
+            + '{"jsonrpc": "2.0", "id": 31, "method": "tools/list"}\n')
+        out = io.StringIO()
+        self.mcp.serve(stdin=inp, stdout=out)
+        lines = [json.loads(x) for x in out.getvalue().splitlines() if x]
+        self.assertEqual(len(lines), 3)
+        self.assertIn("result", lines[0])
+        self.assertEqual(lines[1]["error"]["code"], -32602)
+        self.assertIn("result", lines[2])
+
+    def test_report_schema_matches_actual_envelope(self):
+        import subprocess
+        import tempfile
+        contract = self.mcp.load_contract()
+        rep = next(x for x in contract["tools"]
+                   if x.get("command") == "humanizer-report")
+        schema = rep["output_schema"]
+        self.assertEqual(schema["properties"]["tool"]["enum"],
+                         ["humanizer-report"])
+        with tempfile.TemporaryDirectory() as td:
+            pb = os.path.join(td, "b.txt")
+            pa = os.path.join(td, "a.txt")
+            with open(pb, "w", encoding="utf-8") as fh:
+                fh.write("Текст до правки с числом 12.\n")
+            with open(pa, "w", encoding="utf-8") as fh:
+                fh.write("Текст до правки с числом 12!\n")
+            r = subprocess.run(
+                [sys.executable, "-X", "utf8",
+                 os.path.join(ROOT, "src", "humanizer_ru", "edit_report.py"),
+                 pb, pa, "--json"],
+                cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+            env = json.loads(r.stdout)
+        for key in schema["required"]:
+            self.assertIn(key, env)
+        self.assertEqual(env["tool"], "humanizer-report")
+        item_schema = schema["properties"]["files"]["items"]
+        for item in env["files"]:
+            for key in item_schema["required"]:
+                self.assertIn(key, item)
+            self.assertIsInstance(item["tokens"]["keep"], int)
+            self.assertIsInstance(item["facts"]["unchanged"], bool)
+
+    def test_v1_compatibility_with_saved_contract(self):
+        old = json.load(open(os.path.join(
+            ROOT, "tests", "fixtures", "contract-3311.json"),
+            encoding="utf-8"))
+        new = self.mcp.load_contract()
+        self.assertEqual(sorted(set(old) - set(new)), [],
+                         "удалены ключи верхнего уровня v1")
+        pu = new["prohibited_uses"]
+        self.assertEqual(pu["status"], "withdrawn")
+        self.assertEqual(pu["list"], [])
+        self.assertIsInstance(pu, dict)
+        old_tools = {x["command"] for x in old["tools"]}
+        new_tools = {x["command"] for x in new["tools"]}
+        self.assertEqual(old_tools - new_tools, set(),
+                         "удалены команды инструментов v1")
+
+
+class CliRobustnessTests(unittest.TestCase):
+    """L2: допустимые коды выхода и конверт на вырожденном входе."""
+
+    def _scan(self, data: bytes):
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            pf = os.path.join(td, "t.txt")
+            with open(pf, "wb") as fh:
+                fh.write(data)
+            r = subprocess.run(
+                [sys.executable, "-X", "utf8",
+                 os.path.join(ROOT, "scripts", "scan_soft_signals.py"),
+                 pf, "--json"],
+                cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+                errors="replace")
+        return r
+
+    def test_non_utf8_input(self):
+        payload = bytes([0xFF, 0xFE, 0x00]) + b"bad bytes" + bytes([0x80, 0x81])
+        r = self._scan(payload + b"\n")
+        self.assertIn(r.returncode, (0, 1))
+        env = json.loads(r.stdout)
+        self.assertEqual(env["schema"], 1)
+        self.assertIn("files", env)
+
+    def test_empty_input(self):
+        r = self._scan(b"")
+        self.assertIn(r.returncode, (0, 1))
+        env = json.loads(r.stdout)
+        self.assertEqual(env["tool"], "humanizer-scan")
+
+    def test_missing_file_is_input_error(self):
+        import subprocess
+        r = subprocess.run(
+            [sys.executable, "-X", "utf8",
+             os.path.join(ROOT, "scripts", "scan_soft_signals.py"),
+             os.path.join("tests", "fixtures", "no-such-file.txt"), "--json"],
+            cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+            errors="replace")
+        self.assertEqual(r.returncode, 2)
+        env = json.loads(r.stdout)
+        self.assertIn("error", env)
+
