@@ -38,6 +38,18 @@ class EditReportTest(unittest.TestCase):
         f = er.report(b, a)["files"][0]
         self.assertFalse(f["facts"]["unchanged"])
 
+    def test_facts_fraction_not_truncated(self):
+        # дробь не усечена до целого: 1,1 -> 1,9 видна в отчёте как потеря
+        b, a = self._pair("Доза 1,1 мг.\n", "Доза 1,9 мг.\n")
+        f = er.report(b, a)["files"][0]
+        self.assertGreaterEqual(f["facts"]["lost"], 1)
+        self.assertFalse(f["facts"]["unchanged"])
+
+    def test_facts_equivalent_notations_clean(self):
+        b, a = self._pair("Вес 1.5 кг.\n", "Вес 1,5 кг.\n")
+        f = er.report(b, a)["files"][0]
+        self.assertTrue(f["facts"]["unchanged"])
+
 
 if __name__ == "__main__":
     unittest.main()
