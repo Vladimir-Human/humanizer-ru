@@ -8,6 +8,8 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:   # перезапуск контракт-гейта после публикации Release:
+                       # гонка «тег раньше Release» не требует пересоздания тега
 
 permissions:
   contents: read
