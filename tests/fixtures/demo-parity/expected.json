@@ -1,25 +1,33 @@
 {
   "cli_rc": 1,
   "count": 3,
-  "warnings_b": 0,
   "markers": [
     {
       "line": 1,
       "marker": "contentReference",
       "class": "A",
-      "shadow": false
+      "fragment": "Согласно отчёту :contentReference[oaicite:12]{index=12}, число заявок за неделю выросло на",
+      "shadow": false,
+      "start": 16,
+      "end": 55
     },
     {
       "line": 1,
       "marker": "utm_chatgpt",
       "class": "A",
-      "shadow": false
+      "fragment": "Согласно отчёту :contentReference[oaicite:12]{index=12}, число заявок за неделю выросло на",
+      "shadow": false,
+      "start": 133,
+      "end": 156
     },
     {
       "line": 2,
       "marker": "zero_width",
       "class": "B",
-      "shadow": false
+      "fragment": "Данные подтверждены ассистентом​, подробности см. в чате.",
+      "shadow": false,
+      "start": 31,
+      "end": 32
     }
   ]
 }

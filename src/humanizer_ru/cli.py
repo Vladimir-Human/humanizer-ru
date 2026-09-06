@@ -45,12 +45,55 @@ def _resolved(argv: Optional[Sequence[str]]) -> List[str]:
     return list(sys.argv[1:] if argv is None else argv)
 
 
+def _split_ddash(args: List[str]):
+    """Граница «--»: всё после первого «--» — позиционные операнды, не флаги.
+
+    Возвращает (флаги до «--», операнды после). «--version»/«--contract»
+    в операндах флагами не считаются: имя файла «--version» законно.
+    """
+    if "--" in args:
+        i = args.index("--")
+        return args[:i], args[i + 1:]
+    return list(args), []
+
+
+def _usage_error_envelope(tool: str) -> None:
+    """Конверт ошибки разбора аргументов в stdout (правило error_rule)."""
+    import json
+    print(json.dumps({"tool": tool, "schema": 1,
+                      "files": [{"file": "<argv>",
+                                 "error": "аргументы не распознаны"}],
+                      "error": "вход не читается (код 2)"},
+                     ensure_ascii=False, indent=2))
+
+
+def _guarded(args: List[str], tool: str, fn) -> int:
+    """Делегирование парсеру инструмента: отказ argparse с --json печатает
+    JSON-конверт в stdout (агент всегда получает разобранный JSON, а не
+    голый usage в stderr). Выход 0 (--help) проходит без конверта."""
+    head, _tail = _split_ddash(args)
+    try:
+        return fn(args)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 2
+        if code == 0:
+            return 0
+        if "--json" in head:
+            _usage_error_envelope(tool)
+        return code
+
+
 def _common(args: List[str]) -> Optional[int]:
-    """Перехват --version/--contract до делегирования парсеру инструмента."""
-    if "--version" in args:
+    """Перехват --version/--contract до делегирования парсеру инструмента.
+
+    Учитывает границу «--»: после неё значения являются операндами, и файл
+    с именем «--version» не превращается в запрос версии.
+    """
+    head, _tail = _split_ddash(args)
+    if "--version" in head:
         print(__version__)
         return 0
-    if "--contract" in args:
+    if "--contract" in head:
         text = _contract_text()
         sys.stdout.write(text if text.endswith("\n") else text + "\n")
         return 0
@@ -63,7 +106,7 @@ def scan_main(argv: Optional[Sequence[str]] = None) -> int:
     rc = _common(args)
     if rc is not None:
         return rc
-    return scan_soft_signals.main(args)
+    return _guarded(args, "humanizer-scan", scan_soft_signals.main)
 
 
 def markers_main(argv: Optional[Sequence[str]] = None) -> int:
@@ -120,10 +163,46 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
                     help="с --remove: писать на место (копия .bak)")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка 40 выражений")
-    parsed = ap.parse_args(args)
+    try:
+        parsed = ap.parse_args(args)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 2
+        if code == 0:
+            return 0
+        head, _tail = _split_ddash(args)
+        if "--json" in head:
+            _usage_error_envelope("humanizer-markers")
+        return code
     if parsed.remove:
         return _markers_remove(parsed)
     if parsed.selftest or not parsed.files:
+        if parsed.json and not parsed.selftest:
+            # Машинный режим без файлов: stdout несёт только конверт,
+            # текст самопроверки уходит в stderr; scope_note честный —
+            # входных файлов не было, счётчик маркеров нулевой не «чисто»,
+            # а «нечего считать».
+            import contextlib
+            import io
+            import json
+            if not parsed.files:
+                print("нет файлов — запускается самопроверка выражений; "
+                      "справка: --help", file=sys.stderr)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_self = check_markers.main()
+            tail = buf.getvalue().strip().splitlines()
+            entry = {"file": "<выражения>", "count": 0, "warnings_b": 0,
+                     "markers": [],
+                     "scope_note": "нет файлов: выполнена самопроверка "
+                                   "выражений"
+                                   + (" (%s)" % tail[-1] if tail else "")}
+            envelope = {"tool": "humanizer-markers", "schema": 1,
+                        "files": [entry]}
+            if rc_self:
+                envelope["error"] = ("самопроверка выражений ПРОВАЛЕНА "
+                                     "(код %d)" % rc_self)
+            print(json.dumps(envelope, ensure_ascii=False, indent=2))
+            return rc_self
         if not parsed.files and not parsed.selftest:
             print("нет файлов — запускается самопроверка выражений; "
                   "справка: --help", file=sys.stderr)
@@ -229,7 +308,7 @@ def polish_main(argv: Optional[Sequence[str]] = None) -> int:
     rc = _common(args)
     if rc is not None:
         return rc
-    return polish.main(args)
+    return _guarded(args, "humanizer-polish", polish.main)
 
 
 def detect_main(argv: Optional[Sequence[str]] = None) -> int:
@@ -238,4 +317,4 @@ def detect_main(argv: Optional[Sequence[str]] = None) -> int:
     rc = _common(args)
     if rc is not None:
         return rc
-    return detect_conj.main(args)
+    return _guarded(args, "humanizer-detect", detect_conj.main)

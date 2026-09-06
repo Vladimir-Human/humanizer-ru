@@ -2,15 +2,37 @@
 # -*- coding: utf-8 -*-
 """Генератор JS-правил из markers.v1.json для статического браузерного демо.
 
-Python re переносится в JavaScript RegExp:
+Python re переносится в JavaScript RegExp детерминированно, с явной
+Unicode-семантикой (решения зафиксированы 2026-09-06 и сверяются гейтом
+scripts/check_demo_parity.py на общих векторах):
+
   - инлайновый флаг (?m) переносится во флаги конструктора;
   - Python-escape Uhhhhhhhh переводится в JS-escape u{hhhhhh} (нужен флаг u);
-  - остальные escape (d, s, w, b, uXXXX, xHH) в JS RegExp работают как есть.
+  - \\d -> \\p{Nd}, \\D -> [^\\p{Nd}]: Python \\d — десятичные цифры Unicode,
+    JS \\d — только ASCII; \\p{Nd} с флагом u повторяет Python;
+  - \\w -> [\\p{L}\\p{N}\\p{M}_], \\W — отрицание того же класса: Python \\w —
+    буквенно-цифровые Unicode плюс подчёркивание (включая комбинируемые
+    диакритики); JS \\w — только ASCII;
+  - \\s / \\S -> явный класс пробельных Python (\\t \\n \\v \\f \\r
+    \\u001c-\\u001f пробел \\u0085 \\u00a0 \\u1680 \\u2000-\\u200a \\u2028
+    \\u2029 \\u202f \\u205f \\u3000): наборы \\s в средах различаются
+    (JS включает \\ufeff, Python — \\u001c-\\u001f и \\u0085); явный класс
+    одинаков в обеих;
+  - \\b и \\B в исходных паттернах ЗАПРЕЩЕНЫ (генератор отказывает):
+    семантика границы слова различается (Python — Unicode, JS — ASCII),
+    источник обязан нести явные lookaround-классы, одинаковые в обеих
+    средах;
+  - флаг u добавляется, когда в результате есть \\p{...}, \\u{...} или
+    символы вне BMP;
+  - поле url_marker из реестра переносится в правило: engine.js применяет
+    маскирование URL только к правилам без этого флага (граница детектора).
+
 Генератор не исполняет regex сам; корректность JS-строк браузер и Node
 проверяют при загрузке демо. Вход — markers.v1.json.
 """
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +40,27 @@ IN = os.path.join(HERE, "markers.v1.json")
 OUT = os.path.join(HERE, "markers.js")
 BS = chr(92)
 NL = chr(10)
+
+# Явный класс пробельных Python re (\\s) для переноса в JS: одинаков в
+# обеих средах, в отличие от «родных» \\s.
+_PY_SPACE_CLASS = (BS + "t" + BS + "n" + BS + "v" + BS + "f" + BS + "r"
+                   + BS + "u001c-" + BS + "u001f" + BS + "u0020"
+                   + BS + "u0085" + BS + "u00a0" + BS + "u1680"
+                   + BS + "u2000-" + BS + "u200a" + BS + "u2028"
+                   + BS + "u2029" + BS + "u202f" + BS + "u205f"
+                   + BS + "u3000")
+_WORD_CLASS = BS + "p{L}" + BS + "p{N}" + BS + "p{M}_"
+
+# Классы переноса: ключ — двухсимвольный escape Python, значение — замена
+# для JS (строки уже содержат нужные экранированные последовательности).
+_CLASS_MAP = {
+    "d": BS + "p{Nd}",
+    "D": "[^" + BS + "p{Nd}]",
+    "w": "[" + _WORD_CLASS + "]",
+    "W": "[^" + _WORD_CLASS + "]",
+    "s": "[" + _PY_SPACE_CLASS + "]",
+    "S": "[^" + _PY_SPACE_CLASS + "]",
+}
 
 
 def _is_hex(text):
@@ -30,20 +73,59 @@ def py_to_js(pattern):
     if source.startswith("(?m)"):
         source = source[4:]
         flags += "m"
+    # \b/\B непереносимы (ASCII в JS навсегда): источник обязан нести
+    # явные lookaround-классы. Отказ генератора — защита от тихого
+    # расхождения семантики между CLI и демо.
+    i = 0
+    n = len(source)
+    while i < n:
+        if source[i] == BS:
+            if i + 1 < n and source[i + 1] == BS:
+                i += 2
+                continue
+            if i + 1 < n and source[i + 1] in "bB":
+                raise ValueError(
+                    "паттерн содержит %s%s: граница слова в JS — ASCII и "
+                    "расходится с Python; замените на явные lookaround-"
+                    "классы (?<![A-Za-z0-9_]) / (?![A-Za-z0-9_])"
+                    % (BS, source[i + 1]))
+            i += 2
+            continue
+        i += 1
     out = []
     i = 0
     n = len(source)
     while i < n:
-        if (source[i] == BS and i + 9 < n and source[i + 1] == "U"
-                and _is_hex(source[i + 2:i + 10])):
+        if source[i] != BS or i + 1 >= n:
+            out.append(source[i])
+            i += 1
+            continue
+        nxt = source[i + 1]
+        if nxt == BS:
+            out.append(BS + BS)
+            i += 2
+            continue
+        if nxt == "U" and i + 9 < n and _is_hex(source[i + 2:i + 10]):
             code = int(source[i + 2:i + 10], 16)
             out.append(BS + "u{" + format(code, "x") + "}")
             i += 10
             continue
+        if nxt in _CLASS_MAP:
+            out.append(_CLASS_MAP[nxt])
+            i += 2
+            continue
+        if nxt == '"' or nxt == "'":
+            # Под флагом u экранирование кавычек недопустимо (identity
+            # escapes ограничены); голая кавычка законна и в классе.
+            out.append(nxt)
+            i += 2
+            continue
         out.append(source[i])
-        i += 1
+        out.append(nxt)
+        i += 2
     source = "".join(out)
-    if (BS + "u{") in source or any(ord(c) > 0xFFFF for c in source):
+    if ((BS + "u{") in source or (BS + "p{") in source
+            or any(ord(c) > 0xFFFF for c in source)):
         flags += "u"
     return source, flags
 
@@ -71,6 +153,7 @@ def build_js(doc):
             "description": m["description"],
             "source": source,
             "flags": flags,
+            "url_marker": bool(m.get("url_marker", False)),
             "explain": m.get("explain_ru"),
         })
     # Дата сборки выводится из содержания реестра (максимальная дата
