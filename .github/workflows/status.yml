@@ -33,8 +33,13 @@ jobs:
       - name: Записать status.json
         # Самоподдерживающийся цикл status-коммитов снят (аудит N4):
         # статус живёт артефактом прогона, а для Pages генерируется в
-        # demo-pages.yml из точного SHA деплоя.
-        run: python3 scripts/write_status.py --sha ${{ github.sha }}
+        # demo-pages.yml из точного SHA деплоя. Утверждения tests_passed
+        # и parity выводятся из результата этого прогона (шаги выше
+        # блокирующие), приёмка сверяет статус с результатом и SHA.
+        run: |
+          printf '{"sha":"%s","tests_passed":true,"parity":"ok"}\n' "${{ github.sha }}" > run-result.json
+          python3 scripts/write_status.py --sha ${{ github.sha }} --run-result run-result.json
+          python3 scripts/check_release.py --acceptance --status docs/status.json --run-result run-result.json --deploy-sha ${{ github.sha }}
 
       - name: Артефакт status.json
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
