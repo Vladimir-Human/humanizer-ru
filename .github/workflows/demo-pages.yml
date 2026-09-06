@@ -52,6 +52,10 @@ jobs:
           cp eval/facts/facts.v1.json demo/eval/facts/facts.v1.json
           cp eval/facts/self-audit.v1.json demo/eval/facts/self-audit.v1.json
           cp llms.txt demo/.well-known/llms.txt
+      - name: Сгенерировать status.json деплоя
+        # Статус собирается из точного SHA деплоя: Pages не может отдать
+        # статус чужого коммита, гонка status-коммитов исключена (аудит N4).
+        run: python3 scripts/write_status.py --sha ${{ github.sha }}
       - name: Собрать артефакт из demo/
         # include-hidden-files: true обязателен: с v4 действие по умолчанию
         # вырезает скрытые пути, и Pages отдаёт 404 на /.well-known/llms.txt

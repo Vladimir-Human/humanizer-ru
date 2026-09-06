@@ -121,6 +121,10 @@ def _gates(quick, tmpdir):
         
         
         
+        ("demo-states: самопроверка", [PY,
+         "scripts/check_demo_states.py", "--selftest"], [], {0}),
+        ("demo-states: состояния демо и статус", [PY,
+         "scripts/check_demo_states.py"], [], {0}),
         ("batch: самопроверка scan_folder", [PY,
          "scripts/scan_folder.py", "--selftest"], [], {0}),
         ("pypi-metadata: самопроверка", [PY,
