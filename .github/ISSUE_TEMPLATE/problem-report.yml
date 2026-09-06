@@ -1,0 +1,49 @@
+name: Проблема в поставке
+description: Команда или сайт повели себя не как задокументировано
+title: "problem: "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Версия или коммит
+      description: "pip show humanizer-ru, тег релиза или SHA коммита; для демо — адрес страницы и строка статуса из футера"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Команда или действие
+      description: Точная команда с аргументами или последовательность кликов
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидание
+      description: Что должно было произойти по документации
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактический результат
+      description: Вывод, код выхода, скриншот строки статуса
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Безопасный минимальный пример
+      description: Текст без секретов и личных данных, на котором воспроизводится; можно ссылку на фикстуру
+    validations:
+      required: false
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Область
+      options:
+        - label: CLI/пакет PyPI
+        - label: MCP-сервер
+        - label: Демо на Pages
+        - label: Скилл (SKILL.md/references)
