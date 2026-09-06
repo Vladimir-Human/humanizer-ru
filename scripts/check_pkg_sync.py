@@ -2,19 +2,21 @@
 # -*- coding: utf-8 -*-
 """Гейт синхронности PyPI-пакета с корневыми скриптами.
 
-Пакет `src/humanizer_ru/` копирует четыре рантайм-скрипта корня:
+Пакет `src/humanizer_ru/` копирует пять рантайм-скриптов корня:
 `scripts/check_markers.py`, `scripts/scan_soft_signals.py`,
-`scripts/polish.py` и `scripts/detect_conj.py`. Копии обязаны побайтово
-повторять оригиналы: рассинхронизированный пакет — это wheel, который
-ведёт себя иначе, чем проверенное дерево репозитория.
+`scripts/polish.py`, `scripts/detect_conj.py` и
+`scripts/protected_regions.py`. Копии обязаны побайтово повторять
+оригиналы: рассинхронизированный пакет — это wheel, который ведёт себя
+иначе, чем проверенное дерево репозитория.
 
 Правила:
 1. `src/humanizer_ru/check_markers.py` равен `scripts/check_markers.py`.
 2. `src/humanizer_ru/scan_soft_signals.py` равен `scripts/scan_soft_signals.py`.
 3. `src/humanizer_ru/polish.py` равен `scripts/polish.py`.
 4. `src/humanizer_ru/detect_conj.py` равен `scripts/detect_conj.py`.
-5. В пакете нет других .py-файлов, кроме `__init__.py`, `cli.py` и четырёх копий.
-6. Данные пакета синхронны с корневыми: `src/humanizer_ru/contract.v1.json`
+5. `src/humanizer_ru/protected_regions.py` равен `scripts/protected_regions.py`.
+6. В пакете нет других .py-файлов, кроме `__init__.py`, `cli.py` и пяти копий.
+7. Данные пакета синхронны с корневыми: `src/humanizer_ru/contract.v1.json`
    равен `contract.v1.json`, `src/humanizer_ru/markers.v1.json` равен
    `markers.v1.json` (копии едут в wheel/sdist — `--contract` установленного
    пакета обязан печатать тот же контракт, что и дерево репозитория).
@@ -43,6 +45,7 @@ SYNCED = [
     ("scripts", "scan_soft_signals.py"),
     ("scripts", "polish.py"),
     ("scripts", "detect_conj.py"),
+    ("scripts", "protected_regions.py"),
 ]
 ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
                 "facts_diff.py",
@@ -51,6 +54,7 @@ ALLOWED_PY = {"__init__.py", "cli.py", "check_markers.py",
                 "edit_report.py",
                 "positioning.py",
               "scan_soft_signals.py", "polish.py", "detect_conj.py",
+              "protected_regions.py",
               "mcp_server.py", "text_layer.py"}
 SYNCED_DATA = ["contract.v1.json", "markers.v1.json", "identity.v1.json"]
 # Копии с другим именем: MCP-сервер (scripts/mcp/humanizer_mcp.py ->
@@ -161,6 +165,10 @@ def selftest():
             fh.write("w = 4\n")
         with open(os.path.join(td, PKG, "detect_conj.py"), "w") as fh:
             fh.write("w = 4\n")
+        with open(os.path.join(td, "scripts", "protected_regions.py"), "w") as fh:
+            fh.write("v = 7\n")
+        with open(os.path.join(td, PKG, "protected_regions.py"), "w") as fh:
+            fh.write("v = 7\n")
         for data_name in SYNCED_DATA:
             with open(os.path.join(td, data_name), "w", encoding="utf-8") as fh:
                 fh.write('{"data": 1}\n')
