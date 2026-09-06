@@ -182,9 +182,10 @@ class MachineContractTests(unittest.TestCase):
             self.assertIsInstance(item["facts"]["unchanged"], bool)
 
     def test_v1_compatibility_with_saved_contract(self):
-        old = json.load(open(os.path.join(
-            ROOT, "tests", "fixtures", "contract-3311.json"),
-            encoding="utf-8"))
+        with open(os.path.join(
+                ROOT, "tests", "fixtures", "contract-3311.json"),
+                encoding="utf-8") as fh:
+            old = json.load(fh)
         new = self.mcp.load_contract()
         self.assertEqual(sorted(set(old) - set(new)), [],
                          "удалены ключи верхнего уровня v1")
@@ -217,12 +218,21 @@ class CliRobustnessTests(unittest.TestCase):
         return r
 
     def test_non_utf8_input(self):
-        payload = bytes([0xFF, 0xFE, 0x00]) + b"bad bytes" + bytes([0x80, 0x81])
+        # байты вне UTF-8 и без BOM: декодер обязан заменить, а не отказаться
+        payload = bytes([0x80, 0x81, 0x82]) + b"bad bytes"
         r = self._scan(payload + b"\n")
         self.assertIn(r.returncode, (0, 1))
         env = json.loads(r.stdout)
         self.assertEqual(env["schema"], 1)
         self.assertIn("files", env)
+
+    def test_undecodable_bom_input_is_input_error(self):
+        # BOM UTF-16 с невалидным телом: честный отказ входа (код 2),
+        # а не ложный «проверено без находок»
+        r = self._scan(bytes([0xFF, 0xFE, 0x00, 0x81, 0x82]))
+        self.assertEqual(r.returncode, 2)
+        env = json.loads(r.stdout)
+        self.assertIn("error", env)
 
     def test_empty_input(self):
         r = self._scan(b"")
