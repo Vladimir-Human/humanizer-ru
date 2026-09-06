@@ -63,6 +63,8 @@ humanizer-markers --scan primer.txt
 - Агентные клиенты с поддержкой agentskills.io (opencode, DeepSeek Harness): распакуйте текстовый бандл из архива релиза.
 - Браузерное расширение отклонено: новый поверхностный контур (permissions, store review) не окупается; очередь идей — [research/BACKLOG.md](research/BACKLOG.md).
 
+Каталоги: [Glama MCP](https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru) · [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru).
+
 ## Одноимённые проекты
 
 На GitHub есть скиллы с тем же именем и другим содержанием. Снимок 2026-09-05

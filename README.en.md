@@ -62,6 +62,8 @@ humanizer-markers --scan primer.txt
 - Agent clients supporting agentskills.io (opencode, DeepSeek Harness): unpack the text bundle from the release archive.
 - A browser extension was declined: a new surface (permissions, store review) does not pay off; idea queue — [research/BACKLOG.md](research/BACKLOG.md).
 
+Каталоги: [Glama MCP](https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru) · [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru).
+
 ## Same-name projects
 
 GitHub hosts skills with the same name and different content. Snapshot 2026-09-05
