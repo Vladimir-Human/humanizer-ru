@@ -218,13 +218,13 @@ class CliRobustnessTests(unittest.TestCase):
         return r
 
     def test_non_utf8_input(self):
-        # байты вне UTF-8 и без BOM: декодер обязан заменить, а не отказаться
+        # байты вне UTF-8 и без BOM: честный отказ входа (код 2) с конвертом
+        # ошибки, а не ложный «проверено без находок»
         payload = bytes([0x80, 0x81, 0x82]) + b"bad bytes"
         r = self._scan(payload + b"\n")
-        self.assertIn(r.returncode, (0, 1))
+        self.assertEqual(r.returncode, 2)
         env = json.loads(r.stdout)
-        self.assertEqual(env["schema"], 1)
-        self.assertIn("files", env)
+        self.assertIn("error", env)
 
     def test_undecodable_bom_input_is_input_error(self):
         # BOM UTF-16 с невалидным телом: честный отказ входа (код 2),
