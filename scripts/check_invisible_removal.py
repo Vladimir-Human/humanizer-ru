@@ -19,6 +19,10 @@
      references/removal-matrix.md (U+XXXX литералы).
   5. CLI-интеграция: humanizer-markers --remove --json на safe-фикстуре
      даёт тот же отчёт, что функция (через пакет из src/).
+  6. Съём невидимок не порождает видимый артефакт: зазор схлопывается в
+     точке съёма (после safe/opt-in/to-space нет {2,} пробелов), а
+     авторская типографика вне точек съёма не трогается; законная
+     кириллическая диакритика (категория Mn) сохраняется во всех режимах.
 
 Запуск:
     python3 scripts/check_invisible_removal.py             # проверка
@@ -177,6 +181,41 @@ def check_cli() -> list:
     return errors
 
 
+def check_removal_gaps() -> list:
+    """Съём невидимок не порождает видимый артефакт: {2,} пробелов.
+
+    Проверяются safe-режим (нулевая ширина между пробелами), opt-in
+    (ambiguous между пробелами) и to-space (NBSP между пробелами —
+    тройной пробел не появляется). Законная кириллическая диакритика
+    (категория Mn) сохраняется побайтно во всех режимах.
+    """
+    errors = []
+    gap = "слово \u200b слово и ещё \u2060 одно"
+    cleaned, _ = text_layer.remove_invisible(gap)
+    if "  " in cleaned:
+        errors.append("safe-съём породил {2,} пробелов: %r" % cleaned)
+    if cleaned != "слово слово и ещё одно":
+        errors.append("safe-съём: схлопывание не в точке съёма: %r" % cleaned)
+    gap2 = "слово \u00a0 слово"
+    cleaned2, _ = text_layer.remove_invisible(gap2, True)
+    if "  " in cleaned2:
+        errors.append("opt-in to-space породил {2,} пробелов: %r" % cleaned2)
+    gap3 = "слово \u200e слово"
+    cleaned3, _ = text_layer.remove_invisible(gap3, True)
+    if "  " in cleaned3:
+        errors.append("opt-in снятие породило {2,} пробелов: %r" % cleaned3)
+    author = "авторский  текст без невидимок"
+    if text_layer.remove_invisible(author)[0] != author:
+        errors.append("двойной пробел автора тронут вне точки съёма")
+    mn = "й\u0301 о\u0308"
+    for mode in (False, True):
+        out, _ = text_layer.remove_invisible(mn, mode)
+        if out != mn:
+            errors.append("Mn-диакритика изменена в режиме include_ambiguous"
+                          "=%s: %r" % (mode, out))
+    return errors
+
+
 def check() -> list:
     errors = []
     # Запрет массового удаления по построению: у remove_invisible ровно два
@@ -186,7 +225,8 @@ def check() -> list:
         errors.append("remove_invisible: сигнатура %r — появился лишний "
                       "режим (массовое удаление запрещено)"
                       % list(sig.parameters))
-    for fn in (check_fixtures, check_registry, check_matrix_doc, check_cli):
+    for fn in (check_fixtures, check_registry, check_matrix_doc, check_cli,
+               check_removal_gaps):
         try:
             errors.extend(fn())
         except OSError as exc:
@@ -231,6 +271,20 @@ def selftest() -> int:
     case("NBSP opt-in -> обычный пробел", cleaned_n == "12 %")
     case("NBSP по умолчанию не трогается",
          text_layer.remove_invisible(nbsp)[0] == nbsp)
+    gap = "слово \u200b слово"
+    cleaned_gap, _ = text_layer.remove_invisible(gap)
+    case("после съёма нет {2,} пробелов",
+         cleaned_gap == "слово слово" and "  " not in cleaned_gap)
+    cleaned_gapn, _ = text_layer.remove_invisible("слово \u00a0 слово", True)
+    case("opt-in: двойного/тройного пробела нет", "  " not in cleaned_gapn)
+    mn = "й\u0301 о\u0308"
+    case("Mn-диакритика сохранена во всех режимах",
+         text_layer.remove_invisible(mn)[0] == mn
+         and text_layer.remove_invisible(mn, True)[0] == mn)
+    # Негатив на глобальное схлопывание: авторский двойной пробел вне
+    # точки съёма обязан оставаться — правится только зазор у снятого.
+    case("авторский двойной пробел вне съёма не трогается",
+         text_layer.remove_invisible("авторский  текст")[0] == "авторский  текст")
     errs = check_fixtures()
     case("реальные фикстуры проходят", errs == [])
     # Негатив: подмена expected ловится.

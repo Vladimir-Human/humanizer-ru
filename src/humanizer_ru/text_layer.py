@@ -151,6 +151,36 @@ def layer_a_rx():
     return _RX
 
 
+def _last_out_char(out):
+    for seg in reversed(out):
+        if seg:
+            return seg[-1]
+    return ""
+
+
+def _sub_collapse(text, rx):
+    """rx.subn("", text) со схлопыванием зазора в точке съёма.
+
+    Съём невидимого символа между двумя пробелами не оставляет двойной
+    пробел: правый литеральный пробел поглощается. Авторская типографика
+    вне точек съёма не трогается. Возвращает (текст, число снятых
+    совпадений) — счётчик совпадений не включает поглощённые пробелы.
+    """
+    total = 0
+    out = []
+    pos = 0
+    n = len(text)
+    for m in rx.finditer(text):
+        s, e = m.start(), m.end()
+        out.append(text[pos:s])
+        total += 1
+        pos = e
+        if _last_out_char(out) == " " and pos < n and text[pos] == " ":
+            pos += 1
+    out.append(text[pos:])
+    return "".join(out), total
+
+
 def clean_text_layer(text):
     # I.28: слой снятия включает и Unicode tag-символы (отдельная
     # константа TAG_STRIP_RX с guard эмодзи-флагов). Применяется во всех
@@ -158,7 +188,7 @@ def clean_text_layer(text):
     rx = layer_a_rx()
     total = 0
     if rx is not None:
-        text, n = rx.subn("", text)
+        text, n = _sub_collapse(text, rx)
         total += n
     text, t = clean_tag_strip(text)
     total += t
@@ -336,7 +366,7 @@ def clean_markup(text):
 
 def clean_tag_strip(text):
     """I.28: снятие Unicode tag-символов и default-ignorable вне эмодзи-флагов."""
-    cleaned, n = TAG_STRIP_RX.subn("", text)
+    cleaned, n = _sub_collapse(text, TAG_STRIP_RX)
     return cleaned, n
 
 
@@ -494,6 +524,20 @@ def _is_flag_tag_context(text, i):
     return False
 
 
+def _collapse_gap(out, text, i):
+    """Схлопывание зазора в точке съёма.
+
+    Если слева в выводе уже стоит пробел и справа в входе (позиция i) идёт
+    литеральный пробел, он поглощается: съём невидимого символа не порождает
+    {2,} пробелов там, где их не было. Возвращает 1 (поглотить пробел) или
+    0. Авторская типографика вне точек съёма не трогается: без снятого
+    символа двойные пробелы входа остаются как есть.
+    """
+    if out and out[-1] == " " and i < len(text) and text[i] == " ":
+        return 1
+    return 0
+
+
 def remove_invisible(text, include_ambiguous=False):
     """Снятие невидимых символов по классификации риска.
 
@@ -508,6 +552,12 @@ def remove_invisible(text, include_ambiguous=False):
     Записи: {"codepoint": "U+XXXX", "name", "class", "action", "line"}
     (line — 1-based). Режим «удалить всё невидимое» отсутствует по
     построению: dangerous не снимается ни при каком флаге.
+
+    Зазор схлопывается В ТОЧКЕ СЪЁМА (а не подстановкой по всему тексту):
+    снятие нулевой ширины между двумя пробелами даёт один пробел, замена
+    неразрывного пробела между двумя обычными не даёт тройного. Законная
+    кириллическая диакритика (категория Mn: U+0301, U+0308 и т.п.)
+    невидимой не считается и сохраняется побайтно во всех режимах.
     """
     out = []
     report = {"removed": [], "reported": [], "flag_sequences_kept": [],
@@ -544,11 +594,25 @@ def remove_invisible(text, include_ambiguous=False):
         if cls == "safe":
             report["removed"].append(rec)
             i += 1
+            # Схлопывание зазора в точке съёма: снятие невидимки между
+            # двумя пробелами не оставляет двойной пробел.
+            i += _collapse_gap(out, text, i)
             continue
         if cls == "ambiguous":
             if include_ambiguous:
                 if action == "to-space":
-                    out.append(" ")
+                    # Замена на пробел: если пробел уже есть слева или
+                    # справа, суммарно остаётся один (тройной зазор не
+                    # порождается).
+                    if out and out[-1] == " ":
+                        i += _collapse_gap(out, text, i + 1)
+                    elif i + 1 < n and text[i + 1] == " ":
+                        out.append(" ")
+                        i += 1
+                    else:
+                        out.append(" ")
+                else:
+                    i += _collapse_gap(out, text, i + 1)
                 report["removed"].append(rec)
                 report["warnings"].append(
                     "%s (U+%04X, строка %d): снят opt-in — возможно "
