@@ -62,11 +62,17 @@ def fix_file(path):
     with open(real, encoding="utf-8", errors="surrogateescape") as fh:
         text = fh.read()
     # Маркеры класса A вне текстового пути: фиксируем до чистки,
-    # чтобы UNFIXED честно называл такой файл.
+    # чтобы UNFIXED честно называл такой файл. Граница та же, что у
+    # детектора: строки закрытых fenced-блоков не считаются (иначе файл,
+    # который scan признаёт чистым, получал ложный UNFIXED).
     has_class_a = False
     compiled = {name: __import__("re").compile(case[0])
                 for name, case in cm.CASES.items()}
-    for line in text.splitlines():
+    lines = text.splitlines()
+    blocked = cm._fenced_lines(lines)
+    for num, line in enumerate(lines, 1):
+        if num in blocked:
+            continue
         if cm._line_matches(line, compiled):
             has_class_a = True
             break
@@ -171,6 +177,20 @@ def _selftest():
         if st6 != "CLEAN" or after6 != "пример кода: `?utm_source=openai` внутри.\n":
             print("ПРОВАЛ selftest: инлайн-код (%s): %r" % (st6, after6))
             fails += 1
+        # think-блок внутри закрытого fenced: детектор его не помечает,
+        # фикс обязан оставить файл байт-в-байт и ответить CLEAN.
+        think_open = "<" + "think" + ">"
+        think_close = "</" + "think" + ">"
+        fenced_think = os.path.join(d, "fenced.md")
+        with open(fenced_think, "w", encoding="utf-8") as fh:
+            fh.write("Чистый текст.\n\n```text\n%sдумать%s\n```\n"
+                     % (think_open, think_close))
+        st7, _ = fix_file(fenced_think)
+        with open(fenced_think, encoding="utf-8") as fh:
+            after7 = fh.read()
+        if st7 != "CLEAN" or "думать" not in after7:
+            print("ПРОВАЛ selftest: think в fenced (%s): %r" % (st7, after7))
+            fails += 1
     finally:
         if old_ws is None:
             os.environ.pop("GITHUB_WORKSPACE", None)
@@ -180,7 +200,7 @@ def _selftest():
     if fails:
         print("САМОПРОВЕРКА: провалов %d" % fails)
         return 1
-    print("САМОПРОВЕРКА: 6/6 PASS")
+    print("САМОПРОВЕРКА: 7/7 PASS")
     return 0
 
 
