@@ -27,7 +27,7 @@ jobs:
   build-and-test:
     name: Сборка и чистое venv
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -44,6 +44,23 @@ jobs:
 
       - name: sdist -> чистое venv -> тесты + CLI-зонды
         run: python3 scripts/check_release.py --sdist-test dist/humanizer_ru-*.tar.gz
+
+      - name: Полный строгий прогон валидаторов поставляемого дерева
+        # Публикация неотделима от подтверждённого прогона: --strict
+        # блокирует любой FAIL и любой непроверенный SKIP.
+        run: |
+          python3 scripts/check_all.py --strict
+          python3 -m unittest discover -s tests
+
+      - name: Факты и совместимость с опубликованной версией
+        run: |
+          python3 scripts/check_facts.py --strict-publication
+          python3 scripts/check_compatibility.py
+
+      - name: Интервал публикаций непосредственно перед необратимым шагом
+        # Живой published_at GitHub API; ошибка API (код 2) блокирует
+        # публикацию так же, как нарушение интервала (код 1).
+        run: python3 scripts/check_release.py --pre-release-interval
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
