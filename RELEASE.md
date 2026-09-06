@@ -38,6 +38,11 @@
 2. PR → CI зелёный → merge.
 3. Подписанный аннотированный тег (GPG, существующий ключ проекта; подпись
    по постоянному делегированию — GOVERNANCE.md раздел 2, пункт 5) → push.
+   Открытый ключ подписи опубликован в `docs/release-signing-key.asc`:
+   сторонняя проверка — `gpg --import docs/release-signing-key.asc`, затем
+   `git verify-tag <тег>`; `check_release.py --release-contract` при
+   отсутствии ключа в связке среды повторно проверяет подпись во временной
+   связке, засеянной этим файлом (пользовательская связка не изменяется).
 4. Release с детерминированным архивом `humanizer-ru.zip`
    (`scripts/check_release.py --build`; sha256 локальной сборки =
    CI-артефакт = ноты Release).
