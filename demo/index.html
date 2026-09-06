@@ -95,7 +95,8 @@
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
   const rules = ((DATA && DATA.rules) || []).map(r => ({
     id: r.id, class: r.class, description: r.description,
-    source: r.source, flags: r.flags, explain: r.explain || null
+    source: r.source, flags: r.flags, url_marker: !!r.url_marker,
+    explain: r.explain || null
   }));
   const descById = {};
   const explainById = {};

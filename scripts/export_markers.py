@@ -276,6 +276,11 @@ def build_document(root=ROOT):
             },
             "evidence_status": evidence_status,
             "evidence_class": evidence_class,
+            # URL-маркер ли кейс (граница детектора _is_url_marker): такие
+            # правила сканируют исходную строку, остальные — строку с
+            # замаскированными URL. Поле публикуется, чтобы демо-слой
+            # (engine.js) брал классификацию из реестра, а не дублировал.
+            "url_marker": bool(cm._is_url_marker(name)),
             "explain_ru": (lambda ex: None if ex is None else
                 {"name": ex[0], "why": ex[1], "advice": ex[2]})(
                 EXPLAIN_RU.get(name)),

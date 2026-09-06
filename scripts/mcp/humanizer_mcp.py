@@ -260,9 +260,14 @@ def _result_from_proc(proc):
         parsed = json.loads(proc.stdout)
     except (json.JSONDecodeError, TypeError):
         parsed = None
-    # Структурная проверка: конверт — объект с tool и schema; список или
-    # скаляр от дочернего процесса считаем непарсящимся выводом (N49).
-    if isinstance(parsed, dict) and "tool" in parsed and "schema" in parsed:
+    # Структурная проверка: конверт — объект, у которого tool является
+    # строкой, а schema — целым (bool не принимается); список, скаляр или
+    # объект с ключами не тех типов от дочернего процесса считаем
+    # непарсящимся выводом (N49 + проверка типов, а не наличия ключей).
+    if (isinstance(parsed, dict)
+            and isinstance(parsed.get("tool"), str)
+            and isinstance(parsed.get("schema"), int)
+            and not isinstance(parsed.get("schema"), bool)):
         envelope = parsed
     else:
         envelope = None
@@ -426,6 +431,16 @@ def handle_message(raw_line, state, tool_defs):
             or not isinstance(msg.get("method"), str):
         return _err(msg.get("id"), -32600,
                     "invalid request: jsonrpc=2.0 и method обязательны")
+    resp = _dispatch(msg, state, tool_defs)
+    if "id" not in msg:
+        # JSON-RPC-уведомление (нет id): ответ не отправляется никогда —
+        # ни result, ни error, ни «id: null». Побочные эффекты уведомления
+        # (состояние initialized, отмены) при этом применяются.
+        return None
+    return resp
+
+
+def _dispatch(msg, state, tool_defs):
     method = msg["method"]
     id_ = msg.get("id")
     params = msg.get("params") or {}
@@ -587,6 +602,22 @@ def selftest() -> int:
     r = handle_message('{"jsonrpc": "2.0", "id": 8, "method": "ping"}',
                        state, defs)
     case("ping -> пустой result", r["result"] == {})
+    case("ping без id (уведомление) -> ответа нет",
+         handle_message('{"jsonrpc": "2.0", "method": "ping"}',
+                        state, defs) is None)
+    case("tools/list без id (уведомление) -> ответа нет",
+         handle_message('{"jsonrpc": "2.0", "method": "tools/list"}',
+                        state, defs) is None)
+    # Повреждённый дочерний конверт: ключи на месте, типы неверные
+    # (tool — список, schema — строка). Принимать его как корректный
+    # нельзя: isError без сырого «успеха».
+    import types as _types
+    _bad = _types.SimpleNamespace(
+        returncode=0, stdout='{"tool": [], "schema": "bad"}', stderr="")
+    _res, _env = _result_from_proc(_bad)
+    case("конверт с неверными типами ключей -> isError",
+         _res.get("isError") is True and _env is None
+         and "structuredContent" not in _res)
     # Живой вызов инструмента (дочерний процесс, пакет из этого дерева).
     env_backup = os.environ.get("PYTHONPATH")
     src = os.path.join(os.path.dirname(os.path.dirname(
