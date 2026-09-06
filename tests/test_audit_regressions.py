@@ -16,9 +16,16 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
+SKIP_OUTSIDE = unittest.skipUnless(
+    REPO_ONLY, "вне репозитория (sdist): интеграционные тесты не запускаются")
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
-import check_markers as cm  # noqa: E402
+try:
+    import check_markers as cm  # noqa: E402
+except ImportError:  # вне репозитория (sdist): scripts/ не поставлен
+    cm = None
 
 UTM = ("utm_openai", "utm_chatgpt", "utm_copilot")
 
@@ -27,6 +34,7 @@ def _utm_hits(text):
     return [c for c in UTM if re.compile(cm.CASES[c][0]).search(text)]
 
 
+@SKIP_OUTSIDE
 class UtmBoundaryTests(unittest.TestCase):
     def test_openair_negative(self):
         self.assertEqual(_utm_hits("https://example.com/r?utm_source=openair"), [])
@@ -62,6 +70,7 @@ class UtmBoundaryTests(unittest.TestCase):
             ["utm_copilot"])
 
 
+@SKIP_OUTSIDE
 class CodeSpanSemanticsTests(unittest.TestCase):
     ART = ":contentReference[oaicite:1]{index=1}"
 
@@ -100,6 +109,7 @@ if __name__ == "__main__":
 MCP_ROOT = os.path.join(ROOT, "scripts", "mcp")
 
 
+@SKIP_OUTSIDE
 class MachineContractTests(unittest.TestCase):
     """L2 (N43/N49/N50): типы name, изоляция serve, структура конверта,
     схема report, совместимость v1 с сохранённым контрактом предыдущего релиза (fixtures/contract-3311.json)."""
@@ -199,6 +209,7 @@ class MachineContractTests(unittest.TestCase):
                          "удалены команды инструментов v1")
 
 
+@SKIP_OUTSIDE
 class CliRobustnessTests(unittest.TestCase):
     """L2: допустимые коды выхода и конверт на вырожденном входе."""
 
@@ -253,6 +264,7 @@ class CliRobustnessTests(unittest.TestCase):
         self.assertIn("error", env)
 
 
+@SKIP_OUTSIDE
 class BatchCliTests(unittest.TestCase):
     """L3 (N44): коды выхода батча и самопроверка с негативами."""
 
@@ -285,6 +297,7 @@ class BatchCliTests(unittest.TestCase):
             self.assertIn("| ok |", r.stdout)
 
 
+@SKIP_OUTSIDE
 class SkillBoundaryTests(unittest.TestCase):
     """L4 (N34/N48/N13): профили полномочий, запрет вердикта по следам
     вставки, установка без клона dev-репозитория, инъекции как данные."""
@@ -336,6 +349,7 @@ class SkillBoundaryTests(unittest.TestCase):
         self.assertIn("utm_source=openai", fake)
 
 
+@SKIP_OUTSIDE
 class DemoStatusTests(unittest.TestCase):
     """L5 (N46/N33/N4/N38): состояния демо, share-state, null-lag."""
 
@@ -390,6 +404,7 @@ class DemoStatusTests(unittest.TestCase):
             self.assertIsNone(data["published_commit"])
 
 
+@SKIP_OUTSIDE
 class BenchmarkEvidenceTests(unittest.TestCase):
     """L7 (N25/N30): одноимённые на benchmark-странице, лидерство не
     объявлено, вариант Б приказа поддержан в proposal."""
@@ -420,6 +435,7 @@ class BenchmarkEvidenceTests(unittest.TestCase):
                       "тексте", self.proposal)
 
 
+@SKIP_OUTSIDE
 class ReleaseAcceptanceTests(unittest.TestCase):
     """L9 (N47): metadata проверяются у публикуемых артефактов; отказ среды
     помечен UNAVAILABLE/SKIP, а не PASS; приёмка блокирует публикацию."""

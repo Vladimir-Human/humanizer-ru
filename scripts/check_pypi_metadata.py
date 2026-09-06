@@ -10,6 +10,7 @@ Classifiers в PKG-INFO собранного sdist обязаны соответ
     python3 scripts/check_pypi_metadata.py [--selftest] [--sdist путь.tar.gz]
 """
 import argparse
+import json
 import os
 import subprocess
 import sys

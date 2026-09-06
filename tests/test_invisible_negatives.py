@@ -9,12 +9,19 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
-from check_markers import CASES  # noqa: E402
+try:
+    from check_markers import CASES  # noqa: E402
+except ImportError:  # вне репозитория (sdist)
+    CASES = None
 
 FIXTURES = ("zero-width-negative-human.txt", "invisible-negative-human.txt")
 WATCH = ("zero_width", "invisible_layout")
 
 
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
+
+
+@unittest.skipUnless(REPO_ONLY, "вне репозитория: нужен scripts/check_markers")
 class InvisibleNegativeTests(unittest.TestCase):
     def test_no_invisible_hits(self):
         for name in FIXTURES:

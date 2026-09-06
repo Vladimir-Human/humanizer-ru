@@ -37,7 +37,7 @@ jobs:
         run: python3 scripts/write_status.py --sha ${{ github.sha }}
 
       - name: Артефакт status.json
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b45822a43468149 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: status-json
           path: |

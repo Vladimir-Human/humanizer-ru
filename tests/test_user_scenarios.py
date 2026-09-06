@@ -13,6 +13,10 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
+SKIP_OUTSIDE = unittest.skipUnless(
+    REPO_ONLY, "вне репозитория (sdist): интеграционные тесты не запускаются")
+
 
 def run_cli(*args):
     return subprocess.run([sys.executable, "-X", "utf8", *args],
@@ -20,6 +24,7 @@ def run_cli(*args):
                           encoding="utf-8", errors="replace")
 
 
+@SKIP_OUTSIDE
 class EditorScenarioTests(unittest.TestCase):
     """Редактор/преподаватель: папка текстов, находки и ошибки проверки,
     режим проверки не меняет файлы, «не вердикт об авторстве» на месте."""
@@ -41,6 +46,7 @@ class EditorScenarioTests(unittest.TestCase):
             self.assertEqual(before, after)
 
 
+@SKIP_OUTSIDE
 class CiScenarioTests(unittest.TestCase):
     """Разработчик/CI: коды выхода и JSON задокументированы, отказ проверки
     не выглядит зелёным."""
@@ -68,6 +74,7 @@ class CiScenarioTests(unittest.TestCase):
             self.assertIn("error", env)
 
 
+@SKIP_OUTSIDE
 class McpScenarioTests(unittest.TestCase):
     """Ассистент через MCP: initialize -> list -> call -> плохой запрос ->
     list; сессия жива, ответ структурный."""
@@ -111,6 +118,7 @@ class McpScenarioTests(unittest.TestCase):
         self.assertIn("result", out[4])
 
 
+@SKIP_OUTSIDE
 class ContributorScenarioTests(unittest.TestCase):
     """Внешний контрибьютор: быстрый прогон в CONTRIBUTING, приёмка в
     шаблоне мелкой задачи, вход для сообщения о проблеме."""
