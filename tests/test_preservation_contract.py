@@ -223,5 +223,106 @@ class CliPreservationTests(unittest.TestCase):
             shutil.rmtree(td, ignore_errors=True)
 
 
+class AttrAndMultilinePreservationTests(unittest.TestCase):
+    """Кавычки атрибутов с «>» и многострочные теги — защищённые области."""
+
+    SRC_ATTR = 'Проза <span title="a > b..." data-x="q">текст</span>.\n'
+    SRC_MULTI = 'Проза <span\n title="x...">текст</span>.\n'
+
+    def test_scanner_sees_whole_tag(self):
+        spans = PR.html_tag_spans(self.SRC_ATTR)
+        self.assertEqual(self.SRC_ATTR[spans[0][0]:spans[0][1]],
+                         '<span title="a > b..." data-x="q">')
+        spans = PR.html_tag_spans(self.SRC_MULTI)
+        self.assertEqual(self.SRC_MULTI[spans[0][0]:spans[0][1]],
+                         '<span\n title="x...">')
+
+    def test_typographic_keeps_attr_quotes(self):
+        for src in (self.SRC_ATTR, self.SRC_MULTI):
+            out = P.polish(src, typographic=True)
+            self.assertEqual(out, src)
+            self.assertEqual(P.invariant_problems(src, out,
+                                                  typographic=True), [])
+
+    def test_unclosed_quote_protected_to_line_end(self):
+        src = 'Проза <span title="незакрытая\nдалее "текст"\n'
+        spans = PR.html_tag_spans(src)
+        self.assertEqual(spans[0], (6, 6 + len('<span title="незакрытая')))
+
+
+class ThinkInFencedTests(unittest.TestCase):
+    """Детектор не помечает think внутри fenced — снятие не расходится."""
+
+    THINK_OPEN = "<" + "think" + ">"
+    THINK_CLOSE = "</" + "think" + ">"
+    SPAN = "[span_1](start_span)фрагмент[span_1](end_span)"
+
+    def _doc(self, external_marker):
+        head = ("Внешний текст %s.\n\n" % self.SPAN) if external_marker \
+            else "Чистый текст.\n\n"
+        return (head + "```text\n%sвнутренние рассуждения%s\n```\n\nКонец.\n"
+                % (self.THINK_OPEN, self.THINK_CLOSE))
+
+    def test_clean_markup_keeps_think_in_fenced(self):
+        from humanizer_ru import text_layer as TL
+        doc = self._doc(True)
+        out, count = TL.clean_markup(doc)
+        self.assertIn("внутренние рассуждения", out)
+        self.assertEqual(count, 2)  # снята только внешняя сцепка span
+        self.assertNotIn(self.SPAN, out)
+
+    def test_clean_file_with_think_in_fenced_is_clean(self):
+        import shutil
+        import tempfile
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import action_fix as AF  # noqa: E402
+        with tempfile.TemporaryDirectory() as td:
+            old_ws = os.environ.get("GITHUB_WORKSPACE")
+            os.environ["GITHUB_WORKSPACE"] = td
+            try:
+                path = os.path.join(td, "c.md")
+                doc = self._doc(False)
+                with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(doc)
+                status, counts = AF.fix_file(path)
+                with open(path, encoding="utf-8") as fh:
+                    after = fh.read()
+            finally:
+                if old_ws is None:
+                    os.environ.pop("GITHUB_WORKSPACE", None)
+                else:
+                    os.environ["GITHUB_WORKSPACE"] = old_ws
+                shutil.rmtree(td, ignore_errors=True)
+        self.assertEqual(status, "CLEAN")
+        self.assertEqual(counts, (0, 0))
+        self.assertEqual(after, doc)
+
+    def test_external_marker_fix_leaves_think(self):
+        import shutil
+        import tempfile
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import action_fix as AF  # noqa: E402
+        with tempfile.TemporaryDirectory() as td:
+            old_ws = os.environ.get("GITHUB_WORKSPACE")
+            os.environ["GITHUB_WORKSPACE"] = td
+            try:
+                path = os.path.join(td, "c.md")
+                doc = self._doc(True)
+                with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(doc)
+                status, counts = AF.fix_file(path)
+                with open(path, encoding="utf-8") as fh:
+                    after = fh.read()
+            finally:
+                if old_ws is None:
+                    os.environ.pop("GITHUB_WORKSPACE", None)
+                else:
+                    os.environ["GITHUB_WORKSPACE"] = old_ws
+                shutil.rmtree(td, ignore_errors=True)
+        self.assertEqual(status, "CHANGED")
+        self.assertEqual(counts, (0, 2))
+        self.assertIn("внутренние рассуждения", after)
+
+
 if __name__ == "__main__":
     unittest.main()
