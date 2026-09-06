@@ -4,9 +4,9 @@
   "language": "ru",
   "product": {
     "name": "humanizer-ru",
-    "version": "3.32.0",
+    "version": "3.32.1",
     "install": {
-      "pip": "pip install humanizer-ru==3.32.0",
+      "pip": "pip install humanizer-ru==3.32.1",
       "requires_python": ">=3.9",
       "freshness": "сверьте версию с https://github.com/Vladimir-Human/humanizer-ru/releases/latest или лентой releases.atom"
     },
@@ -21,7 +21,7 @@
   },
   "prohibited_uses": {
     "status": "withdrawn",
-    "since": "3.32.0",
+    "since": "3.32.1",
     "note": "Политика ограниченных сценариев снята 2026-09-05; блок сохранён пустым исключительно для совместимости чтения contract.v1 и не восстанавливает политику.",
     "list": []
   },
