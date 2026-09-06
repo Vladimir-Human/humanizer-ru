@@ -336,21 +336,74 @@ def _clean_utm(text):
     return text, count
 
 
+def _map_outside_protected_multiline(text, fn, protect_urls=False):
+    """Применяет fn(seg)->(seg, n) к тексту вне защищённых областей,
+    допускающих ПЕРЕНОСЫ СТРОК (think-блок, сцепки источника).
+
+    Защищены строки fenced-блоков и frontmatter целиком и интервалы
+    инлайн-кода (плюс URL при protect_urls); проза между ними передаётся
+    fn цельными кусками, поэтому многострочные конструкции снимаются
+    только там, где их видит детектор: внутри кода снятий нет.
+    """
+    if _PR is None:
+        return fn(text)
+    spans = _PR.merge_spans(_multiline_protected(text, protect_urls))
+    pieces = []
+    total = 0
+    last = 0
+    for s, e in spans:
+        seg, n = fn(text[last:s])
+        total += n
+        pieces.append(seg)
+        pieces.append(text[s:e])
+        last = e
+    seg, n = fn(text[last:])
+    total += n
+    pieces.append(seg)
+    return "".join(pieces), total
+
+
+def _multiline_protected(text, protect_urls=False):
+    lines = text.split("\n")
+    offs = []
+    start = 0
+    for line in lines:
+        offs.append((start, start + len(line)))
+        start += len(line) + 1
+    fenced = _PR.fenced_line_indices(lines)
+    front = _PR.frontmatter_line_indices(lines)
+    spans = []
+    for i, line in enumerate(lines):
+        s, _e = offs[i]
+        if i in fenced or i in front:
+            spans.append((s, s + len(line)))
+            continue
+        for cs, ce in _PR.code_spans(line):
+            spans.append((s + cs, s + ce))
+        if protect_urls:
+            for us, ue in _PR.url_spans(line):
+                spans.append((s + us, s + ue))
+    return spans
+
+
 def clean_markup(text):
     """I.10: снятие видимых copy-paste артефактов класса A (безпотерно).
 
     Возвращает (текст, число снятых примет). Порядок: think-блок, сцепки
-    источника, обычные маркеры, затем utm-параметры. Обычные маркеры
+    источника, обычные маркеры, затем utm-параметры. Think-блоки и сцепки
     снимаются только вне защищённых областей (fenced-блоки, frontmatter,
-    инлайн-код); не-URL маркеры дополнительно не снимаются внутри
-    URL-спанов — та же граница, что у детектора (маскирование URL для
-    не-URL маркеров): снятие и обнаружение не расходятся.
+    инлайн-код): детектор не помечает их внутри кода, снятие и обнаружение
+    не расходятся. Обычные маркеры снимаются только вне защищённых
+    областей; не-URL маркеры дополнительно не снимаются внутри URL-спанов
+    — та же граница, что у детектора (маскирование URL для не-URL
+    маркеров).
     """
     count = 0
-    text, n = _THINK_RX.subn("", text)
+    text, n = _map_outside_protected_multiline(
+        text, lambda seg: _THINK_RX.subn("", seg))
     count += n
 
-    text, n = _strip_source_chain(text)
+    text, n = _map_outside_protected_multiline(text, _strip_source_chain)
     count += n
 
     for name, rx in _compiled_markup():

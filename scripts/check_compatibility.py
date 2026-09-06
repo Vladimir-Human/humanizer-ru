@@ -42,16 +42,36 @@ if hasattr(sys.stdout, "reconfigure"):
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 PYPI_JSON = "https://pypi.org/pypi/humanizer-ru/json"
-COMPARE_KEYS = ("rc", "tool", "schema", "count", "features_total",
-                "categories_total", "changed", "chars_after", "conj_density",
-                "genre", "status", "scope_note", "error", "env_error",
-                "markers")
+# Явный список нормализуемых нестабильных полей: тексты причин ошибок
+# зависят от путей окружения (сравниваются наличие и тип, не текст).
+# Пути файлов нормализует проба (к именам файлов). Иного нормализующего
+# списка нет: значения и типы всех остальных полей сравниваются как есть.
+NORM_TEXT_KEYS = ("error", "env_error")
 
 PROBE = '''# -*- coding: utf-8 -*-
 import contextlib, io, json, os, tempfile
 from humanizer_ru.cli import scan_main, markers_main, polish_main, detect_main
 
 T = tempfile.mkdtemp(prefix="compat-probe-")
+
+# Явный список нормализуемых нестабильных значений: тексты причин ошибок
+# зависят от путей окружения, пути файлов — от временного каталога пробы.
+# Ничего остального проба не нормализует: сравниваются все файлы и все
+# вложенные поля конвертов, рекурсивно, с различением типов JSON.
+NORM_TEXT_KEYS = ("error", "env_error")
+
+def norm(value, key=None):
+    if isinstance(value, dict):
+        return {k: norm(v, k) for k, v in value.items()}
+    if isinstance(value, list):
+        return [norm(v) for v in value]
+    if isinstance(value, str):
+        if key in NORM_TEXT_KEYS:
+            return "<текст причины нормализован>"
+        if key == "file":
+            return os.path.basename(value)
+        return value
+    return value
 
 def w(name, text):
     p = os.path.join(T, name)
@@ -81,22 +101,7 @@ def run(label, fn, argv):
         payload = json.loads(buf.getvalue())
     except Exception:
         payload = None
-    if payload is not None:
-        rec["tool"] = payload.get("tool")
-        rec["schema"] = payload.get("schema")
-        if isinstance(payload.get("error"), str):
-            rec["env_error"] = payload["error"]
-        files = payload.get("files") or []
-        if files and isinstance(files[0], dict):
-            f0 = files[0]
-            for k in ("count", "features_total", "categories_total",
-                      "changed", "chars_after", "conj_density", "genre",
-                      "status", "scope_note", "error"):
-                if k in f0:
-                    rec[k] = f0[k]
-            if isinstance(f0.get("markers"), list):
-                rec["markers"] = sorted(str(m.get("marker"))
-                                        for m in f0["markers"])
+    rec["payload"] = norm(payload)
     out.append(rec)
 
 for p in (ru, clean, en, empty, md, missing):
@@ -137,12 +142,85 @@ def prev_published(current: str):
     return ".".join(str(x) for x in best) if best else None
 
 
-def compare(old_recs, new_recs) -> list:
-    """Несовместимости: rc/поля OLD обязаны совпасть в NEW; NEW может
-    добавлять поля. Возвращает список человекочитаемых нарушений.
+def _tname(value) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int):
+        return "int"
+    if isinstance(value, float):
+        return "float"
+    if isinstance(value, str):
+        return "str"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "dict"
+    return type(value).__name__
 
-    Поля error/env_error — свободный текст причины (в него попадают пути
-    временных каталогов окружения): сравниваются наличие и тип, не текст.
+
+def _compat_problems(old, new, path, key=None) -> list:
+    """Рекурсивное сравнение с типами JSON: 1 и True — разные типы,
+    удалённое поле OLD — несовместимость, добавленное поле NEW — нет.
+
+    Списки: каждый элемент OLD обязан иметь типизированную пару в NEW
+    (добавления допустимы, удаления и подмены элементов — нет).
+    """
+    if key in NORM_TEXT_KEYS and isinstance(old, str):
+        if isinstance(new, str):
+            return []
+        return ["%s: поле %s: OLD текст причины, NEW тип %s"
+                % (path, key, _tname(new))]
+    t_old, t_new = _tname(old), _tname(new)
+    if t_old != t_new:
+        return ["%s: поле %s: тип OLD=%s NEW=%s (в JSON-контракте это "
+                "разные типы)" % (path, key or "-", t_old, t_new)]
+    if t_old == "dict":
+        problems = []
+        for k in old:
+            if k not in new:
+                problems.append("%s: поле %s удалено в новой версии"
+                                % (path, k))
+            else:
+                problems.extend(_compat_problems(old[k], new[k], path, k))
+        return problems
+    if t_old == "list":
+        problems = []
+        pool = list(new)
+        for i, item in enumerate(old):
+            hit = None
+            best = None
+            for j, cand in enumerate(pool):
+                sub = _compat_problems(item, cand, path, key)
+                if not sub:
+                    hit = j
+                    break
+                if best is None or len(sub) < len(best[1]):
+                    best = (j, sub)
+            if hit is None:
+                detail = ""
+                if best is not None:
+                    detail = "; ближайшее расхождение: %s" % best[1][0]
+                    pool.pop(best[0])
+                problems.append("%s: элемент %d списка %s отсутствует "
+                                "или изменён в новой версии%s"
+                                % (path, i, key or "-", detail))
+            else:
+                pool.pop(hit)
+        return problems
+    if old != new:
+        return ["%s: поле %s: OLD=%r NEW=%r" % (path, key or "-", old, new)]
+    return []
+
+
+def compare(old_recs, new_recs) -> list:
+    """Несовместимости: записи OLD обязаны совпасть в NEW по типам и
+    значениям всех полей (включая вложенные конверты всех файлов);
+    NEW может добавлять поля. Возвращает список человекочитаемых
+    нарушений. Нормализуются только явно нестабильные значения
+    (NORM_TEXT_KEYS в пробе: тексты причин ошибок; пути файлов
+    приводятся к именам).
     """
     problems = []
     old_by = {r["label"]: r for r in old_recs}
@@ -152,15 +230,7 @@ def compare(old_recs, new_recs) -> list:
         if new is None:
             problems.append("%s: проба исчезла в новой версии" % label)
             continue
-        for key in COMPARE_KEYS:
-            if key not in old or old[key] == new.get(key):
-                continue
-            if key in ("error", "env_error") \
-                    and isinstance(old[key], str) \
-                    and isinstance(new.get(key), str):
-                continue  # текст причины зависит от путей окружения
-            problems.append("%s: поле %s: OLD=%r NEW=%r"
-                            % (label, key, old[key], new.get(key)))
+        problems.extend(_compat_problems(old, new, label))
     for label in sorted(new_by):
         if label not in old_by:
             problems.append("%s: новая проба без пары (матрица разъехалась)"
@@ -297,6 +367,33 @@ def selftest() -> int:
                  "markers": ["utm_chatgpt", "zero_width"]}]
     case("пропажа поля error ловится (негатив)",
          any("error" in p for p in compare(err_text, err_gone)))
+    typed_old = [{"label": "scan:a", "rc": 0,
+                  "payload": {"tool": "humanizer-scan", "schema": 1,
+                              "files": [{"file": "a.txt", "count": 2,
+                                         "invariants": []}]}}]
+    typed_bool = [{"label": "scan:a", "rc": 0,
+                   "payload": {"tool": "humanizer-scan", "schema": True,
+                               "files": [{"file": "a.txt", "count": 2,
+                                          "invariants": []}]}}]
+    case("schema 1 против True — разные типы JSON (негатив)",
+         any("тип" in p for p in compare(typed_old, typed_bool)))
+    typed_rc_bool = [{"label": "scan:a", "rc": False,
+                      "payload": typed_old[0]["payload"]}]
+    case("rc 0 против False — разные типы JSON (негатив)",
+         any("тип" in p for p in compare(typed_old, typed_rc_bool)))
+    typed_dropped = [{"label": "scan:a", "rc": 0,
+                      "payload": {"tool": "humanizer-scan", "schema": 1,
+                                  "files": [{"file": "a.txt",
+                                             "count": 2}]}}]
+    case("удалённое вложенное поле invariants ловится (негатив)",
+         any("invariants" in p for p in compare(typed_old, typed_dropped)))
+    typed_added = [{"label": "scan:a", "rc": 0,
+                    "payload": {"tool": "humanizer-scan", "schema": 1,
+                                "files": [{"file": "a.txt", "count": 2,
+                                           "invariants": [],
+                                           "date_like": True}]}}]
+    case("добавленное вложенное поле аддитивно",
+         compare(typed_old, typed_added) == [])
     print("САМОПРОВЕРКА check_compatibility: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
