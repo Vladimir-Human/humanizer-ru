@@ -75,5 +75,32 @@
     "expect": [
       {"marker": "turn_search", "class": "A", "line": 1, "start": 6, "end": 18, "shadow": false}
     ]
+  },
+  {
+    "name": "combining-acute-writing",
+    "text": "Русский текст :::q\u0301{variant=\"email\"}.",
+    "expect": []
+  },
+  {
+    "name": "combining-acute-placeholder",
+    "text": "Русский текст PASTE_q\u0301_URL_HERE.",
+    "expect": []
+  },
+  {
+    "name": "writing-control-no-combining",
+    "text": "Русский текст :::writing{variant=\"email\"}.",
+    "expect": [
+      {"marker": "writing_block", "class": "A", "line": 1, "start": 14, "end": 32, "shadow": false}
+    ]
+  },
+  {
+    "name": "shadow-zwsp-contentref",
+    "text": "\u200b:cont\u200bentReference[oaicite:3]{index=3}",
+    "expect": [
+      {"marker": "zero_width", "class": "B", "line": 1, "start": 0, "end": 1, "shadow": false},
+      {"marker": "zero_width", "class": "B", "line": 1, "start": 6, "end": 7, "shadow": false},
+      {"marker": "oaicite_short", "class": "A", "line": 1, "start": 20, "end": 29, "shadow": false},
+      {"marker": "contentReference", "class": "A", "line": 1, "start": 0, "end": 37, "shadow": true}
+    ]
   }
 ]
