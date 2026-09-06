@@ -101,4 +101,15 @@ Trusted Publishing: доверенный издатель настроен вл�
    предыдущей публикации прошло не менее 86400 с (по `published_at`);
    `--release-contract` проверяет подпись тега криптографически
    (`git verify-tag`), недоступность gpg — UNAVAILABLE, а не PASS.
+6. Путь публикации исполняемо связан с приёмкой: job `publish`
+   (`pypi-publish.yml`) зависит от `build-and-test`, который включает
+   metadata тех же dist-файлов, sdist-тест, полный строгий прогон,
+   факты в режиме strict-publication, совместимость и
+   `--pre-release-interval` последним шагом перед артефактом публикации;
+   `release-check.yml` на теге работает в `--strict`, принимает явный
+   тег через input dispatch и после публикации проверяет интервал между
+   двумя конкретными релизами
+   (`--post-publication-interval`; исторические исключённые пары названы
+   явно в `WAIVED_INTERVAL_PAIRS`, новые не добавляются). Контракт пути
+   покрыт `tests/test_release_pipeline_contract.py`.
 
