@@ -7,7 +7,8 @@ metadata.version в SKILL.md равен последнему релизному 
 
 Опережение тега допустимо только в окне подготовки релиза: версия выше
 последнего тега И раздел «## <версия>» уже есть в CHANGELOG.md (релиз
-документирован, тег ставит владелец). Во всех прочих случаях — FAIL.
+документирован, тег ставится по постоянному поручению — GOVERNANCE.md
+раздел 2, пункт 5). Во всех прочих случаях — FAIL.
 
 Запуск:
     python3 scripts/check_bundle_fresh.py [--selftest]
@@ -50,7 +51,8 @@ def compare(version, tag, changelog_text):
     tt = tuple(int(x) for x in tag.split("."))
     if vt > tt and ("## %s " % version) in changelog_text:
         return True, ("окно подготовки релиза: %s опережает тег v%s, раздел "
-                      "CHANGELOG на месте — тег ставит владелец"
+                      "CHANGELOG на месте — тег ставится по постоянному "
+                      "поручению (GOVERNANCE.md раздел 2, пункт 5)"
                       % (version, tag))
     if vt > tt:
         return False, ("бандл %s опережает тег v%s без раздела CHANGELOG — "
