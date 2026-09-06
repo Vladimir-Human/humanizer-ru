@@ -1,7 +1,7 @@
 {
   "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
   "schema": "facts.schema.v1.json",
-  "updated": "2026-09-05",
+  "updated": "2026-09-06",
   "entries": [
     {
       "fact_id": "fp-zero-snap-2026-08-25",
@@ -592,6 +592,18 @@
       "date": "2026-09-05",
       "reproduce": "gh pr list --state all --json number,author; gh issue list --state all --json number,author",
       "note": "публикация по приказу рывка N1-N40 от 2026-09-05 (пункт L5: счётчик внешних участников в реестре фактов с датой); обновление счётчика — новым снимком, не правкой этой записи"
+    },
+    {
+      "fact_id": "glama-listing-2026-09",
+      "claim": "MCP-сервер humanizer-ru представлен в каталоге Glama (страница сервера отвечает 200, заголовок «humanizer-ru by Vladimir-Human»); листинг размещён сопровождающим",
+      "status": "proven",
+      "publication_approved": true,
+      "tokens": [
+        "1/1"
+      ],
+      "artifact": "research/DISTRIBUTION-JOURNAL.md",
+      "date": "2026-09-06",
+      "reproduce": "curl -sI https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru | head -1"
     }
   ]
 }
