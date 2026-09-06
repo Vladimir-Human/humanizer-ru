@@ -140,6 +140,15 @@ $ humanizer-scan --json notes.txt
 Machine interface (output schemas, exit codes, when not to use):
 `contract.v1.json`; agent entry point: `llms.txt`.
 
+## Batch check statuses
+
+A batch report row carries the check status of the file: ok — both layers
+ran; partial — one layer failed (its counter is a dash, reason in the error
+column); error — the file was not checked at all. Exit codes: 0 — every file
+checked (findings possible); 1 — some files were not checked, the report is
+marked accordingly; 2 — folder not found. In CI, a non-zero code from a
+partial check must not be treated as a green run.
+
 ## Batch-scan a folder with one command
 
 Check a pile of .md/.txt files (teacher and editor scenario):

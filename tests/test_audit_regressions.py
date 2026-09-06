@@ -252,3 +252,35 @@ class CliRobustnessTests(unittest.TestCase):
         env = json.loads(r.stdout)
         self.assertIn("error", env)
 
+
+class BatchCliTests(unittest.TestCase):
+    """L3 (N44): коды выхода батча и самопроверка с негативами."""
+
+    def _run(self, *extra):
+        import subprocess
+        return subprocess.run(
+            [sys.executable, "-X", "utf8",
+             os.path.join(ROOT, "scripts", "scan_folder.py"), *extra],
+            cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+            errors="replace")
+
+    def test_selftest_negative_cases(self):
+        r = self._run("--selftest")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("САМОПРОВЕРКА scan_folder", r.stdout)
+        self.assertNotIn("FAIL:", r.stdout)
+
+    def test_missing_folder_is_code_2(self):
+        r = self._run(os.path.join("tests", "fixtures", "no-such-dir"))
+        self.assertEqual(r.returncode, 2)
+
+    def test_clean_folder_is_code_0_and_marked(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            with open(os.path.join(td, "a.txt"), "w", encoding="utf-8") as fh:
+                fh.write("обычный текст без артефактов и меток\n")
+            r = self._run(td, "--format", "md")
+            self.assertEqual(r.returncode, 0, r.stdout)
+            self.assertIn("с ошибками проверки: 0", r.stdout)
+            self.assertIn("| ok |", r.stdout)
+

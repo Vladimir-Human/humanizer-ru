@@ -121,6 +121,8 @@ def _gates(quick, tmpdir):
         
         
         
+        ("batch: самопроверка scan_folder", [PY,
+         "scripts/scan_folder.py", "--selftest"], [], {0}),
         ("pypi-metadata: самопроверка", [PY,
          "scripts/check_pypi_metadata.py", "--selftest"], [], {0}),
         ("pypi-metadata: PKG-INFO равен pyproject", [PY,
