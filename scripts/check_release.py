@@ -270,8 +270,9 @@ def verify_tag(root: Path, tag: str, env=None):
     """Криптографическая проверка подписи тега: git verify-tag.
 
     Возвращает True (подпись действительна), False (неподписан/подпись
-    невалидна) или None (проверка невозможна: git/gpg недоступны — это
-    отказ среды, а не «подпись есть»).
+    невалидна) или None (проверка невозможна: git/gpg недоступны либо в
+    связке ключей нет открытого ключа подписи — это отказ среды, а не
+    «подпись недействительна» и не «подпись есть»).
     """
     try:
         proc = subprocess.run(["git", "verify-tag", tag], cwd=root, env=env,
@@ -286,7 +287,52 @@ def verify_tag(root: Path, tag: str, env=None):
     if ("gpg: " in err and ("not found" in err or "No such file" in err
                             or "не найден" in err)):
         return None
+    # Открытого ключа подписанта нет в связке — проверка невозможна, а не
+    # «подпись недействительна» (ключ проекта опубликован в репозитории:
+    # docs/release-signing-key.asc, см. _verify_tag_seeded).
+    if ("No public key" in err or "no public key" in err
+            or "Can't check signature" in err
+            or "отсутствует открытый ключ" in err):
+        return None
     return False
+
+
+def _verify_tag_seeded(root: Path, tag: str, key_path: Path):
+    """Повторная проверка с временной связкой ключей, засеянной открытым
+    ключом проекта из репозитория (docs/release-signing-key.asc).
+
+    Пользовательская связка ключей не меняется: импорт идёт во временный
+    GNUPGHOME, который удаляется после проверки. Возвращает True/False/None
+    с той же семантикой, что verify_tag.
+    """
+    import shutil as _shutil
+    gpg = _shutil.which("gpg")
+    if not gpg or not key_path.is_file():
+        return None
+    td = tempfile.mkdtemp(prefix="relkey-")
+    try:
+        homes = [td]
+        if os.name == "nt" and len(td) > 2 and td[1] == ":":
+            # GnuPG-сборки git-for-windows принимают POSIX-форму пути.
+            homes.append("/" + td[0].lower() + td[2:].replace("\\", "/"))
+        for home in homes:
+            env = dict(os.environ)
+            env["GNUPGHOME"] = home
+            try:
+                imp = subprocess.run([gpg, "--batch", "--import",
+                                      str(key_path)], env=env,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, timeout=60)
+            except (OSError, subprocess.TimeoutExpired):
+                continue
+            if imp.returncode != 0:
+                continue
+            verdict = verify_tag(root, tag, env=env)
+            if verdict is not None:
+                return verdict
+        return None
+    finally:
+        _shutil.rmtree(td, ignore_errors=True)
 
 
 def _repo_slug_from_url(url: str) -> str | None:
@@ -479,13 +525,21 @@ def release_contract(root: Path) -> int:
         return 1
     # Подпись проверяется криптографически, а не по наличию текста маркера.
     verdict = verify_tag(root, tag)
+    if verdict is None:
+        # В связке ключей среды нет открытого ключа подписанта (типично для
+        # чистых CI-раннеров): повторная проверка во временной связке,
+        # засеянной опубликованным ключом проекта из репозитория.
+        verdict = _verify_tag_seeded(root, tag,
+                                     root / "docs" / "release-signing-key.asc")
     if verdict is False:
         print("[FAIL] RELEASE-КОНТРАКТ: подпись тега %s не подтверждена "
               "криптографически (git verify-tag)" % tag)
         return 1
     if verdict is None:
         print("RELEASE-КОНТРАКТ: криптографическая проверка подписи "
-              "невозможна (git/gpg недоступны) — UNAVAILABLE, не PASS",
+              "невозможна (git/gpg недоступны либо нет открытого ключа "
+              "подписанта, в т.ч. docs/release-signing-key.asc) — "
+              "UNAVAILABLE, не PASS",
               file=sys.stderr)
         return 2
     try:
@@ -777,6 +831,27 @@ def selftest() -> None:
                     assert verify_tag(repo, "vsigned") is not True or \
                         os.environ.get("GNUPGHOME") == env.get("GNUPGHOME"), \
                         "подпись подтвердилась без доступа к ключу"
+                    # Пустая связка ключей: нет открытого ключа — это
+                    # UNAVAILABLE (None), а не «подпись недействительна».
+                    empty_home = base / "gnupg-empty"
+                    empty_home.mkdir()
+                    env_empty = dict(env)
+                    env_empty["GNUPGHOME"] = str(empty_home)
+                    assert verify_tag(repo, "vsigned",
+                                      env=env_empty) is None, \
+                        "отсутствие открытого ключа принято за вердикт"
+                    # Засев временной связки опубликованным открытым ключом
+                    # восстанавливает проверку (механизм docs/
+                    # release-signing-key.asc для чистых CI-раннеров).
+                    pub = base / "release-signing-key.asc"
+                    exp = subprocess.run(
+                        ["gpg", "--batch", "--armor", "--export", fpr],
+                        env=env, stdout=subprocess.PIPE, timeout=60)
+                    assert exp.returncode == 0 and exp.stdout, \
+                        "экспорт открытого ключа не удался"
+                    pub.write_bytes(exp.stdout)
+                    assert _verify_tag_seeded(repo, "vsigned", pub) is True, \
+                        "seeded-проверка не подтвердила действительную подпись"
                     passed += 1
                     total += 1
             else:
