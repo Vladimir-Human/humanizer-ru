@@ -546,11 +546,13 @@ def check_repo(root):
  # README и GOVERNANCE зарегистрированы 2026-09-03 (README.md 303,
  # README.en.md 277, GOVERNANCE.md 98 — GOVERNANCE заморожен по объёму):
  # рост только осознанный, через обновление потолка в этом гейте.
+ # 2026-09-06: потолок GOVERNANCE осознанно поднят 98 -> 99 — запись
+ # постоянного поручения автономии (раздел 2, пункт 5).
  for _rel18, _unit18, _limit18 in (
    ("SKILL.md", "chars", 15750),
    ("README.md", "lines", 320),
    ("README.en.md", "lines", 300),
-   ("GOVERNANCE.md", "lines", 98),
+   ("GOVERNANCE.md", "lines", 99),
  ):
   _path18 = os.path.join(root, _rel18)
   if not os.path.isfile(_path18):
