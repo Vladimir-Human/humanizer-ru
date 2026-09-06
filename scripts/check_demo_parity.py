@@ -342,6 +342,24 @@ def selftest() -> int:
         with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(broken)
         case("порча engine.js (тень->прямая) ловится", check(td) != [])
+        with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(eng)
+        # Порча класса переноса Python \w в markers.js (возврат \p{M},
+        # которого в Python \w нет) ловится комбинируемым вектором.
+        bs = chr(92)
+        mk_path = os.path.join(td, "demo", "markers.js")
+        mk = _read(mk_path)
+        broken_mk = mk.replace(bs + bs + "p{L}" + bs + bs + "p{N}_]",
+                               bs + bs + "p{L}" + bs + bs + "p{N}"
+                               + bs + bs + "p{M}_]")
+        if broken_mk == mk:
+            print("FAIL: не найдена точка подмены класса переноса")
+            failed += 1
+        else:
+            with open(mk_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(broken_mk)
+            case("порча класса переноса w в markers.js ловится",
+                 check(td) != [])
     print("САМОПРОВЕРКА check_demo_parity: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
