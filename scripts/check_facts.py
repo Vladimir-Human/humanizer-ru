@@ -9,7 +9,15 @@
 - токен записи со статусом `withdrawn` вне документов-отзывов валит сборку
   (документы-отзывы обязаны цитировать отзываемое число — для них действует
   только покрытие);
-- `--strict-publication` (релизный режим перед пушем): дополнительно ни один
+- цепочка воспроизведения (оба режима): скрипты из строки `reproduce`
+  обязаны существовать в дереве и компилироваться — отсутствующая команда
+  воспроизведения больше не проходит приёмку; `source_data` (необязательное
+  поле) сверяет наличие и фактические хеши исходных данных, run:-источники
+  требуют допущения private-run-artifact и зафиксированного хеша;
+- `--strict-publication` (релизный режим перед пушем): дополнительно
+  фактически исполняет команды записей с `publication_approved: true` и
+  `reproduce_public: true` (код 0 обязателен; исполняются только
+  python-команды реестра), а также ни один
   токен с `publication_approved: false` не встречается в файлах, которые этот
   пуш делает впервые публичными (добавленные/изменённые относительно
   `origin/main`, включая неотслеживаемые). Файлы, уже публичные в
@@ -230,6 +238,151 @@ def token_maps(data):
     return statuses, approved
 
 
+def _reproduce_scripts(reproduce):
+    """Пути скриптов репозитория из строки reproduce (до первой скобки).
+
+    Строка reproduce свободной формы: «python3 scripts/x.py --flag»,
+    «a.py + b.py (один проход; …)», «gh … ; gh …». Извлекаются токены,
+    похожие на пути .py; внешние CLI-команды (gh/curl) не извлекаются —
+    их исполнимость гейтом не проверяется (сеть/авторизация).
+    """
+    s = str(reproduce).split(" (")[0]
+    return re.findall(r"[A-Za-z0-9_][A-Za-z0-9_./-]*\.py", s)
+
+
+def reproduce_problems(root, data):
+    """Цепочка «утверждение → анализ»: скрипты reproduce существуют и
+    компилируются. Отсутствие файла или синтаксис ломает приёмку в обоих
+    режимах: команда воспроизведения обязана быть исполнимой хотя бы
+    структурно, а не только присутствовать строкой в JSON."""
+    import py_compile
+    problems = []
+    for e in data.get("entries", []):
+        fid = e.get("fact_id", "?")
+        rep = e.get("reproduce")
+        if not isinstance(rep, str) or not rep.strip():
+            continue
+        for script in _reproduce_scripts(rep):
+            path = os.path.join(root, script.replace("/", os.sep))
+            if not os.path.isfile(path):
+                problems.append(
+                    "запись %s: reproduce-скрипт отсутствует: %s (команда %r)"
+                    % (fid, script, rep))
+                continue
+            try:
+                with tempfile.TemporaryDirectory(prefix="facts-compile-") as td:
+                    py_compile.compile(path, cfile=os.path.join(td, "m.pyc"),
+                                       doraise=True)
+            except Exception as exc:  # noqa: BLE001 — любая ошибка компиляции
+                problems.append(
+                    "запись %s: reproduce-скрипт не компилируется: %s (%s)"
+                    % (fid, script, exc))
+    return problems
+
+
+def source_data_problems(root, data):
+    """Цепочка «исходные данные → число»: наличие и хеши исходных данных.
+
+    Необязательное поле source_data — список строк «путь (sha256 <64 hex>)»
+    или «run:путь (sha256 <64 hex>)» (данные приватного прогона). Хеш
+    публичного файла сверяется фактически; run:-источник обязан нести
+    допущение private-run-artifact и зафиксированный хеш. Запись без
+    source_data не проверяется (исторические записи), но одобренная
+    запись с run:-артефактом и так обязана нести допущение (см.
+    artifact_problems).
+    """
+    import hashlib
+    problems = []
+    for e in data.get("entries", []):
+        fid = e.get("fact_id", "?")
+        sd = e.get("source_data")
+        if sd is None:
+            continue
+        if not isinstance(sd, list) or not sd:
+            problems.append("запись %s: source_data обязан быть непустым "
+                            "списком" % fid)
+            continue
+        assumptions = e.get("assumptions")
+        for item in sd:
+            if not isinstance(item, str) or not item.strip():
+                problems.append("запись %s: source_data содержит не строку"
+                                % fid)
+                continue
+            m = re.search(r"\(sha256 ([0-9A-Fa-f]{64})\)", item)
+            sha = m.group(1).lower() if m else None
+            path_part = SHA_SUFFIX_RE.sub("", item).strip()
+            if path_part.startswith("run:"):
+                if not isinstance(assumptions, list) \
+                        or "private-run-artifact" not in assumptions:
+                    problems.append(
+                        "запись %s: run:-источник %s без допущения "
+                        "private-run-artifact" % (fid, path_part))
+                if sha is None:
+                    problems.append(
+                        "запись %s: приватный источник %s без "
+                        "зафиксированного хеша" % (fid, path_part))
+                continue
+            full = os.path.join(root, path_part.replace("/", os.sep))
+            if not os.path.isfile(full):
+                problems.append("запись %s: исходные данные недоступны: %s"
+                                % (fid, path_part))
+                continue
+            if sha is None:
+                problems.append("запись %s: source_data без хеша: %s"
+                                % (fid, path_part))
+                continue
+            h = hashlib.sha256()
+            with open(full, "rb") as fh:
+                for chunk in iter(lambda: fh.read(65536), b""):
+                    h.update(chunk)
+            if h.hexdigest() != sha:
+                problems.append("запись %s: хеш %s не совпал с зафиксированным"
+                                % (fid, path_part))
+    return problems
+
+
+def reproduce_run_problems(root, data):
+    """Фактическая исполнимость публичного воспроизведения (только строгий
+    режим, только записи с publication_approved=true и
+    reproduce_public=true): команда исполняется в корне репозитория и
+    обязана дать код 0. Поддерживаются python-команды, в том числе цепочки
+    «A && B»; внешние CLI (gh/curl) reproduce_public не помечаются —
+    их исполнение зависит от сети и авторизации."""
+    import subprocess
+    problems = []
+    for e in data.get("entries", []):
+        fid = e.get("fact_id", "?")
+        if not (e.get("publication_approved") is True
+                and e.get("reproduce_public") is True):
+            continue
+        rep = str(e.get("reproduce", "")).split(" (")[0]
+        parts = [p.strip() for p in rep.split("&&") if p.strip()]
+        if not parts:
+            problems.append("запись %s: reproduce_public без команды" % fid)
+            continue
+        for part in parts:
+            toks = part.split()
+            if toks[0] not in ("python", "python3"):
+                problems.append("запись %s: reproduce_public поддерживает "
+                                "только python-команды: %r" % (fid, part))
+                continue
+            argv = [sys.executable] + toks[1:]
+            try:
+                proc = subprocess.run(
+                    argv, cwd=root, capture_output=True, text=True,
+                    encoding="utf-8", errors="replace", timeout=900)
+            except (OSError, subprocess.SubprocessError) as exc:
+                problems.append("запись %s: reproduce-команда не исполнилась: "
+                                "%r" % (fid, exc))
+                continue
+            if proc.returncode != 0:
+                tail = ((proc.stdout or "") + (proc.stderr or "")).strip()
+                problems.append("запись %s: reproduce-команда %r вернула код "
+                                "%d: %s" % (fid, part, proc.returncode,
+                                            tail[-200:]))
+    return problems
+
+
 def artifact_problems(root, data):
     """publication_approved=true ⇒ артефакт публично доступен.
 
@@ -283,6 +436,8 @@ def run(root, strict):
     statuses, approved = token_maps(data)
     problems = artifact_problems(root, data)
     problems += assumptions_problems(data)
+    problems += reproduce_problems(root, data)
+    problems += source_data_problems(root, data)
     for rel in SHOWCASE:
         path = os.path.join(root, rel)
         if not os.path.isfile(path):
@@ -304,6 +459,11 @@ def run(root, strict):
                                     "документов-отзывов" % (rel, line_no, tok))
     strict_note = ""
     if strict:
+        # Фактическая исполнимость публичного воспроизведения: команды
+        # записей с reproduce_public=true исполняются (это единственная
+        # часть гейта, запускающая код реестра; команды принадлежат
+        # репозиторию и детерминированы).
+        problems += reproduce_run_problems(root, data)
         changed = changed_vs_origin(root)
         if changed is None:
             strict_note = ("git недоступен: строгий режим сканирует всё "
@@ -477,11 +637,91 @@ def selftest():
     case("неполный суффикс sha256 не разрешает отсутствующий путь (негатив)",
          rc == 1 and any("недоступен" in p for p in probs))
 
+    # Цепочка воспроизведения: скрипт существует и компилируется (оба
+    # режима), публичное исполнение — только в строгом.
+    repro_missing = _registry([_entry(
+        reproduce="python3 tools/no_such_tool.py")])
+    td = tree_with(repro_missing)
+    rc, probs, _ = run(td, strict=False)
+    case("reproduce: отсутствующий скрипт ловится",
+         rc == 1 and any("отсутствует" in p for p in probs))
+
+    repro_broken = _registry([_entry(
+        reproduce="python3 scripts/broken_tool.py")])
+    td = tree_with(repro_broken,
+                   extra={"scripts/broken_tool.py": "def (:\n"})
+    rc, probs, _ = run(td, strict=False)
+    case("reproduce: некомпилируемый скрипт ловится",
+         rc == 1 and any("не компилируется" in p for p in probs))
+
+    repro_ok = _registry([_entry(
+        reproduce="python3 scripts/ok_tool.py (один проход)")])
+    td = tree_with(repro_ok, extra={"scripts/ok_tool.py": "print('ok')\n"})
+    rc, probs, _ = run(td, strict=False)
+    case("reproduce: существующий компилируемый скрипт законен",
+         rc == 0 and not probs)
+
+    runpub_fail = _registry([_entry(
+        reproduce="python3 scripts/fail_tool.py", reproduce_public=True)])
+    td = tree_with(runpub_fail,
+                   extra={"scripts/fail_tool.py": "import sys; sys.exit(3)\n"})
+    rc, probs, _ = run(td, strict=True)
+    case("strict: неисполнимое публичное воспроизведение ловится",
+         rc == 1 and any("код 3" in p for p in probs))
+    rc2, _probs2, _ = run(td, strict=False)
+    case("обычный режим команды не исполняет (структурная проверка)",
+         rc2 == 0)
+
+    runpub_ok = _registry([_entry(
+        reproduce="python3 scripts/ok_tool.py", reproduce_public=True)])
+    td = tree_with(runpub_ok, extra={"scripts/ok_tool.py": "print('ok')\n"})
+    rc, probs, _ = run(td, strict=True)
+    case("strict: исполнимое публичное воспроизведение проходит",
+         rc == 0 and not probs)
+
+    # source_data: наличие и фактические хеши исходных данных.
+    import hashlib as _hl
+    _sha = _hl.sha256(b"{}").hexdigest()
+    sd_bad = _registry([_entry(source_data=[
+        "tests/fixtures/selftest.json (sha256 %s)" % ("cd" * 32)])])
+    td = tree_with(sd_bad)
+    rc, probs, _ = run(td, strict=False)
+    case("source_data: несовпавший хеш ловится",
+         rc == 1 and any("не совпал" in p for p in probs))
+    sd_ok = _registry([_entry(source_data=[
+        "tests/fixtures/selftest.json (sha256 %s)" % _sha])])
+    td = tree_with(sd_ok)
+    rc, probs, _ = run(td, strict=False)
+    case("source_data: совпавший хеш законен", rc == 0 and not probs)
+    sd_nosha = _registry([_entry(
+        source_data=["tests/fixtures/selftest.json"])])
+    td = tree_with(sd_nosha)
+    rc, probs, _ = run(td, strict=False)
+    case("source_data: публичный источник без хеша ловится",
+         rc == 1 and any("без хеша" in p for p in probs))
+    sd_run = _registry([_entry(
+        source_data=["run:m/x.json (sha256 %s)" % _sha])])
+    td = tree_with(sd_run)
+    rc, probs, _ = run(td, strict=False)
+    case("source_data: run:-источник без допущения ловится",
+         rc == 1 and any("private-run-artifact" in p for p in probs))
+    sd_run_ok = _registry([_entry(
+        source_data=["run:m/x.json (sha256 %s)" % _sha],
+        assumptions=["private-run-artifact"])])
+    td = tree_with(sd_run_ok)
+    rc, probs, _ = run(td, strict=False)
+    case("source_data: run:-источник с допущением законен",
+         rc == 0 and not probs)
+
     data, errs = load_registry(ROOT)
     case("реальный реестр читается", data is not None and not errs)
     case("реальный реестр структурно валиден", not schema_errors(data))
     case("реальный реестр: артефакты доступны",
          not artifact_problems(ROOT, data))
+    case("реальный реестр: цепочка воспроизведения цела",
+         not reproduce_problems(ROOT, data))
+    case("реальный реестр: хеши исходных данных совпадают",
+         not source_data_problems(ROOT, data))
 
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
