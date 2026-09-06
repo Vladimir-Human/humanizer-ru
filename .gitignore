@@ -45,3 +45,7 @@ node_modules/
 .claude/
 .codex/
 tmp_sweep_*.json
+
+docs/status.json
+demo/status.json
+

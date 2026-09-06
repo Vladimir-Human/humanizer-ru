@@ -335,3 +335,57 @@ class SkillBoundaryTests(unittest.TestCase):
             encoding="utf-8").read()
         self.assertIn("utm_source=openai", fake)
 
+
+class DemoStatusTests(unittest.TestCase):
+    """L5 (N46/N33/N4/N38): состояния демо, share-state, null-lag."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.html = open(os.path.join(ROOT, "demo", "index.html"),
+                        encoding="utf-8").read()
+
+    def test_engine_missing_is_explicit_refusal(self):
+        self.assertIn("if (!engineReady())", self.html)
+        self.assertIn("проверка не выполнялась", self.html)
+
+    def test_warning_precedes_hash_change(self):
+        self.assertLess(self.html.find("Ссылка получит ваш текст"),
+                        self.html.find("location.hash = encodeURIComponent(text)"))
+
+    def test_own_text_clears_share_state(self):
+        self.assertIn("history.replaceState", self.html)
+
+    def test_byte_limit_after_encoding(self):
+        self.assertIn("TextEncoder", self.html)
+        self.assertIn("65536", self.html)
+
+    def test_null_lag_distinct_from_zero(self):
+        self.assertIn("сведений о релизе нет", self.html)
+
+    def test_write_status_null_lag_without_tags(self):
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            os.makedirs(os.path.join(td, "docs"))
+            os.makedirs(os.path.join(td, "demo"))
+            with open(os.path.join(td, "markers.v1.json"), "w",
+                      encoding="utf-8") as fh:
+                json.dump({"count": 40}, fh)
+            env = dict(os.environ, GIT_CONFIG_COUNT="2",
+                       GIT_CONFIG_KEY_0="user.name", GIT_CONFIG_VALUE_0="t",
+                       GIT_CONFIG_KEY_1="user.email",
+                       GIT_CONFIG_VALUE_1="t@example.com")
+            subprocess.run(["git", "init", "-q", td], check=True, env=env)
+            subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "x"],
+                           cwd=td, check=True, env=env)
+            r = subprocess.run(
+                [sys.executable, os.path.join(ROOT, "scripts",
+                                              "write_status.py"),
+                 "--root", td, "--sha", "abc"],
+                capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            data = json.load(open(os.path.join(td, "docs", "status.json"),
+                                  encoding="utf-8"))
+            self.assertIsNone(data["lag_commits"])
+            self.assertIsNone(data["published_commit"])
+
