@@ -257,8 +257,14 @@ def _result_from_proc(proc):
     — isError:true и БЕЗ сырого stdout/stderr: traceback может содержать
     цитаты входного текста и не должен доставляться как «успех»."""
     try:
-        envelope = json.loads(proc.stdout)
+        parsed = json.loads(proc.stdout)
     except (json.JSONDecodeError, TypeError):
+        parsed = None
+    # Структурная проверка: конверт — объект с tool и schema; список или
+    # скаляр от дочернего процесса считаем непарсящимся выводом (N49).
+    if isinstance(parsed, dict) and "tool" in parsed and "schema" in parsed:
+        envelope = parsed
+    else:
         envelope = None
     if proc.returncode not in (0, 1, 2):
         content = []
@@ -467,6 +473,9 @@ def handle_message(raw_line, state, tool_defs):
                         "сервер не инициализирован: сначала initialize")
         if not isinstance(params, dict) or "name" not in params:
             return _err(id_, -32602, "tools/call: params.name обязателен")
+        if not isinstance(params["name"], str):
+            return _err(id_, -32602,
+                        "tools/call: params.name обязан быть строкой")
         arguments = params.get("arguments") or {}
         if not isinstance(arguments, dict):
             return _err(id_, -32602, "tools/call: arguments обязан быть объектом")
@@ -492,7 +501,19 @@ def serve(stdin=None, stdout=None) -> int:
         line = line.strip()
         if not line:
             continue
-        response = handle_message(line, state, tool_defs)
+        try:
+            response = handle_message(line, state, tool_defs)
+        except Exception as exc:  # noqa: BLE001 - изоляция одного запроса
+            # Один плохой запрос не ломает сессию (N43): ответ — JSON-RPC
+            # -32603 без traceback и без входного текста; цикл продолжается.
+            rid = None
+            try:
+                rid = json.loads(line).get("id")
+            except Exception:  # noqa: BLE001
+                rid = None
+            response = _err(rid, -32603,
+                            "внутренняя ошибка обработки запроса: %s"
+                            % type(exc).__name__)
         if response is not None:
             stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
             stdout.flush()
@@ -638,6 +659,47 @@ def selftest() -> int:
                          defs)
     case("facts: лишний параметр -> -32602",
          rpc is not None and rpc[0] == -32602)
+    # L2 (N43): плохой тип name не ломает сессию
+    for bad in ([], {"x": 1}, None):
+        r = handle_message(json.dumps({
+            "jsonrpc": "2.0", "id": 20, "method": "tools/call",
+            "params": {"name": bad, "arguments": {}}}), state, defs)
+        case("tools/call name=%r -> -32602" % (bad,),
+             r.get("error", {}).get("code") == -32602)
+    r = handle_message('{"jsonrpc": "2.0", "id": 21, "method": "tools/list"}',
+                       state, defs)
+    case("сессия жива после плохих name", "result" in r)
+    # L2 (N43): serve изолирует отказ и продолжает обслуживать
+    import io as _io
+    _in = _io.StringIO(json.dumps({
+        "jsonrpc": "2.0", "id": 29, "method": "initialize",
+        "params": {"protocolVersion": LATEST_PROTOCOL}}) + "\n"
+        + json.dumps({"jsonrpc": "2.0", "id": 30, "method": "tools/call",
+                      "params": {"name": [], "arguments": {}}}) + "\n"
+        + '{"jsonrpc": "2.0", "id": 31, "method": "tools/list"}\n')
+    _out = _io.StringIO()
+    serve(stdin=_in, stdout=_out)
+    _lines = [json.loads(x) for x in _out.getvalue().splitlines() if x]
+    case("serve: плохой запрос -> ответ, следующий запрос обслужен",
+         len(_lines) == 3 and "result" in _lines[0]
+         and _lines[1].get("error", {}).get("code") == -32602
+         and "result" in _lines[2])
+    # L2 (N49): конверт неправильной структуры от ребёнка -> isError
+    _orig_argv = globals()["_tool_argv"]
+    try:
+        globals()["_tool_argv"] = lambda *a, **k: [
+            sys.executable, "-c", "print('[1, 2]')"]
+        res, rpc = call_tool("humanizer_markers", {"text": "x"}, defs)
+        case("JSON неправильной структуры от ребёнка -> isError",
+             rpc is None and res["isError"] is True)
+    finally:
+        globals()["_tool_argv"] = _orig_argv
+    # L2 (N50): shim prohibited_uses честный и типосовместимый
+    _doc = load_contract()
+    _pu = _doc.get("prohibited_uses")
+    case("prohibited_uses: withdrawn-шим с пустым list",
+         isinstance(_pu, dict) and _pu.get("status") == "withdrawn"
+         and _pu.get("list") == [])
     print("САМОПРОВЕРКА humanizer_mcp: %d/%d PASS" % (passed, passed + failed))
     return 1 if failed else 0
 
