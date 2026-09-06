@@ -2,19 +2,24 @@
 # -*- coding: utf-8 -*-
 """check_polish_modes.py — гейт честности режимов polish (п.2.1 плана v2).
 
-Три свойства, которые обязан держать человеческий слой polish:
+Четыре свойства, которые обязан держать человеческий слой polish:
 
   1. Публикационный режим `--typographic` применим к собственным публичным
      документам проекта: README.md, SKILL.md, CONTRIBUTING.md, llms.txt —
      changed:false (нулевой диф). Режим ставит русскую публикационную
      типографику (ёлочки из парных прямых кавычек, единый символ
      многоточия) и снимает невидимые символы В ПРОЗЕ, не трогая разметку,
-     fenced-блоки, инлайн-бэктики и YAML-frontmatter.
+     fenced-блоки, инлайн-код и YAML-frontmatter.
   2. Дефолтный режим (strip) те же документы МЕНЯЕТ: destructive-семантика
      не прячется — граница when_not в contract.v1.json («не запускать на
      Markdown и разметке») остаётся правдой.
   3. Оба режима идемпотентны и сохраняют буквы и цифры дословно
      (инварианты polish) на всех четырёх документах и синтетике.
+  4. Безопасные режимы (`--typographic`, `--preserve-markup`) сохраняют
+     защищённые области (единый источник — scripts/protected_regions.py):
+     URL, кавычки HTML-атрибутов, ZWJ-кластеры эмодзи и содержимое
+     инлайн-кода; разрушение области репортится инвариантами (негативы
+     проверяются на уже приведённом тексте, где остальные инварианты целы).
 
 Запуск из корня репозитория:
     python3 scripts/check_polish_modes.py             # проверка
@@ -40,6 +45,22 @@ sys.path.insert(0, HERE)
 import polish as P  # noqa: E402
 
 DOCS = ["README.md", "SKILL.md", "CONTRIBUTING.md", "llms.txt"]
+
+# Синтетические кейсы защищённых областей (единый источник —
+# scripts/protected_regions.py): фрагменты, которые оба безопасных режима
+# обязаны оставлять неизменными, и нарушения, которые инварианты обязаны
+# ловить.
+PROTECTION_CASES = [
+    ("URL", 'См. https://example.org/a...b тут.\n',
+     ["https://example.org/a...b"]),
+    ("кавычки атрибутов", 'Проза "ц" и <a href="x">т</a>.\n',
+     ['<a href="x">']),
+    ("ZWJ-кластер", "семья \U0001F468\u200d\U0001F469\u200d\U0001F467\n",
+     ["\u200d"]),
+    ("содержимое кода", 'Вне `код "x"...` и "проза"...\n',
+     ['`код "x"...`']),
+]
+SAFE_MODES = ({"typographic": True}, {"preserve_markup": True})
 
 
 def _read(rel):
@@ -71,6 +92,40 @@ def check() -> list:
                 errors.append("%s: %s не идемпотентен" % (rel, label))
             if P.letters_of(text) != P.letters_of(out):
                 errors.append("%s: %s изменил буквы/цифры" % (rel, label))
+    # Защищённые области: оба безопасных режима сохраняют фрагменты,
+    # инварианты репортуют нарушения, а не молчат при changed:true.
+    for name, src, musts in PROTECTION_CASES:
+        for kw in SAFE_MODES:
+            label = "typographic" if kw.get("typographic") else "preserve-markup"
+            out = P.polish(src, **kw)
+            for frag in musts:
+                if frag not in out:
+                    errors.append("кейс %s/%s: защищённый фрагмент %r не "
+                                  "сохранён" % (name, label, frag))
+            problems = P.invariant_problems(src, out, **kw)
+            if problems:
+                errors.append("кейс %s/%s: инварианты на чистом результате "
+                              "не пусты: %s" % (name, label, problems))
+        # Негатив: разрушение защищённой области в уже приведённом тексте
+        # обязано ловиться инвариантами (идемпотентность и буквы при этом
+        # целы — ловить должно именно сохранение областей).
+        clean = P.polish(src, typographic=True)
+        if name == "ZWJ-кластер":
+            broken = clean.replace("\u200d", "")
+        elif name == "URL":
+            broken = clean.replace("https://example.org/a...b",
+                                   "https://example.org/a\u2026b")
+        elif name == "кавычки атрибутов":
+            broken = clean.replace('<a href="x">', "<a href=\u00abx\u00bb>")
+        else:
+            broken = clean.replace('`код "x"...`', '`код "x"\u2026`')
+        problems = P.invariant_problems(src, broken, typographic=True)
+        if not problems:
+            errors.append("кейс %s: разрушение защищённой области не "
+                          "репортится инвариантами" % name)
+        elif any("идемпотентность" in p or "смысловая" in p for p in problems):
+            errors.append("кейс %s: негатив пойман не сохранением областей, "
+                          "а другим инвариантом: %s" % (name, problems))
     return errors
 
 
@@ -120,6 +175,20 @@ def selftest() -> int:
     finally:
         P.polish = saved
     case("подделанный typographic ловится check() (негатив)", len(errs) >= len(DOCS))
+    # Негатив: режим, разрушающий защищённые ZWJ-кластеры, ловится check().
+    def broken_zwj(text, preserve_markup=False, typographic=False):
+        out = saved(text, preserve_markup, typographic)
+        if typographic or preserve_markup:
+            out = out.replace("\u200d", "")
+        return out
+
+    P.polish = broken_zwj
+    try:
+        errs_zwj = check()
+    finally:
+        P.polish = saved
+    case("режим, разрушающий ZWJ-кластеры, ловится check() (негатив)",
+         any("ZWJ" in e for e in errs_zwj))
     print("САМОПРОВЕРКА check_polish_modes: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
