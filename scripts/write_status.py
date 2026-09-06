@@ -51,6 +51,8 @@ def main(argv=None):
         tag = best[1]
     published = None
     lag = None
+    if not tag:
+        tag = None
     if tag:
         published = subprocess.run(["git", "rev-parse", "--short", tag],
                                    capture_output=True, text=True,
