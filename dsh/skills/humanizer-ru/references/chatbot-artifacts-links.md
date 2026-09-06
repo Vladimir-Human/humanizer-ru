@@ -46,9 +46,9 @@
 
 | Маркер | Кто добавляет | Регулярное выражение |
 |---|---|---|
-| `?utm_source=chatgpt.com` | OpenAI ChatGPT (веб и приложение) | `[?&]utm_source=chatgpt\.com` |
-| `?utm_source=openai` | Инструменты OpenAI (общий формат API) | `[?&]utm_source=openai` |
-| `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com` |
+| `?utm_source=chatgpt.com` | OpenAI ChatGPT (веб и приложение) | `[?&]utm_source=chatgpt\.com(?![A-Za-z0-9_.-])` |
+| `?utm_source=openai` | Инструменты OpenAI (общий формат API) | `[?&]utm_source=openai(?![A-Za-z0-9_.-])` |
+| `?utm_source=copilot.com` | Microsoft Copilot | `[?&]utm_source=copilot\.com(?![A-Za-z0-9_.-])` |
 | `?referrer=grok.com` (класс B) | xAI Grok | `[?&]referrer=grok\.com` |
 
 **Источник:** английская Википедия §utm_source= (редакция на июль 2026): «Microsoft Copilot may add `utm_source=copilot.com` to URLs. Grok uses `referrer=grok.com`»; там же приведены поисковые ссылки insource для обоих параметров. Русская Википедия: раздел про UTM-метки; она же уточняет (уточнение v3.2): форма `utm_source=chatgpt.com` характерна для ссылок, сгенерированных **до августа 2025 года**, позже ChatGPT чаще ставит `utm_source=openai`. Оба выражения сохранены: старые тексты с меткой `chatgpt.com` массово живут в блогах и архивах. Perplexity меток UTM **не добавляет**, а передаёт обычный referrer `perplexity.ai` (подтверждено разборами веб-аналитики GA4 2026 года и спецификацией атрибуции AI-поисковиков); кандидат `utm_source=perplexity` отклонён повторно, как и в v2.6 — см. `research/GAPS.md`.

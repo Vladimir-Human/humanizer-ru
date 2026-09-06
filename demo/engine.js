@@ -23,19 +23,41 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  function backtickPrefix(line) {
-    var prefix = new Array(line.length + 1);
-    prefix[0] = 0;
-    var count = 0;
-    for (var i = 0; i < line.length; i++) {
-      if (line.charAt(i) === "`") { count += 1; }
-      prefix[i + 1] = count;
+  // Семантика code spans едина с scripts/check_markers.py (_code_spans):
+  // серия из N бэктиков открывает спан, закрывается следующей серией ровно
+  // из N; серии другой длины внутри — содержимое; незакрытая серия тянет
+  // спан до конца строки (N42, аудит 2026-09-06).
+  function codeSpans(line) {
+    var runs = [];
+    var i = 0, n = line.length;
+    while (i < n) {
+      if (line.charAt(i) === "`") {
+        var j = i;
+        while (j < n && line.charAt(j) === "`") { j += 1; }
+        runs.push([i, j - i]);
+        i = j;
+      } else { i += 1; }
     }
-    return [prefix, count];
+    var spans = [];
+    var k = 0;
+    while (k < runs.length) {
+      var len = runs[k][1];
+      var closer = -1;
+      for (var t2 = k + 1; t2 < runs.length; t2++) {
+        if (runs[t2][1] === len) { closer = t2; break; }
+      }
+      if (closer === -1) { spans.push([runs[k][0] + len, n]); break; }
+      spans.push([runs[k][0] + len, runs[closer][0]]);
+      k = closer + 1;
+    }
+    return spans;
   }
 
-  function insideBackticks(prefix, total, start, end) {
-    return prefix[start] % 2 === 1 && (total - prefix[end]) >= 1;
+  function insideCodeSpan(spans, start, end) {
+    for (var q = 0; q < spans.length; q++) {
+      if (start < spans[q][1] && end > spans[q][0]) { return true; }
+    }
+    return false;
   }
 
   function _leadingCount(s, ch) {
@@ -71,8 +93,7 @@
   }
 
   function lineMatches(line, rules) {
-    var bt = backtickPrefix(line);
-    var prefix = bt[0], totalBt = bt[1];
+    var spans = codeSpans(line);
     var found = [];
     for (var i = 0; i < rules.length; i++) {
       var rule = rules[i];
@@ -81,7 +102,7 @@
       var m;
       while ((m = rx.exec(line)) !== null) {
         if (m[0] === "") { rx.lastIndex += 1; continue; }
-        if (insideBackticks(prefix, totalBt, m.index, m.index + m[0].length)) {
+        if (insideCodeSpan(spans, m.index, m.index + m[0].length)) {
           if (rx.lastIndex <= m.index) { rx.lastIndex = m.index + 1; }
           continue;
         }
@@ -132,8 +153,8 @@
   }
 
   return {
-    backtickPrefix: backtickPrefix,
-    insideBackticks: insideBackticks,
+    codeSpans: codeSpans,
+    insideCodeSpan: insideCodeSpan,
     fencedLines: fencedLines,
     lineMatches: lineMatches,
     scanText: scanText
