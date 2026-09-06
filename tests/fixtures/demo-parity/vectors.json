@@ -1,0 +1,79 @@
+[
+  {
+    "name": "control-prose",
+    "text": "обычный текст turn0search1 в прозе",
+    "expect": [
+      {"marker": "turn_search", "class": "A", "line": 1, "start": 14, "end": 26, "shadow": false}
+    ]
+  },
+  {
+    "name": "zwsp-glue",
+    "text": "turn0se\u200barch1",
+    "expect": [
+      {"marker": "zero_width", "class": "B", "line": 1, "start": 7, "end": 8, "shadow": false},
+      {"marker": "turn_search", "class": "A", "line": 1, "start": 0, "end": 12, "shadow": true}
+    ]
+  },
+  {
+    "name": "url-masked-non-url-marker",
+    "text": "https://example.org/turn0search1",
+    "expect": []
+  },
+  {
+    "name": "url-marker-inside-url",
+    "text": "https://docs.example.com/?utm_source=openai",
+    "expect": [
+      {"marker": "utm_openai", "class": "A", "line": 1, "start": 25, "end": 43, "shadow": false}
+    ]
+  },
+  {
+    "name": "unicode-digits",
+    "text": "turn\u0661search\u0661",
+    "expect": [
+      {"marker": "turn_search", "class": "A", "line": 1, "start": 0, "end": 12, "shadow": false}
+    ]
+  },
+  {
+    "name": "line-separator-u2028",
+    "text": "строка1\u2028turn0search1",
+    "expect": [
+      {"marker": "turn_search", "class": "A", "line": 2, "start": 0, "end": 12, "shadow": false}
+    ]
+  },
+  {
+    "name": "cyr-glue-attributable",
+    "text": "вставкаattributableIndex вставка",
+    "expect": [
+      {"marker": "attributableIndex", "class": "A", "line": 1, "start": 7, "end": 24, "shadow": false}
+    ]
+  },
+  {
+    "name": "code-span-single",
+    "text": "x `turn0search1` y",
+    "expect": []
+  },
+  {
+    "name": "code-span-double-run",
+    "text": "x ``a ` turn0search1 b`` y",
+    "expect": []
+  },
+  {
+    "name": "code-span-unclosed",
+    "text": "x `turn0search1 y",
+    "expect": []
+  },
+  {
+    "name": "fenced-block-skipped",
+    "text": "a\n```\nturn0search1\n```\nb turn0search1",
+    "expect": [
+      {"marker": "turn_search", "class": "A", "line": 5, "start": 2, "end": 14, "shadow": false}
+    ]
+  },
+  {
+    "name": "astral-codepoint-coords",
+    "text": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 turn0search1",
+    "expect": [
+      {"marker": "turn_search", "class": "A", "line": 1, "start": 6, "end": 18, "shadow": false}
+    ]
+  }
+]
