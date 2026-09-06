@@ -220,6 +220,8 @@ def _gates(quick, tmpdir):
         ("pkg-sync: самопроверка", [PY, "scripts/check_pkg_sync.py", "--selftest"], [], {0}),
         ("pkg-sync: синхронность пакета", [PY, "scripts/check_pkg_sync.py"],
          ["src/humanizer_ru"], {0}),
+        ("protected-regions: самопроверка", [PY,
+         "scripts/protected_regions.py", "--selftest"], [], {0}),
         ("polish: самопроверка", [PY, "scripts/polish.py", "--selftest"], [], {0}),
         ("polish: инварианты на фикстурах", [PY, "scripts/polish.py", "--gate",
                                              os.path.join("tests", "fixtures", "polish")],

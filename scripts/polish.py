@@ -22,19 +22,29 @@
 Третий режим — --typographic (публикационный): приводит текст к русской
 публикационной типографике БЕЗ снятия заголовков и выделения: парные
 прямые кавычки -> ёлочки, «...» -> единый символ многоточия, невидимые
-символы и NBSP снимаются, переносы строк к LF; содержимое fenced-блоков
-(``` и ~~~) и инлайн-бэктиков не трогается (код есть код). Тире режим не
-ставит: выбор тире — решение агентного слоя. Режим идемпотентен и
-применим к собственным публичным документам проекта (гейт
+символы и NBSP снимаются, переносы строк к LF. Режимы --preserve-markup и
+--typographic опираются на единый источник защищённых областей
+(scripts/protected_regions.py, копия в пакете): содержимое fenced-блоков
+(``` и ~~~), YAML-frontmatter, инлайн-код (серии бэктиков фиксированной
+длины), URL, HTML-теги с кавычками атрибутов и ZWJ-кластеры составных
+эмодзи не трогаются; ZWJ вне эмодзи-контекста снимается как артефакт.
+Если общий источник правил недоступен, оба режима отказывают с явной
+ошибкой вместо небезопасного преобразования. Тире режим не ставит: выбор
+тире — решение агентного слоя. Режим идемпотентен и применим к
+собственным публичным документам проекта (гейт
 scripts/check_polish_modes.py требует changed:false на README.md,
 SKILL.md, CONTRIBUTING.md, llms.txt).
 
-Два инварианта (оба проверяются гейтом и самопроверкой):
+Инварианты (проверяются гейтом и самопроверкой):
   1. Идемпотентность: polish(polish(x)) == polish(x).
   2. Ноль смысловых правок: последовательность букв и цифр до и после
      совпадает дословно — трансформация не удаляет, не добавляет и не
      переставляет ни одной буквы (слова и числа содержимого целы;
      нулевые символы внутри слова лишь склеивают разорванное слово).
+  3. Сохранение защищённых областей (--preserve-markup и --typographic):
+     каждая защищённая область входа обязана присутствовать в результате
+     неизменной; нарушение репортится в списке invariants (URL, кавычки
+     атрибутов, ZWJ-кластер, содержимое кода) и даёт код 1.
 
 Доля отказов 0: polish не отказывает ни на каком входе; текст без
 типографических дефектов возвращается неизменным (пустой диф — норма).
@@ -53,7 +63,8 @@ SKILL.md, CONTRIBUTING.md, llms.txt).
     python3 scripts/polish.py --selftest        # самопроверка с негативами
 
 Коды: 0 — успех/инварианты целы; 1 — нарушение инварианта или диф-гейт;
-2 — вход не читается (с --json конверт ошибки печатается в stdout).
+2 — вход не читается либо запись --in-place не удалась (с --json конверт
+ошибки печатается в stdout).
 Репозиторий: https://github.com/Vladimir-Human/humanizer-ru
 Вход для агентов: llms.txt; машинный контракт: contract.v1.json.
 Только стандартная библиотека.
@@ -70,6 +81,30 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     sys.stderr.reconfigure(errors="backslashreplace")
+
+# Единый источник правил защищённых областей: пакетный контекст
+# (humanizer_ru.polish) берёт соседний модуль, скриптовый — из своего
+# каталога. Копии scripts/polish.py и src/humanizer_ru/polish.py побайтно
+# равны (гейт check_pkg_sync.py), как и копии protected_regions.py.
+try:
+    from . import protected_regions as PR
+except ImportError:
+    try:
+        import os as _os_pr
+        import sys as _sys_pr
+        _sys_pr.path.insert(
+            0, _os_pr.path.dirname(_os_pr.path.abspath(__file__)))
+        import protected_regions as PR
+    except Exception:  # pragma: no cover — поставка неполна
+        PR = None
+
+
+def _require_pr():
+    """Режимы сохранения обязаны защищать области или честно отказать."""
+    if PR is None:
+        raise RuntimeError(
+            "protected_regions недоступен: режимы --preserve-markup и "
+            "--typographic отказывают вместо небезопасного преобразования")
 
 # Невидимые символы: пробельные -> обычный пробел, нулевой ширины -> удалить.
 _INVIS = {
@@ -90,9 +125,15 @@ _LETTERS = re.compile(r"[0-9A-Za-z\u0410-\u042f\u0430-\u044f\u0401\u0451]")
 _FIXPOINT_ROUNDS = 20
 # Публикационный режим: парные прямые кавычки в пределах одной строки.
 _PAIR_QUOTES = re.compile(r'"([^"\n]*)"')
-_FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})")
-_FENCE_CLOSE_CH = {"`": re.compile(r"^ {0,3}(`+)\s*$"),
-                   "~": re.compile(r"^ {0,3}(~+)\s*$")}
+# Русские подписи видов защищённых областей для списка invariants.
+_PROTECTION_LABELS = {
+    "code": "содержимого кода",
+    "fenced": "fenced-блока",
+    "frontmatter": "frontmatter",
+    "url": "URL",
+    "html": "HTML-тега (кавычек атрибутов)",
+    "zwj": "ZWJ-кластера",
+}
 
 
 def words_of(text: str) -> list[str]:
@@ -107,19 +148,41 @@ def letters_of(text: str) -> str:
 
 def _polish_once(text: str, preserve_markup: bool = False) -> str:
     t = text.replace("\r\n", "\n").replace("\r", "\n")
+    if preserve_markup:
+        # Режим сохранения разметки: невидимые символы/NBSP снимаются
+        # только в прозе вне защищённых областей (единый источник —
+        # protected_regions); ёлочки, тире, многоточия, ** и ## остаются.
+        return _preserve_regions_once(t)
     for ch, repl in _INVIS.items():
         t = t.replace(ch, repl)
-    if preserve_markup:
-        # Режим сохранения разметки: только невидимые символы/NBSP и LF.
-        # Ёлочки, тире, многоточия, ** и ## остаются — русская типографика
-        # и Markdown-разметка не являются машинным слоем.
-        return t
     t = t.replace("\u2014", "-").replace("\u2013", "-")  # тире: длинное/короткое
     t = t.replace("\u00ab", '"').replace("\u00bb", '"')  # ёлочки -> прямые
     t = t.replace("\u2026", "...")                        # многоточие
     t = _BOLD.sub(lambda m: m.group(1) or m.group(2) or "", t)
     t = _HEADING.sub("", t)
     return t
+
+
+def _preserve_regions_once(t: str) -> str:
+    """Один проход режима сохранения: LF уже нормализованы вызывающим."""
+    _require_pr()
+    lines = t.split("\n")
+    fenced = PR.fenced_line_indices(lines)
+    front = PR.frontmatter_line_indices(lines)
+    out = []
+    for i, line in enumerate(lines):
+        if i in fenced or i in front:
+            out.append(line)
+            continue
+        pieces = []
+        last = 0
+        for s, e in PR.protected_line_spans(line):
+            pieces.append(PR.remove_invisibles(line[last:s], _INVIS))
+            pieces.append(line[s:e])
+            last = e
+        pieces.append(PR.remove_invisibles(line[last:], _INVIS))
+        out.append("".join(pieces))
+    return "\n".join(out)
 
 
 def polish(text: str, preserve_markup: bool = False,
@@ -149,80 +212,32 @@ def polish(text: str, preserve_markup: bool = False,
     return t
 
 
-def _fenced_mask(lines: list) -> set:
-    """Индексы строк внутри ЗАКРЫТЫХ блоков ``` и ~~~ (отступ до трёх).
-
-    Незакрытый забор не маскирует остаток файла — та же конвенция, что в
-    check_markers/scan_soft_signals: документация без закрытия не прячет
-    текст от трансформации.
-    """
-    inside = set()
-    i = 0
-    n = len(lines)
-    while i < n:
-        m = _FENCE_OPEN.match(lines[i])
-        if not m:
-            i += 1
-            continue
-        ch = m.group(1)[0]
-        flen = len(m.group(1))
-        close_rx = _FENCE_CLOSE_CH[ch]
-        j = i + 1
-        closed_at = -1
-        while j < n:
-            m2 = close_rx.match(lines[j])
-            if m2 and len(m2.group(1)) >= flen:
-                closed_at = j
-                break
-            j += 1
-        if closed_at >= 0:
-            for k in range(i, closed_at + 1):
-                inside.add(k)
-            i = closed_at + 1
-        else:
-            i += 1
-    return inside
-
-
-def _outside_backtick_segments(line: str) -> list:
-    """Интервалы (start, end) строки вне `инлайн-бэктиков`."""
-    segs = []
-    start = 0
-    in_bt = False
-    for idx, ch in enumerate(line):
-        if ch != "`":
-            continue
-        if not in_bt:
-            segs.append((start, idx))
-            in_bt = True
-        else:
-            in_bt = False
-            start = idx + 1
-    if not in_bt:
-        segs.append((start, len(line)))
-    return segs
+def _typo_prose(seg: str) -> str:
+    """Типографская правка одного прозаического сегмента (вне защит)."""
+    seg = PR.remove_invisibles(seg, _INVIS)
+    seg = _PAIR_QUOTES.sub("\u00ab\\1\u00bb", seg)
+    seg = seg.replace("...", "\u2026")
+    return seg
 
 
 def _typographic_once(text: str) -> str:
     """Один проход публикационного режима (без снятия разметки).
 
-    Трансформации применяются ТОЛЬКО к прозе вне fenced-блоков, YAML-
-    frontmatter и инлайн-бэктиков: код и документированные примеры (в том
-    числе невидимые символы внутри них) не трогаются. Невидимые символы и
-    NBSP в прозе снимаются, переносы строк нормализуются везде.
+    Трансформации применяются ТОЛЬКО к прозе вне защищённых областей
+    (единый источник — protected_regions): fenced-блоки (``` и ~~~),
+    YAML-frontmatter, инлайн-код (серии бэктиков фиксированной длины),
+    URL, HTML-теги с кавычками атрибутов и ZWJ-кластеры эмодзи не
+    трогаются. Невидимые символы и NBSP в прозе снимаются, переносы строк
+    нормализуются везде.
     """
+    _require_pr()
     t = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = t.split("\n")
-    fenced = _fenced_mask(lines)
-    # YAML-frontmatter (--- ... --- в начале файла) — данные, не проза.
-    if lines and lines[0].strip() == "---":
-        for j in range(1, len(lines)):
-            fenced.add(j)
-            if lines[j].strip() == "---":
-                break
+    fenced = PR.fenced_line_indices(lines)
+    front = PR.frontmatter_line_indices(lines)
     out = []
     for i, line in enumerate(lines):
-        if i in fenced:
+        if i in fenced or i in front:
             out.append(line)
             continue
         if ("`" not in line and '"' not in line and "..." not in line
@@ -231,16 +246,11 @@ def _typographic_once(text: str) -> str:
             continue
         pieces = []
         last = 0
-        for s, e in _outside_backtick_segments(line):
-            pieces.append(line[last:s])
-            seg = line[s:e]
-            for ch, repl in _INVIS.items():
-                seg = seg.replace(ch, repl)
-            seg = _PAIR_QUOTES.sub("\u00ab\\1\u00bb", seg)
-            seg = seg.replace("...", "\u2026")
-            pieces.append(seg)
+        for s, e in PR.protected_line_spans(line):
+            pieces.append(_typo_prose(line[last:s]))
+            pieces.append(line[s:e])
             last = e
-        pieces.append(line[last:])
+        pieces.append(_typo_prose(line[last:]))
         out.append("".join(pieces))
     return "\n".join(out)
 
@@ -269,12 +279,30 @@ def scope_note(text: str) -> str:
 def invariant_problems(original: str, cleaned: str,
                        preserve_markup: bool = False,
                        typographic: bool = False) -> list[str]:
-    """Проверка пары (до, после): список нарушений инвариантов."""
+    """Проверка пары (до, после): список нарушений инвариантов.
+
+    В режимах --preserve-markup и --typographic дополнительно сверяется
+    сохранение защищённых областей: каждая область входа (содержимое кода,
+    fenced-блок, frontmatter, URL, HTML-тег, ZWJ-кластер) обязана
+    присутствовать в результате неизменной. Список нарушений попадает в
+    --json (поле invariants) и даёт код возврата 1: «почти сохранил»
+    недопустимо.
+    """
     problems = []
     if polish(cleaned, preserve_markup, typographic) != cleaned:
         problems.append("идемпотентность: повторный проход меняет текст")
     if letters_of(original) != letters_of(cleaned):
         problems.append("смысловая правка: буквы/цифры изменены")
+    if preserve_markup or typographic:
+        _require_pr()
+        seen = set()
+        for kind, frag in PR.protected_regions(original):
+            if frag in cleaned or (kind, frag) in seen:
+                continue
+            seen.add((kind, frag))
+            problems.append(
+                "сохранение %s: защищённая область изменена или удалена: %r"
+                % (_PROTECTION_LABELS.get(kind, kind), frag[:60]))
     return problems
 
 
@@ -342,6 +370,60 @@ def selftest() -> int:
     case("preserve-markup сохраняет **жирный**", "**" in pm)
     case("preserve-markup снимает нулевой ширины", "\u200b" not in pm)
     case("preserve-markup идемпотентен", polish(pm, True) == pm)
+
+    # Защищённые области (единый источник protected_regions): URL,
+    # HTML-атрибуты, ZWJ-кластеры, инлайн-код — в обоих безопасных режимах.
+    url_src = "Троеточие... и https://example.org/a...b в прозе.\n"
+    uout = polish(url_src, typographic=True)
+    case("typographic: URL не трогается (многоточие внутри остаётся)",
+         "https://example.org/a...b" in uout)
+    case("typographic: проза вне URL приводится",
+         "Троеточие\u2026" in uout)
+    html_src = 'Проза "цитата" и <a href="x">ссылка</a>.\n'
+    hout = polish(html_src, typographic=True)
+    case("typographic: кавычки атрибута сохранены", '<a href="x">' in hout)
+    case("typographic: кавычки прозы приведены", "\u00abцитата\u00bb" in hout)
+    family = "семья \U0001F468\u200d\U0001F469\u200d\U0001F467 в подписи\n"
+    case("typographic: ZWJ-кластер семьи сохранён",
+         polish(family, typographic=True) == family)
+    case("preserve-markup: ZWJ-кластер семьи сохранён",
+         polish(family, preserve_markup=True) == family)
+    flag = "флаг \U0001F3F3\uFE0F\u200d\U0001F308 в чате\n"
+    case("preserve-markup: радужный флаг сохранён",
+         polish(flag, preserve_markup=True) == flag)
+    psrc = "проза\u200b и `код\u200b внутри` и NBSP\u00a0тут\n"
+    pout = polish(psrc, preserve_markup=True)
+    case("preserve-markup: невидимые в прозе сняты",
+         "проза и" in pout and "NBSP тут" in pout)
+    case("preserve-markup: содержимое инлайн-кода не тронуто",
+         "`код\u200b внутри`" in pout)
+    fsrc2 = "проза\u200b\n```\nкод\u200b внутри\n```\n"
+    fout2 = polish(fsrc2, preserve_markup=True)
+    case("preserve-markup: fenced-блок не тронут",
+         "код\u200b внутри" in fout2 and "проза и" not in fout2)
+    case("preserve-markup: проза вне блока снята", "проза\n" in fout2)
+
+    # Инвариант №3: нарушения сохранения репортятся, а не молчат.
+    src3 = 'См. https://e.org/a...b и "проза"...\n'
+    good3 = polish(src3, typographic=True)
+    case("typographic: инварианты чистого результата пусты",
+         invariant_problems(src3, good3, typographic=True) == [])
+    doctored_url = good3.replace("https://e.org/a...b", "https://e.org/a\u2026b")
+    case("инварианты ловят изменённый URL",
+         any("URL" in p for p in
+             invariant_problems(src3, doctored_url, typographic=True)))
+    fam_broken = family.replace("\u200d", "")
+    case("инварианты ловят разрушенный ZWJ-кластер",
+         any("ZWJ" in p for p in
+             invariant_problems(family, fam_broken, typographic=True)))
+    code_broken = pout.replace("`код\u200b внутри`", "`код внутри`")
+    case("инварианты ловят изменённое содержимое кода",
+         any("кода" in p for p in
+             invariant_problems(psrc, code_broken, preserve_markup=True)))
+    attr_broken = hout.replace('<a href="x">', "<a href=\u00abx\u00bb>")
+    case("инварианты ловят изменённые кавычки атрибута",
+         any("атрибут" in p for p in
+             invariant_problems(html_src, attr_broken, typographic=True)))
 
     # --typographic: публикационная типографика без снятия разметки;
     # fenced-блоки и инлайн-бэктики не трогает.
@@ -454,7 +536,10 @@ def main(argv=None) -> int:
     ap.add_argument("--preserve-markup", action="store_true",
                     help="снимать только невидимые символы/NBSP и "
                          "нормализовать переносы строк; Markdown и русская "
-                         "типографика (ёлочки, тире) сохраняются")
+                         "типографика (ёлочки, тире) сохраняются; "
+                         "защищённые области (инлайн-код, fenced-блоки, "
+                         "frontmatter, URL, HTML-теги, ZWJ-кластеры эмодзи) "
+                         "не трогаются")
     ap.add_argument("--remove", action="store_true",
                     help="явный алиас дефолтного режима: снятие "
                          "машинного слоя (невидимые, разметка); "
@@ -462,8 +547,10 @@ def main(argv=None) -> int:
     ap.add_argument("--typographic", action="store_true",
                     help="публикационный режим: парные прямые кавычки -> "
                          "ёлочки, «...» -> единый символ многоточия, "
-                         "невидимые символы снимаются; разметка, fenced-блоки "
-                         "и инлайн-код не трогаются; приоритет над "
+                         "невидимые символы снимаются только в прозе; "
+                         "защищённые области (разметка, fenced-блоки, "
+                         "инлайн-код, frontmatter, URL, HTML-теги, "
+                         "ZWJ-кластеры эмодзи) не трогаются; приоритет над "
                          "--preserve-markup")
     ap.add_argument("--json", action="store_true",
                     help="машиночитаемый отчёт (схема 1)")
@@ -533,13 +620,36 @@ def main(argv=None) -> int:
         elif args.in_place:
             if args.dry_run:
                 print(("ИЗМЕНИТСЯ " if changed else "БЕЗ ИЗМЕНЕНИЙ ") + path)
+            elif problems:
+                # Нарушен инвариант — результат не записывается: файл
+                # остаётся целым, нарушение видно в stderr и коде возврата.
+                print("НЕ ЗАПИСАНО %s: нарушение инвариантов: %s"
+                      % (path, "; ".join(problems)), file=sys.stderr)
             else:
                 if changed:
-                    with open(path + ".bak", "w", encoding="utf-8",
-                              newline="") as fh:
-                        fh.write(before)
-                    with open(path, "w", encoding="utf-8", newline="") as fh:
-                        fh.write(after)
+                    # Безопасная запись: сначала копия .bak, затем атомарная
+                    # подмена (tmp + os.replace). Ошибка записи не оставляет
+                    # частичный «успешный» результат: исходный файл цел,
+                    # временный убирается, состояние уходит в errors с кодом 2.
+                    tmp = path + ".tmp-polish"
+                    try:
+                        with open(path + ".bak", "w", encoding="utf-8",
+                                  newline="") as fh:
+                            fh.write(before)
+                        with open(tmp, "w", encoding="utf-8",
+                                  newline="") as fh:
+                            fh.write(after)
+                        os.replace(tmp, path)
+                    except OSError as exc:
+                        try:
+                            os.unlink(tmp)
+                        except OSError:
+                            pass
+                        print("НЕ ЗАПИСАНО %s: %r (исходный файл не изменён)"
+                              % (path, exc), file=sys.stderr)
+                        errors.append({"file": path, "error": repr(exc)})
+                        rc = 2
+                        continue
                 print(("ЗАПИСАНО " if changed else "БЕЗ ИЗМЕНЕНИЙ ") + path)
         else:
             # Завершающий перевод строки обязателен: следующий промпт
