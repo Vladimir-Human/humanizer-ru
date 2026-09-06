@@ -18,7 +18,7 @@
   с `--include-ambiguous` и предупреждением, dangerous (разделители
   строк, аннотации) показывается и не снимается никогда; теги
   эмодзи-флагов не трогает. Контейнерные файлы (PNG/DOCX/PDF) —
-  `scripts/filemarks` в репозитории. Все четыре команды читают stdin
+  `scripts/filemarks` в репозитории. humanizer-scan и humanizer-detect читают stdin; humanizer-polish и humanizer-markers принимают файл или stdin; humanizer-facts и humanizer-report принимают два файла; stdin
   через «-».
 - Нормализовать типографику без правки смысла: `humanizer-polish`
   (идемпотентна; буквы и цифры сохраняет дословно; режимы `--diff`,
