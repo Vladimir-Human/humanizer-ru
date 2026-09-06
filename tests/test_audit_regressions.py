@@ -389,3 +389,33 @@ class DemoStatusTests(unittest.TestCase):
             self.assertIsNone(data["lag_commits"])
             self.assertIsNone(data["published_commit"])
 
+
+class BenchmarkEvidenceTests(unittest.TestCase):
+    """L7 (N25/N30): одноимённые на benchmark-странице, лидерство не
+    объявлено, вариант Б приказа поддержан в proposal."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.page = open(os.path.join(ROOT, "demo", "benchmark", "index.html"),
+                        encoding="utf-8").read()
+        cls.leader = open(os.path.join(ROOT, "LEADERBOARD.md"),
+                          encoding="utf-8").read()
+        cls.proposal = open(os.path.join(ROOT, "docs",
+                                          "POSITIONING-PROPOSAL.md"),
+                            encoding="utf-8").read()
+
+    def test_same_names_present_with_status(self):
+        self.assertIn("ilyautov/humanizer-ru", self.page)
+        self.assertIn("smixs/humanizer-ru", self.page)
+        self.assertIn("несопоставимо", self.page)
+
+    def test_no_leadership_claim_from_single_comparator(self):
+        self.assertIn("лидерство в нише", self.leader)
+        self.assertIn("не измерено", self.leader)
+
+    def test_proposal_supports_both_variants(self):
+        self.assertIn("Проверяемая гигиена вставки из чата для русского "
+                      "текста", self.proposal)
+        self.assertIn("Проверка и очистка следов вставки из чата в русском "
+                      "тексте", self.proposal)
+
