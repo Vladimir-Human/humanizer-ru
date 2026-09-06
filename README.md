@@ -54,7 +54,7 @@ humanizer-markers --scan primer.txt
 - [Модель угроз и границы детектора](docs/THREAT-MODEL.md).
 - [Парити-гейт Python и JS правил](.github/workflows/regex-check.yml).
 - [Самоаудит: числа, статусы и эррата](eval/facts/self-audit.v1.json).
-- Статус последнего успешного прогона main: [docs/status.json](docs/status.json) (обновляется только зелёным прогоном).
+- Статус последнего успешного прогона и деплоя: [status.json на Pages](https://vladimir-human.github.io/humanizer-ru/status.json) (генерируется деплой-артефактом из точного SHA; обновляется только зелёным прогоном).
 
 ## Установка скилла в браузерные клиенты
 
