@@ -122,11 +122,10 @@ skills-каталог вашего агента. Свежесть бандла �
 `scripts/`, `knowledge/` и каталоги плагин-манифестов; исполняемого кода при
 установке нет). Загрузка в Claude.ai: **Settings → Skills → Upload skill**.
 
-Клон с закреплением на теге:
-
-```sh
-git clone --branch v3.32.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
-```
+Полный клон репозитория — только для разработки (гейты, eval, история
+изменений). Для установки скилла используйте бандл или архив выпуска выше:
+клон несёт в skills-каталог разработческие скрипты и служебные файлы, которые
+скиллу не нужны.
 
 DeepSeek Harness (dsh): глобально — тот же клон в `~/.agents/skills`, либо
 бандл `dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"`.

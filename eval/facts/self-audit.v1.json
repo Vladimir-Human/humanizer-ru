@@ -2,7 +2,7 @@
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
   "version": "3.32.0",
   "date": "2026-09-06",
-  "measured_commit": "c58956b30ad54b96e306eb0a9f4f12d43972c892",
+  "measured_commit": "f866fd3934915f2640e4747aa0c94a50e32d1ace",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
   "scope_files": 42,
   "methods": {
@@ -25,7 +25,7 @@
   "totals": {
     "markers_class_a": 0,
     "markers_class_b": 0,
-    "own_style_max": 77,
+    "own_style_max": 63,
     "own_style_max_file": "SKILL.md",
     "scan_max_features": 11,
     "detect": {
@@ -76,9 +76,9 @@
       "file": "SKILL.md",
       "markers_a": 0,
       "markers_b": 0,
-      "scan_features": 1,
-      "scan_categories": 1,
-      "style_total": 77,
+      "scan_features": 2,
+      "scan_categories": 2,
+      "style_total": 63,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -289,7 +289,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 69,
+      "style_total": 70,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -300,7 +300,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 96,
+      "style_total": 98,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"

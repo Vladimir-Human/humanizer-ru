@@ -65,13 +65,12 @@ SECURITY files, `PRIVACY_POLICY.md`, `LICENSE`, `gemini-extension.json`,
 nothing executable at install time). Upload into Claude.ai via
 **Settings → Skills → Upload skill**.
 
-Clone pinned to a tag:
+A full repository clone is for development only (gates, eval, changelog
+history). Install the skill from the bundle or the release archive above:
+a clone puts development scripts and service files into the skills
+directory that the skill does not need.
 
-```sh
-git clone --branch v3.32.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
-```
-
-DeepSeek Harness (dsh): globally — the same clone into `~/.agents/skills`, or
+DeepSeek Harness (dsh): globally — the same bundle into `~/.agents/skills`, or
 the bundle `dsh plugin --profile web add "github:Vladimir-Human/humanizer-ru#path:/dsh"`.
 Skill lookup order in dsh: project `.dsh/skills` and `.agents/skills`, then
 `~/.dsh/skills` and `~/.agents/skills`; `~/.claude/skills` is not scanned,
