@@ -14,6 +14,7 @@
       "value_note": "0/11, Wilson 95% CI [0%; 25.9%]",
       "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
       "reproduce": "python3 scripts/check_confidence.py --check",
+      "reproduce_public": true,
       "date": "2026-08-25",
       "note": "без даты ни одна величина не цитируется (ERRATA.md)"
     },
@@ -28,6 +29,7 @@
       "value_note": "0/26, Wilson 95% CI [0%; 12.9%]; корпус: 26 человеческих текстов, 24 машинных ответа 7 семейств, 2 boundary-контроля (eval/manifest.v1.json, все с sha256)",
       "artifact": "research/leaderboard/reference-2026-09-03.json, research/leaderboard/smixs-2026-09-03.json, eval/manifest.v1.json",
       "reproduce": "python3 eval/run_eval.py && python3 scripts/check_confidence.py --check",
+      "reproduce_public": true,
       "date": "2026-09-03",
       "note": "парный прогон одной даты с smixs/humanizer-ru (пин 91f70df); формализация предрегистрации когорты — research/leaderboard/cohort-prereg-2026-09-03.md (честная нота о порядке замера и формализации обязательна к цитированию); без даты величина не цитируется (ERRATA.md)",
       "assumptions": [
@@ -38,7 +40,7 @@
       "fact_id": "di-control-2026-09",
       "claim": "положительный контроль Di не пройден: читательская панель из трёх семейств LLM не отличает сырой машинный текст от согласованного человеческого (две семьи — системная инверсия 0/18); различение Di главного прогона не интерпретируется",
       "status": "limited",
-      "publication_approved": true,
+      "publication_approved": false,
       "tokens": [
         "0.444",
         "0.000",
@@ -50,12 +52,19 @@
       ],
       "value_note": "qwen 0.444 (8/18, CI [0.246; 0.663]); deepseek 0.000 (0/18, CI [0.000; 0.176]); kimi 0.000 (0/18, CI [0.000; 0.176]); агрегат 0/18; вердикт FAIL; следствие — заявка C-класса",
       "artifact": "research/DI-CONTROL-2026-09.md",
-      "reproduce": "python3 tools/di_control_analyze.py",
+      "reproduce": "python3 scripts/di_control_analyze.py",
+      "source_data": [
+        "research/di-control-2026-09/results-qwen.json (sha256 7d374522239612887eba9f5301eba4470051b3edb8168b8621925e6faa8a5fea)",
+        "research/di-control-2026-09/results-deepseek.json (sha256 87f908d7db2027da424e5c333a763946e0bad213105f21d2254acd40757cbeb8)",
+        "research/di-control-2026-09/results-kimi.json (sha256 3807c52a3b24a068f0e47beb830aa3c2aa552cb68a28f407f05512bee32717f4)",
+        "run:measurement/di-control-2026-09/sides.json (sha256 28f9c398733e9830f9a167eeaa3b5d91c5477dc28472b86cb8d15ac4fafbb279)"
+      ],
       "date": "2026-09-03",
-      "note": "предрег preregistration/di-control-2026-09.md заморожен до первого сужения (RUNLOG W-76); публикация исхода одобрена приказом владельца при любом исходе; гриф «судьи LLM, до человеческого контроля»; конфлейт «человечность ↔ аккуратность» — гипотеза, не замер",
+      "note": "предрег research/di-control-2026-09/prereg.md заморожен до первого сужения (RUNLOG W-76, штамп research/prereg-stamps/MANIFEST.md); гриф «судьи LLM, до человеческого контроля»; конфлейт «человечность ↔ аккуратность» — гипотеза, не замер. 2026-09-06: публикация чисел приостановлена (publication_approved=false) — цепочка воспроизведения неисполнима из публичных данных: анализатору нужен каталог приватного прогона (sides.json, хеш зафиксирован в research/di-control-2026-09/PRIVATE-ARTIFACTS.md); прежняя команда воспроизведения вела на несуществующий путь tools/di_control_analyze.py, исправлена на фактический scripts/di_control_analyze.py; исторический отчёт и сырые суждения трёх семейств сохранены, эррата — ERRATA.md",
       "assumptions": [
         "llm-judge-oracle",
-        "prereg-frozen"
+        "prereg-frozen",
+        "private-run-artifact"
       ]
     },
     {
@@ -104,6 +113,7 @@
       "value_note": "0 совпадений на 11 человеческих текстах (Wilson 95% CI [0%; 25.9%]); 2/2 boundary-контроля",
       "artifact": "research/leaderboard/*.json, eval/manifest.v1.json",
       "reproduce": "python3 eval/run_eval.py",
+      "reproduce_public": true,
       "date": "2026-08-12"
     },
     {
@@ -133,6 +143,7 @@
       "value_note": "скор raw 0.846 → после 0.438; дельта −0.408; 11/12 пар ниже; ячейка FP этой строки — отдельная запись (0/11)",
       "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
       "reproduce": "python3 eval/reproduce.py",
+      "reproduce_public": true,
       "retraction": "ERRATA.md (2026-09-01), research/AXIS-RUBRIC-RETRACTION-2026-09-01.md",
       "date": "2026-08-25",
       "note": "число воспроизводится; эффект даёт срез формата и обвязки (3/3 семьи), а не смысловая перезапись (0/3)"
@@ -151,6 +162,7 @@
       "value_note": "скор raw 0.414 → после 0.309; дельта −0.105; 6/9 валидных пар ниже (3 пары короче 20 токенов — guard None)",
       "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
       "reproduce": "python3 eval/reproduce.py --report eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+      "reproduce_public": true,
       "date": "2026-08-25",
       "note": "якоря — эвристика уровня O; регрессии на 3 парах задокументированы в JSON"
     },
@@ -212,6 +224,7 @@
       "value_note": "двусторонний знак-тест, 11/12 пар ниже, p=0.006",
       "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
       "reproduce": "python3 eval/reproduce.py",
+      "reproduce_public": true,
       "retraction": "ERRATA.md (2026-09-01)",
       "date": "2026-08-25",
       "note": "цитируется только в документе-отзыве"
