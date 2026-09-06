@@ -12,10 +12,12 @@ import re
 import unicodedata
 
 _MARKER_CASES = {}
+_CM_IS_URL_MARKER = None
 try:
     # Контекст пакета (humanizer_ru.text_layer): check_markers лежит рядом.
     from . import check_markers as _cm
     _MARKER_CASES = _cm.CASES
+    _CM_IS_URL_MARKER = _cm._is_url_marker
 except ImportError:
     try:
         import os as _os
@@ -24,6 +26,7 @@ except ImportError:
         # Выражения берутся из check_markers.py — единый источник правил
         # (scripts/check_markers.py, словарь CASES).
         from check_markers import CASES as _MARKER_CASES
+        from check_markers import _is_url_marker as _CM_IS_URL_MARKER
     except Exception as _exc:  # слой A без детектора пуст — обязан шуметь
         import sys as _sys
         print("ВНИМАНИЕ: check_markers не импортирован, DETECTOR_OK=False: %s"
@@ -34,6 +37,78 @@ except Exception as _exc:  # относительный импорт вне па
           % _exc, file=_sys.stderr)
 
 DETECTOR_OK = _MARKER_CASES != {}
+
+# Защищённые области — единый источник scripts/protected_regions.py (копия
+# в пакете): очистка не трогает fenced-блоки, YAML-frontmatter и инлайн-код;
+# не-URL маркеры не снимаются внутри URL (детектор их там маскирует).
+_PR = None
+try:
+    from . import protected_regions as _PR
+except ImportError:
+    try:
+        import os as _os_pr
+        import sys as _sys_pr
+        _sys_pr.path.insert(
+            0, _os_pr.path.dirname(_os_pr.path.dirname(
+                _os_pr.path.abspath(__file__))))
+        import protected_regions as _PR
+    except Exception:
+        _PR = None
+except Exception:
+    _PR = None
+
+_URL_MARKER_HINTS = ("utm", "card", "url", "link")
+
+
+def _is_url_marker_name(name):
+    """URL-маркер ли кейс (граница детектора _is_url_marker)."""
+    if _CM_IS_URL_MARKER is not None:
+        try:
+            return _CM_IS_URL_MARKER(name)
+        except Exception:
+            pass
+    if any(h in name for h in _URL_MARKER_HINTS):
+        return True
+    pat = _MARKER_CASES.get(name, ("",))[0]
+    return ("http" in pat or "www" in pat or "referrer" in pat
+            or "vertex" in pat or "grounding" in pat)
+
+
+def _map_outside_protected(text, fn, protect_urls=False):
+    """Применяет fn(seg)->(seg, n) к тексту вне защищённых областей.
+
+    Защищены строки fenced-блоков и frontmatter целиком; внутри остальных
+    строк — интервалы инлайн-кода, а при protect_urls и URL-спаны.
+    Возвращает (текст, суммарный счёт). Без protected_regions применяет fn
+    ко всему тексту (границы выражений при этом всё равно соблюдаются).
+    """
+    if _PR is None:
+        return fn(text)
+    lines = text.split("\n")
+    fenced = _PR.fenced_line_indices(lines)
+    front = _PR.frontmatter_line_indices(lines)
+    total = 0
+    out = []
+    for i, line in enumerate(lines):
+        if i in fenced or i in front:
+            out.append(line)
+            continue
+        spans = _PR.code_spans(line)
+        if protect_urls:
+            spans = _PR.merge_spans(spans + _PR.url_spans(line))
+        pieces = []
+        last = 0
+        for s, e in spans:
+            seg, n = fn(line[last:s])
+            total += n
+            pieces.append(seg)
+            pieces.append(line[s:e])
+            last = e
+        seg, n = fn(line[last:])
+        total += n
+        pieces.append(seg)
+        out.append("".join(pieces))
+    return "\n".join(out), total
 
 
 def _det(name):
@@ -173,30 +248,61 @@ def _strip_source_chain(text):
     return _CHAIN_RUN.sub(_sub, text), count
 
 # I.10-б: utm/referrer — вырезать только параметр из URL, не всю ссылку.
-_UTM_PARAMS = (
-    (r"utm_source=chatgpt\.com", "utm_source=chatgpt.com"),
-    (r"utm_source=openai", "utm_source=openai"),
-    (r"utm_source=copilot\.com", "utm_source=copilot.com"),
-    (r"referrer=grok\.com", "referrer=grok.com"),
+# Границы значения — те же, что у детектора (единый источник CASES):
+# негативный lookahead (?![A-Za-z0-9_.-]) у utm_source=openai/chatgpt.com/
+# copilot.com отвергает utm_source=openair и chatgpt.com.example. Хвост
+# параметра останавливается на пробеле, &, #, ), `, <, > и кавычках —
+# структура markdown-ссылки и границы инлайн-кода не разрушаются.
+_UTM_FALLBACK = (
+    ("utm_chatgpt", r"[?&]utm_source=chatgpt\.com(?![A-Za-z0-9_.-])"),
+    ("utm_openai", r"[?&]utm_source=openai(?![A-Za-z0-9_.-])"),
+    ("utm_copilot", r"[?&]utm_source=copilot\.com(?![A-Za-z0-9_.-])"),
+    ("grok_referrer", r"[?&]referrer=grok\.com"),
 )
+_UTM_TAIL = r"[^\s&#)`<>\"'«»]*"
+
+
+def _utm_patterns():
+    """(выражение детектора + стоп-хвост, имя кейса) — из CASES, с резервом."""
+    out = []
+    for name, fallback in _UTM_FALLBACK:
+        pat = _det(name) or fallback
+        out.append((re.compile(pat + _UTM_TAIL), name))
+    return out
+
+
+def _utm_sub_segment(seg, rx):
+    """Снятие одного utm-паттерна в сегменте; возвращает (сегмент, счёт)."""
+    count = 0
+    while True:
+        m = rx.search(seg)
+        if not m:
+            break
+        start, end = m.start(), m.end()
+        count += 1
+        if seg[start:start + 1] == "?" and seg[end:end + 1] == "&":
+            # "?param&rest" -> "?rest" (оставляем начало query-строки)
+            seg = seg[:start] + "?" + seg[end + 1:]
+        else:
+            # "?param..." или "&param..." -> удалить параметр с его разделителем
+            seg = seg[:start] + seg[end:]
+    return seg, count
 
 
 def _clean_utm(text):
+    """Снятие utm/referrer-параметров вне защищённых областей.
+
+    Защищённые области (fenced-блоки, frontmatter, инлайн-код) не
+    трогаются: документированные примеры параметров остаются как есть.
+    URL-спаны НЕ защищаются для этого снятия: параметр живёт внутри URL,
+    а границы совпадения (lookahead детектора и стоп-класс хвоста)
+    сохраняют структуру ссылки.
+    """
     count = 0
-    for val_pat, _label in _UTM_PARAMS:
-        rx = re.compile(r"[?&]" + val_pat + r"[^\s&#]*")
-        while True:
-            m = rx.search(text)
-            if not m:
-                break
-            start, end = m.start(), m.end()
-            count += 1
-            if text[start:start + 1] == "?" and text[end:end + 1] == "&":
-                # "?param&rest" -> "?rest" (оставляем начало query-строки)
-                text = text[:start] + "?" + text[end + 1:]
-            else:
-                # "?param..." или "&param..." -> удалить параметр с его разделителем
-                text = text[:start] + text[end:]
+    for rx, _name in _utm_patterns():
+        text, n = _map_outside_protected(
+            text, lambda seg, rx=rx: _utm_sub_segment(seg, rx))
+        count += n
     return text, count
 
 
@@ -204,7 +310,11 @@ def clean_markup(text):
     """I.10: снятие видимых copy-paste артефактов класса A (безпотерно).
 
     Возвращает (текст, число снятых примет). Порядок: think-блок, сцепки
-    источника, обычные маркеры, затем utm-параметры.
+    источника, обычные маркеры, затем utm-параметры. Обычные маркеры
+    снимаются только вне защищённых областей (fenced-блоки, frontmatter,
+    инлайн-код); не-URL маркеры дополнительно не снимаются внутри
+    URL-спанов — та же граница, что у детектора (маскирование URL для
+    не-URL маркеров): снятие и обнаружение не расходятся.
     """
     count = 0
     text, n = _THINK_RX.subn("", text)
@@ -213,8 +323,10 @@ def clean_markup(text):
     text, n = _strip_source_chain(text)
     count += n
 
-    for _name, rx in _compiled_markup():
-        text, n = rx.subn("", text)
+    for name, rx in _compiled_markup():
+        text, n = _map_outside_protected(
+            text, lambda seg, rx=rx: rx.subn("", seg),
+            protect_urls=not _is_url_marker_name(name))
         count += n
 
     text, n = _clean_utm(text)
