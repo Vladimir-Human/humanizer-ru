@@ -178,12 +178,18 @@ def build_js(doc):
             json.dumps(data, ensure_ascii=False, indent=2) + ";" + NL + 'window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;' + NL)
 
 
-def build_sw(js_text, index_text=""):
+def build_sw(js_text, index_text="", engine_text="", sample_text=""):
+    """Кэш service worker версионируется хэшем ВСЕХ исполняемых ресурсов:
+    правила, движок, образец и страница (инлайн-скрипты). Изменение любого
+    из них — например engine.js без правки правил — инвалидирует кэш:
+    клиент со старым кешем не остаётся на прежнем исполняемом коде."""
     import hashlib
     digest = hashlib.sha256(
-        (js_text + index_text).encode("utf-8")).hexdigest()[:12]
+        (js_text + engine_text + sample_text + index_text).encode("utf-8")
+    ).hexdigest()[:12]
     return (
-        "/* Автогенерация generate_js_rules.py: кэш версионируется хэшем правил. */\n"
+        "/* Автогенерация generate_js_rules.py: кэш версионируется хэшем "
+        "правил, движка, образца и страницы. */\n"
         "const CACHE = \"humanizer-ru-" + digest + "\";\n"
         "const STATIC = [\"./\", \"./index.html\", \"./brand.css\", \"./markers.js\",\n"
         "  \"./engine.js\", \"./sample.js\", \"./favicon.svg\", \"./manifest.json\"];\n"
@@ -218,9 +224,19 @@ def main():
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as fh:
             index_text = fh.read()
+    engine_text = ""
+    engine_path = os.path.join(HERE, "engine.js")
+    if os.path.isfile(engine_path):
+        with open(engine_path, encoding="utf-8") as fh:
+            engine_text = fh.read()
+    sample_text = ""
+    sample_path = os.path.join(HERE, "sample.js")
+    if os.path.isfile(sample_path):
+        with open(sample_path, encoding="utf-8") as fh:
+            sample_text = fh.read()
     with open(os.path.join(HERE, "sw.js"), "w", encoding="utf-8",
               newline="\n") as fh:
-        fh.write(build_sw(out, index_text))
+        fh.write(build_sw(out, index_text, engine_text, sample_text))
     print("Записан %s: правил %d" % (OUT, doc["count"]))
 
 

@@ -1,5 +1,5 @@
-/* Автогенерация generate_js_rules.py: кэш версионируется хэшем правил. */
-const CACHE = "humanizer-ru-d9373d81dd17";
+/* Автогенерация generate_js_rules.py: кэш версионируется хэшем правил, движка, образца и страницы. */
+const CACHE = "humanizer-ru-cfe3b71551cd";
 const STATIC = ["./", "./index.html", "./brand.css", "./markers.js",
   "./engine.js", "./sample.js", "./favicon.svg", "./manifest.json"];
 self.addEventListener("install", (e) => {

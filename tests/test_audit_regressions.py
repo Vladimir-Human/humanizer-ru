@@ -395,16 +395,42 @@ class DemoStatusTests(unittest.TestCase):
             subprocess.run(["git", "init", "-q", td], check=True, env=env)
             subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "x"],
                            cwd=td, check=True, env=env)
+            ws = os.path.join(ROOT, "scripts", "write_status.py")
+            status_path = os.path.join(td, "docs", "status.json")
+            # Негатив: без результата прогона статус не пишется.
+            r0 = subprocess.run(
+                [sys.executable, ws, "--root", td, "--sha", "abc"],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace")
+            self.assertEqual(r0.returncode, 2)
+            self.assertFalse(os.path.exists(status_path))
+            # Негатив: чужой SHA результата прогона отвергается.
+            rr = os.path.join(td, "run-result.json")
+            with open(rr, "w", encoding="utf-8") as fh:
+                json.dump({"sha": "deadbee", "tests_passed": True,
+                           "parity": "ok"}, fh)
+            r1 = subprocess.run(
+                [sys.executable, ws, "--root", td, "--sha", "abc",
+                 "--run-result", rr],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace")
+            self.assertEqual(r1.returncode, 2)
+            self.assertFalse(os.path.exists(status_path))
+            # Позитив: согласованный результат, тегов нет — null-lag.
+            with open(rr, "w", encoding="utf-8") as fh:
+                json.dump({"sha": "abc", "tests_passed": True,
+                           "parity": "ok"}, fh)
             r = subprocess.run(
-                [sys.executable, os.path.join(ROOT, "scripts",
-                                              "write_status.py"),
-                 "--root", td, "--sha", "abc"],
-                capture_output=True, text=True)
+                [sys.executable, ws, "--root", td, "--sha", "abc",
+                 "--run-result", rr],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace")
             self.assertEqual(r.returncode, 0, r.stderr)
-            data = json.load(open(os.path.join(td, "docs", "status.json"),
-                                  encoding="utf-8"))
+            data = json.load(open(status_path, encoding="utf-8"))
             self.assertIsNone(data["lag_commits"])
             self.assertIsNone(data["published_commit"])
+            self.assertTrue(data["tests_passed"])
+            self.assertEqual(data["parity"], "ok")
 
 
 @SKIP_OUTSIDE
