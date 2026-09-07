@@ -137,6 +137,8 @@ def _gates(quick, tmpdir):
          "scripts/collect_external_feedback.py", "--selftest"], [], {0}),
         ("live-distribution: самопроверка", [PY,
          "scripts/check_live_distribution.py", "--selftest"], [], {0}),
+        ("feedback: доказательность KPI", [PY,
+         "scripts/check_feedback_evidence.py"], [], {0}),
         ("pypi-metadata: самопроверка", [PY,
          "scripts/check_pypi_metadata.py", "--selftest"], [], {0}),
         ("pypi-metadata: PKG-INFO равен pyproject", [PY,
