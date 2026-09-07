@@ -682,6 +682,345 @@ def remove_invisible(text, include_ambiguous=False):
         i += 1
     return "".join(out), report
 
+_CLEAN_ROUNDS = 10
+
+
+def clean_supported(text):
+    """Очистка поддерживаемых артефактов до неподвижной точки.
+
+    Слой A (невидимые символы и Unicode-теги, clean_text_layer) + MARKUP
+    (видимые артефакты класса A, снимаемые доказуемо безпотерно,
+    clean_markup). Итерация до фикспойнта: снятие маркера может обнажить
+    следующий (вложенные формы). Возвращает (текст, {"invisible": n,
+    "markup": n}) — суммарные счётчики снятий.
+    """
+    total_inv = total_mk = 0
+    t = text
+    for _ in range(_CLEAN_ROUNDS):
+        t2, n_inv = clean_text_layer(t)
+        t2, n_mk = clean_markup(t2)
+        total_inv += n_inv
+        total_mk += n_mk
+        if t2 == t:
+            break
+        t = t2
+    return t, {"invisible": total_inv, "markup": total_mk}
+
+
+def _scan_via_detector(paths):
+    """(count, markers, error) через check_markers.scan_paths.
+
+    Проверка до/после очистки исполняется ЕДИНЫМ детектором (контрактный
+    скан маркеров), без дублирующего извлекателя: вывод scan_paths
+    перехватывается и разбирается как конверт контракта.
+    """
+    import contextlib
+    import io
+    import json as _json
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = _cm.scan_paths(list(paths), class_filter="all", as_json=True)
+    if rc == 2:
+        return None, None, "детектор не смог прочитать вход (код 2)"
+    try:
+        doc = _json.loads(buf.getvalue())
+        entry = doc["files"][0]
+        return entry.get("count", 0), entry.get("markers", []), None
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None, None, "детектор не вернул конверт контракта"
+
+
+def _facts_part(before, cleaned):
+    """Сверка фактов до/после через edit_report.facts_part (единый путь:
+    payload маркеров не считается фактом автора)."""
+    try:
+        from . import edit_report as _er
+    except ImportError:
+        import os as _os_f
+        import sys as _sys_f
+        _sys_f.path.insert(0, _os_f.dirname(_os_f.abspath(__file__)))
+        import edit_report as _er
+    return _er.facts_part(before, cleaned)
+
+
+def _scope_note(text):
+    """Статус «вне области» через polish.scope_note (единый определитель)."""
+    try:
+        from . import polish as _polish
+    except ImportError:
+        import os as _os_s
+        import sys as _sys_s
+        _sys_s.path.insert(0, _os_s.dirname(_os_s.abspath(__file__)))
+        import polish as _polish
+    return _polish.scope_note(text)
+
+
+def _protected_report(before, cleaned):
+    """Сохранность защищённых областей и перечень для отчёта.
+
+    Жёсткий инвариант: fenced-блоки, frontmatter, инлайн-код, HTML-теги и
+    ZWJ-кластеры обязаны присутствовать в результате неизменными (единый
+    источник правил — protected_regions). URL-спаны перечисляются отдельно:
+    снятие utm/referrer-параметров внутри URL — документированная операция
+    очистки (граница детектора, removal_guards контракта), прочее
+    содержимое URL не трогается. Возвращает (список для отчёта, нарушения).
+    """
+    report = []
+    problems = []
+    if _PR is None:
+        return report, ["protected_regions недоступен: сохранность "
+                        "защищённых областей не проверена"]
+    by_kind = {}
+    for kind, frag in _PR.protected_regions(before):
+        by_kind.setdefault(kind, []).append(frag)
+    for kind in sorted(by_kind):
+        frags = by_kind[kind]
+        if kind == "url":
+            report.append({"kind": kind, "regions": len(frags),
+                           "note": "utm/referrer-параметры снимаются "
+                                   "согласно границе детектора; прочее "
+                                   "содержимое URL не трогается"})
+            continue
+        missing = [f for f in set(frags) if f not in cleaned]
+        report.append({"kind": kind, "regions": len(frags),
+                       "unchanged": not missing})
+        for frag in missing:
+            problems.append("сохранение %s: защищённая область изменена "
+                            "или удалена: %r" % (kind, frag[:60]))
+    return report, problems
+
+
+def clean_main(argv=None) -> int:
+    """CLI humanizer-clean: явная очистка поддерживаемых артефактов вставки.
+
+    Пользовательский сценарий одной командой: проверка до (единый
+    детектор), очистка (слой A + MARKUP вне защищённых областей, до
+    неподвижной точки), проверка после, сверка фактов, перечень
+    неизменённых защищённых областей и остаточных находок.
+
+    Выход: дефолт — очищенный текст в stdout; --json — конверт контракта
+    {tool: "humanizer-clean", schema: 1, files: [...]} (поля записи: file,
+    changed, removed_invisible, removed_markup, before_check, after_check,
+    protected_untouched, residual, facts, invariants, text, при пустом/
+    не-русском входе — status и scope_note); --diff — унифицированный диф;
+    --in-place — атомарная запись на место с копией .bak (ошибка записи
+    сохраняет исходный файл, код 2); --dry-run — отчёт без записи.
+
+    Коды: 0 — очистка выполнена, остаточных находок нет; 1 — после
+    очистки остался явный остаток (неподдерживаемые пути: класс B,
+    wiki-разметка, плейсхолдеры) или нарушен инвариант защищённых
+    областей/идемпотентности — результат НЕ записывается; 2 — вход не
+    читается (с --json конверт ошибки в stdout, error_rule).
+
+    Граница: операция не переписывает стиль и не трогает смысл — снимаются
+    только зарегистрированные артефакты вставки; неподдерживаемая очистка
+    оставляет явный остаток, а не заявляет полную чистоту.
+    """
+    import argparse
+    import difflib
+    import json
+    import os
+    import sys
+    import tempfile
+
+    ap = argparse.ArgumentParser(
+        prog="humanizer-clean",
+        description="Явная очистка поддерживаемых артефактов чат-вставки: "
+                    "проверка до, снятие невидимых меток и видимых "
+                    "артефактов класса A вне защищённых областей, проверка "
+                    "после, сверка фактов и перечень остатка. Стиль и смысл "
+                    "не переписываются; неподдерживаемые находки остаются "
+                    "видимым остатком (код 1).")
+    ap.add_argument("files", nargs="*",
+                    help="файлы для очистки; «-» читает stdin (UTF-8)")
+    ap.add_argument("--json", action="store_true",
+                    help="конверт контракта {tool, schema, files} с "
+                         "очищенным текстом и отчётом")
+    ap.add_argument("--diff", action="store_true",
+                    help="унифицированный диф до/после")
+    ap.add_argument("--in-place", action="store_true",
+                    help="атомарная запись на место (копия .bak)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="отчёт без записи")
+    ap.add_argument("--selftest", action="store_true",
+                    help="самопроверка текстового слоя")
+    try:
+        args = ap.parse_args(argv)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 2
+        if code == 0:
+            return 0
+        raw = list(sys.argv[1:] if argv is None else argv)
+        if "--json" in raw:
+            print(json.dumps({"tool": "humanizer-clean", "schema": 1,
+                              "files": [{"file": "<argv>",
+                                         "error": "аргументы не распознаны"}],
+                              "error": "вход не читается (код 2)"},
+                             ensure_ascii=False, indent=2))
+        return code
+    if args.selftest:
+        return _selftest()
+    if not args.files:
+        print("нет файлов для очистки; «-» читает stdin", file=sys.stderr)
+        if args.json:
+            print(json.dumps({"tool": "humanizer-clean", "schema": 1,
+                              "files": [{"file": "<argv>",
+                                         "error": "нет файлов для очистки"}],
+                              "error": "вход не читается (код 2)"},
+                             ensure_ascii=False, indent=2))
+        return 2
+
+    report = []
+    errors = []
+    rc = 0
+    tmpdir = tempfile.mkdtemp(prefix="humanizer-clean-")
+    try:
+        for idx, path in enumerate(args.files):
+            label = "<stdin>" if path == "-" else path
+            if path == "-" and args.in_place:
+                msg = "--in-place неприменим к stdin"
+                print("НЕ ЧИТАЕТСЯ -: " + msg, file=sys.stderr)
+                errors.append({"file": "<stdin>", "error": msg})
+                rc = 2
+                continue
+            try:
+                if path == "-":
+                    if hasattr(sys.stdin, "reconfigure"):
+                        sys.stdin.reconfigure(encoding="utf-8",
+                                              errors="strict")
+                    before = sys.stdin.read()
+                else:
+                    with open(path, encoding="utf-8") as fh:
+                        before = fh.read()
+            except (OSError, UnicodeDecodeError) as exc:
+                print("НЕ ЧИТАЕТСЯ %s: %r" % (path, exc), file=sys.stderr)
+                errors.append({"file": label, "error": repr(exc)})
+                rc = 2
+                continue
+
+            # Проверка ДО: единый детектор (файл или копия stdin).
+            if path == "-":
+                before_path = os.path.join(tmpdir, "before-%d.txt" % idx)
+                with open(before_path, "w", encoding="utf-8",
+                          newline="") as fh:
+                    fh.write(before)
+            else:
+                before_path = path
+            b_count, b_markers, scan_err = _scan_via_detector([before_path])
+            if scan_err:
+                print("НЕ ЧИТАЕТСЯ %s: %s" % (path, scan_err),
+                      file=sys.stderr)
+                errors.append({"file": label, "error": scan_err})
+                rc = 2
+                continue
+
+            # Очистка до неподвижной точки.
+            cleaned, removed = clean_supported(before)
+
+            # Проверка ПОСЛЕ: тот же детектор по очищенному тексту.
+            after_path = os.path.join(tmpdir, "after-%d.txt" % idx)
+            with open(after_path, "w", encoding="utf-8", newline="") as fh:
+                fh.write(cleaned)
+            a_count, a_markers, scan_err = _scan_via_detector([after_path])
+            if scan_err:
+                errors.append({"file": label, "error": scan_err})
+                rc = 2
+                continue
+
+            # Инварианты: защищённые области и идемпотентность.
+            protected, problems = _protected_report(before, cleaned)
+            again, _ = clean_supported(cleaned)
+            if again != cleaned:
+                problems.append("идемпотентность: повторная очистка меняет "
+                                "текст")
+            facts = _facts_part(before, cleaned)
+
+            changed = cleaned != before
+            residual = a_count or 0
+            if problems or residual:
+                rc = 1 if rc == 0 else rc
+            note = _scope_note(before)
+            entry = {
+                "file": label,
+                "changed": changed,
+                "removed_invisible": removed["invisible"],
+                "removed_markup": removed["markup"],
+                "before_check": {"count": b_count, "markers": b_markers},
+                "after_check": {"count": a_count, "markers": a_markers},
+                "protected_untouched": protected,
+                "residual": a_markers,
+                "facts": facts,
+                "invariants": problems,
+            }
+            if note:
+                entry["status"] = "out-of-scope"
+                entry["scope_note"] = note
+                print("%s: %s" % (label, note), file=sys.stderr)
+            if args.json:
+                entry["text"] = cleaned
+                report.append(entry)
+            elif args.diff:
+                sys.stdout.writelines(difflib.unified_diff(
+                    before.splitlines(keepends=True),
+                    cleaned.splitlines(keepends=True),
+                    fromfile=label + " (до)", tofile=label + " (после)"))
+            elif args.in_place:
+                if args.dry_run:
+                    print(("ИЗМЕНИТСЯ " if changed else "БЕЗ ИЗМЕНЕНИЙ ")
+                          + label)
+                elif problems:
+                    print("НЕ ЗАПИСАНО %s: нарушение инвариантов: %s"
+                          % (label, "; ".join(problems)), file=sys.stderr)
+                else:
+                    if changed:
+                        # Атомарность: копия .bak, запись во временный файл
+                        # и os.replace; ошибка записи оставляет исходный
+                        # файл целым (состояние уходит в errors, код 2).
+                        tmp = path + ".tmp-clean"
+                        try:
+                            with open(path + ".bak", "w", encoding="utf-8",
+                                      newline="") as fh:
+                                fh.write(before)
+                            with open(tmp, "w", encoding="utf-8",
+                                      newline="") as fh:
+                                fh.write(cleaned)
+                            os.replace(tmp, path)
+                        except OSError as exc:
+                            try:
+                                os.unlink(tmp)
+                            except OSError:
+                                pass
+                            print("НЕ ЗАПИСАНО %s: %r (исходный файл не "
+                                  "изменён)" % (path, exc), file=sys.stderr)
+                            errors.append({"file": label,
+                                           "error": repr(exc)})
+                            rc = 2
+                            continue
+                    print(("ЗАПИСАНО " if changed else "БЕЗ ИЗМЕНЕНИЙ ")
+                          + label)
+                    if residual:
+                        print("ОСТАТОК %s: неподдерживаемых находок %d "
+                              "(перечень — в --json)" % (label, residual),
+                              file=sys.stderr)
+            else:
+                sys.stdout.write(cleaned if not cleaned
+                                 or cleaned.endswith("\n")
+                                 else cleaned + "\n")
+                if residual:
+                    print("ОСТАТОК %s: неподдерживаемых находок %d"
+                          % (label, residual), file=sys.stderr)
+    finally:
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)
+    if args.json:
+        envelope = {"tool": "humanizer-clean", "schema": 1,
+                    "files": report + errors}
+        if rc == 2:
+            envelope["error"] = "вход не читается (код 2)"
+        print(json.dumps(envelope, ensure_ascii=False, indent=2))
+    return rc
+
+
 def _selftest() -> int:
     passed = failed = 0
 
@@ -711,5 +1050,7 @@ if __name__ == "__main__":
     import sys as _sys
     if "--selftest" in _sys.argv:
         _sys.exit(_selftest())
-    _sys.exit(0)
+    # Точка входа python -m humanizer_ru.text_layer — CLI очистки
+    # (humanizer-clean); MCP-контур вызывает модуль этим путём.
+    _sys.exit(clean_main())
 
