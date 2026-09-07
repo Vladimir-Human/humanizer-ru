@@ -395,6 +395,12 @@ def _gates(quick, tmpdir):
           "eval/run_task_benchmark.py",
           "research/task-benchmark/prereg.md",
           "research/task-benchmark/o4-tasks.json"], {0}),
+        # Гейт итогового отчёта поставки: состав критериев заморожен,
+        # обязательный PASS не заменяется пропуском, артефакт не
+        # сравнивается сам с собой (негативы в selftest).
+        ("delivery-report: гейт отчёта поставки",
+         [PY, "scripts/check_delivery_report.py", "--selftest"],
+         ["scripts/check_delivery_report.py"], {0}),
         ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",
                                           "--selftest"], [], {0}),
         ("rhythm: самопроверка", [PY, "scripts/filemarks/rhythm.py", "--selftest"], [], {0}),
