@@ -29,6 +29,7 @@
       "humanizer-scan",
       "humanizer-markers",
       "humanizer-polish",
+      "humanizer-clean",
       "humanizer-detect",
       "humanizer-facts",
       "humanizer-report"

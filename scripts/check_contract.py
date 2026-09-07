@@ -50,6 +50,7 @@ EXPECTED_TOOLS = {
     "humanizer-polish": ("scripts", "polish.py"),
     "humanizer-detect": ("scripts", "detect_conj.py"),
     "humanizer-markers": ("scripts", "check_markers.py"),
+    "humanizer-clean": ("src/humanizer_ru", "text_layer.py"),
     "humanizer-scan": ("scripts", "scan_soft_signals.py"),
     "humanizer-facts": ("src/humanizer_ru", "facts_diff.py"),
     "humanizer-report": ("src/humanizer_ru", "edit_report.py"),
@@ -292,6 +293,42 @@ def live_check() -> list[str]:
         else:
             errors.append("%s: в контракте нет output_schema" % command)
 
+    # humanizer-clean: консольная точка входа пакета (cli.clean_main);
+    # скриптового зеркала нет — зонд через PYTHONPATH=src (тот же приём,
+    # что в блоке --version ниже).
+    env_src = dict(os.environ)
+    env_src["PYTHONPATH"] = os.path.join(ROOT, "src") + os.pathsep \
+        + env_src.get("PYTHONPATH", "")
+
+    def _cli_entry(entry, cli_args):
+        code = ("from humanizer_ru.cli import %s; import sys; "
+                "sys.exit(%s(%r))" % (entry, entry, cli_args))
+        return subprocess.run([sys.executable, "-X", "utf8", "-c", code],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              timeout=120, encoding="utf-8", errors="replace",
+                              env=env_src, cwd=ROOT)
+
+    proc = _cli_entry("clean_main", ["--json", fixture])
+    if proc.returncode not in (0, 1):
+        errors.append("humanizer-clean: код %d: %s"
+                      % (proc.returncode, proc.stderr.strip()[:200]))
+    else:
+        try:
+            payload = json.loads(proc.stdout)
+        except json.JSONDecodeError as exc:
+            payload = None
+            errors.append("humanizer-clean: вывод не JSON: %r" % exc)
+        if payload is not None:
+            if payload.get("tool") != "humanizer-clean":
+                errors.append("humanizer-clean: в конверте чужое имя %r"
+                              % payload.get("tool"))
+            schema = schemas.get("humanizer-clean")
+            if isinstance(schema, dict):
+                errors.extend("humanizer-clean: %s" % e
+                              for e in schema_errors(payload, schema))
+            else:
+                errors.append("humanizer-clean: в контракте нет output_schema")
+
     # out-of-scope: английский и пустой вход — status out-of-scope, код 0.
     with tempfile.TemporaryDirectory(prefix="contract-scope-") as td:
         en = os.path.join(td, "en.txt")
@@ -312,6 +349,19 @@ def live_check() -> list[str]:
             if proc.returncode != 0 or status != "out-of-scope":
                 errors.append("scan на %s входе: ожидался status out-of-scope "
                               "при коде 0, получено %r (код %d)"
+                              % (label, status, proc.returncode))
+            # humanizer-clean: тот же градуированный ответ — механика
+            # отрабатывает, статус входа честный (контракт,
+            # graduated_response.out_of_scope).
+            proc = _cli_entry("clean_main", ["--json", path])
+            try:
+                payload = json.loads(proc.stdout)
+                status = payload["files"][0].get("status")
+            except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                status = None
+            if proc.returncode != 0 or status != "out-of-scope":
+                errors.append("clean на %s входе: ожидался status "
+                              "out-of-scope при коде 0, получено %r (код %d)"
                               % (label, status, proc.returncode))
         # Конверт ошибки: нечитаемый файл с --json — валидный JSON с error, код 2.
         missing = os.path.join(td, "does-not-exist.txt")
@@ -336,13 +386,28 @@ def live_check() -> list[str]:
                 errors.append("%s: на нечитаемом файле с --json ожидался конверт "
                               "{tool, schema, error, files} в stdout при коде 2 "
                               "(код %d)" % (command, proc.returncode))
+        # humanizer-clean: консольная точка входа, тот же error_rule.
+        proc = _cli_entry("clean_main", ["--json", missing])
+        ok = proc.returncode == 2
+        try:
+            payload = json.loads(proc.stdout)
+            ok = ok and payload.get("tool") == "humanizer-clean" \
+                and isinstance(payload.get("error"), str) \
+                and isinstance(payload.get("files"), list)
+        except json.JSONDecodeError:
+            ok = False
+        if not ok:
+            errors.append("humanizer-clean: на нечитаемом файле с --json "
+                          "ожидался конверт {tool, schema, error, files} в "
+                          "stdout при коде 2 (код %d)" % proc.returncode)
 
     # --version и --contract: точки входа пакета (cli.py) называют версию и
     # печатают контракт из данных пакета; в дереве — через PYTHONPATH=src.
     env = dict(os.environ)
     env["PYTHONPATH"] = os.path.join(ROOT, "src") + os.pathsep \
         + env.get("PYTHONPATH", "")
-    for entry in ("scan_main", "markers_main", "polish_main", "detect_main"):
+    for entry in ("scan_main", "markers_main", "polish_main", "detect_main",
+                  "clean_main"):
         proc = subprocess.run(
             [sys.executable, "-c",
              "from humanizer_ru.cli import %s; import sys; "
@@ -443,9 +508,9 @@ def selftest() -> int:
     try:
         doc = load_contract()
         case("контракт читается и структурно валиден", contract_errors(doc) == [])
-        case("все четыре инструмента описаны",
+        case("все инструменты контракта описаны",
              {t["command"] for t in doc.get("tools", [])} == set(EXPECTED_TOOLS))
-        case("все четыре инструмента несут output_schema с const >= 1",
+        case("все инструменты контракта несут output_schema с const >= 1",
              all(isinstance(t.get("output_schema"), dict)
                  and isinstance((t["output_schema"].get("properties", {})
                                  .get("schema", {}) or {}).get("const"), int)
@@ -458,8 +523,8 @@ def selftest() -> int:
                  for t in doc.get("tools", [])))
     except (OSError, json.JSONDecodeError):
         case("контракт читается и структурно валиден", False)
-        case("все четыре инструмента описаны", False)
-        case("все четыре инструмента несут output_schema с const >= 1", False)
+        case("все инструменты контракта описаны", False)
+        case("все инструменты контракта несут output_schema с const >= 1", False)
         case("polish несёт transformation и честное when_not", False)
 
     print("САМОПРОВЕРКА check_contract: %d/%d PASS" % (passed, passed + failed))

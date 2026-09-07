@@ -465,6 +465,17 @@ def envelope(before: str, after: str, files=None) -> dict:
 SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
 
 
+def _scope_note(text: str) -> str:
+    """Статус «вне области» — единый определитель (polish.scope_note)."""
+    try:
+        from humanizer_ru.polish import scope_note
+    except Exception:
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from polish import scope_note
+    return scope_note(text)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog=TOOL, description="Сверка фактов двух версий текста (F1).")
@@ -533,6 +544,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
            "counts": {"lost": len(d["lost"]), "added": len(d["added"]),
                       "changed": len(d["changed"])},
            "diff": d}
+    # Градуированный ответ (контракт, graduated_response.out_of_scope):
+    # пустой и не-русский вход получают честный статус; поля аддитивны —
+    # counts/diff/files сохраняют прежнюю семантику.
+    notes = []
+    for side_label, side_text in (("до", before), ("после", after)):
+        note = _scope_note(side_text)
+        if note:
+            notes.append("%s: %s" % (side_label, note))
+    if notes:
+        env["status"] = "out-of-scope"
+        env["scope_note"] = "; ".join(notes)
+        print(env["scope_note"], file=sys.stderr)
     if args.json:
         print(json.dumps(env, ensure_ascii=False, indent=2))
     else:
