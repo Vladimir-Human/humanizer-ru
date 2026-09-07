@@ -134,14 +134,21 @@ if (fs.existsSync(path.join(root, 'demo', 'sample.js'))) {
 }
 const vectors = JSON.parse(fs.readFileSync(vecFile, 'utf8'));
 for (const v of vectors) { out[v.name] = scan(v.text); }
-// Подсветка: абсолютные офсеты прямых находок режут исходный текст на
-// заявленный фрагмент (для строк без NFC-изменений длины и без тени).
+// Подсветка: абсолютные офсеты режут исходный текст на заявленный
+// фрагмент — для прямых находок дословно (включая строки с
+// NFC-изменениями длины), для теневых — после удаления невидимых
+// символов (координаты тени отображаются в исходную строку).
 const hl = [];
+const INV = new RegExp("[\\u00ad\\u061c\\u034f\\u1680\\u180b-\\u180e" +
+  "\\u200b-\\u200f\\u202a-\\u202e\\u205f\\u2060-\\u2069\\u206a-\\u206f" +
+  "\\u3000\\ufe00-\\ufe0f\\ufeff\\ufff9-\\ufffb\\u{e0000}-\\u{e007f}]", "gu");
 for (const v of vectors) {
   const ms = engine.scanText(v.text, rules);
   for (const m of ms) {
-    if (!m.shadow && v.text.normalize('NFC') === v.text &&
-        v.text.substring(m.start, m.end) !== m.text) {
+    const slice = v.text.substring(m.start, m.end);
+    INV.lastIndex = 0;
+    const norm = m.shadow ? slice.replace(INV, "") : slice;
+    if (norm !== m.text) {
       hl.push(v.name + ':' + m.rule);
     }
   }
