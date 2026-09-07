@@ -5,6 +5,17 @@
 
 ## Unreleased
 
+- Живые агентные входы сверяются с опубликованным продуктом:
+  scripts/check_live_distribution.py (--selftest 3/3, --json) сравнивает
+  локальные server.json/пакет/контракт с PyPI, официальной записью
+  реестра MCP и Pages (status.json + машинные пути); недоступность
+  источника — UNAVAILABLE с причиной (код 2), расхождение версий — код 1
+  (пойман живой факт: реестр MCP отдавал 3.19.2 при пакете 3.33.0).
+  Публикация записи реестра без секретов: workflow publish-mcp.yml
+  (GitHub OIDC, mcp-publisher login github-oidc, publish server.json,
+  чтение опубликованной записи). Гейт «live-distribution: самопроверка»
+  в check_all: счётчики 149 гейтов полного check_all, 138 в --quick.
+
 - Гейты убивают собственных мутантов: check_demo_parity при недоступном
   node возвращает FAIL обязательной проверки (раньше печатал SKIP и код
   0 — путь, записывающий parity:"ok" в Pages-workflow поверх
