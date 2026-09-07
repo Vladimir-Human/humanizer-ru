@@ -93,7 +93,7 @@ runs:
             # Скан в if/else: set -e не срабатывает в условии, rc из else-ветки
             # (rc=1 «маркер найден» и rc=2 «не читается» различаются ниже).
             if python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
-                 --scan --class a "$f" >/dev/null 2>&1; then
+                 --scan --class a -- "$f" >/dev/null 2>&1; then
               continue  # маркеров класса A нет — файл не трогаем
             else
               rc=$?
@@ -113,7 +113,7 @@ runs:
           echo "::group::humanizer-перепроверка после автофикса"
           RESCAN_RC=0
           python3 "${HUMANIZER_SCRIPTS}/check_markers.py" \
-            --scan --class a "${FILES[@]}" || RESCAN_RC=$?
+            --scan --class a -- "${FILES[@]}" || RESCAN_RC=$?
           echo "::endgroup::"
           echo "автофикс: почищено файлов ${MARKED}; изменения в рабочем каталоге — закоммитить их должен вызывающий workflow"
           if [ "${READ_ERRORS}" -ne 0 ]; then
@@ -138,15 +138,14 @@ runs:
             # предупреждением (контекстные индикаторы по политике проекта
             # вердикта сами по себе не дают). Режим любых маркеров доступен
             # напрямую вызовом check_markers.py --scan.
-            python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan --class a "${FILES[@]}"
+            python3 "${HUMANIZER_SCRIPTS}/check_markers.py" --scan --class a -- "${FILES[@]}"
             echo "::endgroup::"
             ;;
           soft-threshold)
             echo "::group::humanizer-scan --fail-multicat 3"
             python3 "${HUMANIZER_SCRIPTS}/scan_soft_signals.py" \
-              "${FILES[@]}" \
               --genre "${GENRE_INPUT}" \
-              --fail-multicat 3
+              --fail-multicat 3 -- "${FILES[@]}"
             echo "::endgroup::"
             ;;
           *)

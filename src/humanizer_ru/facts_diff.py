@@ -480,7 +480,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                              "которых = ошибка (category protected)")
     parser.add_argument("--selftest", action="store_true")
     parser.description = SHORT_RU + "\n\n" + (parser.description or "")
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 2
+        if code == 0:
+            return 0
+        raw = list(sys.argv[1:] if argv is None else argv)
+        if "--json" in raw:
+            # error_rule контракта: с --json отказ разбора аргументов тоже
+            # даёт конверт в stdout (usage остаётся в stderr).
+            print(json.dumps({"tool": TOOL, "schema": SCHEMA, "files": [],
+                              "error": "аргументы не распознаны (код 2)"},
+                             ensure_ascii=False))
+        return code
 
     if args.selftest:
         return selftest()
@@ -492,8 +505,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         try:
             with open(args.protect, encoding="utf-8") as fh:
                 protect = [ln for ln in fh.read().splitlines() if ln.strip()]
-        except OSError:
+        except (OSError, UnicodeDecodeError) as exc:
+            print("не удалось прочитать --protect: %s" % exc, file=sys.stderr)
             print(json.dumps({"tool": TOOL, "schema": SCHEMA,
+                              "files": [args.before, args.after],
                               "error": "вход не читается (код 2)"},
                              ensure_ascii=False))
             return 2
@@ -502,8 +517,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             before = fh.read()
         with open(args.after, encoding="utf-8") as fh:
             after = fh.read()
-    except OSError:
+    except (OSError, UnicodeDecodeError) as exc:
+        # Не-UTF-8 — ошибка входа (контракт, код 2: «вход не читается
+        # (нет файла, не UTF-8)»), а не повод молча сравнивать текст
+        # с замещающими символами вместо байтов автора.
+        print("не удалось прочитать вход: %s" % exc, file=sys.stderr)
         print(json.dumps({"tool": TOOL, "schema": SCHEMA,
+                          "files": [args.before, args.after],
                           "error": "вход не читается (код 2)"},
                          ensure_ascii=False))
         return 2
