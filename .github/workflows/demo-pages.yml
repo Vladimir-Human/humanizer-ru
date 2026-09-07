@@ -18,6 +18,8 @@ on:
       - 'docs/FRAMEWORK.md'
       - 'eval/facts/facts.v1.json'
       - '.github/workflows/demo-pages.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -41,6 +43,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0  # теги нужны write_status для честного лага
+      - name: Разрешить SHA деплоя до коммита
+        # Для события release github.sha может быть объектом аннотированного
+        # тега: статус и приёмка обязаны нести COMMIT деплоя (peeled), а не
+        # SHA объекта тега. Для push/dispatch rev-parse идемпотентен.
+        id: deploy_sha
+        run: echo "sha=$(git rev-parse '${{ github.sha }}^{commit}')" >> "$GITHUB_OUTPUT"
       - name: Настроить Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Добавить машинные файлы к артефакту
@@ -63,17 +71,17 @@ jobs:
         run: |
           python3 -m unittest discover -s tests
           python3 scripts/check_demo_parity.py
-          printf '{"sha":"%s","tests_passed":true,"parity":"ok"}\n' "${{ github.sha }}" > run-result.json
+          printf '{"sha":"%s","tests_passed":true,"parity":"ok"}\n' "${{ steps.deploy_sha.outputs.sha }}" > run-result.json
       - name: Сгенерировать status.json деплоя
         # Статус собирается из точного SHA деплоя и результата прогона:
         # Pages не может отдать статус чужого коммита, гонка
         # status-коммитов исключена (аудит N4).
-        run: python3 scripts/write_status.py --sha ${{ github.sha }} --run-result run-result.json
+        run: python3 scripts/write_status.py --sha ${{ steps.deploy_sha.outputs.sha }} --run-result run-result.json
       - name: Приёмка статуса деплоя
         # Утверждения status.json сверяются с результатом прогона и SHA
         # деплоя (ложное true, чужой SHA и отсутствие результата
         # блокируют публикацию).
-        run: python3 scripts/check_release.py --acceptance --status demo/status.json --run-result run-result.json --deploy-sha ${{ github.sha }}
+        run: python3 scripts/check_release.py --acceptance --status demo/status.json --run-result run-result.json --deploy-sha ${{ steps.deploy_sha.outputs.sha }}
       - name: Собрать артефакт из demo/
         # include-hidden-files: true обязателен: с v4 действие по умолчанию
         # вырезает скрытые пути, и Pages отдаёт 404 на /.well-known/llms.txt
