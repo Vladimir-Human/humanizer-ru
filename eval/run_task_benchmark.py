@@ -47,10 +47,17 @@ def _run_eval(candidate=None):
     proc = subprocess.run(cmd, capture_output=True, text=True,
                           encoding="utf-8", errors="replace",
                           cwd=ROOT, timeout=900)
-    if proc.returncode != 0:
+    # rc=1 у run_eval — легитимный результат («найдены проблемы»: у
+    # компаратора это его человеческие FP), данные — JSON в stdout.
+    # Отказ исполнения — rc>=2 или непарсящийся stdout.
+    if proc.returncode >= 2:
         raise RuntimeError("run_eval rc=%d: %s"
                            % (proc.returncode, (proc.stderr or "")[-300:]))
-    return json.loads(proc.stdout)
+    try:
+        return json.loads(proc.stdout)
+    except ValueError:
+        raise RuntimeError("run_eval rc=%d: stdout не JSON: %s"
+                           % (proc.returncode, (proc.stdout or "")[-200:]))
 
 
 _AXES = ("files", "files_missing", "hash_mismatches", "human_hits",
@@ -92,23 +99,104 @@ def run_o1():
             "fails": fails, "pass": not fails}
 
 
-def run_o2():
-    """Контролируемая очистка: фикспойнт, факты, защищённые области."""
-    from humanizer_ru import text_layer, facts_diff, protected_regions
+def run_o2_v2():
+    """O2 по предрегистрации v2: документированный путь продукта.
+
+    Факты — через edit_report.facts_part (marker-aware: payload маркеров
+    не факт автора); защищённые области — guard-список контракта
+    (fenced/frontmatter/инлайн-код построчно); снятие utm/referrer
+    внутри URL — документированное поведение, не нарушение.
+    """
+    from humanizer_ru import text_layer, edit_report, protected_regions
     records = []
     fails = []
+
+    def guard_texts(t):
+        spans = []
+        lines = t.split("\n")
+        fi = protected_regions.fenced_line_indices(lines)
+        fr = protected_regions.frontmatter_line_indices(lines)
+        for i, ln in enumerate(lines):
+            if i in fi or i in fr:
+                spans.append(ln)
+            else:
+                for s, e in protected_regions.code_spans(ln):
+                    spans.append(ln[s:e])
+        return spans
+
+    docs = _o2_docs()
+    for name, before in docs:
+        cleaned, counters = text_layer.clean_supported(before)
+        again, counters2 = text_layer.clean_supported(cleaned)
+        facts = edit_report.facts_part(before, cleaned)
+        guards_ok = guard_texts(before) == guard_texts(cleaned)
+        import contextlib
+        import io as _io
+        buf = _io.StringIO()
+        with tempfile.TemporaryDirectory(prefix="o2v2-") as td:
+            p = os.path.join(td, name if name.endswith((".txt", ".md"))
+                             else name + ".txt")
+            with open(p, "w", encoding="utf-8", newline="") as fh:
+                fh.write(before)
+            with contextlib.redirect_stdout(buf):
+                rc = text_layer.clean_main([p, "--json"])
+        try:
+            env_ok = bool(json.loads(buf.getvalue()).get("files"))
+        except ValueError:
+            env_ok = False
+        rec = {"doc": name, "removed": counters,
+               "fixed_point": again == cleaned and
+               counters2 == {"invisible": 0, "markup": 0},
+               "facts_lost": facts["lost"],
+               "facts_changed": facts["changed"],
+               "facts_added": facts["added"],
+               "guards_intact": guards_ok,
+               "cli_rc": rc, "cli_envelope_ok": env_ok,
+               "changed": cleaned != before}
+        records.append(rec)
+        if not rec["fixed_point"]:
+            fails.append("O2 %s: очистка не достигла неподвижной точки "
+                         "(поддерживаемые артефакты остались)" % name)
+        if facts["lost"] or facts["changed"]:
+            fails.append("O2 %s: документированный путь сверки фактов "
+                         "показал потерю/изменение (lost=%s changed=%s)"
+                         % (name, facts["lost"], facts["changed"]))
+        if not guards_ok:
+            fails.append("O2 %s: guard-области контракта (fenced/"
+                         "frontmatter/инлайн-код) изменены" % name)
+        if rc not in (0, 1) or not env_ok:
+            fails.append("O2 %s: CLI humanizer-clean rc=%s, конверт %s — "
+                         "не соответствует контракту"
+                         % (name, rc, "ok" if env_ok else "не прочитан"))
+    return {"records": records, "comparator": None,
+            "comparator_note": ("компаратор отсутствует: smixs — линтер "
+                                "без очистки; отсутствие публикуется как "
+                                "отсутствие, не как победа"),
+            "fails": fails, "pass": not fails}
+
+
+def _o2_docs():
     fixdir = os.path.join(ROOT, "tests", "fixtures")
     docs = []
     for name in sorted(os.listdir(fixdir)):
         if name.endswith(".txt"):
             with open(os.path.join(fixdir, name), encoding="utf-8") as fh:
                 docs.append((name, fh.read()))
-    # Синтетический документ: артефакты в теле + защищённые области.
     synth = ("---\ntitle: Отчёт\n---\n\n# Заголовок\n\n"
              "Текст с utm_source=chatgpt.com и меткой.\u200b\n\n"
              "```python\nx = 'utm_source=chatgpt.com'\n```\n\n"
              "Обычный текст и `код utm_source=chatgpt.com` в строке.\n")
     docs.append(("synthetic-protected.md", synth))
+    return docs
+
+
+def run_o2():
+    """Контролируемая очистка (критерии v1): фикспойнт, сырой facts_diff,
+    все защищённые спаны. Замер v1 сохранён для истории."""
+    from humanizer_ru import text_layer, facts_diff, protected_regions
+    records = []
+    fails = []
+    docs = _o2_docs()
 
     for name, before in docs:
         cleaned, counters = text_layer.clean_supported(before)
@@ -362,21 +450,28 @@ def main(argv=None):
     if argv and argv[0] == "--merge-o4":
         merge_o4(argv[1], argv[2])
         return 0
+    v2 = bool(argv and argv[0] == "--v2")
+    prereg_rel = ("research/task-benchmark/prereg-v2.md" if v2
+                  else "research/task-benchmark/prereg.md")
+    prereg_path = os.path.join(ROOT, *prereg_rel.split("/"))
     results = {
         "schema": "task-benchmark.v1",
         "date": datetime.datetime.now(datetime.timezone.utc)
                 .strftime("%Y-%m-%d"),
-        "prereg_sha256": sha256_file(PREREG),
+        "prereg": prereg_rel,
+        "prereg_version": 2 if v2 else 1,
+        "prereg_sha256": sha256_file(prereg_path),
     }
     results["o1"] = run_o1()
-    results["o2"] = run_o2()
+    results["o2"] = run_o2_v2() if v2 else run_o2()
     results["o3"] = run_o3()
     results["o4"] = None
     _rebuild_losses(results)
     out = os.path.join(
-        TB, "results-%s.json"
-        % datetime.datetime.now(datetime.timezone.utc)
-              .strftime("%Y-%m-%d"))
+        TB, "results-%s%s.json"
+        % ("-v2" if v2 else "",
+           datetime.datetime.now(datetime.timezone.utc)
+           .strftime("%Y-%m-%d")))
     with open(out, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(results, fh, ensure_ascii=False, indent=1)
         fh.write("\n")

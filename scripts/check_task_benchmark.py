@@ -57,7 +57,13 @@ def verify(results, live=True):
     """Список нарушений протокола (пустой — протокол пригоден)."""
     runner = _load_runner()
     problems = []
-    want_hash = _sha256(PREREG)
+    version = results.get("prereg_version", 1)
+    prereg_rel = results.get("prereg", "research/task-benchmark/prereg.md")
+    prereg_path = os.path.join(ROOT, *prereg_rel.split("/"))
+    if not os.path.isfile(prereg_path):
+        problems.append("предрегистрация %s отсутствует" % prereg_rel)
+        prereg_path = PREREG
+    want_hash = _sha256(prereg_path)
     if results.get("prereg_sha256") != want_hash:
         problems.append("sha256 предрегистрации %r != фактический %r: "
                         "критерии изменены после заморозки или протокол "
@@ -89,11 +95,14 @@ def verify(results, live=True):
         if o2.get("comparator_note") is None:
             problems.append("o2: отсутствие компаратора не опубликовано")
         if live:
-            fresh = runner.run_o2()
-            got = {(r["doc"], r["changed"], r["facts_lost"],
-                    r["facts_changed"]) for r in o2["records"]}
-            want = {(r["doc"], r["changed"], r["facts_lost"],
-                     r["facts_changed"]) for r in fresh["records"]}
+            fresh = runner.run_o2_v2() if version == 2 else runner.run_o2()
+            keys = ["doc", "changed", "facts_lost", "facts_changed"]
+            if version == 2:
+                keys += ["guards_intact", "cli_rc"]
+            got = {tuple(r.get(k) for k in keys)
+                   for r in o2["records"]}
+            want = {tuple(r.get(k) for k in keys)
+                    for r in fresh["records"]}
             if got != want:
                 problems.append("o2: записи не воспроизводятся живой "
                                 "очисткой (числа протокола подменены или "
@@ -248,6 +257,25 @@ def selftest():
     errs = verify(bad, live=False)
     case("BLOCKED с причиной — потеря опубликована, протокол валиден",
          errs == [] and any(l["op"] == "o4" for l in bad["losses"]))
+
+    # v2: документированный путь O2 + хеш prereg-v2.
+    results_v2 = copy.deepcopy(results)
+    results_v2["o2"] = runner.run_o2_v2()
+    results_v2["prereg"] = "research/task-benchmark/prereg-v2.md"
+    results_v2["prereg_version"] = 2
+    results_v2["prereg_sha256"] = _sha256(os.path.join(TB, "prereg-v2.md"))
+    runner._rebuild_losses(results_v2)
+    case("протокол v2 (документированный путь O2) проходит",
+         verify(results_v2) == [])
+    bad = copy.deepcopy(results_v2)
+    for rec in bad["o2"]["records"]:
+        rec["guards_intact"] = not rec["guards_intact"]
+    case("мутант: подмена guards_intact v2 ловится живым пересчётом",
+         any("o2" in p for p in verify(bad)))
+    bad = copy.deepcopy(results_v2)
+    bad["prereg_sha256"] = results["prereg_sha256"]
+    case("мутант: хеш v1 в протоколе v2 ловится",
+         any("предрегистрации" in p for p in verify(bad, live=False)))
 
     print("САМОПРОВЕРКА check_task_benchmark: %d/%d PASS"
           % (passed, passed + failed))
