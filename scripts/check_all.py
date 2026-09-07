@@ -135,6 +135,8 @@ def _gates(quick, tmpdir):
          "scripts/scan_folder.py", "--selftest"], [], {0}),
         ("feedback: самопроверка сборщика", [PY,
          "scripts/collect_external_feedback.py", "--selftest"], [], {0}),
+        ("live-distribution: самопроверка", [PY,
+         "scripts/check_live_distribution.py", "--selftest"], [], {0}),
         ("feedback: доказательность KPI", [PY,
          "scripts/check_feedback_evidence.py"], [], {0}),
         ("pypi-metadata: самопроверка", [PY,
