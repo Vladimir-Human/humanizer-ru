@@ -386,6 +386,15 @@ def _gates(quick, tmpdir):
          [PY, "scripts/run_journeys_strict.py", "--selftest"],
          ["scripts/run_journeys_strict.py",
           "tests/test_installed_user_journeys.py"], {0}),
+        # Гейт протокола задачного бенчмарка: предрегистрация
+        # заморожена, потери не скрываются, числа пересчитываются
+        # (негативы в selftest).
+        ("task-benchmark: гейт протокола",
+         [PY, "scripts/check_task_benchmark.py", "--selftest"],
+         ["scripts/check_task_benchmark.py",
+          "eval/run_task_benchmark.py",
+          "research/task-benchmark/prereg.md",
+          "research/task-benchmark/o4-tasks.json"], {0}),
         ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",
                                           "--selftest"], [], {0}),
         ("rhythm: самопроверка", [PY, "scripts/filemarks/rhythm.py", "--selftest"], [], {0}),
