@@ -47,6 +47,20 @@ jobs:
       - name: sdist -> чистое venv -> тесты + CLI-зонды
         run: python3 scripts/check_release.py --sdist-test dist/humanizer_ru-*.tar.gz
 
+      - name: Установленные пользовательские сценарии на wheel и sdist (без skips)
+        # Приёмка публикации: сценарии установленной поставки исполняются
+        # для ОБОИХ публикуемых артефактов в чистых venv; отсутствие
+        # подготовленного окружения или пропуск обязательного сценария —
+        # ошибка публикации (код 1), а не успешный skip. Проверяются
+        # реальные console entry points и MCP-сессия установленных данных.
+        run: |
+          python3 -m venv /tmp/journeys-wheel
+          /tmp/journeys-wheel/bin/python -m pip install --quiet dist/humanizer_ru-*.whl
+          HUMANIZER_JOURNEY_PYTHON=/tmp/journeys-wheel/bin/python python3 scripts/run_journeys_strict.py
+          python3 -m venv /tmp/journeys-sdist
+          /tmp/journeys-sdist/bin/python -m pip install --quiet dist/humanizer_ru-*.tar.gz
+          HUMANIZER_JOURNEY_PYTHON=/tmp/journeys-sdist/bin/python python3 scripts/run_journeys_strict.py
+
       - name: Полный строгий прогон валидаторов поставляемого дерева
         # Публикация неотделима от подтверждённого прогона: --strict
         # блокирует любой FAIL и любой непроверенный SKIP.

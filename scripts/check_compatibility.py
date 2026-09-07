@@ -11,11 +11,21 @@
      версии дерева (src/humanizer_ru/__init__.py).
   2. Она ставится во временное чистое venv (pip; сеть).
   3. Фиксированная матрица входов (русский текст с артефактами, чистый
-     русский, английский, пустой, Markdown, нечитаемый файл) прогоняется
-     через все четыре команды в двух окружениях: OLD (установленный пакет)
-     и NEW (пакет дерева, PYTHONPATH=src).
+     русский, английский, пустой, Markdown, не-UTF-8, нечитаемый файл)
+     прогоняется через ВСЕ общие операции в двух окружениях: OLD
+     (установленный пакет) и NEW (пакет дерева, PYTHONPATH=src):
+     scan, markers, polish, detect, clean (если есть в OLD/NEW —
+     отсутствие в OLD фиксируется как аддитивность), пары facts и report,
+     MCP-сессия (состав инструментов и схемы параметров, поведение
+     вызова, ошибка и восстановление; тексты описаний не сравниваются —
+     они генерируются из контракта и сверяются с ним каждой версией
+     отдельно через check_mcp).
   4. Сравнение: rc равен; поля, присутствующие в OLD-ответе, равны в NEW;
      NEW может добавлять поля (аддитивность), но не менять и не удалять.
+     Исключение — CONTRACT_RESTORED: точечные восстановления уже
+     обещанного контрактом поведения (OLD нарушал опубликованный
+     контракт той же версии); вейвер применяется только когда OLD и NEW
+     соответствуют заявленным предикатам, иначе это несовместимость.
 
 Запуск:
     python3 scripts/check_compatibility.py             # проверка
@@ -52,23 +62,39 @@ PROBE = '''# -*- coding: utf-8 -*-
 import contextlib, io, json, os, tempfile
 from humanizer_ru.cli import scan_main, markers_main, polish_main, detect_main
 
+
+def opt(mod, name):
+    """Необязательный вход: отсутствует в старых опубликованных версиях."""
+    try:
+        m = __import__("humanizer_ru." + mod, fromlist=[name])
+        return getattr(m, name, None)
+    except Exception:
+        return None
+
+
+clean_main = opt("cli", "clean_main")
+facts_main = opt("facts_diff", "main")
+report_main = opt("edit_report", "main")
+
 T = tempfile.mkdtemp(prefix="compat-probe-")
 
 # Явный список нормализуемых нестабильных значений: тексты причин ошибок
-# зависят от путей окружения, пути файлов — от временного каталога пробы.
+# зависят от путей окружения, пути файлов — от временного каталога пробы
+# (ключ file, before/after и строковые элементы files у humanizer-facts).
 # Ничего остального проба не нормализует: сравниваются все файлы и все
 # вложенные поля конвертов, рекурсивно, с различением типов JSON.
 NORM_TEXT_KEYS = ("error", "env_error")
+NORM_PATH_KEYS = ("file", "before", "after", "files")
 
 def norm(value, key=None):
     if isinstance(value, dict):
         return {k: norm(v, k) for k, v in value.items()}
     if isinstance(value, list):
-        return [norm(v) for v in value]
+        return [norm(v, key) for v in value]
     if isinstance(value, str):
         if key in NORM_TEXT_KEYS:
             return "<текст причины нормализован>"
-        if key == "file":
+        if key in NORM_PATH_KEYS:
             return os.path.basename(value)
         return value
     return value
@@ -79,16 +105,27 @@ def w(name, text):
         fh.write(text)
     return p
 
+def wb(name, data):
+    p = os.path.join(T, name)
+    with open(p, "wb") as fh:
+        fh.write(data)
+    return p
+
 ru = w("ru.txt", "\\u0421\\u043e\\u0433\\u043b\\u0430\\u0441\\u043d\\u043e \\u043e\\u0442\\u0447\\u0451\\u0442\\u0443 :contentReference[oaicite:12]{index=12}, \\u0437\\u0430\\u044f\\u0432\\u043e\\u043a \\u0441\\u0442\\u0430\\u043b\\u043e \\u0431\\u043e\\u043b\\u044c\\u0448\\u0435 \\u043d\\u0430 12% \\u2014 \\u0438\\u0441\\u0442\\u043e\\u0447\\u043d\\u0438\\u043a: https://example.com/r?utm_source=chatgpt.com\\n\\u0414\\u0430\\u043d\\u043d\\u044b\\u0435 \\u043f\\u043e\\u0434\\u0442\\u0432\\u0435\\u0440\\u0436\\u0434\\u0435\\u043d\\u044b \\u0430\\u0441\\u0441\\u0438\\u0441\\u0442\\u0435\\u043d\\u0442\\u043e\\u043c\\u200b.\\n")
 clean = w("clean.txt", "\\u041e\\u0431\\u044b\\u0447\\u043d\\u044b\\u0439 \\u0440\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439 \\u0442\\u0435\\u043a\\u0441\\u0442 \\u0431\\u0435\\u0437 \\u0434\\u0435\\u0444\\u0435\\u043a\\u0442\\u043e\\u0432. \\u0412\\u0442\\u043e\\u0440\\u043e\\u0439 \\u0430\\u0431\\u0437\\u0430\\u0446.\\n")
 en = w("en.txt", "Plain English text without any Russian words.\\n")
 empty = w("empty.txt", "")
 md = w("md.txt", "# \\u0417\\u0430\\u0433\\u043e\\u043b\\u043e\\u0432\\u043e\\u043a\\n\\n**\\u0416\\u0438\\u0440\\u043d\\u044b\\u0439** \\u0438 \\u00ab\\u0451\\u043b\\u043e\\u0447\\u043a\\u0438\\u00bb \\u2014 \\u0442\\u0438\\u0440\\u0435\\u2026\\n")
+good = w("good.txt", "\\u0412\\u0441\\u0442\\u0440\\u0435\\u0447\\u0430 \\u0441\\u043e\\u0441\\u0442\\u043e\\u044f\\u043b\\u0430\\u0441\\u044c. \\u0426\\u0435\\u043d\\u0430 100 \\u0440\\u0443\\u0431\\u043b\\u0435\\u0439.\\n")
+bad = wb("bad.txt", bytes([0xFF, 0xFE]) + "\\u0426\\u0435\\u043d\\u0430 100 \\u0440\\u0443\\u0431\\u043b\\u0435\\u0439.\\n".encode("utf-8"))
 missing = os.path.join(T, "no-such-file.txt")
 
 out = []
 
 def run(label, fn, argv):
+    if fn is None:
+        out.append({"label": label, "absent": True})
+        return
     buf = io.StringIO()
     ebuf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(ebuf):
@@ -96,6 +133,11 @@ def run(label, fn, argv):
             rc = fn(argv)
         except SystemExit as exc:
             rc = exc.code if isinstance(exc.code, int) else 1
+        except Exception as exc:
+            # Поведение старой поставки на плохом входе фиксируется как
+            # есть (traceback-класс), а не роняет пробу: восстановление
+            # контракта сверяется отдельно (CONTRACT_RESTORED).
+            rc = "EXC:" + type(exc).__name__
     rec = {"label": label, "rc": rc}
     try:
         payload = json.loads(buf.getvalue())
@@ -104,12 +146,76 @@ def run(label, fn, argv):
     rec["payload"] = norm(payload)
     out.append(rec)
 
-for p in (ru, clean, en, empty, md, missing):
+for p in (ru, clean, en, empty, md, bad, missing):
     name = os.path.basename(p)
     run("markers:" + name, markers_main, ["--scan", "--json", p])
     run("scan:" + name, scan_main, ["--json", p])
     run("polish:" + name, polish_main, ["--json", p])
     run("detect:" + name, detect_main, ["--json", p])
+    run("clean:" + name, clean_main, ["--json", "--", p])
+
+# Пары facts/report: идентичная, правка со снятием, порченый UTF-8,
+# отсутствующий файл, пустая пара, английская пара, порча «после».
+PAIRS = [(ru, ru), (ru, clean), (bad, good), (missing, good),
+         (empty, empty), (en, en), (good, bad)]
+for a, b in PAIRS:
+    label = "%s+%s" % (os.path.basename(a), os.path.basename(b))
+    run("facts:" + label, facts_main, ["diff", a, b, "--json"])
+    run("report:" + label, report_main, [a, b, "--json"])
+
+# MCP: сессия in-process (discovery + вызовы + ошибка + восстановление).
+# Сравниваются состав инструментов, схемы параметров и поведение вызова;
+# тексты описаний не сравниваются: они генерируются из контракта и
+# сверяются с контрактом каждой версии отдельно (check_mcp).
+try:
+    from humanizer_ru import mcp_server as ms
+    defs = ms.generate_tool_defs(ms.load_contract())
+    tools_rec = [{"name": d["name"],
+                  "props": sorted(d["inputSchema"]["properties"]),
+                  "required": sorted(d["inputSchema"]["required"])}
+                 for d in defs]
+    out.append({"label": "mcp:tools", "rc": 0, "payload": tools_rec})
+    state = {}
+    r = ms.handle_message(json.dumps({
+        "jsonrpc": "2.0", "id": 1, "method": "initialize",
+        "params": {"protocolVersion": "2025-06-18"}}), state, defs)
+    out.append({"label": "mcp:initialize", "rc": 0,
+                "payload": {"protocolVersion":
+                            r["result"]["protocolVersion"]}})
+    with open(ru, encoding="utf-8") as fh:
+        ru_text = fh.read()
+    r = ms.handle_message(json.dumps({
+        "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+        "params": {"name": "humanizer_markers",
+                   "arguments": {"text": ru_text}},
+    }, ensure_ascii=False), state, defs)
+    res = r.get("result", {})
+    sc = res.get("structuredContent") or {}
+    out.append({"label": "mcp:call-markers", "rc": 0,
+                "payload": {"isError": bool(res.get("isError")),
+                            "tool": sc.get("tool"),
+                            "count": (sc.get("files") or [{}])[0].get("count")}})
+    r = ms.handle_message(json.dumps({
+        "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+        "params": {"name": "humanizer_markers",
+                   "arguments": {"text": ru_text, "\\u043b\\u0438\\u0448\\u043d\\u0438\\u0439": 1}},
+    }, ensure_ascii=False), state, defs)
+    out.append({"label": "mcp:error-extra-param", "rc": 0,
+                "payload": {"code": (r.get("error") or {}).get("code")}})
+    r = ms.handle_message(json.dumps({
+        "jsonrpc": "2.0", "id": 4, "method": "tools/call",
+        "params": {"name": "humanizer_scan",
+                   "arguments": {"text": ru_text}},
+    }, ensure_ascii=False), state, defs)
+    res = r.get("result", {})
+    sc = res.get("structuredContent") or {}
+    out.append({"label": "mcp:call-scan-after-error", "rc": 0,
+                "payload": {"isError": bool(res.get("isError")),
+                            "tool": sc.get("tool"),
+                            "nfiles": len(sc.get("files") or [])}})
+except Exception as exc:
+    out.append({"label": "mcp:session", "rc": "EXC:" + type(exc).__name__,
+                "payload": None})
 
 print(json.dumps(out, ensure_ascii=False, sort_keys=True))
 '''
@@ -214,15 +320,102 @@ def _compat_problems(old, new, path, key=None) -> list:
     return []
 
 
-def compare(old_recs, new_recs) -> list:
+def _is_exc(rec, name=None):
+    rc = rec.get("rc")
+    if not isinstance(rc, str) or not rc.startswith("EXC:"):
+        return False
+    return name is None or rc == "EXC:" + name
+
+
+def _is_code2_envelope(rec, tool=None):
+    if rec.get("rc") != 2:
+        return False
+    payload = rec.get("payload")
+    if not isinstance(payload, dict):
+        return False
+    if not isinstance(payload.get("error"), str):
+        return False
+    return tool is None or payload.get("tool") == tool
+
+
+def _report_facts_lost(rec):
+    try:
+        return rec["payload"]["files"][0]["facts"]["lost"]
+    except (TypeError, KeyError, IndexError):
+        return None
+
+
+# Восстановление уже обещанного поведения (приказ цикла: «если
+# исправление меняет наблюдаемую семантику — докажи, что оно
+# восстанавливает уже обещанное поведение»). Каждая запись: ярлык пробы,
+# описание, пункт контракта/документации, предикат OLD-поведения и
+# предикат NEW-поведения. Вейвер применяется ТОЛЬКО когда оба предиката
+# выполнены: произвольная смена поведения под видом восстановления
+# невозможна; если NEW не соответствует контракту — это несовместимость.
+CONTRACT_RESTORED = {
+    "facts:bad.txt+good.txt": (
+        "не-UTF-8 вход: traceback с пустым stdout заменён кодом 2 "
+        "с конвертом ошибки",
+        'contract.v1.json exit_codes."2": «вход не читается (нет файла, '
+        'не UTF-8); с --json конверт ошибки в stdout»',
+        lambda o: _is_exc(o, "UnicodeDecodeError"),
+        lambda n: _is_code2_envelope(n, "humanizer-facts")),
+    "report:bad.txt+good.txt": (
+        "повреждённый UTF-8: молчаливый успех (errors=replace, код 0) "
+        "заменён кодом 2 с конвертом ошибки",
+        'contract.v1.json exit_codes."2"; docstring humanizer-report: '
+        '«Коды: 0 — отчёт построен; 2 — ошибка входа»',
+        lambda o: o.get("rc") == 0,
+        lambda n: _is_code2_envelope(n, "humanizer-report")),
+    "report:no-such-file.txt+good.txt": (
+        "отсутствующий файл: traceback заменён кодом 2 с конвертом ошибки",
+        'contract.v1.json exit_codes."2"',
+        lambda o: _is_exc(o, "FileNotFoundError"),
+        lambda n: _is_code2_envelope(n, "humanizer-report")),
+    "facts:good.txt+bad.txt": (
+        "не-UTF-8 вход «после»: traceback с пустым stdout заменён кодом 2 "
+        "с конвертом ошибки",
+        'contract.v1.json exit_codes."2"',
+        lambda o: _is_exc(o, "UnicodeDecodeError"),
+        lambda n: _is_code2_envelope(n, "humanizer-facts")),
+    "report:good.txt+bad.txt": (
+        "повреждённый UTF-8 «после»: молчаливый успех (errors=replace) "
+        "заменён кодом 2 с конвертом ошибки",
+        'contract.v1.json exit_codes."2"; docstring humanizer-report: '
+        '«Коды: 0 — отчёт построен; 2 — ошибка входа»',
+        lambda o: o.get("rc") == 0,
+        lambda n: _is_code2_envelope(n, "humanizer-report")),
+    "report:ru.txt+clean.txt": (
+        "сверка фактов установленной поставки: OLD учитывал payload "
+        "маркеров копипасты (числа oaicite/index/utm) как авторские факты "
+        "— _strip_markers вне дерева репозитория не находил выражения и "
+        "молча пропускал снятие; NEW восстанавливает документированный "
+        "принцип «payload маркеров не является фактом автора» "
+        "(lost 4 -> 2 на фиксированной паре проб)",
+        "принцип edit_report._strip_markers («Payload маркеров копипасты "
+        "не является фактом автора — check_examples делает то же через "
+        "_loss_text»); пакетный импорт check_markers первичен",
+        lambda o: _report_facts_lost(o) == 4,
+        lambda n: _report_facts_lost(n) == 2),
+}
+
+
+def compare(old_recs, new_recs):
     """Несовместимости: записи OLD обязаны совпасть в NEW по типам и
     значениям всех полей (включая вложенные конверты всех файлов);
-    NEW может добавлять поля. Возвращает список человекочитаемых
-    нарушений. Нормализуются только явно нестабильные значения
-    (NORM_TEXT_KEYS в пробе: тексты причин ошибок; пути файлов
-    приводятся к именам).
+    NEW может добавлять поля. Возвращает (problems, restored, additions):
+      problems  — человекочитаемые нарушения (несовместимость);
+      restored  — ярлыки CONTRACT_RESTORED: поведение OLD нарушало
+                  опубликованный контракт, NEW восстановило обещанное
+                  (сверка предикатов обязательна — вейвер не маскирует
+                  произвольную смену поведения);
+      additions — ярлыки новых проб, отсутствующих в OLD (аддитивность).
+    Нормализуются только явно нестабильные значения (NORM_TEXT_KEYS в
+    пробе: тексты причин ошибок; пути файлов приводятся к именам).
     """
     problems = []
+    restored = []
+    additions = []
     old_by = {r["label"]: r for r in old_recs}
     new_by = {r["label"]: r for r in new_recs}
     for label, old in sorted(old_by.items()):
@@ -230,12 +423,36 @@ def compare(old_recs, new_recs) -> list:
         if new is None:
             problems.append("%s: проба исчезла в новой версии" % label)
             continue
+        if old.get("absent"):
+            if new.get("absent"):
+                problems.append("%s: проба отсутствует с обеих сторон — "
+                                "матрица сломана" % label)
+            else:
+                additions.append(label)
+            continue
+        if new.get("absent"):
+            problems.append("%s: операция удалена в новой версии" % label)
+            continue
+        waiver = CONTRACT_RESTORED.get(label)
+        if waiver:
+            _desc, _clause, old_pred, new_pred = waiver
+            if old_pred(old) and new_pred(new):
+                restored.append(label)
+                continue
+            if not new_pred(new):
+                problems.append("%s: заявленное восстановление контракта "
+                                "не выполнено — NEW не соответствует пункту "
+                                "(%s)" % (label, _clause))
+                continue
+            # OLD не соответствует предпосылке вейвера (например, будущая
+            # опубликованная версия уже несёт исправление) — обычное
+            # сравнение.
         problems.extend(_compat_problems(old, new, label))
     for label in sorted(new_by):
         if label not in old_by:
             problems.append("%s: новая проба без пары (матрица разъехалась)"
                             % label)
-    return problems
+    return problems, restored, additions
 
 
 def _venv_python(venvdir: str) -> str:
@@ -302,16 +519,24 @@ def run_check() -> int:
         except (json.JSONDecodeError, IndexError) as exc:
             print("ОТКАЗ: вывод проб не JSON: %r" % exc, file=sys.stderr)
             return 2
-        problems = compare(old_recs, new_recs)
+        problems, restored, additions = compare(old_recs, new_recs)
         for p in problems:
             print("[FAIL] " + p)
+        for label in restored:
+            desc, clause, _o, _n = CONTRACT_RESTORED[label]
+            print("[ВОССТАНОВЛЕНО] %s: %s — %s" % (label, desc, clause))
+        for label in additions:
+            print("[АДДИТИВНО] %s: новая проба (в OLD операции не было)"
+                  % label)
         if problems:
             print("СОВМЕСТИМОСТЬ: %s -> %s — нарушений %d"
                   % (prev, current, len(problems)))
             return 1
         print("СОВМЕСТИМОСТЬ: %s -> %s — %d проб, аддитивность соблюдена "
-              "(rc, конверты и детекция совпадают; новые поля разрешены)"
-              % (prev, current, len(new_recs)))
+              "(rc, конверты и детекция совпадают; новые поля разрешены); "
+              "восстановлений контракта %d; новых операций %d"
+              % (prev, current, len(new_recs), len(restored),
+                 len(additions)))
         return 0
     except (OSError, subprocess.TimeoutExpired) as exc:
         print("ОТКАЗ: среда: %r" % exc, file=sys.stderr)
@@ -333,25 +558,29 @@ def selftest() -> int:
     old = [{"label": "scan:a", "rc": 0, "features_total": 3},
            {"label": "markers:a", "rc": 1, "count": 2,
             "markers": ["utm_chatgpt", "zero_width"]}]
-    case("идентичные прогоны совместимы", compare(old, [dict(r) for r in old]) == [])
+    p, _r, _a = compare(old, [dict(r) for r in old])
+    case("идентичные прогоны совместимы", p == [])
     new_added = [{"label": "scan:a", "rc": 0, "features_total": 3,
                   "status": "out-of-scope"},
                  {"label": "markers:a", "rc": 1, "count": 2,
                   "markers": ["utm_chatgpt", "zero_width"]}]
-    case("новое поле — аддитивно, совместимо", compare(old, new_added) == [])
+    p, _r, _a = compare(old, new_added)
+    case("новое поле — аддитивно, совместимо", p == [])
     rc_changed = [{"label": "scan:a", "rc": 2, "features_total": 3},
                   {"label": "markers:a", "rc": 1, "count": 2,
                    "markers": ["utm_chatgpt", "zero_width"]}]
-    case("смена rc ловится (негатив)",
-         any("rc" in p for p in compare(old, rc_changed)))
+    p, _r, _a = compare(old, rc_changed)
+    case("смена rc ловится (негатив)", any("rc" in x for x in p))
     val_changed = [{"label": "scan:a", "rc": 0, "features_total": 4},
                    {"label": "markers:a", "rc": 1, "count": 2,
-                    "markers": ["utm_chatgpt", "zero_width"]}]
+                   "markers": ["utm_chatgpt", "zero_width"]}]
+    p, _r, _a = compare(old, val_changed)
     case("изменение значения поля ловится (негатив)",
-         any("features_total" in p for p in compare(old, val_changed)))
+         any("features_total" in x for x in p))
     dropped = [{"label": "scan:a", "rc": 0, "features_total": 3}]
+    p, _r, _a = compare(old, dropped)
     case("исчезновение пробы ловится (негатив)",
-         any("исчезла" in p for p in compare(old, dropped)))
+         any("исчезла" in x for x in p))
     err_text = [{"label": "scan:a", "rc": 0, "features_total": 3},
                 {"label": "markers:a", "rc": 1, "count": 2,
                  "markers": ["utm_chatgpt", "zero_width"],
@@ -360,13 +589,15 @@ def selftest() -> int:
                {"label": "markers:a", "rc": 1, "count": 2,
                 "markers": ["utm_chatgpt", "zero_width"],
                 "error": "путь /tmp/new-yyyy"}]
+    p, _r, _a = compare(err_text, err_new)
     case("текст error зависит от среды и не считается несовместимостью",
-         compare(err_text, err_new) == [])
+         p == [])
     err_gone = [{"label": "scan:a", "rc": 0, "features_total": 3},
                 {"label": "markers:a", "rc": 1, "count": 2,
                  "markers": ["utm_chatgpt", "zero_width"]}]
+    p, _r, _a = compare(err_text, err_gone)
     case("пропажа поля error ловится (негатив)",
-         any("error" in p for p in compare(err_text, err_gone)))
+         any("error" in x for x in p))
     typed_old = [{"label": "scan:a", "rc": 0,
                   "payload": {"tool": "humanizer-scan", "schema": 1,
                               "files": [{"file": "a.txt", "count": 2,
@@ -375,25 +606,105 @@ def selftest() -> int:
                    "payload": {"tool": "humanizer-scan", "schema": True,
                                "files": [{"file": "a.txt", "count": 2,
                                           "invariants": []}]}}]
+    p, _r, _a = compare(typed_old, typed_bool)
     case("schema 1 против True — разные типы JSON (негатив)",
-         any("тип" in p for p in compare(typed_old, typed_bool)))
+         any("тип" in x for x in p))
     typed_rc_bool = [{"label": "scan:a", "rc": False,
                       "payload": typed_old[0]["payload"]}]
+    p, _r, _a = compare(typed_old, typed_rc_bool)
     case("rc 0 против False — разные типы JSON (негатив)",
-         any("тип" in p for p in compare(typed_old, typed_rc_bool)))
+         any("тип" in x for x in p))
     typed_dropped = [{"label": "scan:a", "rc": 0,
                       "payload": {"tool": "humanizer-scan", "schema": 1,
                                   "files": [{"file": "a.txt",
                                              "count": 2}]}}]
+    p, _r, _a = compare(typed_old, typed_dropped)
     case("удалённое вложенное поле invariants ловится (негатив)",
-         any("invariants" in p for p in compare(typed_old, typed_dropped)))
+         any("invariants" in x for x in p))
     typed_added = [{"label": "scan:a", "rc": 0,
                     "payload": {"tool": "humanizer-scan", "schema": 1,
                                 "files": [{"file": "a.txt", "count": 2,
                                            "invariants": [],
                                            "date_like": True}]}}]
-    case("добавленное вложенное поле аддитивно",
-         compare(typed_old, typed_added) == [])
+    p, _r, _a = compare(typed_old, typed_added)
+    case("добавленное вложенное поле аддитивно", p == [])
+
+    # Новые операции: отсутствует в OLD, присутствует в NEW — аддитивность.
+    absent_old = [{"label": "clean:a", "absent": True}]
+    present_new = [{"label": "clean:a", "rc": 0,
+                    "payload": {"tool": "humanizer-clean", "schema": 1,
+                                "files": []}}]
+    p, _r, additions = compare(absent_old, present_new)
+    case("новая операция (нет в OLD) — аддитивна, не несовместимость",
+         p == [] and additions == ["clean:a"])
+    p, _r, _a = compare(present_new, absent_old)
+    case("удаление операции в NEW ловится (негатив)",
+         any("удалена" in x for x in p))
+    p, _r, _a = compare(absent_old, [{"label": "clean:a", "absent": True}])
+    case("проба отсутствует с обеих сторон — матрица сломана (негатив)",
+         any("матрица" in x for x in p))
+
+    # Вейверы восстановления контракта: применяются только когда OLD
+    # нарушал контракт, а NEW ему соответствует.
+    exc_old = [{"label": "facts:bad.txt+good.txt",
+                "rc": "EXC:UnicodeDecodeError", "payload": None}]
+    env_new = [{"label": "facts:bad.txt+good.txt", "rc": 2,
+                "payload": {"tool": "humanizer-facts", "schema": 1,
+                            "files": ["bad.txt", "good.txt"],
+                            "error": "вход не читается (код 2)"}}]
+    p, restored, _a = compare(exc_old, env_new)
+    case("traceback -> код 2 с конвертом: восстановление контракта",
+         p == [] and restored == ["facts:bad.txt+good.txt"])
+    silent_new = [{"label": "facts:bad.txt+good.txt", "rc": 0,
+                   "payload": {"tool": "humanizer-facts", "schema": 1,
+                               "files": ["bad.txt", "good.txt"],
+                               "counts": {"lost": 0, "added": 0,
+                                          "changed": 0},
+                               "diff": {"lost": [], "added": [],
+                                        "changed": []}}}]
+    p, _r2, _a = compare(exc_old, silent_new)
+    case("вейвер НЕ маскирует молчаливый успех (негатив)", p != [])
+    p, _r2, _a = compare(env_old := [dict(env_new[0])], env_new)
+    case("OLD уже соответствует контракту — обычное сравнение, вейвер спит",
+         p == [])
+    rep_old = [{"label": "report:bad.txt+good.txt", "rc": 0,
+                "payload": {"tool": "humanizer-report", "schema": 1,
+                            "files": [{"before": "bad.txt",
+                                       "after": "good.txt",
+                                       "tokens": {"keep": 1, "add": 1,
+                                                  "delete": 0}}]}}]
+    rep_new = [{"label": "report:bad.txt+good.txt", "rc": 2,
+                "payload": {"tool": "humanizer-report", "schema": 1,
+                            "files": [{"before": "bad.txt",
+                                       "after": "good.txt",
+                                       "error": "причина"}],
+                            "error": "вход не читается (код 2)"}}]
+    p, restored3, _a = compare(rep_old, rep_new)
+    case("report: молчаливый replace -> код 2: восстановление контракта",
+         p == [] and restored3 == ["report:bad.txt+good.txt"])
+    rep4_old = [{"label": "report:ru.txt+clean.txt", "rc": 0,
+                 "payload": {"tool": "humanizer-report", "schema": 1,
+                             "files": [{"before": "ru.txt",
+                                        "after": "clean.txt",
+                                        "facts": {"lost": 4, "changed": 0,
+                                                  "unchanged": False}}]}}]
+    rep2_new = [{"label": "report:ru.txt+clean.txt", "rc": 0,
+                 "payload": {"tool": "humanizer-report", "schema": 1,
+                             "files": [{"before": "ru.txt",
+                                        "after": "clean.txt",
+                                        "facts": {"lost": 2, "changed": 0,
+                                                  "unchanged": False}}]}}]
+    p, restored4, _a = compare(rep4_old, rep2_new)
+    case("report: payload маркеров не факт — восстановление принципа",
+         p == [] and restored4 == ["report:ru.txt+clean.txt"])
+    rep3_new = [{"label": "report:ru.txt+clean.txt", "rc": 0,
+                 "payload": {"tool": "humanizer-report", "schema": 1,
+                             "files": [{"before": "ru.txt",
+                                        "after": "clean.txt",
+                                        "facts": {"lost": 3, "changed": 0,
+                                                  "unchanged": False}}]}}]
+    p, _r4, _a = compare(rep4_old, rep3_new)
+    case("вейвер lost 4->2 не маскирует lost 4->3 (негатив)", p != [])
     print("САМОПРОВЕРКА check_compatibility: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
