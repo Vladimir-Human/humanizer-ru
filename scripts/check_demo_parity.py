@@ -408,7 +408,7 @@ def selftest() -> int:
     # порча engine.js видны гейту (имитация во временном дереве).
     rels = ("scripts/check_markers.py", "demo/sample.js",
             "demo/engine.js", "demo/markers.js",
-            "demo/generate_nfc_table.py",
+            "demo/generate_nfc_table.py", "demo/nfc_nonstarters.json",
             "tests/fixtures/demo-parity/sample.txt",
             "tests/fixtures/demo-parity/expected.json",
             "tests/fixtures/demo-parity/vectors.json")
@@ -498,7 +498,8 @@ def selftest() -> int:
                  check(td) != [])
             with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(eng2)
-        # Порча таблицы не-стартеров NFC ловится сверкой с unicodedata.
+        # Порча таблицы не-стартеров NFC ловится сверкой блока engine.js
+        # с JSON-каноном (детерминированно, не зависит от unicodedata среды).
         eng3 = _read(eng_path)
         broken_table = eng3.replace("NFC_NONSTARTERS = [[768,846],",
                                     "NFC_NONSTARTERS = [[768,847],", 1)
@@ -525,6 +526,14 @@ def selftest() -> int:
             with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(broken_seg)
             case("отказ от стартер-границы NFC ловится", check(td) != [])
+    # Самопроверка генератора таблицы NFC (структура канона, негативы
+    # порчи блока и подмены канона) — часть обязательного пути.
+    gen = os.path.join(ROOT, "demo", "generate_nfc_table.py")
+    proc = subprocess.run([sys.executable, gen, "--selftest"],
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace",
+                          cwd=ROOT, timeout=300)
+    case("selftest генератора таблицы NFC зелёный", proc.returncode == 0)
     print("САМОПРОВЕРКА check_demo_parity: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
