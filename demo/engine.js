@@ -18,9 +18,11 @@
 //   7. вложенные дубли одного артефакта схлопываются (контейнер гасит
 //      содержимое), итоговая сортировка (start, end, rule).
 //
-// Координаты находки: start/end — абсолютные UTF-16 офсеты в тексте
-// (подсветка демо; для shadow и NFC-изменений длины строки — приближение
-// в пределах строки); cpStart/cpEnd — кодовые точки внутри
+// Координаты находки: start/end — абсолютные UTF-16 офсеты в ИСХОДНОМ
+// тексте (подсветка демо): офсеты NFC-строки и теневой строки
+// отображаются обратно через карты префиксных длин NFC и удалённых
+// невидимых символов, поэтому подсветка точна и на комбинируемых знаках,
+// и на теневых находках; cpStart/cpEnd — кодовые точки внутри
 // NFC-нормализованной (для shadow — теневой) строки: это поле сверяется
 // с --json CLI (start/end там в тех же координатах).
 (function (root, factory) {
@@ -119,6 +121,36 @@
       cp += 1;
     }
     return cp;
+  }
+
+  // Обратное отображение координат NFC-строки в индексы исходной строки:
+  // prefixNfc[r] = длина NFC префикса raw[0..r); границам символов
+  // соответствует минимальный r с map[r] >= idx.
+  function _prefixNfcMap(raw) {
+    var map = [0];
+    for (var r = 1; r <= raw.length; r++) {
+      map.push(raw.slice(0, r).normalize("NFC").length);
+    }
+    return map;
+  }
+
+  function _nfcToRaw(map, nfcIdx, rawLen) {
+    for (var r = 0; r <= rawLen; r++) {
+      if (map[r] >= nfcIdx) { return r; }
+    }
+    return rawLen;
+  }
+
+  // Индексы символов исходной строки, остающихся после stripShadow:
+  // kept[i] = raw-индекс i-го неудалённого символа.
+  var SHADOW_TEST_RX = new RegExp(SHADOW_RX.source, "u");
+  function _shadowKeptMap(raw) {
+    var kept = [];
+    for (var r = 0; r < raw.length; r++) {
+      SHADOW_TEST_RX.lastIndex = 0;
+      if (!SHADOW_TEST_RX.test(raw.charAt(r))) { kept.push(r); }
+    }
+    return kept;
   }
 
   // Семантика code spans едина с scripts/check_markers.py (_code_spans):
@@ -248,32 +280,52 @@
       if (fenced[i + 1]) { continue; }
       var raw = parts[i].text;
       var nfc = raw.normalize("NFC");
+      var nfcMap = (nfc === raw) ? null : _prefixNfcMap(raw);
       var direct = lineMatches(nfc, rules);
       var directNames = {};
       for (var j = 0; j < direct.length; j++) {
         var d = direct[j];
         directNames[d.id] = true;
+        var dStart = nfcMap ? _nfcToRaw(nfcMap, d.start, raw.length)
+                            : d.start;
+        var dEnd = nfcMap ? _nfcToRaw(nfcMap, d.end, raw.length)
+                          : d.end;
         out.push({
           rule: d.id, cls: d.cls, line: i + 1,
-          start: parts[i].start + Math.min(d.start, raw.length),
-          end: parts[i].start + Math.min(d.end, raw.length),
+          start: parts[i].start + dStart,
+          end: parts[i].start + dEnd,
           cpStart: u16ToCp(nfc, d.start), cpEnd: u16ToCp(nfc, d.end),
           shadow: false, text: nfc.substring(d.start, d.end)
         });
       }
       // Теневой проход: строка без невидимых символов; находки, уже
-      // пойманные напрямую, не дублируются (как в CLI).
+      // пойманные напрямую, не дублируются (как в CLI). Координаты
+      // отображаются обратно в исходную строку через карту удалённых
+      // невидимых и NFC-карту теневой строки.
       var shadowSrc = stripShadow(raw);
       if (shadowSrc !== raw) {
         var shadowNfc = shadowSrc.normalize("NFC");
+        var kept = _shadowKeptMap(raw);
+        var sNfcMap = (shadowNfc === shadowSrc)
+          ? null : _prefixNfcMap(shadowSrc);
         var sh = lineMatches(shadowNfc, rules);
         for (var q = 0; q < sh.length; q++) {
           var s = sh[q];
           if (directNames[s.id]) { continue; }
+          var sStartShadow = sNfcMap
+            ? _nfcToRaw(sNfcMap, s.start, shadowSrc.length) : s.start;
+          var sEndShadow = sNfcMap
+            ? _nfcToRaw(sNfcMap, s.end, shadowSrc.length) : s.end;
+          var sStart = (kept.length && sStartShadow < kept.length)
+            ? kept[sStartShadow] : raw.length;
+          var sEnd = (kept.length && sEndShadow > 0
+                      && sEndShadow - 1 < kept.length)
+            ? kept[sEndShadow - 1] + 1 : sStart;
+          if (sEnd < sStart) { sEnd = sStart; }
           out.push({
             rule: s.id, cls: s.cls, line: i + 1,
-            start: parts[i].start + Math.min(s.start, raw.length),
-            end: parts[i].start + Math.min(s.end, raw.length),
+            start: parts[i].start + sStart,
+            end: parts[i].start + sEnd,
             cpStart: u16ToCp(shadowNfc, s.start),
             cpEnd: u16ToCp(shadowNfc, s.end),
             shadow: true, text: shadowNfc.substring(s.start, s.end)
