@@ -1,0 +1,56 @@
+[
+ {
+  "task_id": 1,
+  "prompt": "Ты — исполнитель замороженного протокола выбора операции.\n\n1. Прочитай файл C:\\Users\\vovap\\hr-wt-flow8\\research\\task-benchmark\\o4-tasks.json — в нём 6 задач (поле tasks) и поле protocol с форматом ответа.\n2. Прочитай файл C:\\Users\\vovap\\hr-wt-flow8\\contract.v1.json — раздел tools описывает доступные команды продукта (command, task, when_not, modes).\n3. Для КАЖДОЙ из 6 задач выбери ровно одну команду контракта и строку режима (флаги/аргументы, может быть пустой), которые правильно решают задачу.\n4. Ответь РОВНО шестью строками JSON без какого-либо другого текста, по одной на задачу, в порядке task_id:\n{\"task_id\": 1, \"tool\": \"...\", \"mode\": \"...\"}\n{\"task_id\": 2, \"tool\": \"...\", \"mode\": \"...\"}\n... и т.д. до 6.\n\nЗапрещено: запускать команды, читать другие файлы, добавлять пояснения к строкам JSON. Не пересказывай задачи — отвечай только шестью JSON-строками.",
+  "response": "{\"task_id\": 1, \"tool\": \"humanizer-markers\", \"mode\": \"\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-markers", "mode": ""}
+ },
+ {
+  "task_id": 2,
+  "prompt": "тот же замороженный протокол (единая сессия на 6 задач; полный текст prompt — в записи task_id 1)",
+  "response": "{\"task_id\": 2, \"tool\": \"humanizer-clean\", \"mode\": \"\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-clean", "mode": ""}
+ },
+ {
+  "task_id": 3,
+  "prompt": "тот же замороженный протокол (единая сессия на 6 задач; полный текст prompt — в записи task_id 1)",
+  "response": "{\"task_id\": 3, \"tool\": \"humanizer-facts\", \"mode\": \"--no-additions\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-facts", "mode": "--no-additions"}
+ },
+ {
+  "task_id": 4,
+  "prompt": "тот же замороженный протокол (единая сессия на 6 задач; полный текст prompt — в записи task_id 1)",
+  "response": "{\"task_id\": 4, \"tool\": \"humanizer-polish\", \"mode\": \"--preserve-markup\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-polish", "mode": "--preserve-markup"}
+ },
+ {
+  "task_id": 5,
+  "prompt": "тот же замороженный протокол (единая сессия на 6 задач; полный текст prompt — в записи task_id 1)",
+  "response": "{\"task_id\": 5, \"tool\": \"humanizer-detect\", \"mode\": \"--genre marketing\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-detect", "mode": "--genre marketing"}
+ },
+ {
+  "task_id": 6,
+  "prompt": "тот же замороженный протокол (единая сессия на 6 задач; полный текст prompt — в записи task_id 1)",
+  "response": "{\"task_id\": 6, \"tool\": \"humanizer-report\", \"mode\": \"--json\"}",
+  "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+  "provider": "dsh-harness subagent (live LLM API)",
+  "temperature": "не задана (умолчание рантайма)",
+  "verdict": {"tool": "humanizer-report", "mode": "--json"}
+ }
+]
