@@ -146,8 +146,8 @@ class IntervalGateTests(unittest.TestCase):
         self.assertEqual(rc, 1)
 
     def test_post_interval_waived_pair_named(self):
-        # Пара v3.33.0 -> v3.34.0 покрыта одноразовым приказом владельца
-        # от 2026-09-07 (docs/release-waivers.json): rc 0 с явной пометкой.
+        # Текущая пара релизов покрыта одноразовым приказом владельца
+        # (docs/release-waivers.json): rc 0 с явной пометкой об исключении.
         self._patch([
             {"tag_name": TAG_LAST, "draft": False,
              "published_at": "2026-09-06T20:51:52Z"},
