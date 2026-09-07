@@ -57,7 +57,17 @@ jobs:
         run: ./mcp-publisher login github-oidc
 
       - name: Публикация записи реестра
-        run: ./mcp-publisher publish --file server.json
+        run: |
+          # Реестр сверяет версию с PyPI и отвечает 400 «Wait and retry»,
+          # пока свежая версия не распространится: повторяем до 10 раз.
+          for attempt in $(seq 1 10); do
+            echo "попытка $attempt"
+            if ./mcp-publisher publish --file server.json; then
+              exit 0
+            fi
+            [ "$attempt" -lt 10 ] && sleep 60
+          done
+          exit 1
 
       - name: Чтение опубликованной записи
         run: |
