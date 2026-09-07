@@ -87,7 +87,7 @@ jobs:
           python3 scripts/check_release.py --verify dist/humanizer-ru.zip
           sha256sum dist/humanizer-ru.zip
 
-      - name: Контракт выпуска: подпись тега и криптопроверка
+      - name: "Контракт выпуска: подпись тега и криптопроверка"
         run: |
           # Подпись проверяется опубликованным ключом проекта во временной
           # связке (docs/release-signing-key.asc); отсутствие ключа,
