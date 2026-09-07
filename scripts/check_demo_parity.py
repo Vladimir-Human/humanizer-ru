@@ -189,6 +189,97 @@ def _load_vectors(root):
         return json.load(fh)
 
 
+def _nfc_table_check(root) -> int:
+    """Сверка встроенной таблицы не-стартеров NFC с unicodedata (0 — целая)."""
+    gen = os.path.join(root, "demo", "generate_nfc_table.py")
+    proc = subprocess.run([sys.executable, gen, "--check"],
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace",
+                          cwd=root, timeout=300)
+    return proc.returncode
+
+
+_EQUIV_NODE = r"""
+const engine = require(process.argv[2]);
+function naivePrefix(raw) {
+  var m = [0];
+  for (var r = 1; r <= raw.length; r++) {
+    m.push(raw.slice(0, r).normalize('NFC').length);
+  }
+  return m;
+}
+const INV = new RegExp("[\u00ad\u061c\u034f\u1680\u180b-\u180e" +
+  "\u200b-\u200f\u202a-\u202e\u205f\u2060-\u2069\u206a-\u206f" +
+  "\u3000\ufe00-\ufe0f\ufeff\ufff9-\ufffb\u{e0000}-\u{e007f}]", "gu");
+const corpus = [
+  '', 'a', 'abc', 'и\u0306', 'и\u0306'.repeat(50), 'а\u0301а\u0302а\u0300',
+  '\u1100\u1161', '\u1100\u1161\u11A8', '가각간', '\u2126', '\u2126\u0301',
+  'A\u0301\u0302\u0303', '\u0301\u0302\u0300', '\u{E0061}', 'x\u{E0061}y',
+  '\u{1F600}', '\u{1F600}\u0301', '\u{1F3F3}\uFE0F\u200D\u{1F308}',
+  '\u{1D167}\u{1D168}x', '\uFDF0', 'е\u0308\u0301', '\r\n\u0301x',
+  '\u2126\u0301\u03c9', '\u034Fx', 'a\u200Bb\u200Cc',
+  '\u{E0061}\u{E0062}и\u0306\u{1F600}\u0301'
+];
+const bad = [];
+corpus.forEach(function (t, i) {
+  const got = engine._prefixNfcMap(t);
+  const want = naivePrefix(t);
+  if (got.length !== want.length ||
+      got.some(function (v, j) { return v !== want[j]; })) {
+    bad.push({ case: 'prefix#' + i, problem: 'карта != наивное определение' });
+  }
+  const kept = engine._shadowKeptMap(t);
+  const shadow = t.replace(INV, '');
+  if (kept.length !== shadow.length) {
+    bad.push({ case: 'kept#' + i, problem: 'длина != длина теневой строки' });
+  } else {
+    let recon = '';
+    for (const idx of kept) { recon += t.charAt(idx); }
+    if (recon !== shadow) {
+      bad.push({ case: 'kept#' + i, problem: 'реконструкция != теневая строка' });
+    }
+  }
+  for (let j = 1; j < kept.length; j++) {
+    if (kept[j] <= kept[j - 1]) {
+      bad.push({ case: 'kept#' + i, problem: 'карта не монотонна' });
+      break;
+    }
+  }
+});
+console.log(JSON.stringify(bad));
+"""
+
+
+def _maps_equivalence(root):
+    """Сверка карт координат engine.js с наивным определением (node).
+
+    Возвращает список строк-расхождений; None — node недоступен (основная
+    JS-сверка уже считает недоступность отказом, не SKIP).
+    """
+    node = shutil.which("node")
+    if not node:
+        return None
+    engine_path = os.path.join(root, "demo", "engine.js")
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False,
+                                     encoding="utf-8") as fh:
+        fh.write(_EQUIV_NODE)
+        runner_path = fh.name
+    try:
+        proc = subprocess.run([node, runner_path, engine_path],
+                              capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
+                              timeout=120)
+        if proc.returncode != 0:
+            return ["node-сверка карт упала (rc=%d): %s"
+                    % (proc.returncode, (proc.stderr or "")[-200:])]
+        bad = json.loads(proc.stdout.strip() or "[]")
+        return ["%s: %s" % (b.get("case"), b.get("problem")) for b in bad]
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        return ["node-сверка карт не исполнена: %s" % exc]
+    finally:
+        os.unlink(runner_path)
+
+
 def check(root) -> list:
     errors = []
     try:
@@ -284,6 +375,22 @@ def check(root) -> list:
             if js_tuples != cli_tuples:
                 errors.append("вектор %s: JS %s != CLI %s"
                               % (v["name"], js_tuples, cli_tuples))
+    # Таблица не-стартеров NFC (автогенерация demo/generate_nfc_table.py):
+    # безопасность сегментного построения карты префиксов держится на ней.
+    if _nfc_table_check(root) != 0:
+        errors.append("таблица не-стартеров NFC в demo/engine.js расходится "
+                      "с unicodedata — перегенерировать: python3 "
+                      "demo/generate_nfc_table.py")
+    # Эквивалентность карт координат наивному определению (астральные
+    # символы, комбинируемые последовательности, хангыль, синглетоны):
+    # start/end (UTF-16 исходного текста) и cpStart/cpEnd (кодовые точки
+    # NFC/теневой строки) обязаны оставаться точным отображением.
+    eq = _maps_equivalence(root)
+    if eq is None:
+        pass  # node недоступен — ошибка уже добавлена основной JS-сверкой
+    elif eq:
+        errors.append("карты координат engine.js != наивное определение: %s"
+                      % "; ".join(eq[:6]))
     return errors
 
 
@@ -301,6 +408,7 @@ def selftest() -> int:
     # порча engine.js видны гейту (имитация во временном дереве).
     rels = ("scripts/check_markers.py", "demo/sample.js",
             "demo/engine.js", "demo/markers.js",
+            "demo/generate_nfc_table.py", "demo/nfc_nonstarters.json",
             "tests/fixtures/demo-parity/sample.txt",
             "tests/fixtures/demo-parity/expected.json",
             "tests/fixtures/demo-parity/vectors.json")
@@ -372,6 +480,60 @@ def selftest() -> int:
                 fh.write(broken_mk)
             case("порча класса переноса w в markers.js ловится",
                  check(td) != [])
+        # Возврат charAt-обхода в теневую карту (прежний дефект: астральный
+        # невидимый символ оставался в карте обеими суррогатными единицами,
+        # координаты теневых находок съезжали на 2 юнита) ловится вектором
+        # astral-tag-inside-marker через сверку исходного среза.
+        eng2 = _read(eng_path)
+        broken_shadow = eng2.replace(
+            "SHADOW_TEST_RX.test(raw.substr(r, len))",
+            "SHADOW_TEST_RX.test(raw.charAt(r))")
+        if broken_shadow == eng2:
+            print("FAIL: не найдена точка подмены теневой карты")
+            failed += 1
+        else:
+            with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(broken_shadow)
+            case("возврат charAt-обхода теневой карты ловится",
+                 check(td) != [])
+            with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(eng2)
+        # Порча таблицы не-стартеров NFC ловится сверкой блока engine.js
+        # с JSON-каноном (детерминированно, не зависит от unicodedata среды).
+        eng3 = _read(eng_path)
+        broken_table = eng3.replace("NFC_NONSTARTERS = [[768,846],",
+                                    "NFC_NONSTARTERS = [[768,847],", 1)
+        if broken_table == eng3:
+            print("FAIL: не найдена точка подмены таблицы NFC")
+            failed += 1
+        else:
+            with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(broken_table)
+            case("порча таблицы не-стартеров NFC ловится", check(td) != [])
+            with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(eng3)
+        # Отказ от стартер-границы (флеш на каждом символе) ломает карту
+        # префиксов на комбинируемых последовательностях — ловится сверкой
+        # эквивалентности с наивным определением.
+        eng4 = _read(eng_path)
+        broken_seg = eng4.replace(
+            "if (r > segStart && _isNfcStarter(raw.codePointAt(r))) {",
+            "if (r > segStart) {", 1)
+        if broken_seg == eng4:
+            print("FAIL: не найдена точка подмены стартер-границы")
+            failed += 1
+        else:
+            with open(eng_path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(broken_seg)
+            case("отказ от стартер-границы NFC ловится", check(td) != [])
+    # Самопроверка генератора таблицы NFC (структура канона, негативы
+    # порчи блока и подмены канона) — часть обязательного пути.
+    gen = os.path.join(ROOT, "demo", "generate_nfc_table.py")
+    proc = subprocess.run([sys.executable, gen, "--selftest"],
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace",
+                          cwd=ROOT, timeout=300)
+    case("selftest генератора таблицы NFC зелёный", proc.returncode == 0)
     print("САМОПРОВЕРКА check_demo_parity: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0
