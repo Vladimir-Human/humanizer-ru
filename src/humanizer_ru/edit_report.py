@@ -145,9 +145,11 @@ def facts_part(before, after):
 
 
 def report(before_path, after_path):
-    with open(before_path, encoding="utf-8", errors="replace") as fh:
+    # Строгий UTF-8: повреждённый вход — ошибка (код 2) по контракту,
+    # а не молчаливая замена байтов на U+FFFD внутри сверки фактов.
+    with open(before_path, encoding="utf-8") as fh:
         before = fh.read()
-    with open(after_path, encoding="utf-8", errors="replace") as fh:
+    with open(after_path, encoding="utf-8") as fh:
         after = fh.read()
     body = compute(before, after)
     body["facts"] = facts_part(before, after)
@@ -166,8 +168,34 @@ def main(argv=None):
     ap.add_argument("after")
     ap.add_argument("--json", action="store_true")
     ap.description = SHORT_RU + "\n\n" + (ap.description or "")
-    args = ap.parse_args(argv)
-    env = report(args.before, args.after)
+    try:
+        args = ap.parse_args(argv)
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 2
+        if code == 0:
+            return 0
+        raw = list(sys.argv[1:] if argv is None else argv)
+        if "--json" in raw:
+            # error_rule контракта: с --json отказ разбора аргументов тоже
+            # даёт конверт в stdout (usage остаётся в stderr).
+            print(json.dumps({"tool": "humanizer-report", "schema": 1,
+                              "files": [],
+                              "error": "аргументы не распознаны (код 2)"},
+                             ensure_ascii=False, indent=2))
+        return code
+    try:
+        env = report(args.before, args.after)
+    except (OSError, UnicodeDecodeError) as exc:
+        # Коды из docstring: 2 — ошибка входа (нет файла, не UTF-8).
+        print("не удалось прочитать вход: %s" % exc, file=sys.stderr)
+        if args.json:
+            print(json.dumps({"tool": "humanizer-report", "schema": 1,
+                              "files": [{"before": args.before,
+                                         "after": args.after,
+                                         "error": str(exc)}],
+                              "error": "вход не читается (код 2)"},
+                             ensure_ascii=False, indent=2))
+        return 2
     if args.json:
         print(json.dumps(env, ensure_ascii=False, indent=2))
     else:
