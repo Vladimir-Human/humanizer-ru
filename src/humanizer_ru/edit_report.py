@@ -144,6 +144,17 @@ def facts_part(before, after):
             "unchanged": lost == 0 and changed == 0}
 
 
+def _scope_note(text):
+    """Статус «вне области» — единый определитель (polish.scope_note)."""
+    try:
+        from humanizer_ru.polish import scope_note
+    except Exception:
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+        from polish import scope_note
+    return scope_note(text)
+
+
 def report(before_path, after_path):
     # Строгий UTF-8: повреждённый вход — ошибка (код 2) по контракту,
     # а не молчаливая замена байтов на U+FFFD внутри сверки фактов.
@@ -155,8 +166,19 @@ def report(before_path, after_path):
     body["facts"] = facts_part(before, after)
     mb, ma = mtld(before), mtld(after)
     body["mtld"] = {"before": mb, "after": ma}
-    return {"tool": "humanizer-report", "schema": 1,
-            "files": [{"before": before_path, "after": after_path, **body}]}
+    entry = {"before": before_path, "after": after_path, **body}
+    # Градуированный ответ (контракт, graduated_response.out_of_scope):
+    # пустой и не-русский вход получают честный статус; поля аддитивны —
+    # tokens/sari_adapted/edit_types/facts/mtld сохраняют прежнюю семантику.
+    notes = []
+    for side_label, side_text in (("до", before), ("после", after)):
+        note = _scope_note(side_text)
+        if note:
+            notes.append("%s: %s" % (side_label, note))
+    if notes:
+        entry["status"] = "out-of-scope"
+        entry["scope_note"] = "; ".join(notes)
+    return {"tool": "humanizer-report", "schema": 1, "files": [entry]}
 
 
 SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
