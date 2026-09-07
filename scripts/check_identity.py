@@ -47,7 +47,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 IDENTITY_REL = "identity.v1.json"
 SHOWCASE_CARRIERS = ["README.md", "README.en.md", "README.pypi.md",
-                     "llms.txt", "SKILL.md"]
+                     "llms.txt", "SKILL.md",
+                     # Агентские точки входа: карточки плагинов и агентов —
+                     # действующие публичные носители обещаний; старое
+                     # обещание естественности в любом из них — дрейф.
+                     ".codex-plugin/plugin.json",
+                     ".claude-plugin/plugin.json",
+                     ".claude-plugin/marketplace.json",
+                     ".cursor-plugin/plugin.json",
+                     "gemini-extension.json",
+                     "dsh/package.json",
+                     "agents/openai.yaml"]
 
 
 def _read(rel):
@@ -203,7 +213,10 @@ def selftest() -> int:
         for rel in (IDENTITY_REL, "pyproject.toml", "contract.v1.json",
                     "SKILL.md", "dsh/package.json", "gemini-extension.json",
                     ".claude-plugin/plugin.json", "llms.txt", "README.md",
-                    "README.en.md", "README.pypi.md"):
+                    "README.en.md", "README.pypi.md",
+                    ".codex-plugin/plugin.json",
+                    ".claude-plugin/marketplace.json",
+                    ".cursor-plugin/plugin.json", "agents/openai.yaml"):
             src = os.path.join(old_root, rel)
             dst = os.path.join(td, rel)
             os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -242,6 +255,24 @@ def selftest() -> int:
             fh.write("\n")
         case("рассинхрон пакетной копии ловится (негатив)",
              any("рассинхронизирована" in e for e in check()))
+        with open(os.path.join(td, "src", "humanizer_ru",
+                               "identity.v1.json"),
+                  "w", encoding="utf-8") as fh:
+            with open(os.path.join(td, IDENTITY_REL), encoding="utf-8") as src_fh:
+                fh.write(src_fh.read())
+        # негатив 4: старое обещание естественности в карточке плагина —
+        # действующий носитель, запрещённая фраза ловится.
+        plug = os.path.join(td, ".codex-plugin", "plugin.json")
+        with open(plug, encoding="utf-8") as fh:
+            pdoc = json.load(fh)
+        pdoc["description"] = ("Переписывает текст естественным языком, "
+                               "не искажая смысла.")
+        with open(plug, "w", encoding="utf-8") as fh:
+            json.dump(pdoc, fh, ensure_ascii=False)
+        errs4 = check()
+        case("старое обещание в карточке плагина ловится (негатив)",
+             any(".codex-plugin" in e and "запрещённое" in e
+                 for e in errs4))
     finally:
         ROOT = old_root
         shutil.rmtree(td, ignore_errors=True)

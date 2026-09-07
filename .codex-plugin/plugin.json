@@ -1,22 +1,35 @@
 {
   "name": "humanizer-ru",
   "version": "3.34.0",
-  "description": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком. | Reads Russian text, finds traces of machine generation and, on explicit request, rewrites it to sound natural.",
+  "description": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом. | Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix.",
   "author": "Vladimir-Human",
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": "https://github.com/Vladimir-Human/humanizer-ru",
   "license": "MIT",
-  "keywords": ["humanizer", "russian", "writing", "ai-detection", "text", "русский", "очеловечивание"],
+  "keywords": [
+    "humanizer",
+    "russian",
+    "writing",
+    "ai-detection",
+    "text",
+    "русский",
+    "очеловечивание"
+  ],
   "skills": "./SKILL.md",
   "interface": {
     "displayName": "Humanizer RU",
-    "shortDescription": "Очеловечивает русский AI-текст по явной просьбе",
-    "longDescription": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком: убирает канцелярит, шаблоны и маркеры чат-ботов, не искажая смысла. Скилл текстовый: только чтение и правка текста, без выполнения кода и обращения к сети.",
+    "shortDescription": "Проверяемая гигиена вставки из чата для русского текста",
+    "longDescription": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом. Находит и объясняет артефакты копипасты и чат-интерфейсов, снимает поддерживаемые артефакты с проверяемыми границами, сверяет факты до и после правки. Стилистическое переписывание — отдельная возможность только по явной просьбе, без гарантий естественности; вердиктов об авторстве нет. Скилл текстовый: только чтение и правка текста, без выполнения кода и обращения к сети.",
     "developerName": "Vladimir-Human",
     "category": "Writing",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://github.com/Vladimir-Human/humanizer-ru",
     "privacyPolicyURL": "https://github.com/Vladimir-Human/humanizer-ru/blob/main/PRIVACY_POLICY.md",
-    "defaultPrompt": ["Очеловечь этот текст: ..."]
+    "defaultPrompt": [
+      "Проверь этот текст на артефакты вставки из чата и покажи каждую находку с объяснением: ..."
+    ]
   }
 }
