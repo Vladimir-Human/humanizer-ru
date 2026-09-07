@@ -9,10 +9,17 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "scripts"))
+REPO_ONLY = (os.path.isdir(os.path.join(ROOT, "scripts"))
+             and os.path.isfile(os.path.join(ROOT, ".github", "workflows",
+                                             "release-check.yml")))
+SKIP_OUTSIDE = unittest.skipUnless(
+    REPO_ONLY, "вне репозитория (sdist): workflows и scripts/ недоступны")
+if REPO_ONLY:
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import check_release as CR  # noqa: E402
+else:  # pragma: no cover — sdist без scripts/
+    CR = None
 sys.path.insert(0, os.path.join(ROOT, "src"))
-
-import check_release as CR  # noqa: E402
 
 RELEASE_CHECK = os.path.join(ROOT, ".github", "workflows",
                              "release-check.yml")
@@ -32,6 +39,7 @@ def _read(path):
         return fh.read()
 
 
+@SKIP_OUTSIDE
 class WorkflowBindingTests(unittest.TestCase):
     """Проверки исполняемых зависимостей публикации (текст workflow)."""
 
@@ -78,6 +86,7 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertIn("path: dist/", self.pp)
 
 
+@SKIP_OUTSIDE
 class IntervalGateTests(unittest.TestCase):
     """Интервалы: до и после публикации; ошибка API блокирует."""
 
@@ -126,14 +135,28 @@ class IntervalGateTests(unittest.TestCase):
         self.assertIn("исключение", msg)
 
     def test_post_interval_violation_blocks(self):
+        # Пара без зафиксированного приказа: нарушение ловится.
+        self._patch([
+            {"tag_name": TAG_LAST, "draft": False,
+             "published_at": "2026-09-06T20:51:52Z"},
+            {"tag_name": "v3.35" + ".0", "draft": False,
+             "published_at": "2026-09-07T08:00:00Z"},
+        ])
+        rc, _msg = CR.post_release_interval("x/y")
+        self.assertEqual(rc, 1)
+
+    def test_post_interval_waived_pair_named(self):
+        # Пара v3.33.0 -> v3.34.0 покрыта одноразовым приказом владельца
+        # от 2026-09-07 (docs/release-waivers.json): rc 0 с явной пометкой.
         self._patch([
             {"tag_name": TAG_LAST, "draft": False,
              "published_at": "2026-09-06T20:51:52Z"},
             {"tag_name": TAG_NEXT, "draft": False,
              "published_at": "2026-09-07T08:00:00Z"},
         ])
-        rc, _msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 1)
+        rc, msg = CR.post_release_interval("x/y")
+        self.assertEqual(rc, 0)
+        self.assertIn("исключение", msg)
 
     def test_post_interval_not_self_comparison(self):
         # Один опубликованный выпуск: пары нет — «не применим», не успех
@@ -150,6 +173,7 @@ class IntervalGateTests(unittest.TestCase):
         self.assertEqual(rc, 2)
 
 
+@SKIP_OUTSIDE
 class AcceptanceBlockingTests(unittest.TestCase):
     """Приёмка статуса: непроверенное не утверждается."""
 

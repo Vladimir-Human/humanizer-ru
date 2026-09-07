@@ -250,6 +250,7 @@ class AttrAndMultilinePreservationTests(unittest.TestCase):
         self.assertEqual(spans[0], (6, 6 + len('<span title="незакрытая')))
 
 
+@SKIP_OUTSIDE
 class ThinkInFencedTests(unittest.TestCase):
     """Детектор не помечает think внутри fenced — снятие не расходится."""
 
