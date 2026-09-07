@@ -410,11 +410,41 @@ def interval_errors(prev_published: str, new_published: str,
     return []
 
 
-def pre_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
+def load_interval_waivers(root=None):
+    """Одноразовые сокращения интервала, зафиксированные приказом владельца.
+
+    Файл docs/release-waivers.json: список записей {from, to, order,
+    one_time}. Механизм не ослабляет правило: каждое сокращение явно
+    перечислено парой тегов и ссылкой на приказ; собственных решений
+    сопровождения здесь быть не может.
+    """
+    root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(root, "docs", "release-waivers.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def waiver_allows(waivers, prev_tag, target_tag):
+    """Запись приказа для пары (prev_tag, target_tag) или None."""
+    for w in waivers or []:
+        if w.get("from") == prev_tag and w.get("to") == target_tag:
+            return w
+    return None
+
+
+def pre_release_interval(slug: str,
+                         min_seconds: int = MIN_RELEASE_INTERVAL,
+                         target_tag=None, root=None):
     """Проверка ДО публикации: прошёл ли минимум с последнего Release.
 
     Возвращает (rc, сообщение): rc 0 — публиковать можно (или выпусков ещё
-    нет), 1 — слишком рано, 2 — проверка невозможна (сеть/API).
+    нет, или пара покрыта одноразовым приказом из
+    docs/release-waivers.json), 1 — слишком рано, 2 — проверка невозможна
+    (сеть/API).
     """
     import datetime as _dt
     try:
@@ -431,6 +461,13 @@ def pre_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
     now = _dt.datetime.now(_dt.timezone.utc)
     gap = (now - latest_dt).total_seconds()
     if gap < min_seconds:
+        w = waiver_allows(load_interval_waivers(root), latest_tag,
+                          target_tag)
+        if w:
+            return 0, ("интервал сокращён ОДНОРАЗОВО по зафиксированному "
+                       "приказу владельца: %s -> %s (%s); фактический "
+                       "интервал %.0f с" % (latest_tag, target_tag,
+                                            w.get("order", "приказ"), gap))
         return 1, ("слишком ранний выпуск: с публикации %s (%s) прошло "
                    "%.0f с < %d с" % (latest_tag,
                                       latest_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -447,6 +484,10 @@ WAIVED_INTERVAL_PAIRS = {
     ("v3.32.1", "v3.33.0"):
         "решение сопровождения 2026-09-06 (прямой приказ владельца цикла), "
         "зафиксировано в релизном коммите v3.33.0 и в CHANGELOG",
+    ("v3.33.0", "v3.34.0"):
+        "прямой приказ владельца цикла от 2026-09-07 снять 24-часовое "
+        "ожидание для выпуска 3.34.0; одноразово, см. также "
+        "docs/release-waivers.json",
 }
 
 
@@ -926,6 +967,14 @@ def selftest() -> None:
             "интервал > 24 ч отвергнут"
         assert interval_errors("не-дата", "2026-09-06T08:47:06Z"), \
             "неразборчивая дата принята"
+        assert waiver_allows([{"from": "vA", "to": "vB", "order": "приказ"}],
+                             "vA", "vB"), "одноразовый приказ не найден по паре"
+        assert waiver_allows([{"from": "vA", "to": "vB", "order": "приказ"}],
+                             "vA", "vC") is None, \
+            "одноразовый приказ сработал на чужую пару"
+        assert waiver_allows(load_interval_waivers(), "v3.33.0",
+                             "v3.34.0"), "приказ 2026-09-07 не читается из " \
+            "docs/release-waivers.json"
         passed += 1
         total += 1
 
@@ -946,6 +995,14 @@ def selftest() -> None:
             return [
                 {"tag_name": "v3.33.0", "draft": False,
                  "published_at": "2026-09-06T20:51:52Z"},
+                {"tag_name": "v3.35.0", "draft": False,
+                 "published_at": "2026-09-07T08:00:00Z"},
+            ]
+
+        def _fake_waived2(url):
+            return [
+                {"tag_name": "v3.33.0", "draft": False,
+                 "published_at": "2026-09-06T20:51:52Z"},
                 {"tag_name": "v3.34.0", "draft": False,
                  "published_at": "2026-09-07T08:00:00Z"},
             ]
@@ -958,6 +1015,8 @@ def selftest() -> None:
         try:
             globals()["_get_json"] = _fake_waived
             rc_w, msg_w = post_release_interval("x/y")
+            globals()["_get_json"] = _fake_waived2
+            rc_w2, msg_w2 = post_release_interval("x/y")
             globals()["_get_json"] = _fake_violation
             rc_v, _msg_v = post_release_interval("x/y")
             globals()["_get_json"] = _fake_single
@@ -966,6 +1025,8 @@ def selftest() -> None:
             globals()["_get_json"] = saved_get
         assert rc_w == 0 and "исключение" in msg_w, \
             "историческая исключённая пара не названа явно: %s" % msg_w
+        assert rc_w2 == 0 and "исключение" in msg_w2, \
+            "одноразовый приказ 2026-09-07 не назван явно: %s" % msg_w2
         assert rc_v == 1, "нарушение интервала после публикации не поймано"
         assert rc_s == 0, "один выпуск должен давать «не применим», не отказ"
         passed += 1
@@ -1224,6 +1285,11 @@ def main(argv: list[str] | None = None) -> int:
                              "86400 с (по published_at GitHub API); "
                              "0 — можно публиковать, 1 — слишком рано, "
                              "2 — проверка невозможна (сеть/API)")
+    parser.add_argument("--target-tag", metavar="TAG",
+                        help="тег готовящегося выпуска для "
+                             "--pre-release-interval: пара (последний "
+                             "опубликованный, целевой) сверяется с "
+                             "одноразовыми приказами docs/release-waivers.json")
     parser.add_argument("--post-publication-interval", action="store_true",
                         help="проверка ПОСЛЕ публикации: интервал между "
                              "двумя последними конкретными опубликованными "
@@ -1284,7 +1350,8 @@ def main(argv: list[str] | None = None) -> int:
                           "remote.origin.url", file=sys.stderr)
                     rc_interval = 2
                 else:
-                    rc_interval, msg = pre_release_interval(slug)
+                    rc_interval, msg = pre_release_interval(
+                        slug, target_tag=args.target_tag)
                     prefix = {0: "ИНТЕРВАЛ", 1: "[FAIL] ИНТЕРВАЛ",
                               2: "ИНТЕРВАЛ (UNAVAILABLE)"}[rc_interval]
                     print("%s: %s" % (prefix, msg),
