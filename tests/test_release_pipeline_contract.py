@@ -123,6 +123,31 @@ class IntervalGateTests(unittest.TestCase):
         rc, _msg = CR.pre_release_interval("x/y")
         self.assertEqual(rc, 2)
 
+    def test_pre_interval_completion_same_release(self):
+        # Завершение публикации уже выпущенной версии (сторона PyPI того
+        # же выпуска после сбоя CI): тег последнего Release совпадает с
+        # версией пакета — это не новый выпуск, интервал не применяется.
+        import datetime as dt
+        from humanizer_ru import __version__ as current
+        recent = (dt.datetime.now(dt.timezone.utc)
+                  - dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self._patch([{"tag_name": "v" + current, "draft": False,
+                      "published_at": recent}])
+        rc, msg = CR.pre_release_interval("x/y", min_seconds=86400)
+        self.assertEqual(rc, 0, msg)
+        self.assertIn("завершение", msg)
+
+    def test_pre_interval_early_other_tag_blocks(self):
+        # Свежий релиз чужой версии: исключение завершения не расширяется
+        # на новые выпуски — ранняя публикация блокируется.
+        import datetime as dt
+        recent = (dt.datetime.now(dt.timezone.utc)
+                  - dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self._patch([{"tag_name": "v999.0" + ".0", "draft": False,
+                      "published_at": recent}])
+        rc, _msg = CR.pre_release_interval("x/y", min_seconds=86400)
+        self.assertEqual(rc, 1)
+
     def test_post_interval_waived_pair_named(self):
         self._patch([
             {"tag_name": TAG_PREV, "draft": False,

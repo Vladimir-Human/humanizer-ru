@@ -436,6 +436,19 @@ def waiver_allows(waivers, prev_tag, target_tag):
     return None
 
 
+def _local_package_version(root=None):
+    """Версия пакета из src/humanizer_ru/__init__.py (None — не читается)."""
+    root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(str(root), "src", "humanizer_ru", "__init__.py")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        return None
+    m = re.search(r'__version__\s*=\s*"(\d+\.\d+\.\d+)"', text)
+    return m.group(1) if m else None
+
+
 def pre_release_interval(slug: str,
                          min_seconds: int = MIN_RELEASE_INTERVAL,
                          target_tag=None, root=None):
@@ -443,7 +456,8 @@ def pre_release_interval(slug: str,
 
     Возвращает (rc, сообщение): rc 0 — публиковать можно (или выпусков ещё
     нет, или пара покрыта одноразовым приказом из
-    docs/release-waivers.json), 1 — слишком рано, 2 — проверка невозможна
+    docs/release-waivers.json, или это завершение публикации уже
+    выпущенной версии), 1 — слишком рано, 2 — проверка невозможна
     (сеть/API).
     """
     import datetime as _dt
@@ -461,6 +475,16 @@ def pre_release_interval(slug: str,
     now = _dt.datetime.now(_dt.timezone.utc)
     gap = (now - latest_dt).total_seconds()
     if gap < min_seconds:
+        # Завершение публикации уже выпущенной версии: версия пакета равна
+        # тегу последнего Release. Это не новая публикация (например,
+        # догрузка стороны PyPI того же выпуска после сбоя CI): правило
+        # интервала ограничивает частоту НОВЫХ выпусков, а двойную загрузку
+        # одной версии исключает сам PyPI (версия уникальна, skip-existing).
+        local_version = _local_package_version(root)
+        if local_version and latest_tag == "v" + local_version:
+            return 0, ("завершение публикации выпуска %s: версия пакета "
+                       "совпадает с последним Release; правило интервала "
+                       "применяется только к новым выпускам" % (latest_tag,))
         w = waiver_allows(load_interval_waivers(root), latest_tag,
                           target_tag)
         if w:
@@ -975,6 +999,33 @@ def selftest() -> None:
         assert waiver_allows(load_interval_waivers(), "v3.33.0",
                              "v3.34.0"), "приказ 2026-09-07 не читается из " \
             "docs/release-waivers.json"
+        passed += 1
+        total += 1
+
+        # Завершение публикации: версия пакета равна тегу последнего
+        # Release — не новый выпуск, rc 0; свежий релиз чужой версии —
+        # по-прежнему rc 1 (исключение не расширяется на новые выпуски).
+        import datetime as _dtv
+        _ver = _local_package_version()
+        assert _ver, "версия пакета не читается из src/humanizer_ru"
+        _recent = (_dtv.datetime.now(_dtv.timezone.utc)
+                   - _dtv.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        saved_get_pre = globals()["_get_json"]
+        try:
+            globals()["_get_json"] = lambda url: [
+                {"tag_name": "v" + _ver, "draft": False,
+                 "published_at": _recent}]
+            rc_c, msg_c = pre_release_interval("x/y")
+            assert rc_c == 0 and "завершение" in msg_c, \
+                "завершение публикации своей версии не распознано: %s" % (msg_c,)
+            globals()["_get_json"] = lambda url: [
+                {"tag_name": "v999.0.0", "draft": False,
+                 "published_at": _recent}]
+            rc_o, msg_o = pre_release_interval("x/y")
+            assert rc_o == 1, \
+                "ранний выпуск чужой версии пропущен: %s" % (msg_o,)
+        finally:
+            globals()["_get_json"] = saved_get_pre
         passed += 1
         total += 1
 
