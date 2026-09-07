@@ -20,7 +20,6 @@
 - scripts/check_demo_browser.py: браузерная проверка DOM-подсветки и
   согласованности копирования (playwright; без него код 2 UNAVAILABLE,
   команда для CI/локали с браузерной средой).
-
 - Живые агентные входы сверяются с опубликованным продуктом:
   scripts/check_live_distribution.py (--selftest 3/3, --json) сравнивает
   локальные server.json/пакет/контракт с PyPI, официальной записью
