@@ -718,8 +718,51 @@ def _fenced_lines(lines: list) -> set:
     return inside
 
 
+def _scan_error_envelope(error: str) -> None:
+    """Конверт ошибки входа в stdout (error_rule контракта: с --json код 2
+    всегда печатает разобранный JSON, а не голый stderr)."""
+    print(json.dumps({"tool": "humanizer-markers", "schema": 1,
+                      "files": [], "error": error},
+                     ensure_ascii=False, indent=2))
+
+
+def _parse_scan_argv(args) -> tuple:
+    """Разбор смешанного списка аргументов --scan однократно.
+
+    Флаги --json, --versions и --class {a|all} снимаются только ДО границы
+    «--»; после «--» значения не переразбираются: файл с именем «--class»
+    или «--json» доходит до сканирования как путь. Возвращает кортеж
+    (paths, class_filter, as_json, versions, error); error — текст ошибки
+    разбора (None, если разбор успешен).
+    """
+    args = list(args)
+    if "--" in args:
+        i = args.index("--")
+        head, tail = args[:i], args[i + 1:]
+    else:
+        head, tail = args, []
+    as_json = "--json" in head
+    versions = "--versions" in head
+    head = [a for a in head if a not in ("--json", "--versions")]
+    class_filter = "all"
+    error = None
+    if "--class" in head:
+        idx = head.index("--class")
+        if idx + 1 >= len(head) or head[idx + 1] not in ("a", "all"):
+            error = "--class ожидает значение 'a' или 'all'"
+        else:
+            class_filter = head[idx + 1]
+            del head[idx:idx + 2]
+    return head + tail, class_filter, as_json, versions, error
+
+
 def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
-    """Прогон всех выражений по произвольным файлам.
+    """Прогон всех выражений по произвольным файлам (вход совместимости).
+
+    Принимает смешанный список: флаги --class {a|all}, --json, --versions
+    могут стоять среди операндов; граница «--»: всё после первого «--» —
+    операнды и повторно не интерпретируется. Типизированный вход для новых
+    вызовов — scan_paths(): уже разобранные операнды там не переразбираются.
 
     Запуск:  python3 scripts/check_markers.py --scan файл1 [файл2 …]
              python3 scripts/check_markers.py --scan --class a файл1 …
@@ -746,15 +789,35 @@ def scan(paths: list, as_json: bool = False, versions: bool = False) -> int:
     файл в cp1251/другой кодировке даёт код 2 с явным сообщением, а не
     молчаливый пропуск или мусорные совпадения.
     """
-    class_filter = "all"
+    parsed, class_filter, argv_json, argv_versions, error = \
+        _parse_scan_argv(paths)
+    as_json = as_json or argv_json
+    versions = versions or argv_versions
+    if error:
+        print(error, file=sys.stderr)
+        if as_json:
+            _scan_error_envelope("вход не читается (код 2)")
+        return 2
+    return scan_paths(parsed, class_filter=class_filter,
+                      as_json=as_json, versions=versions)
+
+
+def scan_paths(paths: list, class_filter: str = "all",
+               as_json: bool = False, versions: bool = False) -> int:
+    """Прогон всех выражений по уже разобранным операндам (типизированный вход).
+
+    Значения paths не переразбираются: файл с именем «--class», «--json»,
+    «--version», «--» остаётся путём. Разбор флагов — _parse_scan_argv()
+    (скрипт) или argparse (консольная команда humanizer-markers).
+    Семантика вывода, кодов возврата, «-»/stdin, --class и UTF-8 — как в
+    scan(). Ошибка входа с as_json всегда печатает конверт в stdout.
+    """
+    if class_filter not in ("a", "all"):
+        print("--class ожидает значение 'a' или 'all'", file=sys.stderr)
+        if as_json:
+            _scan_error_envelope("вход не читается (код 2)")
+        return 2
     remaining = list(paths)
-    if "--class" in remaining:
-        idx = remaining.index("--class")
-        if idx + 1 >= len(remaining) or remaining[idx + 1] not in ("a", "all"):
-            print("--class ожидает значение 'a' или 'all'", file=sys.stderr)
-            return 2
-        class_filter = remaining[idx + 1]
-        del remaining[idx:idx + 2]
     compiled = {name: re.compile(case[0]) for name, case in CASES.items()}
     found = 0
     class_b_warnings = 0
@@ -1065,14 +1128,19 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--selftest":
         sys.exit(selftest())
     if len(sys.argv) > 1 and sys.argv[1] == "--scan":
-        # scan() разбирает --class {a|all} сам, поэтому передаём весь хвост;
-        # --json снимается здесь (конверт контракта вместо текстовых строк).
-        rest = sys.argv[2:]
-        as_json = "--json" in rest
-        use_versions = "--versions" in rest
-        if as_json:
-            rest = [a for a in rest if a not in ("--json", "--versions")]
-        sys.exit(scan(rest, as_json=as_json, versions=use_versions))
+        # Флаги разбираются один раз здесь и только до границы «--»:
+        # операнды (включая имена файлов вроде «--json» или «--class»)
+        # доходят до сканирования типизированным списком и повторно не
+        # интерпретируются.
+        paths, class_filter, as_json, use_versions, error = \
+            _parse_scan_argv(sys.argv[2:])
+        if error:
+            print(error, file=sys.stderr)
+            if as_json:
+                _scan_error_envelope("вход не читается (код 2)")
+            sys.exit(2)
+        sys.exit(scan_paths(paths, class_filter=class_filter,
+                            as_json=as_json, versions=use_versions))
     if len(sys.argv) > 1 and sys.argv[1] == "--parity":
         sys.exit(parity(*sys.argv[2:]))
     sys.exit(main())
