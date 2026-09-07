@@ -9,11 +9,16 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "scripts"))
-
-import collect_external_feedback as CF  # noqa: E402
-
-REPO = CF.REPO
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
+SKIP_OUTSIDE = unittest.skipUnless(
+    REPO_ONLY, "вне репозитория (sdist): сборщик живёт в scripts/")
+if REPO_ONLY:
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import collect_external_feedback as CF  # noqa: E402
+    REPO = CF.REPO
+else:  # pragma: no cover — sdist без scripts/
+    CF = None
+    REPO = "Vladimir-Human/humanizer-ru"
 VER = "3.33" + ".0"  # конкатенация: гейт version-literals запрещает литерал
 
 
@@ -29,6 +34,7 @@ def _comment(cid, url, body, login="reader-external",
             "url": url, "body": body}
 
 
+@SKIP_OUTSIDE
 class BodyAndSignalsTests(unittest.TestCase):
     def _collect(self, runner):
         return CF.collect("2026-09-06", runner=runner, synthetic=True)
@@ -79,6 +85,7 @@ class BodyAndSignalsTests(unittest.TestCase):
         self.assertTrue(com[0]["signals"]["has_problem"])
 
 
+@SKIP_OUTSIDE
 class PaginationTests(unittest.TestCase):
     def test_more_than_50_comments_read_fully(self):
         page1 = [_comment("P%d" % i,
@@ -139,6 +146,7 @@ class PaginationTests(unittest.TestCase):
                             for r in rows))
 
 
+@SKIP_OUTSIDE
 class GraphqlErrorTests(unittest.TestCase):
     def test_errors_without_data_unavailable(self):
         def runner(args):
@@ -165,6 +173,7 @@ class GraphqlErrorTests(unittest.TestCase):
         self.assertTrue(src["discussions"].get("partial"))
 
 
+@SKIP_OUTSIDE
 class AccountsAndSyntheticTests(unittest.TestCase):
     def test_internal_and_bots_excluded_from_external(self):
         env = _disc_env([{

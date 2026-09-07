@@ -17,18 +17,24 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for _p in (os.path.join(ROOT, "scripts"), os.path.join(ROOT, "src"),
-           os.path.join(ROOT, "demo")):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
+SKIP_OUTSIDE = unittest.skipUnless(
+    REPO_ONLY, "вне репозитория (sdist): гейты живут в scripts/ и demo/")
+if REPO_ONLY:
+    for _p in (os.path.join(ROOT, "scripts"), os.path.join(ROOT, "src"),
+               os.path.join(ROOT, "demo")):
+        if _p not in sys.path:
+            sys.path.insert(0, _p)
+    import check_demo_parity as CDP  # noqa: E402
+    import check_markers as cm  # noqa: E402
+    import check_perf_regex as CPR  # noqa: E402
+    import check_robustness as CRB  # noqa: E402
+    import generate_js_rules as G  # noqa: E402
+else:  # pragma: no cover — sdist без scripts/
+    CDP = cm = CPR = CRB = G = None
 
-import check_demo_parity as CDP  # noqa: E402
-import check_markers as cm  # noqa: E402
-import check_perf_regex as CPR  # noqa: E402
-import check_robustness as CRB  # noqa: E402
-import generate_js_rules as G  # noqa: E402
 
-
+@SKIP_OUTSIDE
 class NoNodeRefusalTests(unittest.TestCase):
     """Мутант: node «исчез» из окружения (shutil.which -> None)."""
 
@@ -52,6 +58,7 @@ class NoNodeRefusalTests(unittest.TestCase):
         self.assertNotEqual(rc, 0, "main вернул 0 при непроверенной JS-стороне")
 
 
+@SKIP_OUTSIDE
 class NameExemptMutantTests(unittest.TestCase):
     """Мутант: квадратичный паттерн под именем из прежнего белого списка."""
 
@@ -74,6 +81,7 @@ class NameExemptMutantTests(unittest.TestCase):
         self.assertTrue(ok)
 
 
+@SKIP_OUTSIDE
 class HomoglyphMutationTests(unittest.TestCase):
     """Мутант: оператор мутации не меняет применимый вход."""
 
@@ -113,6 +121,7 @@ def _mutation_probes():
         self.assertEqual(pos, len(samples))
 
 
+@SKIP_OUTSIDE
 class GeneratorClassTests(unittest.TestCase):
     """Мутант: возврат \p{M} в класс переноса Python \w."""
 
