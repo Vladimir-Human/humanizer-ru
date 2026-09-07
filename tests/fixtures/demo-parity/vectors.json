@@ -102,5 +102,12 @@
       {"marker": "oaicite_short", "class": "A", "line": 1, "start": 20, "end": 29, "shadow": false},
       {"marker": "contentReference", "class": "A", "line": 1, "start": 0, "end": 37, "shadow": true}
     ]
+  },
+  {
+    "name": "combining-highlight-precise",
+    "text": "и\u0306 :contentReference[oaicite:3]{index=3}",
+    "expect": [
+      {"marker": "contentReference", "class": "A", "line": 1, "start": 2, "end": 39, "shadow": false}
+    ]
   }
 ]
