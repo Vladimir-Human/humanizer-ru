@@ -142,27 +142,81 @@ def _row(author, kind, url, date, title, body="", synthetic=False,
     }
 
 
-def _graphql_discussions(runner, since, synthetic=False):
-    """Discussion-корни и комментарии к ним (курсорная пагинация).
+def _graphql_page(runner, query):
+    """Один GraphQL-запрос: (envelope, err, partial_note).
 
-    Ответ GraphQL читается через оболочку data.repository.discussions.
-    Ответ внешнего пользователя в треде владельца рассматривается как
-    кандидат (kind: discussion-comment) даже когда корень старше окна.
+    GraphQL errors без data — недоступность источника (не пустой ответ);
+    errors при наличии data — частичный ответ: данные принимаются,
+    неполнота фиксируется заметкой; RATE_LIMITED — недоступность.
+    """
+    payload, err = runner(["graphql", "-f", "query=" + query])
+    if err:
+        return None, err, None
+    envelope = payload[0] if payload else {}
+    errors = (envelope or {}).get("errors") or []
+    data = (envelope or {}).get("data")
+    if errors and not data:
+        kinds = " ".join(str(e.get("type") or e.get("message"))
+                         for e in errors)
+        if "RATE_LIMITED" in kinds.upper():
+            return None, ("ограничение API GitHub: %s" % kinds[:200]), None
+        return None, ("GraphQL errors без data: %s" % kinds[:200]), None
+    note = None
+    if errors:
+        note = ("частичный ответ GraphQL: %s"
+                % "; ".join(str(e.get("message")) for e in errors)[:200])
+    return envelope, None, note
+
+
+def _comment_rows(node_comments, number, thread_url, since, synthetic,
+                  seen):
+    """Строки комментариев discussion (тело, автор, url) + признаки."""
+    rows = []
+    for c in node_comments or []:
+        curl = c.get("url") or thread_url
+        if curl in seen:
+            continue
+        seen.add(curl)
+        clogin = ((c.get("author") or {}).get("login") or "")
+        ccreated = (c.get("createdAt") or "")[:10]
+        if since and ccreated < since:
+            continue
+        rows.append(_row(clogin, "discussion-comment", curl, ccreated,
+                         "ответ в #%s" % number,
+                         body=c.get("body") or "",
+                         synthetic=synthetic, thread=thread_url))
+    return rows
+
+
+def _graphql_discussions(runner, since, synthetic=False):
+    """Discussion-корни, их комментарии и ответы на комментарии.
+
+    Возвращает (rows, err, notes): notes — список заметок о полноте
+    (частичные ответы GraphQL). Тела запрошены на каждом уровне
+    (body у корня, комментария и ответа); пагинация курсорная на каждом
+    уровне: корни (discussions), комментарии (comments), ответы
+    (replies через отдельный запрос по id комментария). Удалённый автор
+    (author: null) не объявляется ботом: login пуст, external=False.
+    Повторы по url дедуплицируются.
     """
     rows = []
+    notes = []
+    seen = set()
     cursor = "null"
     while True:
         query = (
             '{ repository(owner: "%s", name: "%s") { discussions('
             "first: 50, after: %s, orderBy: {field: CREATED_AT, "
             "direction: ASC}) { pageInfo { hasNextPage endCursor } nodes { "
-            "number title createdAt author { login } comments(first: 50) { "
-            "nodes { createdAt author { login } url } } } } } }"
+            "number title createdAt author { login } body "
+            "comments(first: 50) { pageInfo { hasNextPage endCursor } "
+            "nodes { id createdAt author { login } url body } } } } } }"
             % (OWNER, REPO_NAME, cursor))
-        payload, err = runner(["graphql", "-f", "query=" + query])
+        envelope, err, note = _graphql_page(runner, query)
         if err:
-            return rows, err
-        envelope = payload[0] if payload else {}
+            return rows, err, notes
+        if note:
+            notes.append(note)
         data = (envelope or {}).get("data") or {}
         repo = data.get("repository") or {}
         disc = repo.get("discussions") or {}
@@ -171,25 +225,63 @@ def _graphql_discussions(runner, since, synthetic=False):
             created = (node.get("createdAt") or "")[:10]
             number = node.get("number")
             url = "https://github.com/%s/discussions/%s" % (REPO, number)
-            if not since or created >= since:
+            if url not in seen and (not since or created >= since):
+                seen.add(url)
                 rows.append(_row(login, "discussion", url, created,
                                  node.get("title", ""),
+                                 body=node.get("body") or "",
                                  synthetic=synthetic))
-            comments = ((node.get("comments") or {}).get("nodes") or [])
-            for c in comments:
-                clogin = ((c.get("author") or {}).get("login") or "")
-                ccreated = (c.get("createdAt") or "")[:10]
-                if since and ccreated < since:
+            comments = (node.get("comments") or {})
+            rows.extend(_comment_rows(comments.get("nodes"), number, url,
+                                      since, synthetic, seen))
+            # Пагинация комментариев уровня discussion.
+            cpage = comments.get("pageInfo") or {}
+            ccursor = cpage.get("endCursor")
+            while cpage.get("hasNextPage") and ccursor:
+                cquery = (
+                    '{ repository(owner: "%s", name: "%s") { discussions('
+                    "first: 1, after: %s) { nodes { number comments("
+                    "first: 50, after: \"%s\") { pageInfo { hasNextPage "
+                    "endCursor } nodes { id createdAt author { login } "
+                    "url body } } } } } }"
+                    % (OWNER, REPO_NAME, cursor, ccursor))
+                envelope, err, note = _graphql_page(runner, cquery)
+                if err:
+                    return rows, err, notes
+                if note:
+                    notes.append(note)
+                d2 = (((envelope or {}).get("data") or {}).get("repository")
+                      or {}).get("discussions") or {}
+                n2 = (d2.get("nodes") or [{}])[0]
+                comments = n2.get("comments") or {}
+                rows.extend(_comment_rows(comments.get("nodes"), number,
+                                          url, since, synthetic, seen))
+                cpage = comments.get("pageInfo") or {}
+                ccursor = cpage.get("endCursor")
+            # Ответы на комментарии: первый уровень вложенности replies.
+            for c in (node.get("comments") or {}).get("nodes") or []:
+                cid = c.get("id")
+                if not cid:
                     continue
-                rows.append(_row(clogin, "discussion-comment",
-                                 c.get("url") or url, ccreated,
-                                 "ответ в #%s" % number,
-                                 synthetic=synthetic, thread=url))
+                rquery = (
+                    "{ node(id: \"%s\") { ... on DiscussionComment { "
+                    "replies(first: 50) { pageInfo { hasNextPage endCursor } "
+                    "nodes { id createdAt author { login } url body } } "
+                    "} } }" % cid)
+                envelope, err, note = _graphql_page(runner, rquery)
+                if err:
+                    return rows, err, notes
+                if note:
+                    notes.append(note)
+                replies = ((((envelope or {}).get("data") or {}).get("node"))
+                           or {}).get("replies") or {}
+                rows.extend(_comment_rows(replies.get("nodes"), number, url,
+                                          since, synthetic, seen))
         page = disc.get("pageInfo") or {}
         if page.get("hasNextPage") and page.get("endCursor"):
             cursor = '"%s"' % page["endCursor"]
             continue
-        return rows, None
+        return rows, None, notes
 
 
 def collect(since, runner=None, synthetic=False):
@@ -245,13 +337,19 @@ def collect(since, runner=None, synthetic=False):
             n += 1
         sources["issue-comments"] = {"status": "ok", "items": n}
 
-    disc_rows, err = _graphql_discussions(runner, since,
-                                          synthetic=synthetic)
+    disc_rows, err, notes = _graphql_discussions(runner, since,
+                                                 synthetic=synthetic)
     if err:
         sources["discussions"] = {"status": "unavailable", "reason": err}
     else:
         rows.extend(disc_rows)
-        sources["discussions"] = {"status": "ok", "items": len(disc_rows)}
+        st = {"status": "ok", "items": len(disc_rows)}
+        if notes:
+            # Частичный ответ GraphQL: сбор полон не целиком, полнота
+            # не утверждается (непроверенное состояние не становится ok).
+            st["partial"] = True
+            st["notes"] = notes
+        sources["discussions"] = st
     return rows, sources
 
 
@@ -365,6 +463,185 @@ def selftest():
          any(r["concrete_usage_signs"] for r in ext))
     case("синтетика помечена", all(r["synthetic"] for r in rows))
     case("источники ok", all(s["status"] == "ok" for s in src.values()))
+
+    # Тела discussion и комментариев доезжают до признаков использования.
+    body_env = [{"data": {"repository": {"discussions": {
+        "pageInfo": {"hasNextPage": False, "endCursor": None},
+        "nodes": [
+            {"number": 96, "title": "проблема с конвертом",
+             "createdAt": "2026-09-06T00:00:00Z",
+             "author": {"login": "reader-external"},
+             "body": "humanizer-markers --json " + ver + " ошибка: конверт пуст",
+             "comments": {"pageInfo": {"hasNextPage": False,
+                                       "endCursor": None},
+                          "nodes": [
+                              {"id": "C1",
+                               "createdAt": "2026-09-06T01:00:00Z",
+                               "author": {"login": "reader-external"},
+                               "url": "https://github.com/%s/discussions/"
+                                      "96#c1" % REPO,
+                               "body": "воспроизвёл: exit code 2 на ubuntu"}]}}
+        ]}}}}]
+
+    def body_runner(args):
+        q = args[2] if len(args) > 2 else ""
+        if "replies(first:" in q:
+            return [{"data": {"node": {"replies": {
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
+                "nodes": [
+                    {"id": "R1", "createdAt": "2026-09-06T02:00:00Z",
+                     "author": {"login": "second-external"},
+                     "url": "https://github.com/%s/discussions/96#c1r1"
+                            % REPO,
+                     "body": "подтверждаю на своей машине, версия " + ver}
+                ]}}}}], None
+        return body_env, None
+
+    rows_b, src_b = collect("2026-09-06", runner=body_runner, synthetic=True)
+    disc_body = [r for r in rows_b if r["kind"] == "discussion"]
+    com_body = [r for r in rows_b if r["kind"] == "discussion-comment"]
+    reply_rows = [r for r in com_body if "c1r1" in r["url"]]
+    case("тело discussion доезжает до признаков",
+         bool(disc_body) and disc_body[0]["body_excerpt"]
+         and disc_body[0]["signals"]["has_command"])
+    case("тело комментария доезжает до признаков",
+         any(r["body_excerpt"] and r["signals"]["has_problem"]
+             for r in com_body if "c1" in r["url"] and "c1r1" not in r["url"]))
+    case("ответы на комментарии собираются (replies)",
+         bool(reply_rows) and reply_rows[0]["author"] == "second-external")
+    case("полнота источника без частичных ответов",
+         src_b["discussions"]["status"] == "ok"
+         and not src_b["discussions"].get("partial"))
+
+    # Пагинация комментариев discussion: вторая страница дочитывается.
+    paged_env = [{"data": {"repository": {"discussions": {
+        "pageInfo": {"hasNextPage": False, "endCursor": None},
+        "nodes": [
+            {"number": 97, "title": "тред",
+             "createdAt": "2026-09-06T00:00:00Z",
+             "author": {"login": OWNER},
+             "body": "",
+             "comments": {"pageInfo": {"hasNextPage": True,
+                                       "endCursor": "CC1"},
+                          "nodes": [
+                              {"id": "P1",
+                               "createdAt": "2026-09-06T01:00:00Z",
+                               "author": {"login": "reader-external"},
+                               "url": "https://github.com/%s/discussions/"
+                                      "97#p1" % REPO,
+                               "body": "первая страница"}]}}
+        ]}}}}]
+    page2_env = [{"data": {"repository": {"discussions": {
+        "nodes": [
+            {"number": 97,
+             "comments": {"pageInfo": {"hasNextPage": False,
+                                       "endCursor": None},
+                          "nodes": [
+                              {"id": "P2",
+                               "createdAt": "2026-09-06T03:00:00Z",
+                               "author": {"login": "reader-external"},
+                               "url": "https://github.com/%s/discussions/"
+                                      "97#p2" % REPO,
+                               "body": "вторая страница"}]}}
+        ]}}}}]
+
+    def paged_runner(args):
+        q = args[2] if len(args) > 2 else ""
+        if "first: 1, after:" in q:
+            return page2_env, None
+        if "replies(first:" in q:
+            return [{"data": {"node": {"replies": {"nodes": []}}}}], None
+        return paged_env, None
+
+    rows_p, _src_p = collect("2026-09-06", runner=paged_runner,
+                             synthetic=True)
+    urls_p = [r["url"] for r in rows_p if r["kind"] == "discussion-comment"]
+    case("вторая страница комментариев дочитывается",
+         any("#p1" in u for u in urls_p) and any("#p2" in u for u in urls_p))
+
+    # GraphQL errors: без data — unavailable; с data — частичность;
+    # RATE_LIMITED — недоступность, а не пустой успех.
+    def err_runner_no_data(args):
+        q = args[2] if len(args) > 2 else ""
+        if q.startswith("query=") or "query=" in q:
+            return [{"errors": [{"message": "boom"}]}], None
+        return [], None
+    _rows_e, src_e = collect("2026-09-06", runner=err_runner_no_data,
+                             synthetic=True)
+    case("GraphQL errors без data — unavailable источника",
+         src_e["discussions"]["status"] == "unavailable")
+
+    def err_runner_partial(args):
+        return [{"data": {"repository": {"discussions": {
+                    "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    "nodes": []}}},
+                 "errors": [{"message": "поле недоступно"}]}], None
+    _rows_pa, src_pa = collect("2026-09-06", runner=err_runner_partial,
+                               synthetic=True)
+    case("частичный ответ GraphQL помечен, полнота не утверждается",
+         src_pa["discussions"]["status"] == "ok"
+         and src_pa["discussions"].get("partial") is True)
+
+    def err_runner_rate(args):
+        return [{"errors": [{"type": "RATE_LIMITED",
+                             "message": "limit"}]}], None
+    _rows_r, src_r = collect("2026-09-06", runner=err_runner_rate,
+                             synthetic=True)
+    case("RATE_LIMITED — unavailable, не пустой успех",
+         src_r["discussions"]["status"] == "unavailable"
+         and "ограничение API" in src_r["discussions"]["reason"])
+
+    # Дедупликация повторов по url.
+    dup_env = [{"data": {"repository": {"discussions": {
+        "pageInfo": {"hasNextPage": False, "endCursor": None},
+        "nodes": [
+            {"number": 98, "title": "дубль",
+             "createdAt": "2026-09-06T00:00:00Z",
+             "author": {"login": "reader-external"}, "body": "",
+             "comments": {"pageInfo": {"hasNextPage": False,
+                                       "endCursor": None},
+                          "nodes": [
+                              {"id": "D1",
+                               "createdAt": "2026-09-06T01:00:00Z",
+                               "author": {"login": "reader-external"},
+                               "url": "https://github.com/%s/discussions/"
+                                      "98#d1" % REPO, "body": "раз"},
+                              {"id": "D1b",
+                               "createdAt": "2026-09-06T01:00:00Z",
+                               "author": {"login": "reader-external"},
+                               "url": "https://github.com/%s/discussions/"
+                                      "98#d1" % REPO, "body": "два"}]}}
+        ]}}}}]
+
+    def dup_runner(args):
+        q = args[2] if len(args) > 2 else ""
+        if "replies(first:" in q:
+            return [{"data": {"node": {"replies": {"nodes": []}}}}], None
+        return dup_env, None
+    rows_d, _src_d = collect("2026-09-06", runner=dup_runner, synthetic=True)
+    d_urls = [r["url"] for r in rows_d if r["kind"] == "discussion-comment"]
+    case("повторы по url дедуплицируются",
+         len(d_urls) == len(set(d_urls)) and len(d_urls) == 1)
+
+    # Удалённый автор (author: null) не объявляется ботом.
+    null_env = [{"data": {"repository": {"discussions": {
+        "pageInfo": {"hasNextPage": False, "endCursor": None},
+        "nodes": [
+            {"number": 99, "title": "аноним",
+             "createdAt": "2026-09-06T00:00:00Z",
+             "author": None, "body": "",
+             "comments": {"nodes": []}}]}}}}]
+
+    def null_runner(args):
+        q = args[2] if len(args) > 2 else ""
+        if "replies(first:" in q:
+            return [{"data": {"node": {"replies": {"nodes": []}}}}], None
+        return null_env, None
+    rows_n, _src_n = collect("2026-09-06", runner=null_runner, synthetic=True)
+    anon = [r for r in rows_n if r["kind"] == "discussion"]
+    case("удалённый автор: не бот и не внешний без логина",
+         bool(anon) and anon[0]["author"] == ""
+         and anon[0]["bot"] is False and anon[0]["external"] is False)
 
     # Негатив: ошибка gh — UNAVAILABLE, а не пустой список.
     _rows2, src2 = collect("2026-09-06", runner=make({

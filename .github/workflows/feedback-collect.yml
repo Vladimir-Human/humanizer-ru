@@ -1,0 +1,47 @@
+name: Сбор внешней обратной связи
+
+# Регулярный сбор кандидатов внешнего опыта использования (issues,
+# комментарии, discussions с телами и пагинацией каждого уровня).
+# Публичных сообщений не создаёт: результат — артефакт прогона и снимок
+# покрытия источников. Зачёт события — ручное чтение исходного сообщения
+# сопровождением с записью в research/external-feedback/evidence.v1.json
+# (проверяется scripts/check_feedback_evidence.py).
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: feedback-collect-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    name: Сбор кандидатов и покрытие источников
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Сборщик внешней обратной связи
+        run: |
+          python3 scripts/collect_external_feedback.py \
+            --since 2026-09-06 --json > feedback-candidates.json
+          python3 scripts/collect_external_feedback.py \
+            --since 2026-09-06 --json | python3 -c "import json,sys; d=json.load(sys.stdin); print('источники:', json.dumps(d['sources'], ensure_ascii=False)); print('кандидатов:', len(d['candidates']), 'внешних:', d['external_candidates'])"
+
+      - name: Документ доказательств валиден
+        run: python3 scripts/check_feedback_evidence.py
+
+      - name: Артефакт снимка
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: feedback-candidates
+          path: feedback-candidates.json
+          if-no-files-found: error
