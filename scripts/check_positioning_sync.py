@@ -73,46 +73,63 @@ def check_formula_words(pos_text=None):
     return errs
 
 
-def check(pos_text=None):
+def check(pos_text=None, reader=None):
+    read_ = reader or read
     if pos_text is None:
-        pos_text = read("POSITIONING.md")
+        pos_text = read_("POSITIONING.md")
     short_ru, long_ru, short_en, long_en = formulas(pos_text)
     errs = []
     if not (short_ru and long_ru and short_en and long_en):
         return ["POSITIONING.md: не все формулы найдены"]
     if len(short_ru) > 60 or len(long_ru) > 160:
         errs.append("POSITIONING.md: длины формул RU вне лимитов")
-    py = read("src/humanizer_ru/positioning.py")
+    py = read_("src/humanizer_ru/positioning.py")
     if ('SHORT_RU = "%s"' % short_ru) not in py:
         errs.append("positioning.py: SHORT_RU расходится с POSITIONING.md")
     if ('LONG_RU = "%s"' % long_ru) not in py:
         errs.append("positioning.py: LONG_RU расходится с POSITIONING.md")
-    pj = read("pyproject.toml")
+    pj = read_("pyproject.toml")
     if ('description = "%s"' % short_ru) not in pj:
         errs.append("pyproject description не равен короткой формуле")
-    ru = read("README.md")
+    ru = read_("README.md")
     lines = ru.split("\n")
     if len(lines) < 2 or lines[1] != short_ru:
         errs.append("README.md: вторая строка не равна короткой формуле")
     if "Почему так называется" not in ru:
         errs.append("README.md: нет абзаца «Почему так называется»")
-    en = read("README.en.md")
+    en = read_("README.en.md")
     if short_en not in en:
         errs.append("README.en.md: нет короткой формулы EN")
-    demo = read("demo/index.html")
+    demo = read_("demo/index.html")
     if ("<title>%s</title>" % short_ru) not in demo:
         errs.append("demo title не равен короткой формуле")
     if long_ru not in demo:
         errs.append("demo meta/og description не содержит длинную формулу")
-    sj = json.loads(read("server.json"))
+    sj = json.loads(read_("server.json"))
     if long_ru not in str(sj.get("description", "")):
         errs.append("server.json description не содержит длинную формулу")
-    cff = read("CITATION.cff")
+    cff = read_("CITATION.cff")
     cff_flat = re.sub(r"\s+", " ", cff)
     if short_ru not in cff_flat:
         errs.append("CITATION.cff title не содержит короткую формулу")
     if long_ru not in cff_flat:
         errs.append("CITATION.cff abstract не содержит длинную формулу")
+    # Агентские точки входа: карточки плагинов и пакетов несут длинную
+    # формулу (RU или EN) — старое описание «очеловечивает естественно»
+    # в действующем носителе обнаруживается машинно.
+    for rel in (".codex-plugin/plugin.json",
+                ".claude-plugin/plugin.json",
+                ".claude-plugin/marketplace.json",
+                ".cursor-plugin/plugin.json",
+                "gemini-extension.json",
+                "dsh/package.json"):
+        t = read_(rel)
+        if long_ru not in t and long_en not in t:
+            errs.append("%s: нет длинной формулы позиционирования "
+                        "(RU или EN)" % rel)
+    oa = read_("agents/openai.yaml")
+    if short_ru not in oa:
+        errs.append("agents/openai.yaml: нет короткой формулы RU")
     for rel in ("scripts/scan_soft_signals.py", "scripts/polish.py",
                 "scripts/detect_conj.py", "src/humanizer_ru/facts_diff.py",
                 "src/humanizer_ru/edit_report.py"):
@@ -132,6 +149,17 @@ def selftest():
     pos = read("POSITIONING.md")
     bad = pos.replace("гигиена вставки из чата", "гигиена вставки из почты")
     checks.append(("расхождение формулы ловится", check(bad) != []))
+
+    def plugin_drift_reader(rel):
+        # Старое обещание в действующем носителе: карточка плагина без
+        # формулы позиционирования.
+        if rel == ".codex-plugin/plugin.json":
+            return '{"description": "Очеловечивает русский AI-текст"}'
+        return read(rel)
+
+    checks.append(("дрейф описания в карточке плагина ловится",
+                   any(".codex-plugin" in e
+                       for e in check(reader=plugin_drift_reader))))
     formula_bad = check_formula_words(
         "## Короткая формула (RU, <= 60 символов)\nСканер слоя regex\n\n"
         "## Короткая формула (EN)\nFinds machine-text traces\n")
