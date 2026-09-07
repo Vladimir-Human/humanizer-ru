@@ -142,6 +142,14 @@ def mtld(text, threshold=0.72):
 
 
 def facts_part(before, after):
+    """Сверка фактов пары (единый извлекатель — facts_diff, без дублей).
+
+    Поля: lost/changed/added (числа), unchanged — НЕТ потерь и изменений
+    (добавления в него не входят; семантика сохранена), identical —
+    однозначный итог полного сравнения: нет ни потерь, ни добавлений,
+    ни инверсий (аддитивное поле: агент, читающий «факты не тронуты»,
+    обязан смотреть identical, а не unchanged).
+    """
     try:
         from humanizer_ru import facts_diff as fd
     except Exception:
@@ -151,8 +159,10 @@ def facts_part(before, after):
     env = fd.diff(_strip_markers(before), _strip_markers(after))
     lost = len(env.get("lost", []) or [])
     changed = len(env.get("changed", []) or [])
-    return {"lost": lost, "changed": changed,
-            "unchanged": lost == 0 and changed == 0}
+    added = len(env.get("added", []) or [])
+    return {"lost": lost, "changed": changed, "added": added,
+            "unchanged": lost == 0 and changed == 0,
+            "identical": lost == 0 and changed == 0 and added == 0}
 
 
 def _scope_note(text):

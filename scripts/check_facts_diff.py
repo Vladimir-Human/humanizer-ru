@@ -90,8 +90,11 @@ def check():
         if proc.returncode != 0:
             errors.append("чистая пара дала код %d" % proc.returncode)
         env = json.loads(proc.stdout)
-        if sorted(env.keys()) != ["counts", "diff", "files", "schema", "tool"]:
+        if sorted(env.keys()) != ["counts", "diff", "files", "identical",
+                                  "schema", "tool"]:
             errors.append("конверт изменился: %s" % sorted(env.keys()))
+        if env.get("identical") is not True:
+            errors.append("идентичная пара: identical != true")
 
         write(a, "Бюджет уточняется; Иван Петров не подтвердил; "
                  "нельзя публиковать.")
