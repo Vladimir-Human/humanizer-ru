@@ -326,6 +326,15 @@ def _gates(quick, tmpdir):
           "demo/markers.js", "tests/fixtures/demo-parity/sample.txt",
           "tests/fixtures/demo-parity/expected.json",
           "tests/fixtures/demo-parity/vectors.json"], {0}),
+        # Перф-бюджет обработки ввода демо: линейность карты префиксов NFC
+        # (пороги заморожены 2026-09-07 до оптимизации); node недоступен —
+        # код 2 не входит в допустимые: бюджет не считается соблюдённым.
+        ("demo-perf: самопроверка",
+         [PY, "scripts/check_demo_perf.py", "--selftest"],
+         ["scripts/check_demo_perf.py"], {0}),
+        ("demo-perf: бюджет обработки ввода",
+         [PY, "scripts/check_demo_perf.py"],
+         ["scripts/check_demo_perf.py", "demo/engine.js"], {0}),
         ("polish-modes: самопроверка",
          [PY, "scripts/check_polish_modes.py", "--selftest"],
          ["scripts/check_polish_modes.py"], {0}),
