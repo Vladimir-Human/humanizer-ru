@@ -170,10 +170,12 @@ for a, b in PAIRS:
 try:
     from humanizer_ru import mcp_server as ms
     defs = ms.generate_tool_defs(ms.load_contract())
-    tools_rec = [{"name": d["name"],
-                  "props": sorted(d["inputSchema"]["properties"]),
-                  "required": sorted(d["inputSchema"]["required"])}
-                 for d in defs]
+    # Словарь по имени инструмента: аддитивный инструмент — новое поле
+    # словаря (допустимо), аддитивный параметр — новый элемент списка
+    # props (каждый OLD-элемент обязан иметь типизированную пару в NEW).
+    tools_rec = {d["name"]: {
+        "props": sorted(d["inputSchema"]["properties"]),
+        "required": sorted(d["inputSchema"]["required"])} for d in defs}
     out.append({"label": "mcp:tools", "rc": 0, "payload": tools_rec})
     state = {}
     r = ms.handle_message(json.dumps({
