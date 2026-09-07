@@ -21,11 +21,16 @@ Verifiable chat-paste hygiene for Russian text
 
 ```text
 pip install humanizer-ru
-humanizer-markers --scan primer.txt
-  primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок за неделю 12%: https://
-  primer.txt:1 [utm_chatgpt] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок за неделю 12%: https://
-  primer.txt:2 [zero_width] Данные подтверждены ассистентом​, подробности в чате.
+python -c "open('primer.txt','w',encoding='utf-8').write('Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.\n')"
+humanizer-markers --scan primer.txt; echo "rc=$?"
+  primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.
+  Найдено маркеров: 1.
+  rc=1
 ```
+
+rc=1 means "markers found" — the expected outcome on the sample carrying
+a paste trace, not an error; rc=0 — no traces, rc=2 — input unreadable
+(with --json the error envelope goes to stdout).
 
 ### MCP in one config
 
@@ -36,6 +41,20 @@ humanizer-markers --scan primer.txt
   }
 }
 ```
+
+## Matrix of verified capabilities and boundaries
+
+No leadership claims: there is no comparable external study in the niche
+as of this writing (see LEADERBOARD.md). Rows list what the cycle's gates
+and tests actually verify; boundaries list what a surface does not do.
+
+| Surface | Known-artifact check | Safe cleanup | Fact cross-check | Machine envelope | Boundary |
+|---|---|---|---|---|---|
+| CLI (`humanizer-markers`, `-polish`, `-facts`, `-report`) | yes, with coordinates and classes A/B | strip / --preserve-markup / --typographic modes with preservation invariants | humanizer-facts (fact categories) | --json, exit codes per contract | does not check semantics; no authorship verdicts |
+| MCP (`humanizer-mcp`, tool set of contract.v1.json) | same commands over stdio | same modes via humanizer_polish | humanizer_facts | JSON-RPC envelopes, isError per contract | text never leaves the process |
+| Pages demo | yes, source-range highlighting in the browser | no (check and report only) | no | report copied from a single result | offline in browser, no install |
+| GitHub Action | paste gate + text-path autofix (class A) | action_fix outside fenced/code | no | gate rc | fix never touches protected regions |
+| Text skill (SKILL.md) | agent procedures via references | stylistic edits only on explicit request | no | none (skill prose) | no guarantees of naturalness or meaning preservation |
 
 ## What it does NOT do
 
