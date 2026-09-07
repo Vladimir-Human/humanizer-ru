@@ -2,7 +2,7 @@
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
   "version": "3.34.0",
   "date": "2026-09-07",
-  "measured_commit": "cec29163432e9ed1acb8e56b7a321ccbd38e4ec5",
+  "measured_commit": "dd0ad1db9843c8e0f72e4c41e7b3a5659665dbf7",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
   "scope_files": 42,
   "methods": {
@@ -220,9 +220,9 @@
       "file": "llms.txt",
       "markers_a": 0,
       "markers_b": 0,
-      "scan_features": 0,
-      "scan_categories": 0,
-      "style_total": 44,
+      "scan_features": 1,
+      "scan_categories": 1,
+      "style_total": 51,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"

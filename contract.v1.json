@@ -258,6 +258,7 @@
       "script": "scripts/check_markers.py",
       "task": "артефакты копипасты и чат-интерфейсов: 40 маркеров классов A и B; находит и показывает; --remove снимает невидимые метки текстового слоя по классификации риска (safe автоматически, ambiguous только opt-in, dangerous никогда)",
       "when_not": "не детектор генерации: отсутствие маркеров не доказывает авторство человека; контейнерные файлы (PNG/DOCX/PDF/…) — scripts/filemarks (репозиторий); текстовый слой снятия входит в пакет (text_layer)",
+      "mcp_note": "Через MCP схема инструмента принимает только параметры text и marker_class: режим --remove (снятие невидимых меток) по MCP не вызывается — это консольная команда humanizer-markers --remove; явная очистка поддерживаемых артефактов вставки доступна инструментом humanizer_clean.",
       "removal_guards": [
         "снятие текстового пути не трогает защищённые области: fenced-блоки, YAML-frontmatter и инлайн-код сохраняются байт-в-байт (единый источник правил — scripts/protected_regions.py)",
         "не-URL маркеры не снимаются внутри URL-спанов: снятие совпадает с границей детектора (маскирование URL)",
@@ -393,6 +394,108 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "command": "humanizer-clean",
+      "script": "src/humanizer_ru/text_layer.py",
+      "task": "явная очистка поддерживаемых артефактов чат-вставки одним сценарием: проверка до (единый детектор), снятие невидимых меток (слой A) и видимых артефактов класса A (MARKUP) вне защищённых областей до неподвижной точки, проверка после, сверка фактов, перечень неизменённых защищённых областей и остаточных находок; стиль и смысл не переписываются",
+      "when_not": "не стилистическое переписывание и не проверка смысла: снимаются только зарегистрированные артефакты вставки; неподдерживаемые находки (класс B, вики-разметка, плейсхолдеры, метки вне текстового пути) остаются явным остатком (код 1) — операция не заявляет полную чистоту; контейнерные файлы (PNG/DOCX/PDF/…) — scripts/filemarks (репозиторий)",
+      "removal_guards": [
+        "защищённые области (fenced-блоки, YAML-frontmatter, инлайн-код, HTML-теги, ZWJ-кластеры) сохраняются неизменными (единый источник правил — scripts/protected_regions.py); нарушение инварианта — код 1, результат не записывается",
+        "не-URL маркеры не снимаются внутри URL-спанов; снятие utm/referrer-параметров согласно границе детектора — прочее содержимое URL не трогается",
+        "--in-place атомарен: копия .bak, запись во временный файл и os.replace; ошибка записи сохраняет исходный файл (код 2)",
+        "зазор схлопывается в точке съёма; кириллическая диакритика категории Mn сохраняется побайтно"
+      ],
+      "modes": [
+        "ФАЙЛ...",
+        "--json",
+        "--diff",
+        "--in-place (.bak)",
+        "--dry-run",
+        "--selftest",
+        "- (stdin)",
+        "--version",
+        "--contract"
+      ],
+      "output_schema": {
+        "type": "object",
+        "required": [
+          "tool",
+          "schema",
+          "files"
+        ],
+        "properties": {
+          "tool": {
+            "const": "humanizer-clean"
+          },
+          "schema": {
+            "const": 1
+          },
+          "error": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "file"
+              ],
+              "properties": {
+                "file": {
+                  "type": "string"
+                },
+                "changed": {
+                  "type": "boolean"
+                },
+                "removed_invisible": {
+                  "type": "integer"
+                },
+                "removed_markup": {
+                  "type": "integer"
+                },
+                "before_check": {
+                  "type": "object"
+                },
+                "after_check": {
+                  "type": "object"
+                },
+                "protected_untouched": {
+                  "type": "array"
+                },
+                "residual": {
+                  "type": "array"
+                },
+                "facts": {
+                  "type": "object"
+                },
+                "invariants": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "status": {
+                  "enum": [
+                    "out-of-scope"
+                  ]
+                },
+                "scope_note": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "очищенный текст (только в --json; единица — тот же текст, который печатает дефолтный режим)"
+                },
+                "error": {
+                  "type": "string"
                 }
               }
             }
@@ -569,6 +672,17 @@
             "items": {
               "type": "string"
             }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "out-of-scope"
+            ],
+            "description": "градуированный ответ на пустой/не-русский вход (graduated_response.out_of_scope); поле отсутствует, когда вход в области"
+          },
+          "scope_note": {
+            "type": "string",
+            "description": "пояснение статуса out-of-scope по стороне пары (до/после)"
           }
         }
       }
@@ -616,6 +730,17 @@
                 },
                 "after": {
                   "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "out-of-scope"
+                  ],
+                  "description": "градуированный ответ на пустой/не-русский вход (graduated_response.out_of_scope); поле отсутствует, когда вход в области"
+                },
+                "scope_note": {
+                  "type": "string",
+                  "description": "пояснение статуса out-of-scope по стороне пары (до/после)"
                 },
                 "tokens": {
                   "type": "object",

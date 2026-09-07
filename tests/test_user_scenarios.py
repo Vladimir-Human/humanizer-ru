@@ -112,7 +112,10 @@ class McpScenarioTests(unittest.TestCase):
                     {"jsonrpc": "2.0", "id": 5, "method": "tools/list"}):
             out.append(m.handle_message(json.dumps(msg), state, defs))
         self.assertIn("result", out[0])
-        self.assertEqual(len(out[1]["result"]["tools"]), 6)
+        # Состав tools/list равен контракту (единый источник); число не
+        # зашивается: аддитивный инструмент меняет контракт, а не тест.
+        self.assertEqual(len(out[1]["result"]["tools"]),
+                         len(m.load_contract()["tools"]))
         self.assertIn("structuredContent", out[2]["result"])
         self.assertEqual(out[3]["error"]["code"], -32602)
         self.assertIn("result", out[4])

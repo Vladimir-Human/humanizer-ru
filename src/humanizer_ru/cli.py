@@ -22,6 +22,7 @@ from . import check_markers
 from . import detect_conj
 from . import polish
 from . import scan_soft_signals
+from . import text_layer
 
 EPILOG = ("Репозиторий: https://github.com/Vladimir-Human/humanizer-ru\n"
           "Вход для агентов: llms.txt; машинный контракт: contract.v1.json")
@@ -327,3 +328,13 @@ def detect_main(argv: Optional[Sequence[str]] = None) -> int:
     if rc is not None:
         return rc
     return _guarded(args, "humanizer-detect", detect_conj.main)
+
+
+def clean_main(argv: Optional[Sequence[str]] = None) -> int:
+    """Точка входа humanizer-clean: явная очистка поддерживаемых
+    артефактов чат-вставки (проверка до, снятие, проверка после)."""
+    args = _resolved(argv)
+    rc = _common(args)
+    if rc is not None:
+        return rc
+    return _guarded(args, "humanizer-clean", text_layer.clean_main)
