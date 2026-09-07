@@ -175,5 +175,111 @@ class NumericSurfaceParityTests(unittest.TestCase):
             self.assertFalse(facts["unchanged"])
 
 
+class MixedScaleMergeTests(unittest.TestCase):
+    """«5 миллионов» = «пять миллионов»: обещанная нормализация цифр и
+    числительных словами восстановлена для смешанной записи разрядов."""
+
+    def test_digit_plus_scale_equals_words(self):
+        d = fd.diff("Цена 5 миллионов рублей.", "Цена пять миллионов рублей.")
+        self.assertEqual((d["lost"], d["added"], d["changed"]), ([], [], []))
+
+    def test_merge_canon_value(self):
+        ex = fd.extract("Цена 5 миллионов рублей.")
+        self.assertEqual(ex["numbers"][0]["value"], "5000000|₽")
+
+    def test_fractional_merge_exact(self):
+        d = fd.diff("Выручка 2.5 миллиона.", "Выручка 2500000.")
+        self.assertEqual((d["lost"], d["added"]), ([], []))
+
+    def test_different_values_not_collapsed(self):
+        d = fd.diff("Цена 5 миллионов рублей.", "Цена 6 миллионов рублей.")
+        self.assertTrue(d["lost"] and d["added"])
+        d2 = fd.diff("Цена 5 миллионов рублей.", "Цена 5 тысяч рублей.")
+        self.assertTrue(d2["lost"] and d2["added"])
+
+    def test_range_with_scale_is_explicit_boundary(self):
+        # Закрепление ГРАНИЦЫ, не обещания: компоненты диапазона
+        # извлекаются раздельно (эквивалентность диапазонов не заявлена).
+        vals = sorted(n["value"] for n in
+                      fd.extract("Диапазон 5-10 миллионов заявок.")["numbers"])
+        self.assertEqual(vals, sorted(["5", "10", "1000000"]))
+
+    def test_non_integer_product_not_merged(self):
+        # 0.1 дюжины = 1.2 — нецелое произведение: слияния нет,
+        # компоненты видны раздельно (явность вместо тихой нормализации).
+        vals = sorted(n["value"] for n in fd.extract("0.1 дюжины.")["numbers"])
+        self.assertEqual(vals, sorted(["0.1", "12"]))
+
+
+class IdenticalAndStrictTests(unittest.TestCase):
+    """identical — однозначный итог полного сравнения; --no-additions —
+    явный строгий режим; unchanged не переопределён."""
+
+    def test_envelope_identical_false_on_addition(self):
+        e = fd.envelope("Встреча состоялась.",
+                        "Встреча состоялась. Цена 100 рублей.")
+        self.assertFalse(e["identical"])
+        self.assertGreaterEqual(e["counts"]["added"], 1)
+        # Прежняя семантика: lost/changed пусты, added не влияет на rc.
+        self.assertEqual(e["counts"]["lost"], 0)
+        self.assertEqual(e["counts"]["changed"], 0)
+
+    def test_cli_no_additions_strict_rc(self):
+        with tempfile.TemporaryDirectory() as td:
+            b = os.path.join(td, "b.txt")
+            a = os.path.join(td, "a.txt")
+            with open(b, "w", encoding="utf-8", newline="") as fh:
+                fh.write("Встреча состоялась.\n")
+            with open(a, "w", encoding="utf-8", newline="") as fh:
+                fh.write("Встреча состоялась. Цена 100 рублей.\n")
+            p1 = run_cli(["diff", b, a, "--json"])
+            self.assertEqual(p1.returncode, 0)  # дефолт сохранён
+            doc1 = json.loads(p1.stdout)
+            self.assertFalse(doc1["identical"])
+            self.assertNotIn("strict_additions", doc1)
+            p2 = run_cli(["diff", b, a, "--json", "--no-additions"])
+            self.assertEqual(p2.returncode, 1)  # строгий режим
+            doc2 = json.loads(p2.stdout)
+            self.assertTrue(doc2["strict_additions"])
+            self.assertFalse(doc2["identical"])
+
+    def test_report_added_and_identical_fields(self):
+        with tempfile.TemporaryDirectory() as td:
+            b = os.path.join(td, "b.txt")
+            a = os.path.join(td, "a.txt")
+            with open(b, "w", encoding="utf-8", newline="") as fh:
+                fh.write("Встреча состоялась.\n")
+            with open(a, "w", encoding="utf-8", newline="") as fh:
+                fh.write("Встреча состоялась. Цена 100 рублей.\n")
+            p = subprocess.run([sys.executable, "-X", "utf8", "-m",
+                                "humanizer_ru.edit_report", b, a, "--json"],
+                               capture_output=True, text=True,
+                               encoding="utf-8", errors="replace")
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            facts = json.loads(p.stdout)["files"][0]["facts"]
+            # unchanged НЕ переопределён (добавления в него не входят);
+            # added и identical — аддитивные поля.
+            self.assertTrue(facts["unchanged"])
+            self.assertGreaterEqual(facts["added"], 1)
+            self.assertFalse(facts["identical"])
+
+    def test_permutation_boundary_pinned(self):
+        # Отрицательный пример границы метода: сохранённый набор фактов
+        # != сохранённые отношения (публикуется рядом с успешной сверкой).
+        d = fd.diff("Иван получил 100 рублей, Мария 200.",
+                    "Мария получила 100 рублей, Иван 200.")
+        self.assertEqual((d["lost"], d["added"], d["changed"]), ([], [], []))
+
+    def test_mcp_no_additions_schema_from_contract(self):
+        defs = m.generate_tool_defs(m.load_contract())
+        by = {d["name"]: d for d in defs}
+        self.assertIn("no_additions",
+                      by["humanizer_facts"]["inputSchema"]["properties"])
+        self.assertNotIn("no_additions",
+                         by["humanizer_report"]["inputSchema"]["properties"])
+        self.assertNotIn("no_additions",
+                         by["humanizer_scan"]["inputSchema"]["properties"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,12 @@
               десятичный разделитель нормализуются строково) плюс
               каноническая единица с границей слова, поэтому
               «15 %» и «пятнадцать процентов» — один факт, а
-              «5 минут» и «5 миндалин» — разные;
+              «5 минут» и «5 миндалин» — разные; смешанная запись
+              нормализуется так же: «5 миллионов» и «пять миллионов» —
+              один факт (точное целое произведение цифры и разряда;
+              диапазон «5-10 миллионов» — явная граница: компоненты
+              диапазона извлекаются раздельно, эквивалентность
+              диапазонов не обещана);
               знак числа («-», «+», U+2212) входит в значение, если не
               стоит сразу после цифры («10-20» — два беззнаковых);
               поле date_like=true помечает запись вида дд.мм или дд,мм
@@ -38,9 +43,17 @@
 
 diff(до, после) -> lost / added / changed с позициями; changed — инверсии
 отрицаний («не X» -> «X») и нормативных модальностей (нельзя -> можно,
-запрещено -> разрешено). Коды выхода CLI: 0 — нет lost/changed, 1 — есть,
-2 — вход не читается (конверт ошибки). Конверт: {tool, schema, files,
-counts, diff}.
+запрещено -> разрешено). Сравнение мультимножественное: сохранённый НАБОР
+фактов не равен сохранённым ОТНОШЕНИЯМ (перестановка сумм между двумя
+лицами может дать пустой diff — закреплённый отрицательный пример, см.
+when_not контракта). Конверт дополнительно несёт identical — однозначный
+итог полного сравнения (нет ни потерь, ни добавлений, ни инверсий;
+аддитивное поле). Коды выхода CLI: 0 — нет lost/changed (в режиме
+--no-additions также нет added), 1 — есть, 2 — вход не читается (конверт
+ошибки). --no-additions — явный строгий режим вызывающего агента:
+добавления фактов считаются нарушением; дефолтная семантика added (не
+влияет на код выхода) сохранена. Конверт: {tool, schema, files, counts,
+diff, identical}.
 
 Неполнота извлечения: сверка оперирует поддерживаемыми категориями
 фактов; успешная сверка НЕ является семантической гарантией сохранения
@@ -266,6 +279,51 @@ def _canon_number(value: str, unit_raw: str) -> str:
     return num + ("|" + unit if unit else "")
 
 
+# Смешанная запись «5 миллионов»: цифра + разрядное слово — один факт
+# с каноническим точным произведением (та же нормализация, что обещана
+# для «15 %» и «пятнадцать процентов»: цифры и числительные словами —
+# одна категория с точным десятичным значением). Слияние применяется
+# только когда произведение целое и точное и число не входит в диапазон:
+# «5-10 миллионов» остаётся явной границей (компоненты диапазона
+# извлекаются раздельно, как и прежде — эквивалентность диапазонов
+# не обещана и не конструируется).
+_SCALES_ALT = "|".join(sorted((re.escape(w) for w in _SCALES),
+                              key=len, reverse=True))
+_SCALE_AFTER_RX = re.compile(
+    r"[ \u00a0\u202f]+(%s)(?![0-9A-Za-z\u0400-\u04ff])" % _SCALES_ALT,
+    re.I)
+_RANGE_BEFORE_RX = re.compile(r"\d[ \u00a0\u202f]*[\-\u2013\u2014]$")
+_RANGE_AFTER_RX = re.compile(r"[\-\u2013\u2014][ \u00a0\u202f]*\d")
+
+
+def _merge_scale(num_str: str, scale: int) -> Optional[str]:
+    """Цифра × разряд: точное целое произведение строкой (без float);
+    None, когда произведение нецелое (слияние только явное)."""
+    s = re.sub("[%s]" % _SEP, "", num_str).replace(",", ".")
+    sign = ""
+    if s[:1] in ("+", "-", "\u2212"):
+        sign = "-" if s[:1] in ("-", "\u2212") else ""
+        s = s[1:]
+    if "." in s:
+        int_p, frac = s.split(".", 1)
+    else:
+        int_p, frac = s, ""
+    int_p = int_p or "0"
+    try:
+        iv = int(int_p)
+        fv = int(frac) if frac else 0
+    except ValueError:
+        return None
+    denom = 10 ** len(frac)
+    total = (iv * denom + fv) * scale
+    if total % denom != 0:
+        return None
+    value = total // denom
+    if sign and value != 0:
+        return "-" + str(value)
+    return str(value)
+
+
 def extract(text: str) -> Dict[str, List[dict]]:
     """Факты текста: категория -> список {value, raw, pos}."""
     out: Dict[str, List[dict]] = {k: [] for k in (
@@ -283,6 +341,25 @@ def extract(text: str) -> Dict[str, List[dict]]:
     num_spans = []
     for m in NUM_RX.finditer(text):
         if _inside_dates(m.start(), m.end()):
+            continue
+        # Смешанная запись: цифра + разрядное слово («5 миллионов») —
+        # один факт, если произведение целое и число не в диапазоне.
+        merged = None
+        scale_m = _SCALE_AFTER_RX.match(text, m.end())
+        if scale_m \
+                and not _RANGE_BEFORE_RX.search(text[:m.start()]) \
+                and not _RANGE_AFTER_RX.match(text, m.end()):
+            merged = _merge_scale(m.group(),
+                                  _SCALES[scale_m.group(1).lower()])
+        if merged is not None:
+            end = scale_m.end()
+            rest = text[end:end + 14]
+            unit = UNIT_RX.match(rest)
+            value = _canon_number(merged, unit.group() if unit else "")
+            out["numbers"].append({"value": value,
+                                   "raw": text[m.start():end],
+                                   "pos": m.start()})
+            num_spans.append((m.start(), end))
             continue
         rest = text[m.end():m.end() + 14]
         unit = UNIT_RX.match(rest)
@@ -457,7 +534,8 @@ def envelope(before: str, after: str, files=None) -> dict:
             "files": list(files or ["<before>", "<after>"]),
             "counts": {"lost": len(d["lost"]), "added": len(d["added"]),
                        "changed": len(d["changed"])},
-            "diff": d}
+            "diff": d,
+            "identical": not (d["lost"] or d["added"] or d["changed"])}
 
 
 # ---------------------------------------------------------------- CLI
@@ -489,6 +567,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     p_diff.add_argument("--protect", metavar="TERMS",
                         help="файл терминов/имён (по строке), потеря "
                              "которых = ошибка (category protected)")
+    p_diff.add_argument("--no-additions", action="store_true",
+                        help="строгий режим вызывающего агента: добавления "
+                             "фактов считаются нарушением (код 1) даже без "
+                             "потерь и изменений; по умолчанию added не "
+                             "влияет на код выхода")
     parser.add_argument("--selftest", action="store_true")
     parser.description = SHORT_RU + "\n\n" + (parser.description or "")
     try:
@@ -543,7 +626,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
            "files": [args.before, args.after],
            "counts": {"lost": len(d["lost"]), "added": len(d["added"]),
                       "changed": len(d["changed"])},
-           "diff": d}
+           "diff": d,
+           # Однозначный итог ПОЛНОГО сравнения (аддитивное поле):
+           # нет ни потерь, ни добавлений, ни инверсий.
+           "identical": not (d["lost"] or d["added"] or d["changed"])}
+    if args.no_additions:
+        env["strict_additions"] = True
     # Градуированный ответ (контракт, graduated_response.out_of_scope):
     # пустой и не-русский вход получают честный статус; поля аддитивны —
     # counts/diff/files сохраняют прежнюю семантику.
@@ -570,8 +658,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         kind, item["category"], item["value"],
                         item.get("pos_before", item.get("pos_after"))))
         if not d["lost"] and not d["changed"]:
-            print("потерь и инверсий фактов нет")
-    return 0 if not d["lost"] and not d["changed"] else 1
+            if d["added"] and args.no_additions:
+                print("добавления фактов: %d — нарушение в строгом режиме "
+                      "(--no-additions)" % len(d["added"]))
+            else:
+                print("потерь и инверсий фактов нет")
+    if d["lost"] or d["changed"]:
+        return 1
+    if args.no_additions and d["added"]:
+        return 1
+    return 0
 
 
 # ---------------------------------------------------------------- selftest
@@ -656,6 +752,38 @@ def selftest() -> int:
          not d["lost"] and not d["added"])
     case("диапазон 10-20 — два беззнаковых числа",
          len(extract("Диапазон страниц 10-20.")["numbers"]) == 2)
+    d = diff("Цена 5 миллионов рублей.", "Цена пять миллионов рублей.")
+    case("смешанный разряд: «5 миллионов» = «пять миллионов» (обещанная "
+         "нормализация цифр и числительных словами)",
+         not d["lost"] and not d["added"] and not d["changed"])
+    d = diff("Цена 5 миллионов рублей.", "Цена 6 миллионов рублей.")
+    case("разные числа с разрядом не схлопываются (негатив)",
+         any(i["category"] == "numbers" for i in d["lost"])
+         and any(i["category"] == "numbers" for i in d["added"]))
+    d = diff("Цена 5 миллионов рублей.", "Цена 5 тысяч рублей.")
+    case("разные разряды не схлопываются (негатив)",
+         any(i["category"] == "numbers" for i in d["lost"])
+         and any(i["category"] == "numbers" for i in d["added"]))
+    d = diff("Выручка 2.5 миллиона.", "Выручка 2500000.")
+    case("дробь с разрядом: точное целое произведение без float",
+         not d["lost"] and not d["added"])
+    vals = sorted(n["value"]
+                  for n in extract("Диапазон 5-10 миллионов заявок.")
+                  ["numbers"])
+    case("диапазон с разрядом — явная граница: компоненты раздельно "
+         "(5, 10 и слово-разряд), слияния нет",
+         vals == sorted(["5", "10", "1000000"]))
+    d = diff("Иван получил 100 рублей, Мария 200.",
+             "Мария получила 100 рублей, Иван 200.")
+    case("перестановка отношений при том же наборе фактов — пустой diff "
+         "(документированная граница: набор фактов != отношения)",
+         not d["lost"] and not d["added"] and not d["changed"])
+    e = envelope("Встреча состоялась.",
+                 "Встреча состоялась. Цена 100 рублей.")
+    case("identical=false при добавлении; added видно в counts",
+         e["identical"] is False and e["counts"]["added"] >= 1)
+    e2 = envelope("Встреча состоялась.", "Встреча состоялась.")
+    case("identical=true на идентичной паре", e2["identical"] is True)
     big = "9" * 400
     d = diff("Значение %s единиц." % big, "Значение %s единиц." % big)
     case("400 девяток: точное равенство, без OverflowError",

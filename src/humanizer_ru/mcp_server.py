@@ -137,6 +137,19 @@ def generate_tool_defs(contract) -> list:
                 "text_after": dict(TEXT_PARAM),
             }
             required = ["text_before", "text_after"]
+            # Строгий режим запрета добавлений — из modes контракта
+            # (схемы генерируются из контракта, не hardcoded).
+            if cmd == "humanizer-facts" and any(
+                    "--no-additions" in m for m in t.get("modes", [])):
+                props["no_additions"] = {
+                    "type": "boolean",
+                    "description": "Строгий режим: добавления фактов "
+                                   "считаются нарушением (код 1 / счётчик "
+                                   "added>0 в отчёте) даже без потерь и "
+                                   "изменений. По умолчанию добавления "
+                                   "видны в counts.added, но на результат "
+                                   "не влияют.",
+                }
         else:
             props = {"text": dict(TEXT_PARAM)}
             required = ["text"]
@@ -222,7 +235,10 @@ def _tool_argv(tool_name, arguments, text_path):
     argv = [sys.executable, "-X", "utf8", "-m", mod]
     if tool_name == "humanizer_facts":
         # два входа: файлы кладёт call_tool, порядок before, after
-        return argv + ["diff", text_path, text_path + ".after", "--json"]
+        argv = argv + ["diff", text_path, text_path + ".after", "--json"]
+        if arguments.get("no_additions"):
+            argv.append("--no-additions")
+        return argv
     if tool_name == "humanizer_report":
         return argv + [text_path, text_path + ".after", "--json"]
     if tool_name == "humanizer_markers":
