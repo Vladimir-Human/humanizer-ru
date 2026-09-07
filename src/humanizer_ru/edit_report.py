@@ -83,18 +83,29 @@ def compute(before, after):
 def _strip_markers(text):
     """Payload маркеров копипасты не является фактом автора (check_examples
     делает то же через _loss_text): снимаем сигнатуры до сверки фактов."""
-    import os
-    here = os.path.dirname(os.path.abspath(__file__))
-    for base in (os.path.dirname(os.path.dirname(here)), os.path.dirname(here)):
-        sp = os.path.join(base, "scripts")
-        if os.path.isdir(sp) and sp not in sys.path:
-            sys.path.insert(0, sp)
+    cm = None
     try:
-        import check_markers as cm
-        for case in cm.CASES.values():
-            text = re.sub(case[0], " ", text)
+        # Пакетный контекст (в том числе установленная поставка: sdist/wheel
+        # не несут каталог scripts/, скриптовый путь там не работает).
+        from humanizer_ru import check_markers as _cm_pkg
+        cm = _cm_pkg
     except Exception:
-        pass
+        import os
+        here = os.path.dirname(os.path.abspath(__file__))
+        for base in (os.path.dirname(os.path.dirname(here)),
+                     os.path.dirname(here)):
+            sp = os.path.join(base, "scripts")
+            if os.path.isdir(sp) and sp not in sys.path:
+                sys.path.insert(0, sp)
+        try:
+            import check_markers as _cm_scripts
+            cm = _cm_scripts
+        except Exception:
+            cm = None
+    if cm is None:
+        return text
+    for case in cm.CASES.values():
+        text = re.sub(case[0], " ", text)
     return text
 
 
