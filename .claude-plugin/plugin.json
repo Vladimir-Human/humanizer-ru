@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "humanizer-ru",
   "displayName": "Humanizer RU",
-  "description": "Читает русскоязычный текст, находит следы машинной генерации и по явной просьбе переписывает его естественным языком. | Reads Russian text, finds traces of machine generation and, on explicit request, rewrites it to sound natural.",
+  "description": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом. | Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix.",
   "version": "3.34.0",
   "author": "Vladimir-Human",
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
@@ -17,5 +17,7 @@
     "русский",
     "очеловечивание"
   ],
-  "skills": ["SKILL.md"]
+  "skills": [
+    "SKILL.md"
+  ]
 }
