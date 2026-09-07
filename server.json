@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Vladimir-Human/humanizer-ru",
   "title": "humanizer-ru",
-  "description": "Проверяемая гигиена вставки из чата для русского текста: детерминированно, с реестром фактов, офлайн, каждый флаг с причиной и советом.",
+  "description": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом.",
   "version": "3.33.0",
   "websiteUrl": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": {
