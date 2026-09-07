@@ -10,6 +10,7 @@ on:
       - 'demo/**'
       - 'llms.txt'
       - 'contract.v1.json'
+      - 'identity.v1.json'
       - 'ERRATA.md'
       - 'README.md'
       - 'README.en.md'
@@ -89,3 +90,14 @@ jobs:
         # После деплоя: копии и обе конвенции llms.txt отдают 200,
         # ссылки llms.txt разрешаются.
         run: python3 scripts/check_pages_router.py --live-pages
+      - name: Браузерная DOM-проверка опубликованного демо
+        # Обязательная приёмка Pages: подсветка режет исходный текст точно
+        # (DOM mark.textContent и срезы), состояния и работа без сети
+        # проверены реальным браузером по опубликованному URL.
+        # Браузерная среда — инфраструктура CI, не runtime продукта.
+        # UNAVAILABLE (код 2, playwright не поднялся) роняет шаг так же,
+        # как FAIL: непроверенное состояние не публикуется как зелёное.
+        run: |
+          python3 -m pip install --user playwright
+          python3 -m playwright install --with-deps chromium
+          python3 scripts/check_demo_browser.py --url "${{ steps.deployment.outputs.page_url }}index.html"

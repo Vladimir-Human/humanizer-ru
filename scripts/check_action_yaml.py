@@ -54,16 +54,42 @@ def _parse_yaml(path):
         return ["%s: YAML-ошибка: %s" % (base, str(exc)[:200])]
 
 
+def _struct_line(line):
+    """Похожа ли строка на структуру YAML (ключ mapping, элемент списка,
+    комментарий), а не на текст literal-блока."""
+    s = line.lstrip()
+    if s.startswith("#"):
+        return True
+    if re.match(r"-(\s|$)", s):
+        return True
+    return bool(re.match(r"(?:[A-Za-z0-9_.\-]+|\"[^\"]*\"|'[^']*'):(\s|$)", s))
+
+
+_KEY_RX = re.compile(r"(\s*)(?:-\s+)?([A-Za-z0-9_.\-]+):(\s|$)")
+
+
 def _check_literal_indent(path, base=None):
-    """Fallback без PyYAML: блок `run: |` — все непустые строки после
-    него обязаны иметь отступ не меньше отступа первой строки блока."""
+    """Ограниченный stdlib-анализ (НЕ полная проверка YAML) блоков `run: |`.
+
+    Содержимое literal-блока — строки глубже колонки ключа `run`; блок
+    заканчивает первая строка на уровне ключа или выше, если она похожа
+    на структуру YAML (ключ, элемент списка, комментарий). Строка на
+    уровне ключа или выше БЕЗ структуры — классическая поломка (heredoc
+    в колонке 1 обрывает блок) — ошибка. Строки внутри блока с отступом
+    меньше первой строки содержимого (но глубже ключа) — ошибка отступа.
+    Корректная последовательность «run: | -> вложенные строки -> соседний
+    ключ -> следующий шаг» не отвергается: прежняя реализация читала весь
+    остаток файла как содержимое блока и давала ложный отказ.
+    """
     base = base or os.path.basename(path)
     with open(path, encoding="utf-8") as fh:
         lines = fh.readlines()
     errs = []
     i = 0
     while i < len(lines):
-        if re.match(r"\s*(?:-\s+)?run:\s*\|", lines[i]):
+        m = re.match(r"(\s*)(?:-\s+)?run:\s*\|", lines[i])
+        if m:
+            key_col = lines[i].index("run:")
             block_indent = None
             i += 1
             while i < len(lines):
@@ -72,11 +98,20 @@ def _check_literal_indent(path, base=None):
                     i += 1
                     continue
                 indent = len(stripped) - len(stripped.lstrip())
+                if indent <= key_col:
+                    if _struct_line(stripped):
+                        break  # конец блока: следующая структура YAML
+                    errs.append("%s:%d: строка после блока run: | в колонке "
+                                "%d — не содержимое блока (нужно > %d) и не "
+                                "структура YAML (literal-блок оборван)"
+                                % (base, i + 1, indent, key_col))
+                    i += 1
+                    continue
                 if block_indent is None:
                     block_indent = indent
-                elif indent < block_indent and stripped.strip():
-                    errs.append("%s:%d: строка блока run в колонке %d"
-                                " (нужно >= %d)"
+                elif indent < block_indent:
+                    errs.append("%s:%d: строка блока run в колонке %d "
+                                "(нужно >= %d)"
                                 % (base, i + 1, indent, block_indent))
                 i += 1
             continue
@@ -85,32 +120,36 @@ def _check_literal_indent(path, base=None):
 
 
 def _check_plain_scalars(path, base=None):
-    """Fallback без PyYAML: «: » (или конечное «:») внутри незакавыченного
-    значения mapping-строки — YAML-ошибка «mapping values are not allowed
-    here». Так ломается, например, `- name: Заголовок: с двоеточием` без
-    кавычек. Строки внутри literal-блоков (run: |) пропускаются."""
+    """Ограниченный stdlib-анализ (НЕ полная проверка YAML): «: » (или
+    конечное «:») внутри незакавыченного значения mapping-строки —
+    YAML-ошибка «mapping values are not allowed here». Так ломается,
+    например, `- name: Заголовок: с двоеточием` без кавычек. Строки
+    внутри literal-блоков (run: |) пропускаются: блок заканчивается
+    строкой на уровне ключа или выше — соседний ключ после блока
+    проверяется (прежде весь хвост файла считался содержимым блока)."""
     base = base or os.path.basename(path)
     with open(path, encoding="utf-8") as fh:
         lines = fh.readlines()
     errs = []
     in_block = False
-    block_indent = 0
+    block_key_col = 0
     for lineno, raw in enumerate(lines, 1):
         line = raw.rstrip("\n")
         if not line.strip():
             continue
         indent = len(line) - len(line.lstrip())
         if in_block:
-            if indent >= block_indent:
+            if indent > block_key_col:
                 continue
             in_block = False
-        m = re.match(r"\s*(?:-\s+)?[A-Za-z0-9_.\-]+:(\s|$)", line)
+        m = _KEY_RX.match(line)
         if not m:
             continue
         value = line[m.end():].strip()
+        key_col = line.index(m.group(2) + ":")
         if value.startswith("|") or value.startswith(">"):
             in_block = True
-            block_indent = indent + 1
+            block_key_col = key_col
             continue
         if not value or value.startswith("#"):
             continue
@@ -146,13 +185,21 @@ def run():
         rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
         for e in _parse_yaml(path):
             failures.append("[FAIL] %s: %s" % (rel, e))
+    try:
+        import yaml
+        branch = "PyYAML %s — полный парсинг" % getattr(yaml, "__version__",
+                                                        "?")
+    except ImportError:
+        branch = ("ограниченный stdlib-анализ (literal-блоки run: | и "
+                  "незакавыченные «: »-скаляры) — НЕ полная проверка YAML; "
+                  "полная — с установленным PyYAML")
     if failures:
         for f in failures:
             print(f)
-        print("ИТОГ: ошибок %d — YAML экшена/workflows не парсится"
-              % len(failures))
+        print("ИТОГ: ошибок %d — YAML экшена/workflows не парсится (%s)"
+              % (len(failures), branch))
         return 1
-    print("OK action.yml и workflows (%d файлов): YAML валиден" % len(targets))
+    print("OK action.yml и workflows (%d файлов): %s" % (len(targets), branch))
     return 0
 
 
@@ -219,6 +266,60 @@ def _selftest():
          not _check_plain_scalars(p))
     case("block-скаляр и комментарии проходят (parse)", not _parse_yaml(p))
     os.unlink(p)
+
+    # Регрессия ложного отказа: корректная последовательность «run: |,
+    # соседний ключ того же шага, следующий шаг» прежде отвергалась —
+    # stdlib-ветвь читала весь остаток файла как содержимое блока.
+    p = tmp("jobs:\n  j:\n    steps:\n"
+            "      - name: A\n"
+            "        run: |\n"
+            "          echo a\n"
+            "        shell: bash\n"
+            "      - run: |\n"
+            "          echo b\n")
+    case("корректная последовательность шагов проходит (fallback)",
+         not _check_literal_indent(p) and not _check_plain_scalars(p))
+    case("корректная последовательность шагов проходит (parse)",
+         not _parse_yaml(p))
+    os.unlink(p)
+
+    # heredoc в колонке 1 ловится и ограниченным анализом, не только
+    # PyYAML: строка без структуры на уровне ключа — обрыв literal-блока.
+    p = tmp("name: x\nruns:\n  using: composite\n  steps:\n"
+            "    - run: |\n"
+            "        set -e\n"
+            "        python3 - x <<'PY'\n"
+            "import os\n"
+            "PY\n")
+    case("heredoc в колонке 1 пойман (fallback)",
+         bool(_check_literal_indent(p)))
+    os.unlink(p)
+
+    # Соседний ключ после literal-блока проверяется на «: » (прежде
+    # утекал: хвост файла считался содержимым блока).
+    p = tmp("steps:\n"
+            "  - run: |\n"
+            "      echo a\n"
+            "    name: Плохое: имя\n")
+    case("соседний ключ после блока проверен на «: » (fallback)",
+         bool(_check_plain_scalars(p)))
+    case("соседний ключ после блока с «: » пойман (parse)",
+         bool(_parse_yaml(p)))
+    os.unlink(p)
+
+    # Обе ветви на файлах репозитория: одинаковый вердикт (чисто).
+    targets_all = [ACTION] + _targets()
+    case("файлы репозитория чисты ограниченным stdlib-анализом",
+         all(not (_check_literal_indent(t) + _check_plain_scalars(t))
+             for t in targets_all))
+    try:
+        import yaml  # noqa: F401
+        case("файлы репозитория чисты PyYAML (согласно со stdlib-анализом)",
+             all(not _parse_yaml(t) for t in targets_all))
+    except ImportError:
+        print("ПРИМЕЧАНИЕ: PyYAML не установлен — сравнение с dev-парсером "
+              "не выполнено; ограниченный stdlib-анализ не является полной "
+              "проверкой YAML")
 
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
