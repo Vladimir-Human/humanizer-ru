@@ -91,6 +91,10 @@
   const onlyA = document.getElementById("onlyA");
   const showAll = document.getElementById("showAll");
   const runBtn = document.getElementById("run");
+  // Единый объект результата: список, подсветка, строка итога и отчёт
+  // строятся из одного вычисления; копирование до завершения debounce
+  // пересчитывает результат, а не читает устаревший DOM.
+  let lastResult = null;
 
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
   const rules = ((DATA && DATA.rules) || []).map(r => ({
@@ -122,9 +126,14 @@
 
   function mergedRanges(matches) {
     if (!matches.length) return [];
+    // Прямые и теневые находки приходят в порядке строк и проходов, а не
+    // по возрастанию start: перед слиянием интервалы сортируются, иначе
+    // теневая находка раньше прямой терялась или склеивалась неверно.
+    const sorted = matches.slice().sort((a, b) =>
+      (a.start - b.start) || (a.end - b.end));
     const ranges = [];
     let cur = null;
-    for (const m of matches) {
+    for (const m of sorted) {
       if (!cur || m.start > cur.end) {
         if (cur) ranges.push(cur);
         cur = { start: m.start, end: m.end, cls: m.cls };
@@ -217,15 +226,17 @@
       renderPreview(text, []);
       return;
     }
+    const matches = text.trim() ? findMatches(text) : [];
     state.textContent = text.trim()
-      ? "состояние: проверено, находок " + findMatches(text).length
+      ? "состояние: проверено, находок " + matches.length
       : "состояние: готово к проверке";
-    const matches = findMatches(text);
     renderList(matches);
     renderPreview(text, matches);
     if (location.hash.length > 1 && text.trim()) {
       summary.textContent += " Текст загружен из ссылки — проверьте его происхождение.";
     }
+    lastResult = { text: text, matches: matches,
+                   verdict: summary.textContent };
   }
 
   onlyA.addEventListener("change", run);
@@ -252,9 +263,20 @@
   });
   document.getElementById("copyReport").addEventListener("click", () => {
     const text = textarea.value;
-    const matches = findMatches(text);
+    // Отчёт всегда согласован с одним результатом: если текст изменился
+    // после последнего прогона (debounce ещё не сработал), результат
+    // пересчитывается здесь же; устаревшая строка итога из DOM не берётся.
+    let res = (lastResult && lastResult.text === text) ? lastResult : null;
+    if (!res) {
+      const matches = engineReady() && text.trim() ? findMatches(text) : [];
+      const verdict = !engineReady()
+        ? "Движок или правила не загрузились: проверка не выполнялась."
+        : (text.trim() ? verdictLine(matches.length, text) : "");
+      res = { text: text, matches: matches, verdict: verdict };
+    }
+    const matches = res.matches;
     const lines = matches.map(m => m.cls + " " + m.rule + ": " + m.text.slice(0, 120));
-    const report = summary.textContent + "\n" + lines.join("\n") +
+    const report = res.verdict + "\n" + lines.join("\n") +
       "\n\nJSON: " + JSON.stringify({ tool: "humanizer-demo", schema: 1,
         matches: matches.map(m => ({ rule: m.rule, class: m.cls,
           start: m.start, end: m.end })) });
