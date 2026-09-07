@@ -380,6 +380,12 @@ def _gates(quick, tmpdir):
          ["eval/run_triggers.py"], {0}),
         ("compile: scripts", [PY, "-m", "compileall", "-q", "scripts"], [], {0}),
         ("release: самопроверка", [PY, "scripts/check_release.py", "--selftest"], [], {0}),
+        # Раннер установленных сценариев: skip обязательного
+        # сценария — отказ приёмки, а не успех (негативы — в selftest).
+        ("acceptance: раннер установленных сценариев",
+         [PY, "scripts/run_journeys_strict.py", "--selftest"],
+         ["scripts/run_journeys_strict.py",
+          "tests/test_installed_user_journeys.py"], {0}),
         ("filemarks: самопроверка", [PY, "scripts/filemarks/filemarks.py",
                                           "--selftest"], [], {0}),
         ("rhythm: самопроверка", [PY, "scripts/filemarks/rhythm.py", "--selftest"], [], {0}),
