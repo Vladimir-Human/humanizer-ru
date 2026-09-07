@@ -40,6 +40,18 @@ def run(py, args, cwd=None, input_text=None):
                           errors="replace")
 
 
+def console_exe(name):
+    """Консольная точка входа установленной поставки (рядом с её python)."""
+    exe = name + (".exe" if os.name == "nt" else "")
+    return os.path.join(os.path.dirname(PY), exe)
+
+
+def installed_contract():
+    """Контракт из данных УСТАНОВЛЕННОЙ поставки (не из дерева репо)."""
+    proc = run(console_exe("humanizer-scan"), ["--contract"])
+    return json.loads(proc.stdout)
+
+
 def write_tmp(td, name, text):
     path = os.path.join(td, name)
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
@@ -50,7 +62,7 @@ def write_tmp(td, name, text):
 @SKIP_INSTALLED
 class EditorJourneyTests(unittest.TestCase):
     """Редактор/преподаватель: находка, объяснение, безопасный отказ,
-    сохранность защищённых областей."""
+    сохранность защищённых областей, явная очистка."""
 
     def test_finding_and_explanation(self):
         with tempfile.TemporaryDirectory() as td:
@@ -74,6 +86,22 @@ class EditorJourneyTests(unittest.TestCase):
                 after = fh.read()
             self.assertIn("рассуждение внутри кода", after)
             self.assertIn("```text", after)
+
+    def test_explicit_cleanup_found_cleaned_verified(self):
+        # Основной сценарий продукта на установленной поставке:
+        # нашёл -> очистил -> проверил (консольный humanizer-clean).
+        contract = installed_contract()
+        cmds = {t["command"] for t in contract["tools"]}
+        self.assertIn("humanizer-clean", cmds,
+                      "явная очистка отсутствует в установленном контракте")
+        with tempfile.TemporaryDirectory() as td:
+            p = write_tmp(td, "art.txt", MARKER_LINE)
+            proc = run(console_exe("humanizer-clean"), ["--json", "--", p])
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            f0 = json.loads(proc.stdout)["files"][0]
+            self.assertGreaterEqual(f0["before_check"]["count"], 1)
+            self.assertEqual(f0["after_check"]["count"], 0)
+            self.assertNotIn("contentReference", f0["text"])
 
 
 @SKIP_INSTALLED
@@ -101,6 +129,32 @@ class DeveloperJourneyTests(unittest.TestCase):
         self.assertEqual(env["tool"], "humanizer-markers")
         self.assertIn("error", env)
 
+    def test_console_entry_points_exist_and_answer(self):
+        # Реальные console entry points установленной поставки, не только
+        # python -m: состав — из контракта установленных данных.
+        contract = installed_contract()
+        for t in contract["tools"]:
+            exe = console_exe(t["command"])
+            self.assertTrue(os.path.isfile(exe),
+                            "нет точки входа %s" % t["command"])
+        for name in ("humanizer-scan", "humanizer-markers",
+                     "humanizer-polish", "humanizer-detect"):
+            proc = run(console_exe(name), ["--version"])
+            self.assertEqual(proc.returncode, 0, name)
+            self.assertRegex(proc.stdout.strip(), r"^\d+\.\d+\.\d+$")
+
+    def test_console_flag_like_filename_after_ddash(self):
+        # Имя файла, похожее на флаг, — путь (регрессия машинного ввода
+        # на установленной поставке, граница «--»).
+        with tempfile.TemporaryDirectory() as td:
+            write_tmp(td, "--class", MARKER_LINE)
+            proc = run(console_exe("humanizer-markers"),
+                       ["--scan", "--json", "--", "--class"], cwd=td)
+            self.assertEqual(proc.returncode, 1)
+            env = json.loads(proc.stdout)
+            self.assertEqual(env["files"][0]["file"], "--class")
+            self.assertGreaterEqual(env["files"][0]["count"], 1)
+
 
 @SKIP_INSTALLED
 class AssistantJourneyTests(unittest.TestCase):
@@ -112,6 +166,9 @@ class AssistantJourneyTests(unittest.TestCase):
         return run(PY, ["-m", "humanizer_ru.mcp_server"], input_text=input_text)
 
     def test_mcp_flow(self):
+        contract = installed_contract()
+        expected_tools = sorted(t["command"].replace("-", "_")
+                                for t in contract["tools"])
         requests = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize",
              "params": {"protocolVersion": "2025-06-18",
@@ -129,6 +186,12 @@ class AssistantJourneyTests(unittest.TestCase):
              "params": {"name": "humanizer_markers",
                         "arguments": {"text": CLEAN_LINE}}},
         ]
+        if "humanizer_clean" in expected_tools:
+            # Явная очистка через MCP: находка -> очищенный текст -> отчёт.
+            requests.append(
+                {"jsonrpc": "2.0", "id": 6, "method": "tools/call",
+                 "params": {"name": "humanizer_clean",
+                            "arguments": {"text": MARKER_LINE}}})
         proc = self._session(requests)
         lines = [ln for ln in proc.stdout.split("\n") if ln.strip()]
         by_id = {}
@@ -137,11 +200,22 @@ class AssistantJourneyTests(unittest.TestCase):
             if "id" in msg:
                 by_id[msg["id"]] = msg
         tools = by_id[2]["result"]["tools"]
-        self.assertEqual(len(tools), 6)
+        # Состав инструментов — из установленного контракта (единый
+        # источник), а не зашитое число: аддитивный инструмент не ломает
+        # сценарий, расхождение с контрактом — ломает.
+        self.assertEqual(sorted(t["name"] for t in tools), expected_tools)
         self.assertFalse(by_id[3].get("result", {}).get("isError"))
         self.assertIn("error", by_id[4])
         self.assertEqual(by_id[4]["error"]["code"], -32602)
+        # После ошибки входа сессия продолжает обслуживать валидные
+        # вызовы (discovery/call/error/recovery).
         self.assertFalse(by_id[5].get("result", {}).get("isError"))
+        if 6 in by_id:
+            res6 = by_id[6]["result"]
+            self.assertFalse(res6.get("isError"))
+            f0 = res6["structuredContent"]["files"][0]
+            self.assertNotIn("contentReference", f0["text"])
+            self.assertEqual(f0["after_check"]["count"], 0)
 
 
 @SKIP_INSTALLED
