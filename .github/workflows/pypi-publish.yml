@@ -59,8 +59,10 @@ jobs:
 
       - name: Интервал публикаций непосредственно перед необратимым шагом
         # Живой published_at GitHub API; ошибка API (код 2) блокирует
-        # публикацию так же, как нарушение интервала (код 1).
-        run: python3 scripts/check_release.py --pre-release-interval
+        # публикацию так же, как нарушение интервала (код 1). Одноразовое
+        # сокращение возможно только парой тегов из docs/release-waivers.json
+        # (зафиксированный приказ владельца); механизм правила сохранён.
+        run: python3 scripts/check_release.py --pre-release-interval --target-tag "${{ github.ref_name }}"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
