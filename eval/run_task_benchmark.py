@@ -468,10 +468,9 @@ def main(argv=None):
     results["o4"] = None
     _rebuild_losses(results)
     out = os.path.join(
-        TB, "results-%s%s.json"
-        % ("-v2" if v2 else "",
-           datetime.datetime.now(datetime.timezone.utc)
-           .strftime("%Y-%m-%d")))
+        TB, ("results-v2-" if v2 else "results-")
+        + datetime.datetime.now(datetime.timezone.utc)
+          .strftime("%Y-%m-%d") + ".json")
     with open(out, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(results, fh, ensure_ascii=False, indent=1)
         fh.write("\n")
