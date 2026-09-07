@@ -207,10 +207,12 @@ def markers_main(argv: Optional[Sequence[str]] = None) -> int:
             print("нет файлов — запускается самопроверка выражений; "
                   "справка: --help", file=sys.stderr)
         return check_markers.main()
-    paths = list(parsed.files)
-    if parsed.cls != "all":
-        paths += ["--class", parsed.cls]
-    return check_markers.scan(paths, as_json=parsed.json)
+    # Операнды уже разобраны argparse: передаём типизированный список,
+    # не подмешивая строки флагов. Файл с именем «--class» — путь, а не
+    # флаг: повторный разбор операндов поглощал вход (код 2 без конверта).
+    return check_markers.scan_paths(list(parsed.files),
+                                    class_filter=parsed.cls,
+                                    as_json=parsed.json)
 
 
 def _markers_remove(parsed) -> int:
@@ -222,6 +224,13 @@ def _markers_remove(parsed) -> int:
 
     if not parsed.files:
         print("нет файлов для --remove; «-» читает stdin", file=sys.stderr)
+        if parsed.json:
+            # error_rule контракта: с --json код 2 печатает конверт в stdout.
+            print(json.dumps({"tool": "humanizer-markers", "schema": 1,
+                              "files": [{"file": "<argv>", "mode": "remove",
+                                         "error": "нет файлов для --remove"}],
+                              "error": "вход не читается (код 2)"},
+                             ensure_ascii=False, indent=2))
         return 2
     report_files = []
     rc = 0
