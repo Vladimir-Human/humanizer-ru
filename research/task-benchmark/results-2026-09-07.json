@@ -1,0 +1,665 @@
+{
+ "schema": "task-benchmark.v1",
+ "date": "2026-09-07",
+ "prereg_sha256": "61715e83fa9a8929736027a4a54f4f923d51db87607b27608171f89832351e76",
+ "o1": {
+  "axes": {
+   "reference": {
+    "files": 52,
+    "files_missing": 0,
+    "hash_mismatches": 0,
+    "human_hits": 0,
+    "ai_hits": 11,
+    "ai_unexpected": 0,
+    "boundary_expected_ok": 2,
+    "boundary_unexpected": 0
+   },
+   "smixs-91f70df": {
+    "files": 52,
+    "files_missing": 0,
+    "hash_mismatches": 0,
+    "human_hits": 75,
+    "ai_hits": 150,
+    "ai_unexpected": 3,
+    "boundary_expected_ok": 1,
+    "boundary_unexpected": 1
+   }
+  },
+  "details_reference": [],
+  "details_smixs": [
+   {
+    "file": "research/validation/human/09-wikipedia-modern.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/11-it-notation.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 11,
+      "case": "A остаток размышлений"
+     },
+     {
+      "line": 7,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 11,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/13-krylov-kvartet.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 7,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 10,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 10,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/14-afanasyev-finist.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/15-perelman-zavtrak.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 0,
+      "case": "формальное открытие"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/16-chekhov-smert-chinovnika.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 4,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 4,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 8,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/17-saltykov-shchedrin-dva-generala.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 7,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 7,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 7,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/18-goncharov-oblomov.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 0,
+      "case": "формальное открытие"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/19-gilyarovsky-moskvich.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 9,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/21-leskov-levsha.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 8,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 10,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/23-ershov-konek-predislovie.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 3,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 6,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 6,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/24-gercen-byloe-i-dumy.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 3,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/human/25-ciolkovsky-grezy.txt",
+    "kind": "human",
+    "hits": [
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 1,
+      "case": "23 длинное тире"
+     },
+     {
+      "line": 11,
+      "case": "23 длинное тире"
+     }
+    ],
+    "fp": true
+   },
+   {
+    "file": "research/validation/boundary/emoji-zwj.txt",
+    "kind": "boundary",
+    "expected": 0,
+    "actual": 1,
+    "cases": [
+     "21 эмодзи"
+    ]
+   },
+   {
+    "file": "research/raw/gemini/02-valans-span.txt",
+    "kind": "ai",
+    "expected": 3,
+    "actual": 3,
+    "cases": [
+     "A gemini-цитата"
+    ]
+   },
+   {
+    "file": "research/raw/gemini/03-eretria-span.txt",
+    "kind": "ai",
+    "expected": 7,
+    "actual": 9,
+    "cases": [
+     "23 длинное тире",
+     "A gemini-цитата"
+    ]
+   },
+   {
+    "file": "research/raw/le-chat/01-fast-канберра.txt",
+    "kind": "ai",
+    "expected": 1,
+    "actual": 1,
+    "cases": [
+     "23 длинное тире"
+    ]
+   }
+  ],
+  "comparability": "сопоставимы только human-FP и boundary (предрегистрация O1); счётчики правил несопоставимы",
+  "fails": [],
+  "pass": true
+ },
+ "o2": {
+  "records": [
+   {
+    "doc": "gemini-span.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 2
+    },
+    "fixed_point": true,
+    "facts_lost": 2,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   },
+   {
+    "doc": "injection-closing-tag.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 1
+    },
+    "fixed_point": true,
+    "facts_lost": 1,
+    "facts_changed": 0,
+    "facts_added": 1,
+    "protected_intact": false,
+    "changed": true
+   },
+   {
+    "doc": "injection-fake-permission.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 1
+    },
+    "fixed_point": true,
+    "facts_lost": 1,
+    "facts_changed": 0,
+    "facts_added": 1,
+    "protected_intact": false,
+    "changed": true
+   },
+   {
+    "doc": "injection-tool-result.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 1
+    },
+    "fixed_point": true,
+    "facts_lost": 2,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   },
+   {
+    "doc": "invisible-negative-human.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": false
+   },
+   {
+    "doc": "openai-pua-short.txt",
+    "removed": {
+     "invisible": 6,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   },
+   {
+    "doc": "openai-pua.txt",
+    "removed": {
+     "invisible": 12,
+     "markup": 4
+    },
+    "fixed_point": true,
+    "facts_lost": 8,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   },
+   {
+    "doc": "perplexity-s3.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": false
+   },
+   {
+    "doc": "ref-name-search.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": false
+   },
+   {
+    "doc": "unicode-tags.txt",
+    "removed": {
+     "invisible": 10,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   },
+   {
+    "doc": "zero-width-negative-human.txt",
+    "removed": {
+     "invisible": 0,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": false
+   },
+   {
+    "doc": "synthetic-protected.md",
+    "removed": {
+     "invisible": 1,
+     "markup": 0
+    },
+    "fixed_point": true,
+    "facts_lost": 0,
+    "facts_changed": 0,
+    "facts_added": 0,
+    "protected_intact": true,
+    "changed": true
+   }
+  ],
+  "comparator": null,
+  "comparator_note": "компаратор отсутствует: smixs — линтер без очистки; отсутствие публикуется как отсутствие, не как победа",
+  "fails": [
+   "O2 gemini-span.txt: очистка потеряла/изменила факты (lost=2 changed=0)",
+   "O2 injection-closing-tag.txt: очистка потеряла/изменила факты (lost=1 changed=0)",
+   "O2 injection-closing-tag.txt: защищённые области изменены",
+   "O2 injection-fake-permission.txt: очистка потеряла/изменила факты (lost=1 changed=0)",
+   "O2 injection-fake-permission.txt: защищённые области изменены",
+   "O2 injection-tool-result.txt: очистка потеряла/изменила факты (lost=2 changed=0)",
+   "O2 openai-pua.txt: очистка потеряла/изменила факты (lost=8 changed=0)"
+  ],
+  "pass": false
+ },
+ "o3": {
+  "records": [
+   {
+    "pair_id": "identical",
+    "before": "Встреча состоялась. Цена 100 рублей.",
+    "after": "Встреча состоялась. Цена 100 рублей.",
+    "expect": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0
+    },
+    "got": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "loss",
+    "before": "Бюджет 500 тыс. ₽ до 15 марта 2026 года.",
+    "after": "Бюджет уточняется.",
+    "expect": {
+     "lost_min": 1
+    },
+    "got": {
+     "lost": 2,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "addition",
+    "before": "Встреча состоялась.",
+    "after": "Встреча состоялась. Цена 100 рублей.",
+    "expect": {
+     "added_min": 1
+    },
+    "got": {
+     "lost": 0,
+     "added": 1,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "inversion",
+    "before": "Иван Петров не подтвердил данные.",
+    "after": "Иван Петров подтвердил данные.",
+    "expect": {
+     "changed_min": 1
+    },
+    "got": {
+     "lost": 1,
+     "added": 0,
+     "changed": 1,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "permutation-boundary",
+    "before": "Иван получил 100 рублей, Мария 200.",
+    "after": "Мария получила 100 рублей, Иван 200.",
+    "expect": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0
+    },
+    "got": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "mixed-scale",
+    "before": "Цена 5 миллионов рублей.",
+    "after": "Цена пять миллионов рублей.",
+    "expect": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0
+    },
+    "got": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "fraction-scale",
+    "before": "Выручка 2.5 миллиона.",
+    "after": "Выручка 2500000.",
+    "expect": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0
+    },
+    "got": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": null
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "range-boundary",
+    "before": "Диапазон 5-10 миллионов заявок.",
+    "after": "Диапазон 5-10 миллионов заявок.",
+    "expect": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": [
+      "10",
+      "1000000",
+      "5"
+     ]
+    },
+    "got": {
+     "lost": 0,
+     "added": 0,
+     "changed": 0,
+     "numbers_values": [
+      "10",
+      "1000000",
+      "5"
+     ]
+    },
+    "ok": true
+   },
+   {
+    "pair_id": "strict-mode-rc",
+    "expect": {
+     "strict_rc": 1,
+     "loose_rc": 0
+    },
+    "got": {
+     "strict_rc": 1,
+     "loose_rc": 0
+    },
+    "ok": true
+   }
+  ],
+  "comparator": null,
+  "comparator_note": "компаратор отсутствует: детерминированная сверка фактов на стандартной библиотеке — публичные аналоги не измерены (статус «не измерено», не «нет»)",
+  "fails": [],
+  "pass": true
+ },
+ "o4": null,
+ "losses": [
+  {
+   "op": "o2",
+   "reason": "O2 gemini-span.txt: очистка потеряла/изменила факты (lost=2 changed=0)"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 injection-closing-tag.txt: очистка потеряла/изменила факты (lost=1 changed=0)"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 injection-closing-tag.txt: защищённые области изменены"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 injection-fake-permission.txt: очистка потеряла/изменила факты (lost=1 changed=0)"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 injection-fake-permission.txt: защищённые области изменены"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 injection-tool-result.txt: очистка потеряла/изменила факты (lost=2 changed=0)"
+  },
+  {
+   "op": "o2",
+   "reason": "O2 openai-pua.txt: очистка потеряла/изменила факты (lost=8 changed=0)"
+  }
+ ],
+ "summary": {
+  "o1_pass": true,
+  "o2_pass": false,
+  "o3_pass": true,
+  "o4_status": "not-run",
+  "o4_pass": null,
+  "losses": 7
+ }
+}
