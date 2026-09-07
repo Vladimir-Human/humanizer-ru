@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "window": {
+    "start": "2026-09-06",
+    "end": "2026-10-06"
+  },
+  "coverage": {
+    "collected_at": "2026-09-07T00:10:34Z",
+    "collector": "scripts/collect_external_feedback.py --since 2026-09-06 --json",
+    "sources": {
+      "issues": {
+        "status": "ok",
+        "items": 1
+      },
+      "issue-comments": {
+        "status": "ok",
+        "items": 11
+      },
+      "discussions": {
+        "status": "ok",
+        "items": 2
+      }
+    }
+  },
+  "events": [
+    {
+      "date": "2026-09-06",
+      "kind": "issue",
+      "url": "https://github.com/Vladimir-Human/humanizer-ru/issues/119",
+      "author": "zerocodefast",
+      "quote": "Hey! humanizer-ru scans Russian text for traces of machine generation and, on explicit request, rewrites it to sound natural, which is exactly what you want before publishing agent-drafted copy.  We m",
+      "rationale": "Прочитано исходное сообщение целиком: это каталожное приглашение (awesome-ai-plugins): автор предлагает включить проект в список, а не описывает собственное применение инструмента на своём тексте. По правилам окна каталожные приглашения не являются внешним опытом использования; автоматический признак solicitation подтверждается текстом.",
+      "read_by": "сопровождение",
+      "qualified": false,
+      "synthetic": false
+    }
+  ],
+  "notes": "Окно наблюдения 2026-09-06..2026-10-06 не перезапускается релизами. Квалифицированных событий на момент снимка нет: KPI_PENDING. Синтетические прогоны коллектора в этот файл не попадают (synthetic=true исключает qualified)."
+}
