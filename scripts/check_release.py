@@ -439,6 +439,49 @@ def pre_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
                % (latest_tag, gap, min_seconds))
 
 
+# Явный список исторических пар, для которых сокращённый интервал
+# зафиксирован решением сопровождения в релизном коммите (история не
+# переписывается). Новые пары сюда не добавляются: исключение не правило,
+# сокращение интервала собственным решением запрещено.
+WAIVED_INTERVAL_PAIRS = {
+    ("v3.32.1", "v3.33.0"):
+        "решение сопровождения 2026-09-06 (прямой приказ владельца цикла), "
+        "зафиксировано в релизном коммите v3.33.0 и в CHANGELOG",
+}
+
+
+def post_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
+    """Проверка ПОСЛЕ публикации: интервал между двумя последними
+    конкретными опубликованными релизами (пара берётся из опубликованного
+    списка; новый релиз не сравнивается с самим собой).
+
+    Возвращает (rc, сообщение): rc 0 — соблюдён или неприменим (выпусков
+    меньше двух), 1 — нарушение, 2 — проверка невозможна (сеть/API).
+    """
+    try:
+        releases = _get_json(
+            "https://api.github.com/repos/%s/releases?per_page=10" % slug)
+    except (OSError, ValueError) as exc:
+        return 2, "проверка интервала невозможна (сеть/API): %r" % (exc,)
+    dated = [(_parse_published(r.get("published_at")), r.get("tag_name"))
+             for r in releases if not r.get("draft")]
+    dated = [(d, t) for d, t in dated if d is not None and t]
+    if len(dated) < 2:
+        return 0, "опубликованных выпусков меньше двух — интервал не применим"
+    dated.sort(key=lambda pair: pair[0])
+    (prev_dt, prev_tag), (new_dt, new_tag) = dated[-2], dated[-1]
+    waiver = WAIVED_INTERVAL_PAIRS.get((prev_tag, new_tag))
+    if waiver:
+        return 0, ("интервал пары %s -> %s зафиксирован как историческое "
+                   "исключение: %s" % (prev_tag, new_tag, waiver))
+    errs = interval_errors(prev_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                           new_dt.strftime("%Y-%m-%dT%H:%M:%SZ"), min_seconds)
+    if errs:
+        return 1, "; ".join(errs)
+    return 0, ("интервал между опубликованными релизами %s и %s соблюдён"
+               % (prev_tag, new_tag))
+
+
 # ---- Приёмка статуса поставки: утверждения только из результата прогона ----
 
 def status_acceptance_errors(status, run_result, deploy_sha=None) -> list:
@@ -886,6 +929,48 @@ def selftest() -> None:
         passed += 1
         total += 1
 
+        # Интервал после публикации: пара из опубликованного списка;
+        # историческая исключённая пара названа явно, нарушение ловится,
+        # релиз с самим собой не сравнивается (берутся две разные записи).
+        saved_get = globals()["_get_json"]
+
+        def _fake_waived(url):
+            return [
+                {"tag_name": "v3.32.1", "draft": False,
+                 "published_at": "2026-09-06T08:47:06Z"},
+                {"tag_name": "v3.33.0", "draft": False,
+                 "published_at": "2026-09-06T20:51:52Z"},
+            ]
+
+        def _fake_violation(url):
+            return [
+                {"tag_name": "v3.33.0", "draft": False,
+                 "published_at": "2026-09-06T20:51:52Z"},
+                {"tag_name": "v3.34.0", "draft": False,
+                 "published_at": "2026-09-07T08:00:00Z"},
+            ]
+
+        def _fake_single(url):
+            return [
+                {"tag_name": "v3.33.0", "draft": False,
+                 "published_at": "2026-09-06T20:51:52Z"},
+            ]
+        try:
+            globals()["_get_json"] = _fake_waived
+            rc_w, msg_w = post_release_interval("x/y")
+            globals()["_get_json"] = _fake_violation
+            rc_v, _msg_v = post_release_interval("x/y")
+            globals()["_get_json"] = _fake_single
+            rc_s, _msg_s = post_release_interval("x/y")
+        finally:
+            globals()["_get_json"] = saved_get
+        assert rc_w == 0 and "исключение" in msg_w, \
+            "историческая исключённая пара не названа явно: %s" % msg_w
+        assert rc_v == 1, "нарушение интервала после публикации не поймано"
+        assert rc_s == 0, "один выпуск должен давать «не применим», не отказ"
+        passed += 1
+        total += 1
+
         # Приёмка статуса: ложный true, чужой SHA, отсутствие результата.
         good_status = {"commit": "abc1234", "tests_passed": True,
                        "parity": "ok"}
@@ -1139,6 +1224,12 @@ def main(argv: list[str] | None = None) -> int:
                              "86400 с (по published_at GitHub API); "
                              "0 — можно публиковать, 1 — слишком рано, "
                              "2 — проверка невозможна (сеть/API)")
+    parser.add_argument("--post-publication-interval", action="store_true",
+                        help="проверка ПОСЛЕ публикации: интервал между "
+                             "двумя последними конкретными опубликованными "
+                             "релизами (не релиз с самим собой); "
+                             "0 — соблюдён/неприменим, 1 — нарушение, "
+                             "2 — проверка невозможна (сеть/API)")
     parser.add_argument("--acceptance", action="store_true",
                         help="приёмка статуса поставки: утверждения "
                              "status.json сверяются с результатом прогона "
@@ -1198,6 +1289,32 @@ def main(argv: list[str] | None = None) -> int:
                               2: "ИНТЕРВАЛ (UNAVAILABLE)"}[rc_interval]
                     print("%s: %s" % (prefix, msg),
                           file=sys.stderr if rc_interval else sys.stdout)
+        rc_post = 0
+        if args.post_publication_interval:
+            root = args.root or Path(".")
+            try:
+                remote = subprocess.run(
+                    ["git", "config", "remote.origin.url"], cwd=root,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    timeout=60, encoding="utf-8", errors="replace")
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                print("ИНТЕРВАЛ ПОСЛЕ: git недоступен: %r" % (exc,),
+                      file=sys.stderr)
+                rc_post = 2
+            else:
+                slug = (_repo_slug_from_url(remote.stdout)
+                        if remote.returncode == 0 else None)
+                if slug is None:
+                    print("ИНТЕРВАЛ ПОСЛЕ: репозиторий не определён из "
+                          "remote.origin.url", file=sys.stderr)
+                    rc_post = 2
+                else:
+                    rc_post, msg = post_release_interval(slug)
+                    prefix = {0: "ИНТЕРВАЛ ПОСЛЕ",
+                              1: "[FAIL] ИНТЕРВАЛ ПОСЛЕ",
+                              2: "ИНТЕРВАЛ ПОСЛЕ (UNAVAILABLE)"}[rc_post]
+                    print("%s: %s" % (prefix, msg),
+                          file=sys.stderr if rc_post else sys.stdout)
         rc_accept = 0
         if args.acceptance:
             if not args.status:
@@ -1232,11 +1349,14 @@ def main(argv: list[str] | None = None) -> int:
                               "прогона и SHA деплоя")
         if not any((args.selftest, args.root, args.build, args.verify,
                     args.release_contract, args.sdist_test is not None,
-                    args.pre_release_interval, args.acceptance)):
+                    args.pre_release_interval,
+                    args.post_publication_interval, args.acceptance)):
             parser.error("выберите --selftest, --root/--build, --verify, "
                          "--release-contract, --sdist-test, "
-                         "--pre-release-interval или --acceptance")
-        return rc_contract or rc_sdist or rc_interval or rc_accept
+                         "--pre-release-interval, "
+                         "--post-publication-interval или --acceptance")
+        return (rc_contract or rc_sdist or rc_interval or rc_post
+                or rc_accept)
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1

@@ -10,6 +10,11 @@ on:
       - 'v*'
   workflow_dispatch:   # перезапуск контракт-гейта после публикации Release:
                        # гонка «тег раньше Release» не требует пересоздания тега
+    inputs:
+      tag:
+        description: 'Проверяемый тег (по умолчанию последний v*)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -22,18 +27,21 @@ jobs:
   release-check:
     name: Тег соответствует релизному контракту
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout (full history + tags)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Релизный тег (ref или последний v*)
+      - name: Релизный тег (явный input, ref или последний v*)
         id: tag
         run: |
-          if [[ "$GITHUB_REF_NAME" == v* ]]; then T="$GITHUB_REF_NAME"; else T=$(git tag --sort=-v:refname | head -1); fi
+          if [[ -n "${{ inputs.tag }}" ]]; then T="${{ inputs.tag }}";
+          elif [[ "$GITHUB_REF_NAME" == v* ]]; then T="$GITHUB_REF_NAME";
+          else T=$(git tag --sort=-v:refname | head -1); fi
           echo "value=$T" >> "$GITHUB_OUTPUT"
+          echo "проверяемый тег: $T"
 
       - name: Тег annotated (не lightweight)
         run: |
@@ -66,9 +74,10 @@ jobs:
         run: |
           # Полный релизный чек-лист одной командой: 148 гейтов, включая
           # pkg-sync, confidence, facts, polish, conj, selfattack, contract, markers-export, adversarial, filemarks, release-contract.
+          # Режим --strict: без FAIL и без непроверенных SKIP.
           # Заменяет рукописный список: ручной перечень
           # отставал от check_all.py и пропускал гейты, добавленные позже.
-          python3 scripts/check_all.py
+          python3 scripts/check_all.py --strict
           python3 -m unittest discover -s tests -v
           python3 -m compileall -q scripts eval
 
@@ -77,6 +86,20 @@ jobs:
           python3 scripts/check_release.py --root . --build dist/humanizer-ru.zip
           python3 scripts/check_release.py --verify dist/humanizer-ru.zip
           sha256sum dist/humanizer-ru.zip
+
+      - name: Контракт выпуска: подпись тега и криптопроверка
+        run: |
+          # Подпись проверяется опубликованным ключом проекта во временной
+          # связке (docs/release-signing-key.asc); отсутствие ключа,
+          # неверная подпись и подпись не тем ключом различаются.
+          python3 scripts/check_release.py --release-contract
+
+      - name: Интервал после публикации (две конкретные публикации)
+        run: |
+          # Пара берётся из опубликованного списка Release: новый выпуск
+          # не сравнивается с самим собой; исторические исключённые пары
+          # названы в WAIVED_INTERVAL_PAIRS явно.
+          python3 scripts/check_release.py --post-publication-interval
 
       - name: Приложить архив к прогону
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
