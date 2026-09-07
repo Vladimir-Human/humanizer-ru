@@ -16,8 +16,9 @@ CLI); гейт сверяет стороны на фиксированной ф�
   2. demo/sample.js (кнопка «Вставить образец») байт-в-байт равен
      фикстуре — демо показывает тот же текст, который проверяет гейт.
   3. JS-сторона: node исполняет demo/engine.js + demo/markers.js +
-     demo/sample.js и даёт тот же счёт и состав (если node недоступен,
-     сторона печатается как SKIP — в CI node есть).
+     demo/sample.js и даёт тот же счёт и состав; недоступность node —
+     FAIL обязательной проверки (непроверенная JS-сторона не может
+     давать зелёный статус и parity:"ok" в Pages-workflow).
   4. Векторы паритета: tests/fixtures/demo-parity/vectors.json — общий
      набор входов (теневая нормализация, маскирование URL, Unicode-цифры,
      разделители строк Python splitlines, code spans, fenced-блоки,
@@ -238,7 +239,11 @@ def check(root) -> list:
         errors.append("JS-сторона: %s" % exc)
         node = "error"
     if node is None:
-        print("SKIP: node недоступен — JS-сторона не сверена (в CI node есть)")
+        # Непроверенная JS-сторона — не зелёный статус: обязательный путь
+        # (CI, поставка) обязан отказать, иначе Pages-workflow запишет
+        # parity:"ok" поверх непроверенного состояния.
+        errors.append("JS-сторона не сверена: node недоступен — обязательная "
+                      "проверка паритета не выполнена (это FAIL, не SKIP)")
     elif node != "error":
         if node.get("__sample__") is not None:
             if len(node["__sample__"]) != count:
