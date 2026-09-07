@@ -99,7 +99,7 @@ Arrived by name — choose by the verification method, not by stars.
 
 - 58 patterns of machine writing and 40 regex markers (classes A and B).
 - Proof records: 38 of 40 markers (registry research/fixtures/marker-sources.json).
-- Gates: 149 gates in the full check_all (138 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
+- Gates: 150 gates in the full check_all (139 in --quick); fixtures live in tests/fixtures/, docs are checked by check_docs.py, persona in PERSONA.md.
 
 ## More
 

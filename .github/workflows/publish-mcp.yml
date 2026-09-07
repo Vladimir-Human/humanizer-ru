@@ -1,0 +1,64 @@
+name: Публикация в официальный реестр MCP
+
+# Поддерживаемый путь публикации записи реестра
+# registry.modelcontextprotocol.io без секретов: GitHub OIDC
+# (mcp-publisher login github-oidc) доказывает владение пространством
+# имён io.github.Vladimir-Human по месту запуска (Actions этого репо).
+# Публикуется server.json из корня: версия и пакет обязаны совпадать с
+# опубликованным на PyPI (сверяется scripts/check_live_distribution.py).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-mcp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Публикация server.json в реестр MCP
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Версия server.json равна версии пакета
+        run: |
+          python3 - <<'PY'
+          import json, re, sys
+          server = json.load(open("server.json", encoding="utf-8"))
+          init = open("src/humanizer_ru/__init__.py", encoding="utf-8").read()
+          m = re.search(r'__version__\s*=\s*"(\d+\.\d+\.\d+)"', init)
+          if not m:
+              sys.exit("версия пакета не читается")
+          if server.get("version") != m.group(1):
+              sys.exit("server.json version %s != пакет %s"
+                       % (server.get("version"), m.group(1)))
+          print("версии совпадают:", m.group(1))
+          PY
+
+      - name: Установить mcp-publisher
+        run: |
+          curl -sSL -o mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz"
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+          ./mcp-publisher --version || true
+
+      - name: Аутентификация GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+
+      - name: Публикация записи реестра
+        run: ./mcp-publisher publish --file server.json
+
+      - name: Чтение опубликованной записи
+        run: |
+          sleep 5
+          curl -sS "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); s=d.get('server') or {}; print('реестр: версия', s.get('version'), 'статус', ((d.get('_meta') or {}).get('io.modelcontextprotocol.registry/official') or {}).get('status'))"
