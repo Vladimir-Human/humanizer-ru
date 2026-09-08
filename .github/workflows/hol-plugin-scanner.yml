@@ -28,6 +28,16 @@ jobs:
         continue-on-error: true
         uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f # v1.2.635
         with:
+          mode: verify
           plugin_dir: "."
+          format: text
+          output: plugin-scanner-report.txt
           min_score: 80
           fail_on_severity: high
+      - name: Upload scanner report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: hol-plugin-scanner-report
+          path: plugin-scanner-report.txt
+          if-no-files-found: ignore
