@@ -1,7 +1,7 @@
 {
   "name": "humanizer-ru",
   "displayName": "Humanizer RU",
-  "version": "3.35.0",
+  "version": "3.35.1",
   "description": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом. | Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix.",
   "author": "Vladimir-Human",
   "license": "MIT",
