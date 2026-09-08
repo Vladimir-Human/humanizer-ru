@@ -1,28 +1,11 @@
-# OWNER-TODO — единственный канал к владельцу
+# Project follow-ups
 
-Активных пунктов: 0. Все действия приказа исполнены агентом; пункты,
-требующие личных аккаунтов, либо выполнены владельцем и проверены агентом
-(Glama-листинг, закрепление репозитория в профиле — 2026-09-06), либо
-делегированы агенту постоянным поручением (подпись тегов и акта), либо
-переведены в опциональные (Smithery — в research/BACKLOG.md: публикация
-требует OAuth-входа, а требуемые два каталога уже живые: skills.sh и Glama,
-заявка awesome-mcp-servers OPEN).
+This public checklist describes repository work. It is not a log of private
+actions or account state.
 
-Ответ первому внешнему пользователю — агент через API по появлению: тред
-Discussions #95 и новые issue/discussions мониторятся в режиме поддержки,
-окно KPI 2026-09-06 → 2026-10-06 (research/DISTRIBUTION-JOURNAL.md).
+- Keep release, package, MCP Registry and Pages versions aligned.
+- Keep catalog snapshots dated and distinguish LIVE, STALE, NOT LISTED and BLOCKED.
+- Count qualified external usage separately from CI, catalog activity and repository-owned smoke tests.
+- Keep sensitive source material and private correspondence outside the repository.
 
-## Закрытые пункты (история)
-
-- About/Website формулой и Discussions — агент через API 2026-09-04.
-- Выбор позиционирования — делегирован агенту 2026-09-05, принят вариант А.
-- Теги и Release 3.31.1, 3.32.0, 3.32.1 — агент исполнительской подписью по
-  постоянному поручению владельца; PyPI по OIDC автоматически.
-- Личная GPG-подпись акта — делегирована агенту 2026-09-06 («GPG-подпись
-  сам ставь»); акт подписан ключом 023E1F146B59348F, ассет Release v3.32.1.
-- Glama-листинг — размещён владельцем 2026-09-06, проверен агентом (страница
-  200), бейдж в теле README, факт в реестре (glama-listing-2026-09).
-- Закрепление репозитория в профиле — владелец 2026-09-06, проверено
-  агентом (humanizer-ru в закреплённых).
-- Лицензии MultiSocial/CoAT — проверены живым Zenodo API 2026-09-05.
-- Ротация токенов — долгоживущих токенов нет (аудит), OIDC работоспособен.
+Technical evidence is maintained in research/ and by the release gates.

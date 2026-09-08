@@ -10,8 +10,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-OUT = Path(r"C:\Users\vovap\Projects\humanizer-superposition\run-20260831") / \
-    "measurement" / "f8-2026-09"
+OUT = Path(os.environ.get("HUMANIZER_MEASUREMENT_DIR", "measurement")) / \
+    "f8-2026-09"
 
 
 def mtld(text, threshold=0.72):

@@ -50,11 +50,11 @@
   пяти CLI с argparse.
 - Гейт scripts/check_positioning_sync.py в check_all (selftest с негативом);
   счётчики 123/112 во всех носителях.
-- OWNER-TODO.md создан (7 пунктов с точными инструкциями), OWNER-ACTIONS.md
-  помечен как история; POSITIONING.md и OWNER-TODO.md внесены в манифест
+- project follow-ups создан (7 пунктов с точными инструкциями), project operations
+  помечен как история; POSITIONING.md и project follow-ups внесены в манифест
   check_docs (фикс после красного docs-джоба на PR, коммит на main).
 - PR #78 слит (c50d4e4); self-review 5541020867.
-- OWNER-TODO пункт 1 (About/Website) ждёт владельца: текст для вставки —
+- project follow-ups пункт 1 (About/Website) ждёт владельца: текст для вставки —
   короткая формула дословно.
 
 ## Поток W3 — визуал «за 3 секунды» (закрыт)
@@ -163,7 +163,7 @@
 
 - ISSUE_TEMPLATE: new-marker.yml (регулярка, три примера «за», три
   «против», источник с датой просмотра) и question.yml; config.yml с
-  contact_links Discussions (включаются владельцем, OWNER-TODO пункт 2).
+  contact_links Discussions (включаются владельцем, project follow-ups пункт 2).
 - CONTRIBUTING: раздел «Добавить маркер за 10 минут» (семь шагов конвейера:
   CASES/CLASS_OF, фикстуры и секция, реестр доказательств и
   REGISTERED_CASES, строка references, регенерация markers.v1.json и
@@ -173,7 +173,7 @@
   парсера таблиц references (unpack 4 колонок), откат полный
   (git checkout по списку плюс удаление фикстур); сквозная верификация
   отложена до внешнего контрибьютора, заметка в BACKLOG.
-- OWNER-TODO.md создан (About/Website, Discussions, pin, Glama, PyPI
+- project follow-ups создан (About/Website, Discussions, pin, Glama, PyPI
   trusted publisher, MultiSocial, личная GPG-подпись акта) — единственный
   канал к владельцу.
 - PULL_REQUEST_TEMPLATE: чек-лист unittest, parity, бюджеты обеих README
@@ -260,17 +260,17 @@
   RU/EN, отметка «отклонено» в BACKLOG; пара добавлена в parity-список.
 - drafts/FRONTIER-ACT.md (run-каталог): одна страница, каждое утверждение
   с командой проверки; все команды прогнаны, rc 0; check_outward 0 FAIL;
-  GPG clearsign ключом 023E1F146B59348F; отсоединённая подпись архива
+  GPG clearsign ключом project signing key; отсоединённая подпись архива
   humanizer-ru.zip.asc приложена к Release v3.31.0.
 - CHANGELOG Unreleased: строка перехода в режим поддержки и роста.
 - METRICS.md: снимок 2026-09-04 (3.31.0).
-- Архив r-FINAL-20260904.zip с sha256 в двух местах (run-каталог и копия
+- Архив private run archive с sha256 в двух местах (run-каталог и копия
   в humanizer-superposition), хеш записан в state/RESUME-POINT.md и
   RUNLOG.md.
 - Дайджест с блоком «владельцу лично» (П14): drafts/DIGEST-FRONTIER-
   2026-09-04.md.
 
-## Пункты OWNER-TODO, исполненные агентом (2026-09-04/05)
+## Пункты project follow-ups, исполненные агентом (2026-09-04/05)
 
 - About репозитория: description установлен дословно короткой формулой
   позиционирования через gh repo edit; homepage уже указывал на Pages.
@@ -285,17 +285,17 @@
   записано в research/LICENSES-EXTERNAL.md.
 - OIDC PyPI: ротировать нечего — долгоживущих токенов нет (аудит), доверие
   работоспособно (публикация 3.31.0 прошла без токенов); статус в
-  OWNER-TODO, решение о ротации доверия — UI владельца.
+  project follow-ups, решение о ротации доверия — UI владельца.
 - Попутно устранён дефект детерминизма: build_date в markers.js теперь
   выводится из содержания реестра (максимальная дата accessed), а не из
   текущего дня; гейт markers-export не ломается при регенерации на
   следующий день; футер демо подписан «данные правил от …».
 
-Остаются физически недоступными агенту (нужен аккаунт или личный ключ
-владельца): pin репозитория в профиле (нет публичного API), вход и
-submission в Glama (OAuth владельцем), решение о ротации OIDC-доверия в
-PyPI UI, запрос доступа MultiSocial с академической почты, личная
-GPG-подпись финального акта.
+Некоторые действия требуют внешней учетной записи или ключа проекта: pin
+репозитория в профиле (нет публичного API), submission в Glama, настройка
+OIDC-доверия в PyPI UI, запрос доступа к restricted source через authorized
+institutional account и подпись релизных артефактов. Их состояние проверяется
+через публичные результаты, без хранения учетных данных в репозитории.
 
 ## Дальше по потокам
 
