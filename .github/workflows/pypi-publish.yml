@@ -73,6 +73,24 @@ jobs:
           python3 scripts/check_facts.py --strict-publication
           python3 scripts/check_compatibility.py
 
+      - name: Браузерная DOM-проверка демо кандидата до публикации
+        # Проверка КАНДИДАТА блокирует публикацию (исполняется в
+        # build-and-test до артефакта). Проверка опубликованного URL
+        # живёт в demo-pages.yml: она не отменяет выполненный deploy,
+        # но роняет workflow Pages и блокирует объявление поставки
+        # проверенной. Браузерная среда — инфраструктура CI, не runtime
+        # продукта (stdlib-only поставка не меняется).
+        run: |
+          python3 -m pip install --quiet playwright
+          python3 -m playwright install --with-deps chromium
+          python3 -m http.server 8478 --directory demo &
+          SERVER_PID=$!
+          sleep 2
+          python3 scripts/check_demo_browser.py --url http://localhost:8478/index.html
+          RC=$?
+          kill $SERVER_PID 2>/dev/null || true
+          exit $RC
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pypi-dist
