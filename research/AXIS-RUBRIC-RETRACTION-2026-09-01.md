@@ -23,7 +23,7 @@
 | pure  | смысловая перезапись сверх формата | 0 из 3 |
 
 То есть вклад вносит канал, который от качества текста не зависит. Проверка живёт в
-артефактах прогона `run-20260831` (`w1-gates/w1-decomposition.json`,
+артефактах прогона `private measurement run` (`w1-gates/w1-decomposition.json`,
 `experiments/audit-packet.json`, заявках `preregistration/` с хешами до замеров) и
 перепроверена тремя независимыми чужими линиями.
 
@@ -43,4 +43,3 @@
     python3 eval/reproduce.py                 # дельта и её интервал по сырым отчётам
     python3 scripts/check_confidence.py --check  # числа LEADERBOARD против JSON
     python3 scripts/check_all.py              # 75 гейтов, FAIL 0
-
