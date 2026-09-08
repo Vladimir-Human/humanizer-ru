@@ -1,6 +1,6 @@
 {
   "name": "humanizer-ru-dsh",
-  "version": "3.35.0",
+  "version": "3.35.1",
   "description": "Agent Skill. Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix. Style rewriting only on explicit request; 40 regex markers with an evidence registry.",
   "license": "MIT",
   "author": "Vladimir-Human",

@@ -68,7 +68,7 @@ npx skills add https://github.com/Vladimir-Human/humanizer-ru --skill humanizer-
 или клон тега выпуска:
 
 ```sh
-git clone --branch v3.35.0 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
+git clone --branch v3.35.1 --depth 1 https://github.com/Vladimir-Human/humanizer-ru.git ~/.claude/skills/humanizer-ru
 ```
 
 Попробовать без установки: [онлайн-демо](https://vladimir-human.github.io/humanizer-ru/) —
