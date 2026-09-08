@@ -186,6 +186,30 @@ def check() -> list:
         if root_bytes.replace(b"\r\n", b"\n") != \
                 pkg_bytes.replace(b"\r\n", b"\n"):
             errors.append("копия identity.v1.json в пакете рассинхронизирована")
+
+    # 9. README.pypi.md: перечень операций полон (из контракта), а флаги
+    # в примерах существуют — описание не предлагает несуществующих
+    # параметров и не теряет новые операции.
+    pypi_readme = _read("README.pypi.md")
+    contract = _read_json("contract.v1.json")
+    for cmd in [t.get("command") for t in contract.get("tools", [])]:
+        if cmd and cmd not in pypi_readme:
+            errors.append("README.pypi.md: актуальный перечень пропустил "
+                          "операцию %s" % cmd)
+    vocab = set()
+    for t in contract.get("tools", []):
+        for mode in t.get("modes", []):
+            vocab.update(re.findall(r"--[a-z][a-z0-9-]*", str(mode)))
+    vocab.update(("--json", "--version", "--contract", "--selftest",
+                  "--help"))
+    for line in pypi_readme.split("\n"):
+        low = line.lower()
+        if "pip " in low or "npx " in low or "git clone" in low:
+            continue  # флаги чужих CLI (pip/npx/git) контрактом не правятся
+        for flag in re.findall(r"--[a-z][a-z0-9-]*", line):
+            if flag not in vocab:
+                errors.append("README.pypi.md: флаг %s не существует в "
+                              "modes контракта" % flag)
     return errors
 
 
@@ -273,6 +297,32 @@ def selftest() -> int:
         case("старое обещание в карточке плагина ловится (негатив)",
              any(".codex-plugin" in e and "запрещённое" in e
                  for e in errs4))
+        # негатив 5: актуальный перечень README.pypi.md пропустил новую
+        # операцию (humanizer-clean заменён на несуществующее имя).
+        pypi_path = os.path.join(td, "README.pypi.md")
+        with open(pypi_path, encoding="utf-8") as fh:
+            orig_pypi = fh.read()
+        with open(pypi_path, "w", encoding="utf-8") as fh:
+            fh.write(orig_pypi.replace("humanizer-clean", "humanizer-wipe"))
+        case("пропуск операции в перечне README.pypi ловится (негатив)",
+             any("пропустил операцию" in e for e in check()))
+        # негатив 6: несуществующий параметр в описании команды.
+        with open(pypi_path, "w", encoding="utf-8") as fh:
+            fh.write(orig_pypi.replace("- `humanizer-polish`",
+                                       "- `humanizer-polish --no-such-flag`"))
+        case("несуществующий параметр ловится (негатив)",
+             any("не существует в modes" in e for e in check()))
+        # негатив 7: полное исключение юридических документов (старое
+        # обещание шире реальной операции) — запрещённое заявление.
+        with open(pypi_path, "w", encoding="utf-8") as fh:
+            fh.write(orig_pypi + "\nДля текста не на русском, исходного "
+                                 "кода, юридических документов и "
+                                 "художественной прозы не предназначен.\n")
+        case("обещание шире операции (полное исключение жанров) ловится",
+             any("запрещённое" in e and "README.pypi" in e
+                 for e in check()))
+        with open(pypi_path, "w", encoding="utf-8") as fh:
+            fh.write(orig_pypi)
     finally:
         ROOT = old_root
         shutil.rmtree(td, ignore_errors=True)
