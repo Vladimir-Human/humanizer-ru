@@ -57,6 +57,13 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertIn("workflow_dispatch", self.rc)
         self.assertIn("inputs:", self.rc)
         self.assertIn("inputs.tag", self.rc)
+        self.assertIn("required: true", self.rc)
+        self.assertIn("ref: ${{ inputs.tag || github.ref_name }}", self.rc)
+
+    def test_publish_workflows_checkout_selected_tag(self):
+        self.assertIn("inputs.tag", self.pp)
+        self.assertIn("required: true", self.pp)
+        self.assertIn("ref: ${{ inputs.tag || github.ref_name }}", self.pp)
 
     def test_publish_needs_verified_build(self):
         self.assertIn("needs: build-and-test", self.pp)
