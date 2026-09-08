@@ -555,6 +555,12 @@ def _scope_note(text: str) -> str:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    raw = list(sys.argv[1:] if argv is None else argv)
+    divider = raw.index("--") if "--" in raw else len(raw)
+    if "--version" in raw[:divider]:
+        from humanizer_ru import __version__
+        print(__version__)
+        return 0
     parser = argparse.ArgumentParser(
         prog=TOOL, description="Сверка фактов двух версий текста (F1).")
     sub = parser.add_subparsers(dest="cmd")

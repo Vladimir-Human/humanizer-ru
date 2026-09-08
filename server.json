@@ -14,10 +14,16 @@
       "registryType": "pypi",
       "identifier": "humanizer-ru",
       "version": "3.35.1",
-      "runtimeHint": "uv",
+      "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
-      }
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "humanizer-mcp"
+        }
+      ]
     }
   ],
   "_meta": {

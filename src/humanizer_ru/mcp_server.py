@@ -839,10 +839,15 @@ def selftest() -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="MCP-сервер humanizer-ru (stdio, JSON-RPC 2.0, stdlib).")
+    ap.add_argument("--version", action="store_true",
+                    help="напечатать версию пакета и выйти")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--tools", action="store_true",
                     help="напечатать tools/list JSON и выйти")
     args = ap.parse_args(argv)
+    if args.version:
+        print(package_version())
+        return 0
     if args.selftest:
         return selftest()
     if args.tools:

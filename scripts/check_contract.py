@@ -80,19 +80,28 @@ def load_contract() -> dict:
 
 # ------------------------------------------------------------ мини-валидатор
 
-def _type_ok(value, name: str) -> bool:
-    if name == "integer":
-        return isinstance(value, int) and not isinstance(value, bool)
-    if name == "number":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
-    py = _TYPES.get(name)
-    if py is None:
-        return True  # неизвестный тип не ограничивает
-    if py is bool:
-        return isinstance(value, bool)
-    if py is dict or py is list or py is str:
-        return isinstance(value, py)
-    return isinstance(value, py)
+def _type_ok(value, name) -> bool:
+    """Проверить JSON Schema type, включая массив допустимых типов."""
+    names = name if isinstance(name, list) else [name]
+    if not names or not all(isinstance(item, str) for item in names):
+        return False
+    for item in names:
+        if item == "null" and value is None:
+            return True
+        if item == "integer" and isinstance(value, int) \
+                and not isinstance(value, bool):
+            return True
+        if item == "number" and isinstance(value, (int, float)) \
+                and not isinstance(value, bool):
+            return True
+        py = _TYPES.get(item)
+        if py is not None and isinstance(value, py):
+            return True
+        # Сохраняем прежнюю совместимость с расширением схемы: неизвестный
+        # тип не ограничивает значение, но только если он единственный.
+        if py is None and len(names) == 1:
+            return True
+    return False
 
 
 def schema_errors(value, schema, where: str = "$") -> list[str]:
@@ -110,7 +119,7 @@ def schema_errors(value, schema, where: str = "$") -> list[str]:
     if "enum" in schema and value not in schema["enum"]:
         errors.append("%s: значение %r вне enum %r" % (where, value, schema["enum"]))
     tname = schema.get("type")
-    if tname and not _type_ok(value, tname):
+    if tname is not None and not _type_ok(value, tname):
         errors.append("%s: тип %s, ожидался %s" % (where, type(value).__name__, tname))
         return errors
     if "anyOf" in schema:
@@ -308,6 +317,14 @@ def live_check() -> list[str]:
                               timeout=120, encoding="utf-8", errors="replace",
                               env=env_src, cwd=ROOT)
 
+    def _module_entry(module, cli_args):
+        code = ("from humanizer_ru.%s import main; import sys; "
+                "sys.exit(main(%r))" % (module, cli_args))
+        return subprocess.run([sys.executable, "-X", "utf8", "-c", code],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              timeout=120, encoding="utf-8", errors="replace",
+                              env=env_src, cwd=ROOT)
+
     proc = _cli_entry("clean_main", ["--json", fixture])
     if proc.returncode not in (0, 1):
         errors.append("humanizer-clean: код %d: %s"
@@ -328,6 +345,35 @@ def live_check() -> list[str]:
                               for e in schema_errors(payload, schema))
             else:
                 errors.append("humanizer-clean: в контракте нет output_schema")
+
+    # Facts/report обязаны проверяться успешным путём тоже. Ранее live probe
+    # проверял только четыре однофайловые команды, поэтому union type
+    # mtld: [number, null] в humanizer-report оставался непокрытым.
+    for command, entry, argv, ok_codes in (
+            ("humanizer-facts", "facts_diff",
+             ["diff", fixture, fixture, "--json"], (0,)),
+            ("humanizer-report", "edit_report",
+             [fixture, fixture, "--json"], (0,))):
+        proc = _module_entry(entry, argv)
+        if proc.returncode not in ok_codes:
+            errors.append("%s: код %d: %s"
+                          % (command, proc.returncode,
+                             proc.stderr.strip()[:200]))
+            continue
+        try:
+            payload = json.loads(proc.stdout)
+        except json.JSONDecodeError as exc:
+            errors.append("%s: вывод не JSON: %r" % (command, exc))
+            continue
+        if payload.get("tool") != command:
+            errors.append("%s: в конверте чужое имя %r"
+                          % (command, payload.get("tool")))
+        schema = schemas.get(command)
+        if isinstance(schema, dict):
+            errors.extend("%s: %s" % (command, e)
+                          for e in schema_errors(payload, schema))
+        else:
+            errors.append("%s: в контракте нет output_schema" % command)
 
     # out-of-scope: английский и пустой вход — status out-of-scope, код 0.
     with tempfile.TemporaryDirectory(prefix="contract-scope-") as td:
@@ -434,6 +480,18 @@ def live_check() -> list[str]:
         if not ok2:
             errors.append("cli.%s --contract: ожидался контракт из данных "
                           "пакета (код %d)" % (entry, proc.returncode))
+    for module in ("facts_diff", "edit_report", "mcp_server"):
+        code = ("from humanizer_ru.%s import main; import sys; "
+                "sys.exit(main(['--version']))" % module)
+        proc = subprocess.run(
+            [sys.executable, "-X", "utf8", "-c", code],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60,
+            encoding="utf-8", errors="replace", env=env, cwd=ROOT)
+        ver = proc.stdout.strip()
+        if proc.returncode != 0 or not re.match(r"^\d+\.\d+\.\d+$", ver):
+            errors.append("module.%s --version: ожидалась версия X.Y.Z, "
+                          "получено %r (код %d)"
+                          % (module, ver, proc.returncode))
     # MCP-smoke: сервер отвечает на initialize версией из контракта и несёт
     # четыре инструмента (полное conformance-ядро — scripts/check_mcp.py).
     try:
@@ -504,6 +562,13 @@ def selftest() -> int:
     bad_name = {"tool": "humanizer-scan", "schema": 1, "files": [{"file": "a"}]}
     case("чужое имя инструмента валится (const)",
          any("const" in e for e in schema_errors(bad_name, schema)))
+    nullable = {"type": ["number", "null"]}
+    case("union type number/null принимает null",
+         schema_errors(None, nullable) == [])
+    case("union type number/null принимает число",
+         schema_errors(1.25, nullable) == [])
+    case("union type number/null отвергает строку",
+         bool(schema_errors("1.25", nullable)))
 
     try:
         doc = load_contract()
