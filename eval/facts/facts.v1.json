@@ -1,622 +1,636 @@
 {
-  "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
-  "schema": "facts.schema.v1.json",
-  "updated": "2026-09-06",
-  "entries": [
-    {
-      "fact_id": "fp-zero-snap-2026-08-25",
-      "claim": "ноль ложных обвинений на 11 человеческих текстах: датированный снимок прогона 2026-08-25, а не свойство детектора",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0/11"
-      ],
-      "value_note": "0/11, Wilson 95% CI [0%; 25.9%]",
-      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
-      "reproduce": "python3 scripts/check_confidence.py --check",
-      "reproduce_public": true,
-      "date": "2026-08-25",
-      "note": "без даты ни одна величина не цитируется (ERRATA.md)"
-    },
-    {
-      "fact_id": "fp-zero-snap-2026-09-03",
-      "claim": "ноль ложных срабатываний regex-слоя на 26 человеческих текстах: датированный снимок парного прогона 2026-09-03 на корпусе полного дерева, а не свойство детектора",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0/26"
-      ],
-      "value_note": "0/26, Wilson 95% CI [0%; 12.9%]; корпус: 26 человеческих текстов, 24 машинных ответа 7 семейств, 2 boundary-контроля (eval/manifest.v1.json, все с sha256)",
-      "artifact": "research/leaderboard/reference-2026-09-03.json, research/leaderboard/smixs-2026-09-03.json, eval/manifest.v1.json",
-      "reproduce": "python3 eval/run_eval.py && python3 scripts/check_confidence.py --check",
-      "reproduce_public": true,
-      "date": "2026-09-03",
-      "note": "парный прогон одной даты с smixs/humanizer-ru (пин 91f70df); формализация предрегистрации когорты — research/leaderboard/cohort-prereg-2026-09-03.md (честная нота о порядке замера и формализации обязательна к цитированию); без даты величина не цитируется (ERRATA.md)",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "di-control-2026-09",
-      "claim": "положительный контроль Di не пройден: читательская панель из трёх семейств LLM не отличает сырой машинный текст от согласованного человеческого (две семьи — системная инверсия 0/18); различение Di главного прогона не интерпретируется",
-      "status": "limited",
-      "publication_approved": false,
-      "tokens": [
-        "0.444",
-        "0.000",
-        "8/18",
-        "0/18",
-        "0.246",
-        "0.663",
-        "0.176"
-      ],
-      "value_note": "qwen 0.444 (8/18, CI [0.246; 0.663]); deepseek 0.000 (0/18, CI [0.000; 0.176]); kimi 0.000 (0/18, CI [0.000; 0.176]); агрегат 0/18; вердикт FAIL; следствие — заявка C-класса",
-      "artifact": "research/DI-CONTROL-2026-09.md",
-      "reproduce": "python3 scripts/di_control_analyze.py",
-      "source_data": [
-        "research/di-control-2026-09/results-qwen.json (sha256 7d374522239612887eba9f5301eba4470051b3edb8168b8621925e6faa8a5fea)",
-        "research/di-control-2026-09/results-deepseek.json (sha256 87f908d7db2027da424e5c333a763946e0bad213105f21d2254acd40757cbeb8)",
-        "research/di-control-2026-09/results-kimi.json (sha256 3807c52a3b24a068f0e47beb830aa3c2aa552cb68a28f407f05512bee32717f4)",
-        "run:measurement/di-control-2026-09/sides.json (sha256 28f9c398733e9830f9a167eeaa3b5d91c5477dc28472b86cb8d15ac4fafbb279)"
-      ],
-      "date": "2026-09-03",
-      "note": "предрег research/di-control-2026-09/prereg.md заморожен до первого сужения (RUNLOG W-76, штамп research/prereg-stamps/MANIFEST.md); гриф «судьи LLM, до человеческого контроля»; конфлейт «человечность ↔ аккуратность» — гипотеза, не замер. 2026-09-06: публикация чисел приостановлена (publication_approved=false) — цепочка воспроизведения неисполнима из публичных данных: анализатору нужен каталог приватного прогона (sides.json, хеш зафиксирован в research/di-control-2026-09/PRIVATE-ARTIFACTS.md); прежняя команда воспроизведения вела на несуществующий путь tools/di_control_analyze.py, исправлена на фактический scripts/di_control_analyze.py; исторический отчёт и сырые суждения трёх семейств сохранены, эррата — ERRATA.md",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "private-run-artifact"
-      ]
-    },
-    {
-      "fact_id": "fp-repl-2026-08-31",
-      "claim": "реплика той же линии судьи 2026-08-31: два человеческих текста из 11 превысили порог обвинения",
-      "status": "limited",
-      "publication_approved": false,
-      "tokens": [
-        "2/11"
-      ],
-      "value_note": "2/11, Wilson 95% CI [5.1%; 47.7%]",
-      "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
-      "date": "2026-08-31",
-      "note": "обе поверхности датированы; ни одна не даёт права писать «FP = 0» без даты; артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
-      "assumptions": [
-        "single-family-panel",
-        "private-run-artifact"
-      ]
-    },
-    {
-      "fact_id": "fp-repl-scores-2026-08-31",
-      "claim": "скоры двух человеческих текстов в реплике 2026-08-31 выше порога 0.5",
-      "status": "limited",
-      "publication_approved": false,
-      "tokens": [
-        "0.65"
-      ],
-      "value_note": "два скора 0.65 при пороге обвинения 0.5",
-      "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
-      "date": "2026-08-31",
-      "note": "артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
-      "assumptions": [
-        "single-family-panel",
-        "private-run-artifact"
-      ]
-    },
-    {
-      "fact_id": "detect-overlap-ours-2026-08-12",
-      "claim": "совпадения regex-слоя классов A/B на нейтральном корпусе 2026-08-12: человеческие тексты и boundary-контроли",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0/11",
-        "2/2"
-      ],
-      "value_note": "0 совпадений на 11 человеческих текстах (Wilson 95% CI [0%; 25.9%]); 2/2 boundary-контроля",
-      "artifact": "research/leaderboard/*.json, eval/manifest.v1.json",
-      "reproduce": "python3 eval/run_eval.py",
-      "reproduce_public": true,
-      "date": "2026-08-12"
-    },
-    {
-      "fact_id": "detect-overlap-smixs-2026-08-12",
-      "claim": "снимок третьей стороны: smixs/humanizer-ru на том же нейтральном корпусе",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "1/2"
-      ],
-      "value_note": "1/2 boundary-контролей (остальные ячейки строки — целые счётчики)",
-      "artifact": "research/leaderboard/*.json",
-      "date": "2026-08-12",
-      "note": "коммит 91f70df11f7fb30722e6fcf18803d402e2d86a53 (2026-08-05), MIT; числа столбца не сравнимы между кандидатами"
-    },
-    {
-      "fact_id": "axis-delta-llmrubric-2026-08-25",
-      "claim": "дельта детектируемости до/после (llm_rubric) — интерпретация как показателя качества после переписывания ОТОЗВАНА",
-      "status": "withdrawn",
-      "publication_approved": true,
-      "tokens": [
-        "0.846",
-        "0.438",
-        "0.408",
-        "11/12"
-      ],
-      "value_note": "скор raw 0.846 → после 0.438; дельта −0.408; 11/12 пар ниже; ячейка FP этой строки — отдельная запись (0/11)",
-      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
-      "reproduce": "python3 eval/reproduce.py",
-      "reproduce_public": true,
-      "retraction": "ERRATA.md (2026-09-01), research/AXIS-RUBRIC-RETRACTION-2026-09-01.md",
-      "date": "2026-08-25",
-      "note": "число воспроизводится; эффект даёт срез формата и обвязки (3/3 семьи), а не смысловая перезапись (0/3)"
-    },
-    {
-      "fact_id": "axis-delta-ttr-2026-08-25",
-      "claim": "дельта stdlib-прокси лексического разнообразия (ttr_lexdiv) — относительная метрика одной даты, не вердикт",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.414",
-        "0.309",
-        "0.105",
-        "6/9"
-      ],
-      "value_note": "скор raw 0.414 → после 0.309; дельта −0.105; 6/9 валидных пар ниже (3 пары короче 20 токенов — guard None)",
-      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
-      "reproduce": "python3 eval/reproduce.py --report eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
-      "reproduce_public": true,
-      "date": "2026-08-25",
-      "note": "якоря — эвристика уровня O; регрессии на 3 парах задокументированы в JSON"
-    },
-    {
-      "fact_id": "axis-noise-ttr-2026-08-25",
-      "claim": "шум ttr_lexdiv на человеческих текстах: максимум ниже порога",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.411"
-      ],
-      "value_note": "максимальный скор 0.411 (it-notation) при пороге 0.5",
-      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
-      "date": "2026-08-25"
-    },
-    {
-      "fact_id": "panel-precedent-g5-2026-08-28",
-      "claim": "прецедент двухсемейной репликации слепой панели (норма 2026-08-28): G5, согласие семей",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "14/14"
-      ],
-      "value_note": "Qwen3.7-max и GLM-5.2 дали одинаковый вердикт 14/14 (p=0.000122)",
-      "artifact": "research/agent/G5-exp1-report.md, research/superposition/2026-08-28-q4-judge-panel/",
-      "date": "2026-08-28",
-      "note": "панельные числа — со статусом и оговоркой о позиционном шуме; механические оси второй семьи не требуют"
-    },
-    {
-      "fact_id": "softlayer-realistic-corpus-2026-09-01",
-      "claim": "мягкий слой на реалистичном корпусе: рабочей точки «FP=0 при ненулевом recall» не существует; прежняя заявка «62.5% при FP=0» отозвана",
-      "status": "withdrawn",
-      "publication_approved": true,
-      "tokens": [
-        "0.211",
-        "0.140",
-        "0.306",
-        "0.491",
-        "0.445",
-        "0.538"
-      ],
-      "value_note": "T=1/K=1: recall 0.211 [0.140; 0.306] при доле ложных обвинений 0.491 [0.445; 0.538]; корпус: 90 машинных против 440 человеческих",
-      "artifact": "run:experiments/w3-threshold.json (прогон run-20260831)",
-      "retraction": "ERRATA.md (2026-09-01), статус-баннеры research/F5-* и research/soft-threshold-sweep/",
-      "date": "2026-09-01",
-      "note": "отозванное число 62.5% в витринных текстах не встречается; здесь — честный замер на реалистичном корпусе; артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
-      "assumptions": [
-        "private-run-artifact"
-      ]
-    },
-    {
-      "fact_id": "flagship-signtest-2026-08-25",
-      "claim": "знак-тест флагманской дельты — принадлежит отозванной интерпретации",
-      "status": "withdrawn",
-      "publication_approved": true,
-      "tokens": [
-        "0.006"
-      ],
-      "value_note": "двусторонний знак-тест, 11/12 пар ниже, p=0.006",
-      "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
-      "reproduce": "python3 eval/reproduce.py",
-      "reproduce_public": true,
-      "retraction": "ERRATA.md (2026-09-01)",
-      "date": "2026-08-25",
-      "note": "цитируется только в документе-отзыве"
-    },
-    {
-      "fact_id": "conj-genre-matched-in-retraction",
-      "claim": "жанрово-согласованный пересчёт частоты связок на свежих людях, процитированный в документе-отзыве",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.873",
-        "0.810",
-        "0.928",
-        "0.735",
-        "0.619",
-        "0.841"
-      ],
-      "value_note": "инструкции: AUC 0.873 CI [0.810; 0.928] — проходит; эссе: 0.735 CI [0.619; 0.841] — не проходит",
-      "artifact": "run:experiments/genre-matched.json (прогон run-20260831)",
-      "date": "2026-09-01",
-      "note": "домен — чистая проза; публикация значения одобрена ответом владельца (RELEASE-REQUEST-01, пункт 2); артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
-      "assumptions": [
-        "private-run-artifact"
-      ]
-    },
-    {
-      "fact_id": "rewrite-measurement-2026-09",
-      "claim": "отчёт измерения переписывания Фазы 3 (предрегистрация v4): гриф «судьи LLM, до человеческого контроля», заявка ветви B с двумя оговорками как составной частью, честный MISS A/B варианта 2 с дефектом сетки 1/42; контейнерная запись — все десятичные и дробные числа страницы покрыты ею",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.024",
-        "0.048",
-        "0.080",
-        "0.095",
-        "0.0952",
-        "0.10",
-        "0.1190",
-        "0.20",
-        "0.25",
-        "0.294",
-        "0.41",
-        "0.444",
-        "0.50",
-        "0.556",
-        "0.60",
-        "0.625",
-        "0.714",
-        "0.8147",
-        "0.833",
-        "0.849",
-        "0.870",
-        "0.889",
-        "0.929",
-        "0/37",
-        "0/43",
-        "1/34",
-        "1/42",
-        "1/43",
-        "107/126",
-        "117/126",
-        "12/18",
-        "17/17",
-        "18/18",
-        "31/42",
-        "35/42",
-        "37/42",
-        "39/39",
-        "39/42",
-        "4/192",
-        "4/4",
-        "41/42",
-        "53/53",
-        "7/17",
-        "8.0223",
-        "8.3946",
-        "8/8"
-      ],
-      "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
-      "date": "2026-09-03",
-      "note": "одобрение чисел — ответ владельца 2026-09-02 (решение 3.2=B); публикация — RELEASE-REQUEST-02 пункт 1, ключ «публикую 1-2-3» 2026-09-03; воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "positional-noise-documented"
-      ]
-    },
-    {
-      "fact_id": "rewrite-claim-pq-2026-09",
-      "claim": "заявка Pq (ветвь B, предрег v4 §7): доля читательского предпочтения переписи против машинного оригинала 1.0 (18/18 пар), точный 95% CI (0.8147; 1.0); судьи — LLM, до человеческого контроля",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "18/18",
-        "0.8147"
-      ],
-      "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
-      "date": "2026-09-03",
-      "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "positional-noise-documented"
-      ]
-    },
-    {
-      "fact_id": "rewrite-claim-sp-2026-09",
-      "claim": "заявка Sp (ветвь B): предпочтение специфично относительно плацебо-правки — 1.0 (доли предпочтения плацебо 0.0 у всех трёх семейств); оговорка: контраст не отделяет «короче» от «лучше» (плацебо сохраняло объём)",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "18/18"
-      ],
-      "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
-      "date": "2026-09-03",
-      "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "positional-noise-documented"
-      ]
-    },
-    {
-      "fact_id": "rewrite-claim-di-2026-09",
-      "claim": "заявка Di (ветвь B): различение переписи от согласованного человеческого текста 0.41 (7/17 определённых пар), по семействам 0.444 / 0.294 / 0.556 — с оговоркой 1: положительный контроль не исполнен, значение совместимо с неспособностью судей отличать машинное от человеческого",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.41",
-        "7/17",
-        "0.444",
-        "0.294",
-        "0.556"
-      ],
-      "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
-      "date": "2026-09-03",
-      "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "positional-noise-documented"
-      ]
-    },
-    {
-      "fact_id": "rewrite-claim-length-2026-09",
-      "claim": "оговорка длины (составная часть заявки B): перепись короче оригинала в 18/18 пар, средняя дельта −195.1 символа (≈2418.8 → ≈2223.7); дизайн не различает «предпочитают перепись» и «предпочитают короче»",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "18/18"
-      ],
-      "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
-      "date": "2026-09-03",
-      "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
-      "assumptions": [
-        "llm-judge-oracle",
-        "prereg-frozen",
-        "positional-noise-documented"
-      ]
-    },
-    {
-      "fact_id": "fact-loss-2026-09",
-      "claim": "корпусная метрика потерь фактов при переписывании: доли пар с lost/changed и с added по трём наборам пар, один проход по замороженному предрегу factloss-prereg-2026-09",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.00",
-        "0.0000",
-        "0.0224",
-        "0.1250",
-        "0.2555",
-        "0.3441",
-        "0.3543",
-        "0.4451",
-        "0.4685",
-        "0.4709",
-        "0.5699",
-        "0.6078",
-        "0.6658",
-        "0.8241",
-        "0.8333",
-        "0.9416",
-        "1.00",
-        "1.0000",
-        "3.20"
-      ],
-      "value_note": "S1 core 0.00/0.00; S1 все 0.125/0.125; S2 lost 0.5699, added 0.3441; S3 lost 0.8333, added 1.00; CI в отчёте; инструмент переоценивает потери из-за сравнения чисел с единицей (консервативно)",
-      "artifact": "research/FACT-LOSS-2026.md",
-      "reproduce": "python tools/factloss_measure.py (один проход; предрег заморожен, повтор — только новым предрегом)",
-      "date": "2026-09-04",
-      "note": "измерение, не контроль: порогов нет; границы инструмента и направленность ошибки записаны в отчёте; тексты пар не публикуются (S3 — habr-контроли без лицензии, только агрегаты)",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "fp-corpus-2026-09",
-      "claim": "ложные срабатывания детекторного слоя (маркеры классов A/B) на корпусах текстов-неносителей: точечная доля и Wilson 95% CI по стратам и overall по единственному проходу замороженного предрега f16-fp-corpus-prereg-2026-09",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.0000",
-        "0.0003",
-        "0.0006",
-        "0.0013",
-        "0.02",
-        "0.0876"
-      ],
-      "value_note": "overall n=12354 fp=8 доля 0.0006 CI [0.0003; 0.0013]; цель 0.02 достигнута; отклонения предрега задокументированы в отчёте",
-      "artifact": "research/FP-CORPUS-2026.md",
-      "reproduce": "python tools/fp_corpus_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
-      "date": "2026-09-04",
-      "note": "тексты корпусов не публикуются (CoAT human включает НКРЯ и соцсети; только локально, наружу агрегаты); MultiSocial restricted исключён; Taiga исключена по правилу размера",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "adversarial-robustness-2026-09",
-      "claim": "recall детекторного слоя по операторам мутаций и глубинам 1-3 в единственной рабочей точке бинарного детектора по замороженному предрегу f3-adversarial-prereg-2026-09",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.0003",
-        "0.0006",
-        "0.0013",
-        "0.1316",
-        "0.2105",
-        "0.2632",
-        "0.2895",
-        "0.4737",
-        "0.50",
-        "0.6579",
-        "0.6842",
-        "0.70",
-        "0.7368",
-        "0.8421",
-        "0.90",
-        "0.9211",
-        "0.9737",
-        "1.0000"
-      ],
-      "value_note": "матрица recall x оператор x глубина в research/ADVERSARIAL-ROBUSTNESS-2026.md; FPR рабочей точки из F16; операторы ниже порога опубликованы как границы с планом ремонта F9",
-      "artifact": "research/ADVERSARIAL-ROBUSTNESS-2026.md",
-      "reproduce": "python tools/adversarial_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
-      "date": "2026-09-04",
-      "note": "измеряется только собственный детекторный слой; публикация не является обучающим сигналом для сторонних детекторов",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "marker-lr-2026-09",
-      "claim": "отношения правдоподобия маркеров классов A/B между машинной стратой CoAT и неносителями F16 по замороженному предрегу f17-lr-prereg-2026-09; пороги не достигнуты, маркеры копипаста не калибруются на машинной популяции без артефактов",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.0000",
-        "0.0003",
-        "0.0015",
-        "0.0019",
-        "0.0022",
-        "0.0026",
-        "0.0032",
-        "0.0037",
-        "2.5299",
-        "3.8531"
-      ],
-      "value_note": "p1 класса A на машинной страте 0; невидимые B LR_lower 2.5299 и 3.8531 (шкала ограниченное); план калибровки на артефактных популяциях в BACKLOG",
-      "artifact": "research/MARKER-LR-2026.md",
-      "reproduce": "python tools/marker_lr_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
-      "date": "2026-09-04",
-      "note": "LR не является вердиктом об авторстве и не выводится пользователю (Главное правило)",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "adversarial-robustness-v2-2026-09",
-      "claim": "adversarial-кривая v2: self-attack (--remove ratio и SKILL-rewrite FPR), FPR-кривая на human-мутантах, recall на двух поколениях машинных, retention сигнатур, McNemar и бутстрэп по замороженному предрегу f3-adversarial-prereg-v2",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.0067",
-        "0.03",
-        "0.0333",
-        "0.04",
-        "0.0526",
-        "0.0789",
-        "0.1053",
-        "0.1316",
-        "0.1579",
-        "0.2632",
-        "0.3158",
-        "0.3684",
-        "0.4211",
-        "0.4474",
-        "0.5789",
-        "0.6579",
-        "0.7368",
-        "0.7632",
-        "0.8158",
-        "0.8421",
-        "0.9211",
-        "0.9474"
-      ],
-      "value_note": "self-attack --remove ratio 0.1579 (порог 0.5 не достигнут, интерпретация в отчёте); FPR 0.0 во всех точках; recall на машинных около нуля (граница продукта); retention деградирует монотонно у zero-width/homoglyph/typo",
-      "artifact": "research/ADVERSARIAL-ROBUSTNESS-V2-2026.md",
-      "reproduce": "tools/mutants_build.py + tools/f3v2_measure.py + tools/f3v2_rewrite_measure.py (один проход; предрег read-only после прохода)",
-      "date": "2026-09-04",
-      "note": "выводы по классам операторов не смешиваются; регенерация не читается как устойчивость",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "f8-umbrella-2026-09",
-      "claim": "зонтичный корпус F8-узла: ROC/AUC мягких сигналов по поколениям и доменам, вердикт F12 excess-vocabulary, детектируемость docx-осей, baseline сигнатур, sensitivity на immutable blob'ах, FP тяжёлого домена — один проход по замороженному предрегу f8-umbrella-prereg-2026-09",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0.0003",
-        "0.0006",
-        "0.0013",
-        "0.0061",
-        "0.0081",
-        "0.016",
-        "0.0193",
-        "0.0236",
-        "0.0301",
-        "0.0326",
-        "0.0361",
-        "0.0472",
-        "0.0526",
-        "0.0591",
-        "0.0672",
-        "0.0734",
-        "0.0951",
-        "0.1425",
-        "0.1626",
-        "0.1835",
-        "0.204",
-        "0.3191",
-        "0.4617",
-        "0.4854",
-        "0.5139",
-        "0.52",
-        "0.5633",
-        "0.602",
-        "0.6068",
-        "0.6081",
-        "0.6119",
-        "0.6167",
-        "0.6211",
-        "0.6255",
-        "0.6382",
-        "0.6487",
-        "0.6933"
-      ],
-      "value_note": "вердикты и числа в research/F8-UMBRELLA-2026.md; дефицит тяжёлой страты 381 против 500 зафиксирован в предреге; OCR-страта недоступна",
-      "artifact": "research/F8-UMBRELLA-2026.md",
-      "reproduce": "tools/f8_corpus_build.py + tools/f8_measure.py (один проход; предрег read-only после прохода)",
-      "date": "2026-09-04",
-      "note": "фрагменты корпусов не публикуются; наружу агрегаты и хеши",
-      "assumptions": [
-        "prereg-frozen"
-      ]
-    },
-    {
-      "fact_id": "external-contributors-2026-09",
-      "claim": "внешние участники на 2026-09-05: внешних issues 0 из 12 открытых и закрытых (все от проекта); 1 внешний автор PR — inquilabee, PR 41, 2026-07-29, закрыт без слияния; KPI 30 дней — первый внешний пользователь с issue или обсуждением",
-      "status": "limited",
-      "publication_approved": true,
-      "tokens": [
-        "0/12"
-      ],
-      "artifact": "research/SPRINT-LEADERSHIP-2026-09-05.md",
-      "date": "2026-09-05",
-      "reproduce": "gh pr list --state all --json number,author; gh issue list --state all --json number,author",
-      "note": "публикация по приказу рывка N1-N40 от 2026-09-05 (пункт L5: счётчик внешних участников в реестре фактов с датой); обновление счётчика — новым снимком, не правкой этой записи"
-    },
-    {
-      "fact_id": "glama-listing-2026-09",
-      "claim": "MCP-сервер humanizer-ru представлен в каталоге Glama (страница сервера отвечает 200, заголовок «humanizer-ru by Vladimir-Human»); листинг размещён сопровождающим",
-      "status": "proven",
-      "publication_approved": true,
-      "tokens": [
-        "1/1"
-      ],
-      "artifact": "research/DISTRIBUTION-JOURNAL.md",
-      "date": "2026-09-06",
-      "reproduce": "curl -sI https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru | head -1"
-    }
-  ]
+ "registry": "humanizer-ru facts: публичные числа витрины (единственный источник)",
+ "schema": "facts.schema.v1.json",
+ "updated": "2026-09-08",
+ "entries": [
+  {
+   "fact_id": "fp-zero-snap-2026-08-25",
+   "claim": "ноль ложных обвинений на 11 человеческих текстах: датированный снимок прогона 2026-08-25, а не свойство детектора",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0/11"
+   ],
+   "value_note": "0/11, Wilson 95% CI [0%; 25.9%]",
+   "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+   "reproduce": "python3 scripts/check_confidence.py --check",
+   "reproduce_public": true,
+   "date": "2026-08-25",
+   "note": "без даты ни одна величина не цитируется (ERRATA.md)"
+  },
+  {
+   "fact_id": "fp-zero-snap-2026-09-03",
+   "claim": "ноль ложных срабатываний regex-слоя на 26 человеческих текстах: датированный снимок парного прогона 2026-09-03 на корпусе полного дерева, а не свойство детектора",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0/26"
+   ],
+   "value_note": "0/26, Wilson 95% CI [0%; 12.9%]; корпус: 26 человеческих текстов, 24 машинных ответа 7 семейств, 2 boundary-контроля (eval/manifest.v1.json, все с sha256)",
+   "artifact": "research/leaderboard/reference-2026-09-03.json, research/leaderboard/smixs-2026-09-03.json, eval/manifest.v1.json",
+   "reproduce": "python3 eval/run_eval.py && python3 scripts/check_confidence.py --check",
+   "reproduce_public": true,
+   "date": "2026-09-03",
+   "note": "парный прогон одной даты с smixs/humanizer-ru (пин 91f70df); формализация предрегистрации когорты — research/leaderboard/cohort-prereg-2026-09-03.md (честная нота о порядке замера и формализации обязательна к цитированию); без даты величина не цитируется (ERRATA.md)",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "di-control-2026-09",
+   "claim": "положительный контроль Di не пройден: читательская панель из трёх семейств LLM не отличает сырой машинный текст от согласованного человеческого (две семьи — системная инверсия 0/18); различение Di главного прогона не интерпретируется",
+   "status": "limited",
+   "publication_approved": false,
+   "tokens": [
+    "0.444",
+    "0.000",
+    "8/18",
+    "0/18",
+    "0.246",
+    "0.663",
+    "0.176"
+   ],
+   "value_note": "qwen 0.444 (8/18, CI [0.246; 0.663]); deepseek 0.000 (0/18, CI [0.000; 0.176]); kimi 0.000 (0/18, CI [0.000; 0.176]); агрегат 0/18; вердикт FAIL; следствие — заявка C-класса",
+   "artifact": "research/DI-CONTROL-2026-09.md",
+   "reproduce": "python3 scripts/di_control_analyze.py",
+   "source_data": [
+    "research/di-control-2026-09/results-qwen.json (sha256 7d374522239612887eba9f5301eba4470051b3edb8168b8621925e6faa8a5fea)",
+    "research/di-control-2026-09/results-deepseek.json (sha256 87f908d7db2027da424e5c333a763946e0bad213105f21d2254acd40757cbeb8)",
+    "research/di-control-2026-09/results-kimi.json (sha256 3807c52a3b24a068f0e47beb830aa3c2aa552cb68a28f407f05512bee32717f4)",
+    "run:measurement/di-control-2026-09/sides.json (sha256 28f9c398733e9830f9a167eeaa3b5d91c5477dc28472b86cb8d15ac4fafbb279)"
+   ],
+   "date": "2026-09-03",
+   "note": "предрег research/di-control-2026-09/prereg.md заморожен до первого сужения (RUNLOG W-76, штамп research/prereg-stamps/MANIFEST.md); гриф «судьи LLM, до человеческого контроля»; конфлейт «человечность ↔ аккуратность» — гипотеза, не замер. 2026-09-06: публикация чисел приостановлена (publication_approved=false) — цепочка воспроизведения неисполнима из публичных данных: анализатору нужен каталог приватного прогона (sides.json, хеш зафиксирован в research/di-control-2026-09/PRIVATE-ARTIFACTS.md); прежняя команда воспроизведения вела на несуществующий путь tools/di_control_analyze.py, исправлена на фактический scripts/di_control_analyze.py; исторический отчёт и сырые суждения трёх семейств сохранены, эррата — ERRATA.md",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "private-run-artifact"
+   ]
+  },
+  {
+   "fact_id": "fp-repl-2026-08-31",
+   "claim": "реплика той же линии судьи 2026-08-31: два человеческих текста из 11 превысили порог обвинения",
+   "status": "limited",
+   "publication_approved": false,
+   "tokens": [
+    "2/11"
+   ],
+   "value_note": "2/11, Wilson 95% CI [5.1%; 47.7%]",
+   "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
+   "date": "2026-08-31",
+   "note": "обе поверхности датированы; ни одна не даёт права писать «FP = 0» без даты; артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
+   "assumptions": [
+    "single-family-panel",
+    "private-run-artifact"
+   ]
+  },
+  {
+   "fact_id": "fp-repl-scores-2026-08-31",
+   "claim": "скоры двух человеческих текстов в реплике 2026-08-31 выше порога 0.5",
+   "status": "limited",
+   "publication_approved": false,
+   "tokens": [
+    "0.65"
+   ],
+   "value_note": "два скора 0.65 при пороге обвинения 0.5",
+   "artifact": "run:w1-gates/w1-decomposition.json (прогон run-20260831)",
+   "date": "2026-08-31",
+   "note": "артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
+   "assumptions": [
+    "single-family-panel",
+    "private-run-artifact"
+   ]
+  },
+  {
+   "fact_id": "detect-overlap-ours-2026-08-12",
+   "claim": "совпадения regex-слоя классов A/B на нейтральном корпусе 2026-08-12: человеческие тексты и boundary-контроли",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0/11",
+    "2/2"
+   ],
+   "value_note": "0 совпадений на 11 человеческих текстах (Wilson 95% CI [0%; 25.9%]); 2/2 boundary-контроля",
+   "artifact": "research/leaderboard/*.json, eval/manifest.v1.json",
+   "reproduce": "python3 eval/run_eval.py",
+   "reproduce_public": true,
+   "date": "2026-08-12"
+  },
+  {
+   "fact_id": "detect-overlap-smixs-2026-08-12",
+   "claim": "снимок третьей стороны: smixs/humanizer-ru на том же нейтральном корпусе",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "1/2"
+   ],
+   "value_note": "1/2 boundary-контролей (остальные ячейки строки — целые счётчики)",
+   "artifact": "research/leaderboard/*.json",
+   "date": "2026-08-12",
+   "note": "коммит 91f70df11f7fb30722e6fcf18803d402e2d86a53 (2026-08-05), MIT; числа столбца не сравнимы между кандидатами"
+  },
+  {
+   "fact_id": "axis-delta-llmrubric-2026-08-25",
+   "claim": "дельта детектируемости до/после (llm_rubric) — интерпретация как показателя качества после переписывания ОТОЗВАНА",
+   "status": "withdrawn",
+   "publication_approved": true,
+   "tokens": [
+    "0.846",
+    "0.438",
+    "0.408",
+    "11/12"
+   ],
+   "value_note": "скор raw 0.846 → после 0.438; дельта −0.408; 11/12 пар ниже; ячейка FP этой строки — отдельная запись (0/11)",
+   "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+   "reproduce": "python3 eval/reproduce.py",
+   "reproduce_public": true,
+   "retraction": "ERRATA.md (2026-09-01), research/AXIS-RUBRIC-RETRACTION-2026-09-01.md",
+   "date": "2026-08-25",
+   "note": "число воспроизводится; эффект даёт срез формата и обвязки (3/3 семьи), а не смысловая перезапись (0/3)"
+  },
+  {
+   "fact_id": "axis-delta-ttr-2026-08-25",
+   "claim": "дельта stdlib-прокси лексического разнообразия (ttr_lexdiv) — относительная метрика одной даты, не вердикт",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.414",
+    "0.309",
+    "0.105",
+    "6/9"
+   ],
+   "value_note": "скор raw 0.414 → после 0.309; дельта −0.105; 6/9 валидных пар ниже (3 пары короче 20 токенов — guard None)",
+   "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+   "reproduce": "python3 eval/reproduce.py --report eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+   "reproduce_public": true,
+   "date": "2026-08-25",
+   "note": "якоря — эвристика уровня O; регрессии на 3 парах задокументированы в JSON"
+  },
+  {
+   "fact_id": "axis-noise-ttr-2026-08-25",
+   "claim": "шум ttr_lexdiv на человеческих текстах: максимум ниже порога",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.411"
+   ],
+   "value_note": "максимальный скор 0.411 (it-notation) при пороге 0.5",
+   "artifact": "eval/detect-results/2026-08-25-detect-axis-12-ttr.json",
+   "date": "2026-08-25"
+  },
+  {
+   "fact_id": "panel-precedent-g5-2026-08-28",
+   "claim": "прецедент двухсемейной репликации слепой панели (норма 2026-08-28): G5, согласие семей",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "14/14"
+   ],
+   "value_note": "Qwen3.7-max и GLM-5.2 дали одинаковый вердикт 14/14 (p=0.000122)",
+   "artifact": "research/agent/G5-exp1-report.md, research/superposition/2026-08-28-q4-judge-panel/",
+   "date": "2026-08-28",
+   "note": "панельные числа — со статусом и оговоркой о позиционном шуме; механические оси второй семьи не требуют"
+  },
+  {
+   "fact_id": "softlayer-realistic-corpus-2026-09-01",
+   "claim": "мягкий слой на реалистичном корпусе: рабочей точки «FP=0 при ненулевом recall» не существует; прежняя заявка «62.5% при FP=0» отозвана",
+   "status": "withdrawn",
+   "publication_approved": true,
+   "tokens": [
+    "0.211",
+    "0.140",
+    "0.306",
+    "0.491",
+    "0.445",
+    "0.538"
+   ],
+   "value_note": "T=1/K=1: recall 0.211 [0.140; 0.306] при доле ложных обвинений 0.491 [0.445; 0.538]; корпус: 90 машинных против 440 человеческих",
+   "artifact": "run:experiments/w3-threshold.json (прогон run-20260831)",
+   "retraction": "ERRATA.md (2026-09-01), статус-баннеры research/F5-* и research/soft-threshold-sweep/",
+   "date": "2026-09-01",
+   "note": "отозванное число 62.5% в витринных текстах не встречается; здесь — честный замер на реалистичном корпусе; артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
+   "assumptions": [
+    "private-run-artifact"
+   ]
+  },
+  {
+   "fact_id": "flagship-signtest-2026-08-25",
+   "claim": "знак-тест флагманской дельты — принадлежит отозванной интерпретации",
+   "status": "withdrawn",
+   "publication_approved": true,
+   "tokens": [
+    "0.006"
+   ],
+   "value_note": "двусторонний знак-тест, 11/12 пар ниже, p=0.006",
+   "artifact": "eval/detect-results/2026-08-25-detect-axis-12-glm53.json",
+   "reproduce": "python3 eval/reproduce.py",
+   "reproduce_public": true,
+   "retraction": "ERRATA.md (2026-09-01)",
+   "date": "2026-08-25",
+   "note": "цитируется только в документе-отзыве"
+  },
+  {
+   "fact_id": "conj-genre-matched-in-retraction",
+   "claim": "жанрово-согласованный пересчёт частоты связок на свежих людях, процитированный в документе-отзыве",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.873",
+    "0.810",
+    "0.928",
+    "0.735",
+    "0.619",
+    "0.841"
+   ],
+   "value_note": "инструкции: AUC 0.873 CI [0.810; 0.928] — проходит; эссе: 0.735 CI [0.619; 0.841] — не проходит",
+   "artifact": "run:experiments/genre-matched.json (прогон run-20260831)",
+   "date": "2026-09-01",
+   "note": "домен — чистая проза; публикация значения одобрена ответом владельца (RELEASE-REQUEST-01, пункт 2); артефакт приватного прогона, публикация данных — после лицензионного и privacy-гейта",
+   "assumptions": [
+    "private-run-artifact"
+   ]
+  },
+  {
+   "fact_id": "rewrite-measurement-2026-09",
+   "claim": "отчёт измерения переписывания Фазы 3 (предрегистрация v4): гриф «судьи LLM, до человеческого контроля», заявка ветви B с двумя оговорками как составной частью, честный MISS A/B варианта 2 с дефектом сетки 1/42; контейнерная запись — все десятичные и дробные числа страницы покрыты ею",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.024",
+    "0.048",
+    "0.080",
+    "0.095",
+    "0.0952",
+    "0.10",
+    "0.1190",
+    "0.20",
+    "0.25",
+    "0.294",
+    "0.41",
+    "0.444",
+    "0.50",
+    "0.556",
+    "0.60",
+    "0.625",
+    "0.714",
+    "0.8147",
+    "0.833",
+    "0.849",
+    "0.870",
+    "0.889",
+    "0.929",
+    "0/37",
+    "0/43",
+    "1/34",
+    "1/42",
+    "1/43",
+    "107/126",
+    "117/126",
+    "12/18",
+    "17/17",
+    "18/18",
+    "31/42",
+    "35/42",
+    "37/42",
+    "39/39",
+    "39/42",
+    "4/192",
+    "4/4",
+    "41/42",
+    "53/53",
+    "7/17",
+    "8.0223",
+    "8.3946",
+    "8/8"
+   ],
+   "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
+   "date": "2026-09-03",
+   "note": "одобрение чисел — ответ владельца 2026-09-02 (решение 3.2=B); публикация — RELEASE-REQUEST-02 пункт 1, ключ «публикую 1-2-3» 2026-09-03; воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "positional-noise-documented"
+   ]
+  },
+  {
+   "fact_id": "rewrite-claim-pq-2026-09",
+   "claim": "заявка Pq (ветвь B, предрег v4 §7): доля читательского предпочтения переписи против машинного оригинала 1.0 (18/18 пар), точный 95% CI (0.8147; 1.0); судьи — LLM, до человеческого контроля",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "18/18",
+    "0.8147"
+   ],
+   "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
+   "date": "2026-09-03",
+   "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "positional-noise-documented"
+   ]
+  },
+  {
+   "fact_id": "rewrite-claim-sp-2026-09",
+   "claim": "заявка Sp (ветвь B): предпочтение специфично относительно плацебо-правки — 1.0 (доли предпочтения плацебо 0.0 у всех трёх семейств); оговорка: контраст не отделяет «короче» от «лучше» (плацебо сохраняло объём)",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "18/18"
+   ],
+   "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
+   "date": "2026-09-03",
+   "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "positional-noise-documented"
+   ]
+  },
+  {
+   "fact_id": "rewrite-claim-di-2026-09",
+   "claim": "заявка Di (ветвь B): различение переписи от согласованного человеческого текста 0.41 (7/17 определённых пар), по семействам 0.444 / 0.294 / 0.556 — с оговоркой 1: положительный контроль не исполнен, значение совместимо с неспособностью судей отличать машинное от человеческого",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.41",
+    "7/17",
+    "0.444",
+    "0.294",
+    "0.556"
+   ],
+   "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
+   "date": "2026-09-03",
+   "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "positional-noise-documented"
+   ]
+  },
+  {
+   "fact_id": "rewrite-claim-length-2026-09",
+   "claim": "оговорка длины (составная часть заявки B): перепись короче оригинала в 18/18 пар, средняя дельта −195.1 символа (≈2418.8 → ≈2223.7); дизайн не различает «предпочитают перепись» и «предпочитают короче»",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "18/18"
+   ],
+   "artifact": "research/REWRITE-MEASUREMENT-2026-09.md (sha256 B2E713FE653C9AC38CCBDB22BAB0464365682474CFEAF8B2FF74E3C4354618F9)",
+   "date": "2026-09-03",
+   "note": "воспроизведение из публичных данных отсутствует: артефакт приватного прогона (run-20260831); набор воспроизведения (сырые транскрипты и замороженный анализатор) публикуется следующим шагом и только после лицензионного и privacy-гейта — см. §9 отчёта",
+   "assumptions": [
+    "llm-judge-oracle",
+    "prereg-frozen",
+    "positional-noise-documented"
+   ]
+  },
+  {
+   "fact_id": "fact-loss-2026-09",
+   "claim": "корпусная метрика потерь фактов при переписывании: доли пар с lost/changed и с added по трём наборам пар, один проход по замороженному предрегу factloss-prereg-2026-09",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.00",
+    "0.0000",
+    "0.0224",
+    "0.1250",
+    "0.2555",
+    "0.3441",
+    "0.3543",
+    "0.4451",
+    "0.4685",
+    "0.4709",
+    "0.5699",
+    "0.6078",
+    "0.6658",
+    "0.8241",
+    "0.8333",
+    "0.9416",
+    "1.00",
+    "1.0000",
+    "3.20"
+   ],
+   "value_note": "S1 core 0.00/0.00; S1 все 0.125/0.125; S2 lost 0.5699, added 0.3441; S3 lost 0.8333, added 1.00; CI в отчёте; инструмент переоценивает потери из-за сравнения чисел с единицей (консервативно)",
+   "artifact": "research/FACT-LOSS-2026.md",
+   "reproduce": "python tools/factloss_measure.py (один проход; предрег заморожен, повтор — только новым предрегом)",
+   "date": "2026-09-04",
+   "note": "измерение, не контроль: порогов нет; границы инструмента и направленность ошибки записаны в отчёте; тексты пар не публикуются (S3 — habr-контроли без лицензии, только агрегаты)",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "fp-corpus-2026-09",
+   "claim": "ложные срабатывания детекторного слоя (маркеры классов A/B) на корпусах текстов-неносителей: точечная доля и Wilson 95% CI по стратам и overall по единственному проходу замороженного предрега f16-fp-corpus-prereg-2026-09",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.0000",
+    "0.0003",
+    "0.0006",
+    "0.0013",
+    "0.02",
+    "0.0876"
+   ],
+   "value_note": "overall n=12354 fp=8 доля 0.0006 CI [0.0003; 0.0013]; цель 0.02 достигнута; отклонения предрега задокументированы в отчёте",
+   "artifact": "research/FP-CORPUS-2026.md",
+   "reproduce": "python tools/fp_corpus_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
+   "date": "2026-09-04",
+   "note": "тексты корпусов не публикуются (CoAT human включает НКРЯ и соцсети; только локально, наружу агрегаты); MultiSocial restricted исключён; Taiga исключена по правилу размера",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "adversarial-robustness-2026-09",
+   "claim": "recall детекторного слоя по операторам мутаций и глубинам 1-3 в единственной рабочей точке бинарного детектора по замороженному предрегу f3-adversarial-prereg-2026-09",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.0003",
+    "0.0006",
+    "0.0013",
+    "0.1316",
+    "0.2105",
+    "0.2632",
+    "0.2895",
+    "0.4737",
+    "0.50",
+    "0.6579",
+    "0.6842",
+    "0.70",
+    "0.7368",
+    "0.8421",
+    "0.90",
+    "0.9211",
+    "0.9737",
+    "1.0000"
+   ],
+   "value_note": "матрица recall x оператор x глубина в research/ADVERSARIAL-ROBUSTNESS-2026.md; FPR рабочей точки из F16; операторы ниже порога опубликованы как границы с планом ремонта F9",
+   "artifact": "research/ADVERSARIAL-ROBUSTNESS-2026.md",
+   "reproduce": "python tools/adversarial_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
+   "date": "2026-09-04",
+   "note": "измеряется только собственный детекторный слой; публикация не является обучающим сигналом для сторонних детекторов",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "marker-lr-2026-09",
+   "claim": "отношения правдоподобия маркеров классов A/B между машинной стратой CoAT и неносителями F16 по замороженному предрегу f17-lr-prereg-2026-09; пороги не достигнуты, маркеры копипаста не калибруются на машинной популяции без артефактов",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.0000",
+    "0.0003",
+    "0.0015",
+    "0.0019",
+    "0.0022",
+    "0.0026",
+    "0.0032",
+    "0.0037",
+    "2.5299",
+    "3.8531"
+   ],
+   "value_note": "p1 класса A на машинной страте 0; невидимые B LR_lower 2.5299 и 3.8531 (шкала ограниченное); план калибровки на артефактных популяциях в BACKLOG",
+   "artifact": "research/MARKER-LR-2026.md",
+   "reproduce": "python tools/marker_lr_measure.py (один проход; предрег заморожен, повтор только новым предрегом)",
+   "date": "2026-09-04",
+   "note": "LR не является вердиктом об авторстве и не выводится пользователю (Главное правило)",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "adversarial-robustness-v2-2026-09",
+   "claim": "adversarial-кривая v2: self-attack (--remove ratio и SKILL-rewrite FPR), FPR-кривая на human-мутантах, recall на двух поколениях машинных, retention сигнатур, McNemar и бутстрэп по замороженному предрегу f3-adversarial-prereg-v2",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.0067",
+    "0.03",
+    "0.0333",
+    "0.04",
+    "0.0526",
+    "0.0789",
+    "0.1053",
+    "0.1316",
+    "0.1579",
+    "0.2632",
+    "0.3158",
+    "0.3684",
+    "0.4211",
+    "0.4474",
+    "0.5789",
+    "0.6579",
+    "0.7368",
+    "0.7632",
+    "0.8158",
+    "0.8421",
+    "0.9211",
+    "0.9474"
+   ],
+   "value_note": "self-attack --remove ratio 0.1579 (порог 0.5 не достигнут, интерпретация в отчёте); FPR 0.0 во всех точках; recall на машинных около нуля (граница продукта); retention деградирует монотонно у zero-width/homoglyph/typo",
+   "artifact": "research/ADVERSARIAL-ROBUSTNESS-V2-2026.md",
+   "reproduce": "tools/mutants_build.py + tools/f3v2_measure.py + tools/f3v2_rewrite_measure.py (один проход; предрег read-only после прохода)",
+   "date": "2026-09-04",
+   "note": "выводы по классам операторов не смешиваются; регенерация не читается как устойчивость",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "f8-umbrella-2026-09",
+   "claim": "зонтичный корпус F8-узла: ROC/AUC мягких сигналов по поколениям и доменам, вердикт F12 excess-vocabulary, детектируемость docx-осей, baseline сигнатур, sensitivity на immutable blob'ах, FP тяжёлого домена — один проход по замороженному предрегу f8-umbrella-prereg-2026-09",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0.0003",
+    "0.0006",
+    "0.0013",
+    "0.0061",
+    "0.0081",
+    "0.016",
+    "0.0193",
+    "0.0236",
+    "0.0301",
+    "0.0326",
+    "0.0361",
+    "0.0472",
+    "0.0526",
+    "0.0591",
+    "0.0672",
+    "0.0734",
+    "0.0951",
+    "0.1425",
+    "0.1626",
+    "0.1835",
+    "0.204",
+    "0.3191",
+    "0.4617",
+    "0.4854",
+    "0.5139",
+    "0.52",
+    "0.5633",
+    "0.602",
+    "0.6068",
+    "0.6081",
+    "0.6119",
+    "0.6167",
+    "0.6211",
+    "0.6255",
+    "0.6382",
+    "0.6487",
+    "0.6933"
+   ],
+   "value_note": "вердикты и числа в research/F8-UMBRELLA-2026.md; дефицит тяжёлой страты 381 против 500 зафиксирован в предреге; OCR-страта недоступна",
+   "artifact": "research/F8-UMBRELLA-2026.md",
+   "reproduce": "tools/f8_corpus_build.py + tools/f8_measure.py (один проход; предрег read-only после прохода)",
+   "date": "2026-09-04",
+   "note": "фрагменты корпусов не публикуются; наружу агрегаты и хеши",
+   "assumptions": [
+    "prereg-frozen"
+   ]
+  },
+  {
+   "fact_id": "external-contributors-2026-09",
+   "claim": "внешние участники на 2026-09-05: внешних issues 0 из 12 открытых и закрытых (все от проекта); 1 внешний автор PR — inquilabee, PR 41, 2026-07-29, закрыт без слияния; KPI 30 дней — первый внешний пользователь с issue или обсуждением",
+   "status": "limited",
+   "publication_approved": true,
+   "tokens": [
+    "0/12"
+   ],
+   "artifact": "research/SPRINT-LEADERSHIP-2026-09-05.md",
+   "date": "2026-09-05",
+   "reproduce": "gh pr list --state all --json number,author; gh issue list --state all --json number,author",
+   "note": "публикация по приказу рывка N1-N40 от 2026-09-05 (пункт L5: счётчик внешних участников в реестре фактов с датой); обновление счётчика — новым снимком, не правкой этой записи"
+  },
+  {
+   "fact_id": "glama-listing-2026-09",
+   "claim": "MCP-сервер humanizer-ru представлен в каталоге Glama (страница сервера отвечает 200, заголовок «humanizer-ru by Vladimir-Human»); листинг размещён сопровождающим",
+   "status": "proven",
+   "publication_approved": true,
+   "tokens": [
+    "1/1"
+   ],
+   "artifact": "research/DISTRIBUTION-JOURNAL.md",
+   "date": "2026-09-06",
+   "reproduce": "curl -sI https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru | head -1"
+  },
+  {
+   "fact_id": "o4-o5-agent-choice-2026-09-08",
+   "claim": "O4 (протокол v2): 6/6 по записанным ответам — интерпретация «нейтральный выбор» отозвана эрратой 2026-09-08 (ключ был доступен испытуемому, ключ задачи 4 неверен); O5 (нейтральная предрегистрация, ключ вне репозитория, хеш ключа заморожен): агент 6/6, no-op baseline 0/6, прозрачный keyword baseline 5/6; один оцениваемый проход, оговорка задачи 4 опубликована",
+   "status": "proven",
+   "publication_approved": true,
+   "tokens": [
+    "6/6",
+    "0/6",
+    "5/6"
+   ],
+   "artifact": "research/task-benchmark/results-o5-2026-09-08.json",
+   "date": "2026-09-08",
+   "reproduce": "python3 scripts/check_task_benchmark.py --verify research/task-benchmark/results-o5-2026-09-08.json"
+  }
+ ]
 }
