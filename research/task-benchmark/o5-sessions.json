@@ -5,8 +5,8 @@
    "task_id": 1,
    "prompt": "Ты участвуешь в замере маршрутизации задач.\n\n1. Прочитай публичные карточки продукта: файлы <worktree>\\llms.txt и <worktree>\\README.md.\n2. Прочитай файл задач <worktree>\\research\\task-benchmark\\o5-tasks.json (ТОЛЬКО этот файл; другие файлы каталога research/ читать запрещено).\n3. Для каждой из 6 задач реши, какая одна операция (команда humanizer-*) и какой режим (строка флагов/аргументов, может быть пустой) правильно её решают — исходя из карточек продукта и текста задачи.\n4. Ответь РОВНО шестью строками JSON без какого-либо другого текста, по одной на задачу, в порядке task_id:\n{\"task_id\": 1, \"tool\": \"...\", \"mode\": \"...\"}\n...до task_id 6.\n\nЗапрещено: запускать команды, читать другие файлы, добавлять пояснения.",
    "response": "{\"task_id\": 1, \"tool\": \"humanizer-markers\", \"mode\": \"--scan\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается — записано как есть, без домысливания",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)",
    "note": "единая сессия на 6 задач; полный текст промпта — в записи task_id 1"
   },
@@ -14,24 +14,24 @@
    "task_id": 2,
    "prompt": "та же единая сессия (полный текст — в записи task_id 1)",
    "response": "{\"task_id\": 2, \"tool\": \"humanizer-clean\", \"mode\": \"--json\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)"
   },
   {
    "task_id": 3,
    "prompt": "та же единая сессия (полный текст — в записи task_id 1)",
    "response": "{\"task_id\": 3, \"tool\": \"humanizer-facts\", \"mode\": \"diff --no-additions\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)"
   },
   {
    "task_id": 4,
    "prompt": "та же единая сессия (полный текст — в записи task_id 1)",
    "response": "{\"task_id\": 4, \"tool\": \"humanizer-polish\", \"mode\": \"--preserve-markup --typographic\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)",
    "note": "испытуемый перечислил оба режима; замороженное правило оценки «required_flags входит в mode» засчитывает ответ — оговорка публикуется вместе с результатом"
   },
@@ -39,16 +39,16 @@
    "task_id": 5,
    "prompt": "та же единая сессия (полный текст — в записи task_id 1)",
    "response": "{\"task_id\": 5, \"tool\": \"humanizer-detect\", \"mode\": \"\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)"
   },
   {
    "task_id": 6,
    "prompt": "та же единая сессия (полный текст — в записи task_id 1)",
    "response": "{\"task_id\": 6, \"tool\": \"humanizer-report\", \"mode\": \"до.md после.md --json\"}",
-   "model": "сессия dsh-harness (live LLM API); точный идентификатор модели рантаймом исполнителю не сообщается",
-   "provider": "dsh-harness subagent (live LLM API)",
+   "model": "evaluation harness; точный идентификатор модели рантаймом исполнителю не сообщается",
+   "provider": "evaluation harness",
    "temperature": "не задана (умолчание рантайма)"
   }
  ]

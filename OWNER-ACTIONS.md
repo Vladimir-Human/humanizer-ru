@@ -1,34 +1,15 @@
-# OWNER-ACTIONS.md — физически невозможно без владельца (F19)
+# Project operations
 
-Строки ниже — НЕ условия приёмки и НЕ дефекты исполнения: это действия,
-требующие учетных записей/веб-интерфейсов владельца. Исполнитель сделал
-всё, что возможно без них, и зафиксировал состояние.
+This public note records operational boundaries without account details,
+private contact data, credentials, signing material or personal action history.
 
-| Действие | Почему без владельца невозможно | Что сделал исполнитель | Состояние |
-|---|---|---|---|
-| Trusted Publishing PyPI (настройка издателя в web-UI) | API настройки издателя не существует (404); настройка — только веб-сессия аккаунта | workflow pypi-publish.yml готов; OIDC-публикация проверена сухим прогоном и боевым релизом v3.20.0 после настройки владельцем | закрыто владельцем 2026-09-04 |
-| Glama-листинг (вход в аккаунт, подача сервера, Dockerfile в форму) | подача требует веб-сессии аккаунта | Dockerfile и текст бейджа готовы (drafts/glama-submission.md run-каталога); честный ответ боту glama-check в PR punkpeye/awesome-mcp-servers#13565 | ждёт входа владельца |
-| Магазины браузерных расширений (Chrome Web Store и подобные) | публикация требует аккаунта разработчика и оплаты/верификации | расширение проектируется как sideload-пакет (F6); магазины — только после владельца | ждёт владельца |
-| Живые читатели / слепая человеческая панель (заявка B) | решение владельца: закрыта навсегда | Di-контроль опубликован честно (FAIL), заявка C-класса | закрыто решением |
+| Area | Publicly verifiable state | Boundary |
+|---|---|---|
+| PyPI Trusted Publishing | The release workflow uses GitHub OIDC and validates artifacts before upload. | External publisher configuration is managed by the package service. |
+| Catalogs | Public catalog pages and their content are checked by dated snapshots. | An open request is not a published listing. |
+| Restricted research data | Only license and access status are recorded. | Restricted datasets stay excluded until terms permit reproducible use. |
+| Human evaluation | Automated and model-based checks are labelled with their limits. | Private participant data is not stored here. |
 
-Всё остальное из поправок 44-54 — в работе исполнителя без владельца.
-| Доступ к MultiSocial (Zenodo 13846152, restricted) | запрос доступа принимается только с официальной академической почты института; у исполнителя такой почты нет | форма запроса на странице записи; условия research-only и без ре-шеринга | ждёт владельца с академическим адресом; без доступа страта исключена с причиной |
-
-## Ротация токенов и подписи (дополнение к П14, 2026-09-04: исполняет агент)
-
-Аудит 2026-09-04 (gh secret list, чтение pypi-publish.yml): долгоживущих
-API-токенов PyPI в секретах репозитория НЕТ — публикация идёт по OIDC
-Trusted Publishing (id-token: write, PEP 740); ротация токенов PyPI
-отсутствует как задача; управление trusted publisher требует web-входа
-владельца только при смене доверия: https://pypi.org/manage/project/humanizer-ru/settings/publishing/
-(поля: workflow name, environment, OIDC subject; менять не требуется).
-GitHub-секретов в репозитории нет (gh secret list пусто) — ротировать нечего.
-MCP-реестры (Glama и прочие): сохранённых сессий и токенов у агента нет
-(владелец не входил) — ротация невозможна без входа; список «вход владельца»:
-https://glama.ai/mcp/servers (кнопка Add server, вход провайдером, затем
-submission формы из drafts/glama-submission.md).
-План исполнителя после FRONTIER-ACT: GPG-подпись актов (clearsign +
-detach-sign в Release-ассеты) ключом проекта 023E1F146B59348F; проверка
-подписи в гейте акта; ротация OIDC-доверия не требуется (токенов нет),
-пометка «ротация при входе владельца» остаётся только для web-UI PyPI и
-Glama. Каждый шаг фиксируется в RUNLOG; новые секреты в логах не светятся.
+Current distribution evidence is in research/DISTRIBUTION-JOURNAL.md and the
+release gates. This public tree is intended to exclude secrets, private keys
+and raw private correspondence; verify any new material before committing it.
