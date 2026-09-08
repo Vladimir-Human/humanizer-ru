@@ -156,3 +156,52 @@
 - 2026-09-08: статус KPI не изменился — новых внешних обращений о
   реальном использовании на момент публикации нет; окно наблюдения до
   2026-10-06, PENDING.
+
+### 2026-09-08. Выпуск 3.35.1 опубликован (патч: публичные metadata и приёмка)
+
+- Источник: main `206f4055245c917793b7cb360512c0a5123fb83d`
+  (PR #165, tree `8eb346fd9ba603440558fcd6330a08bdcfe88c83`; полный
+  strict на этом дереве — 155 гейтов, FAIL 0, SKIP 0).
+- Тег `v3.35.1` подписан существующим GPG-ключом проекта
+  (`023E1F146B59348F`), проверка Good signature локально и
+  `check_release.py --release-contract` rc=0. Интервальное правило не
+  применялось: отменено приказом владельца от 2026-09-08.
+- Release: https://github.com/Vladimir-Human/humanizer-ru/releases/tag/v3.35.1,
+  published_at 2026-09-08T11:44:38Z. Архив `humanizer-ru.zip`
+  (детерминированная сборка) sha256
+  `acfd5b9b284cc88d82ed78f00025e920cd15c8ab112f29b243fb9f6cf280603a`,
+  подпись `humanizer-ru.zip.asc` — Good signature.
+- CI: release-check, pypi-publish (включая установленные сценарии для
+  wheel и sdist и новую браузерную проверку кандидата до публикации),
+  publish-mcp, demo-pages — все success.
+- PyPI: версия 3.35.1; скачанные артефакты сверены с дайджестами PyPI:
+  wheel `bbd1a36e00cc59ff…` match True, sdist `62b6c8c5111c423c…`
+  match True, yanked=False, requires_dist=None (stdlib-only);
+  `check_pypi_metadata.py` на скачанных — OK, `--live` — OK;
+  `--sdist-test` на скачанном sdist: PROBES OK 3.35.1 +
+  upgrade-smoke 3.35.0 -> 3.35.1 OK.
+- Чистая venv на скачанном wheel: импорт из site-packages, 7 консольных
+  точек 3.35.1, контракт 7 инструментов, установленные сценарии
+  `Ran 11 tests OK` (0 пропущено).
+- Реестр MCP: 3.35.1 status=active isLatest=True; установка по записи
+  реестра, initialize protocol 2025-06-18, tools/list — 7 инструментов
+  (включая humanizer_clean).
+- Pages: деплой release-событием записал статус с устаревшим
+  `published_tag=v3.35.0` — гонка распространения свежего тега;
+  расхождение поймал усиленный `check_live_distribution.py --json`
+  (rc=1, «published_commit != peeled-commit тега»). Актуальный статус
+  пересчитан workflow_dispatch (run 34223634340): `--json` rc=0,
+  problems []; браузерная проверка опубликованного URL — OK.
+  Долговременный фикс (принудительный `git fetch --tags` перед расчётом
+  статуса) — PR #166.
+- Token-scan логов пяти релизных ранов и diff v3.35.0..v3.35.1:
+  секретов не найдено.
+- Каталоги (датированные снапшоты 2026-09-08T15, фактическое состояние
+  отделено от устаревших внешних копий): PyPI API — 3.35.1; Glama —
+  6 уникальных инструментов (humanizer_clean отсутствует, STALE,
+  пересчёт сторонний); skills.sh — карточка 3.35.0 (отстаёт на версию),
+  alias ранее 3.25.4, заявка vercel-labs/skills#2173 открыта (PENDING;
+  содержательная заявка одна — повторные не создавались); Smithery —
+  статическая страница без машинных деталей. Внешние решения каталогов —
+  внешняя зависимость (PENDING), поставка при этом проверена по
+  официальным источникам (PyPI, реестр MCP, Release, Pages).
