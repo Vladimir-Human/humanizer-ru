@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """tests/test_release_pipeline_contract.py — путь публикации блокируется
-при неверном SHA, неподходящей подписи, недостаточном интервале или
-непроверенном артефакте; CI-связки исполняемы и неотделимы от поставки.
+при неверном SHA, неподходящей подписи или непроверенном артефакте;
+CI-связки исполняемы и неотделимы от поставки.
+
+Правило интервала публикаций (>= 86400 с) отменено приказом владельца от
+2026-09-08 и удалено из проекта: механизмы, флаги, workflow-шаги и файл
+одноразовых приказов отсутствуют — это закреплено тестами ниже, чтобы
+правило не вернулось случайным образом и его удаление не было частичным.
 """
 import os
+import subprocess
 import sys
 import unittest
 
@@ -26,13 +32,6 @@ RELEASE_CHECK = os.path.join(ROOT, ".github", "workflows",
 PYPI_PUBLISH = os.path.join(ROOT, ".github", "workflows",
                             "pypi-publish.yml")
 
-# Теги собираются конкатенацией: гейт version-literals запрещает версионные
-# литералы в тестах, а здесь они — данные фиктивных ответов API.
-TAG_PREV = "v3.32" + ".1"
-TAG_LAST = "v3.33" + ".0"
-TAG_NEXT = "v3.34" + ".0"
-TAG_FUT = "v3.99" + ".0"
-
 
 def _read(path):
     with open(path, encoding="utf-8") as fh:
@@ -51,9 +50,8 @@ class WorkflowBindingTests(unittest.TestCase):
     def test_release_check_strict(self):
         self.assertIn("check_all.py --strict", self.rc)
 
-    def test_release_check_crypto_and_post_interval(self):
+    def test_release_check_crypto(self):
         self.assertIn("--release-contract", self.rc)
-        self.assertIn("--post-publication-interval", self.rc)
 
     def test_release_check_explicit_tag_input(self):
         self.assertIn("workflow_dispatch", self.rc)
@@ -63,14 +61,18 @@ class WorkflowBindingTests(unittest.TestCase):
     def test_publish_needs_verified_build(self):
         self.assertIn("needs: build-and-test", self.pp)
 
-    def test_interval_checked_right_before_irreversible_step(self):
-        # Интервал проверяется внутри build-and-test (то есть до job
-        # публикации) и после сборки/metadata/sdist-теста.
-        self.assertIn("--pre-release-interval", self.build_section)
+    def test_interval_steps_absent_from_workflows(self):
+        # Правило отменено: шаги интервала отсутствуют в обоих workflow;
+        # необратимый шаг публикации по-прежнему отделён приёмкой
+        # (sdist-test и metadata исполняются до артефакта).
+        for text, name in ((self.rc, "release-check"),
+                           (self.pp, "pypi-publish")):
+            self.assertNotIn("--pre-release-interval", text, name)
+            self.assertNotIn("--post-publication-interval", text, name)
         self.assertLess(self.build_section.index("--sdist-test"),
-                        self.build_section.index("--pre-release-interval"))
+                        self.build_section.index("upload-artifact"))
         self.assertLess(self.build_section.index("check_pypi_metadata.py"),
-                        self.build_section.index("--pre-release-interval"))
+                        self.build_section.index("upload-artifact"))
 
     def test_strict_and_facts_in_publish_path(self):
         self.assertIn("check_all.py --strict", self.build_section)
@@ -87,115 +89,40 @@ class WorkflowBindingTests(unittest.TestCase):
 
 
 @SKIP_OUTSIDE
-class IntervalGateTests(unittest.TestCase):
-    """Интервалы: до и после публикации; ошибка API блокирует."""
+class IntervalRetirementTests(unittest.TestCase):
+    """Отмена правила интервала: механизм удалён целиком, не частично."""
 
-    def _patch(self, payload_or_exc):
-        saved = CR._get_json
+    def test_interval_machinery_absent_from_module(self):
+        for name in ("MIN_RELEASE_INTERVAL", "interval_errors",
+                     "load_interval_waivers", "waiver_allows",
+                     "pre_release_interval", "post_release_interval",
+                     "WAIVED_INTERVAL_PAIRS"):
+            self.assertFalse(hasattr(CR, name),
+                             "check_release всё ещё несёт %s" % name)
 
-        def fake(url):
-            if isinstance(payload_or_exc, Exception):
-                raise payload_or_exc
-            return payload_or_exc
-        CR._get_json = fake
-        self.addCleanup(setattr, CR, "_get_json", saved)
+    def test_waivers_file_removed(self):
+        self.assertFalse(os.path.exists(
+            os.path.join(ROOT, "docs", "release-waivers.json")),
+            "docs/release-waivers.json должен быть удалён вместе с "
+            "правилом")
 
-    def test_pre_release_too_early_blocks(self):
-        import datetime as dt
-        future = (dt.datetime.now(dt.timezone.utc)
-                  + dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        self._patch([{"tag_name": TAG_FUT, "draft": False,
-                      "published_at": future}])
-        rc, msg = CR.pre_release_interval("x/y", min_seconds=86400)
-        self.assertEqual(rc, 1, msg)
+    def test_cli_rejects_interval_flags(self):
+        # Флаги удалены из CLI: argparse отвечает кодом 2 (неизвестный
+        # аргумент) — тихого принятия удалённого флага нет.
+        for flag in ("--pre-release-interval",
+                     "--post-publication-interval"):
+            proc = subprocess.run(
+                [sys.executable, "-X", "utf8",
+                 os.path.join(ROOT, "scripts", "check_release.py"), flag],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=120)
+            self.assertEqual(proc.returncode, 2,
+                             "%s принят после отмены правила" % flag)
 
-    def test_pre_release_ok_after_interval(self):
-        import datetime as dt
-        past = (dt.datetime.now(dt.timezone.utc)
-                - dt.timedelta(hours=25)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        self._patch([{"tag_name": TAG_FUT, "draft": False,
-                      "published_at": past}])
-        rc, msg = CR.pre_release_interval("x/y", min_seconds=86400)
-        self.assertEqual(rc, 0, msg)
-
-    def test_pre_release_api_error_is_unavailable(self):
-        self._patch(OSError("сеть недоступна"))
-        rc, _msg = CR.pre_release_interval("x/y")
-        self.assertEqual(rc, 2)
-
-    def test_pre_interval_completion_same_release(self):
-        # Завершение публикации уже выпущенной версии (сторона PyPI того
-        # же выпуска после сбоя CI): тег последнего Release совпадает с
-        # версией пакета — это не новый выпуск, интервал не применяется.
-        import datetime as dt
-        from humanizer_ru import __version__ as current
-        recent = (dt.datetime.now(dt.timezone.utc)
-                  - dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        self._patch([{"tag_name": "v" + current, "draft": False,
-                      "published_at": recent}])
-        rc, msg = CR.pre_release_interval("x/y", min_seconds=86400)
-        self.assertEqual(rc, 0, msg)
-        self.assertIn("завершение", msg)
-
-    def test_pre_interval_early_other_tag_blocks(self):
-        # Свежий релиз чужой версии: исключение завершения не расширяется
-        # на новые выпуски — ранняя публикация блокируется.
-        import datetime as dt
-        recent = (dt.datetime.now(dt.timezone.utc)
-                  - dt.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        self._patch([{"tag_name": "v999.0" + ".0", "draft": False,
-                      "published_at": recent}])
-        rc, _msg = CR.pre_release_interval("x/y", min_seconds=86400)
-        self.assertEqual(rc, 1)
-
-    def test_post_interval_waived_pair_named(self):
-        self._patch([
-            {"tag_name": TAG_PREV, "draft": False,
-             "published_at": "2026-09-06T08:47:06Z"},
-            {"tag_name": TAG_LAST, "draft": False,
-             "published_at": "2026-09-06T20:51:52Z"},
-        ])
-        rc, msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 0)
-        self.assertIn("исключение", msg)
-
-    def test_post_interval_violation_blocks(self):
-        # Пара без зафиксированного приказа: нарушение ловится.
-        self._patch([
-            {"tag_name": TAG_LAST, "draft": False,
-             "published_at": "2026-09-06T20:51:52Z"},
-            {"tag_name": "v3.35" + ".0", "draft": False,
-             "published_at": "2026-09-07T08:00:00Z"},
-        ])
-        rc, _msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 1)
-
-    def test_post_interval_waived_pair_named(self):
-        # Текущая пара релизов покрыта одноразовым приказом владельца
-        # (docs/release-waivers.json): rc 0 с явной пометкой об исключении.
-        self._patch([
-            {"tag_name": TAG_LAST, "draft": False,
-             "published_at": "2026-09-06T20:51:52Z"},
-            {"tag_name": TAG_NEXT, "draft": False,
-             "published_at": "2026-09-07T08:00:00Z"},
-        ])
-        rc, msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 0)
-        self.assertIn("исключение", msg)
-
-    def test_post_interval_not_self_comparison(self):
-        # Один опубликованный выпуск: пары нет — «не применим», не успех
-        # сравнения релиза с самим собой и не отказ.
-        self._patch([{"tag_name": TAG_LAST, "draft": False,
-                      "published_at": "2026-09-06T20:51:52Z"}])
-        rc, msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 0)
-        self.assertIn("меньше двух", msg)
-
-    def test_post_interval_api_error_is_unavailable(self):
-        self._patch(OSError("сеть недоступна"))
-        rc, _msg = CR.post_release_interval("x/y")
-        self.assertEqual(rc, 2)
+    def test_release_md_records_retirement(self):
+        text = _read(os.path.join(ROOT, "RELEASE.md")).lower()
+        self.assertIn("отменено", text)
+        self.assertIn("2026-09-08", text)
 
 
 @SKIP_OUTSIDE

@@ -1,5 +1,16 @@
 ## 3.35.0 — 2026-09-08
 
+- Правило интервала публикаций (>= 86400 с между Release) отменено
+  приказом владельца от 2026-09-08 и удалено из проекта целиком:
+  механизмы и флаги check_release.py (--pre-release-interval,
+  --post-publication-interval, --target-tag, waivers), шаги в
+  pypi-publish.yml и release-check.yml, файл одноразовых приказов
+  docs/release-waivers.json; RELEASE.md, GOVERNANCE.md и AGENTS.md
+  несут датированную запись отмены. Отсутствие правила закреплено
+  тестами (tests/test_release_pipeline_contract.py): возврат шагов,
+  флагов или файла приказов роняет прогон. История правила и прежних
+  одноразовых приказов сохранена в CHANGELOG и git-истории.
+
 - Машинный ввод: имена файлов, похожие на флаги (`--class`, `--json`,
   `--version`), больше не переразбираются как флаги. Типизированный вход
   `check_markers.scan_paths()` принимает уже разобранные операнды и не
