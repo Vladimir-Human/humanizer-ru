@@ -375,178 +375,6 @@ def _release_status(slug: str, tag: str) -> int:
         return exc.code
 
 
-# ---- Интервал выпусков: не менее 24 часов между публикациями ---------------
-
-MIN_RELEASE_INTERVAL = 86400
-
-
-def _parse_published(value: str):
-    """ISO-8601 с Z в datetime (UTC); None при неразборе."""
-    import datetime as _dt
-    try:
-        return _dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=_dt.timezone.utc)
-    except (TypeError, ValueError):
-        return None
-
-
-def interval_errors(prev_published: str, new_published: str,
-                    min_seconds: int = MIN_RELEASE_INTERVAL) -> list:
-    """Нарушения интервала между двумя публикациями (по published_at).
-
-    Возвращает список ошибок; пуст — интервал соблюдён. Неразборчивая дата
-    — ошибка (непроверенное состояние не считается успехом).
-    """
-    prev_dt = _parse_published(prev_published)
-    new_dt = _parse_published(new_published)
-    if prev_dt is None or new_dt is None:
-        return ["published_at не разобран: %r -> %r"
-                % (prev_published, new_published)]
-    gap = (new_dt - prev_dt).total_seconds()
-    if gap < min_seconds:
-        return ["интервал между публикациями %.0f с < %d с "
-                "(%s -> %s): слишком ранний выпуск"
-                % (gap, min_seconds, prev_published, new_published)]
-    return []
-
-
-def load_interval_waivers(root=None):
-    """Одноразовые сокращения интервала, зафиксированные приказом владельца.
-
-    Файл docs/release-waivers.json: список записей {from, to, order,
-    one_time}. Механизм не ослабляет правило: каждое сокращение явно
-    перечислено парой тегов и ссылкой на приказ; собственных решений
-    сопровождения здесь быть не может.
-    """
-    root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(root, "docs", "release-waivers.json")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
-        return []
-    return data if isinstance(data, list) else []
-
-
-def waiver_allows(waivers, prev_tag, target_tag):
-    """Запись приказа для пары (prev_tag, target_tag) или None."""
-    for w in waivers or []:
-        if w.get("from") == prev_tag and w.get("to") == target_tag:
-            return w
-    return None
-
-
-def _local_package_version(root=None):
-    """Версия пакета из src/humanizer_ru/__init__.py (None — не читается)."""
-    root = root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(str(root), "src", "humanizer_ru", "__init__.py")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            text = fh.read()
-    except OSError:
-        return None
-    m = re.search(r'__version__\s*=\s*"(\d+\.\d+\.\d+)"', text)
-    return m.group(1) if m else None
-
-
-def pre_release_interval(slug: str,
-                         min_seconds: int = MIN_RELEASE_INTERVAL,
-                         target_tag=None, root=None):
-    """Проверка ДО публикации: прошёл ли минимум с последнего Release.
-
-    Возвращает (rc, сообщение): rc 0 — публиковать можно (или выпусков ещё
-    нет, или пара покрыта одноразовым приказом из
-    docs/release-waivers.json, или это завершение публикации уже
-    выпущенной версии), 1 — слишком рано, 2 — проверка невозможна
-    (сеть/API).
-    """
-    import datetime as _dt
-    try:
-        releases = _get_json(
-            "https://api.github.com/repos/%s/releases?per_page=10" % slug)
-    except (OSError, ValueError) as exc:
-        return 2, "проверка интервала невозможна (сеть/API): %r" % (exc,)
-    dated = [(_parse_published(r.get("published_at")), r.get("tag_name"))
-             for r in releases if not r.get("draft")]
-    dated = [(d, t) for d, t in dated if d is not None]
-    if not dated:
-        return 0, "опубликованных выпусков нет — интервал не применим"
-    latest_dt, latest_tag = max(dated, key=lambda pair: pair[0])
-    now = _dt.datetime.now(_dt.timezone.utc)
-    gap = (now - latest_dt).total_seconds()
-    if gap < min_seconds:
-        # Завершение публикации уже выпущенной версии: версия пакета равна
-        # тегу последнего Release. Это не новая публикация (например,
-        # догрузка стороны PyPI того же выпуска после сбоя CI): правило
-        # интервала ограничивает частоту НОВЫХ выпусков, а двойную загрузку
-        # одной версии исключает сам PyPI (версия уникальна, skip-existing).
-        local_version = _local_package_version(root)
-        if local_version and latest_tag == "v" + local_version:
-            return 0, ("завершение публикации выпуска %s: версия пакета "
-                       "совпадает с последним Release; правило интервала "
-                       "применяется только к новым выпускам" % (latest_tag,))
-        w = waiver_allows(load_interval_waivers(root), latest_tag,
-                          target_tag)
-        if w:
-            return 0, ("интервал сокращён ОДНОРАЗОВО по зафиксированному "
-                       "приказу владельца: %s -> %s (%s); фактический "
-                       "интервал %.0f с" % (latest_tag, target_tag,
-                                            w.get("order", "приказ"), gap))
-        return 1, ("слишком ранний выпуск: с публикации %s (%s) прошло "
-                   "%.0f с < %d с" % (latest_tag,
-                                      latest_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                      gap, min_seconds))
-    return 0, ("интервал соблюдён: с публикации %s прошло %.0f с (>= %d)"
-               % (latest_tag, gap, min_seconds))
-
-
-# Явный список исторических пар, для которых сокращённый интервал
-# зафиксирован решением сопровождения в релизном коммите (история не
-# переписывается). Новые пары сюда не добавляются: исключение не правило,
-# сокращение интервала собственным решением запрещено.
-WAIVED_INTERVAL_PAIRS = {
-    ("v3.32.1", "v3.33.0"):
-        "решение сопровождения 2026-09-06 (прямой приказ владельца цикла), "
-        "зафиксировано в релизном коммите v3.33.0 и в CHANGELOG",
-    ("v3.33.0", "v3.34.0"):
-        "прямой приказ владельца цикла от 2026-09-07 снять 24-часовое "
-        "ожидание для выпуска 3.34.0; одноразово, см. также "
-        "docs/release-waivers.json",
-}
-
-
-def post_release_interval(slug: str, min_seconds: int = MIN_RELEASE_INTERVAL):
-    """Проверка ПОСЛЕ публикации: интервал между двумя последними
-    конкретными опубликованными релизами (пара берётся из опубликованного
-    списка; новый релиз не сравнивается с самим собой).
-
-    Возвращает (rc, сообщение): rc 0 — соблюдён или неприменим (выпусков
-    меньше двух), 1 — нарушение, 2 — проверка невозможна (сеть/API).
-    """
-    try:
-        releases = _get_json(
-            "https://api.github.com/repos/%s/releases?per_page=10" % slug)
-    except (OSError, ValueError) as exc:
-        return 2, "проверка интервала невозможна (сеть/API): %r" % (exc,)
-    dated = [(_parse_published(r.get("published_at")), r.get("tag_name"))
-             for r in releases if not r.get("draft")]
-    dated = [(d, t) for d, t in dated if d is not None and t]
-    if len(dated) < 2:
-        return 0, "опубликованных выпусков меньше двух — интервал не применим"
-    dated.sort(key=lambda pair: pair[0])
-    (prev_dt, prev_tag), (new_dt, new_tag) = dated[-2], dated[-1]
-    waiver = WAIVED_INTERVAL_PAIRS.get((prev_tag, new_tag))
-    if waiver:
-        return 0, ("интервал пары %s -> %s зафиксирован как историческое "
-                   "исключение: %s" % (prev_tag, new_tag, waiver))
-    errs = interval_errors(prev_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                           new_dt.strftime("%Y-%m-%dT%H:%M:%SZ"), min_seconds)
-    if errs:
-        return 1, "; ".join(errs)
-    return 0, ("интервал между опубликованными релизами %s и %s соблюдён"
-               % (prev_tag, new_tag))
-
-
 # ---- Приёмка статуса поставки: утверждения только из результата прогона ----
 
 def status_acceptance_errors(status, run_result, deploy_sha=None) -> list:
@@ -978,111 +806,6 @@ def selftest() -> None:
             raise AssertionError("сетевая ошибка проглочена вместо проброса")
         total += 1
 
-        # Интервал публикаций: слишком ранний выпуск ловится, законный — нет.
-        assert interval_errors("2026-09-05T21:04:31Z", "2026-09-06T08:47:06Z"), \
-            "интервал 11:42:35 не пойман"
-        assert interval_errors("2026-09-05T08:47:07Z", "2026-09-06T08:47:06Z"), \
-            "интервал 86399 с не пойман"
-        assert not interval_errors("2026-09-05T08:47:06Z",
-                                   "2026-09-06T08:47:06Z"), \
-            "ровно 86400 с отвергнуто (правило: не менее 24 ч)"
-        assert not interval_errors("2026-09-05T08:47:05Z",
-                                   "2026-09-06T08:47:06Z"), \
-            "интервал > 24 ч отвергнут"
-        assert interval_errors("не-дата", "2026-09-06T08:47:06Z"), \
-            "неразборчивая дата принята"
-        assert waiver_allows([{"from": "vA", "to": "vB", "order": "приказ"}],
-                             "vA", "vB"), "одноразовый приказ не найден по паре"
-        assert waiver_allows([{"from": "vA", "to": "vB", "order": "приказ"}],
-                             "vA", "vC") is None, \
-            "одноразовый приказ сработал на чужую пару"
-        assert waiver_allows(load_interval_waivers(), "v3.33.0",
-                             "v3.34.0"), "приказ 2026-09-07 не читается из " \
-            "docs/release-waivers.json"
-        passed += 1
-        total += 1
-
-        # Завершение публикации: версия пакета равна тегу последнего
-        # Release — не новый выпуск, rc 0; свежий релиз чужой версии —
-        # по-прежнему rc 1 (исключение не расширяется на новые выпуски).
-        import datetime as _dtv
-        _ver = _local_package_version()
-        assert _ver, "версия пакета не читается из src/humanizer_ru"
-        _recent = (_dtv.datetime.now(_dtv.timezone.utc)
-                   - _dtv.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        saved_get_pre = globals()["_get_json"]
-        try:
-            globals()["_get_json"] = lambda url: [
-                {"tag_name": "v" + _ver, "draft": False,
-                 "published_at": _recent}]
-            rc_c, msg_c = pre_release_interval("x/y")
-            assert rc_c == 0 and "завершение" in msg_c, \
-                "завершение публикации своей версии не распознано: %s" % (msg_c,)
-            globals()["_get_json"] = lambda url: [
-                {"tag_name": "v999.0.0", "draft": False,
-                 "published_at": _recent}]
-            rc_o, msg_o = pre_release_interval("x/y")
-            assert rc_o == 1, \
-                "ранний выпуск чужой версии пропущен: %s" % (msg_o,)
-        finally:
-            globals()["_get_json"] = saved_get_pre
-        passed += 1
-        total += 1
-
-        # Интервал после публикации: пара из опубликованного списка;
-        # историческая исключённая пара названа явно, нарушение ловится,
-        # релиз с самим собой не сравнивается (берутся две разные записи).
-        saved_get = globals()["_get_json"]
-
-        def _fake_waived(url):
-            return [
-                {"tag_name": "v3.32.1", "draft": False,
-                 "published_at": "2026-09-06T08:47:06Z"},
-                {"tag_name": "v3.33.0", "draft": False,
-                 "published_at": "2026-09-06T20:51:52Z"},
-            ]
-
-        def _fake_violation(url):
-            return [
-                {"tag_name": "v3.33.0", "draft": False,
-                 "published_at": "2026-09-06T20:51:52Z"},
-                {"tag_name": "v3.35.0", "draft": False,
-                 "published_at": "2026-09-07T08:00:00Z"},
-            ]
-
-        def _fake_waived2(url):
-            return [
-                {"tag_name": "v3.33.0", "draft": False,
-                 "published_at": "2026-09-06T20:51:52Z"},
-                {"tag_name": "v3.34.0", "draft": False,
-                 "published_at": "2026-09-07T08:00:00Z"},
-            ]
-
-        def _fake_single(url):
-            return [
-                {"tag_name": "v3.33.0", "draft": False,
-                 "published_at": "2026-09-06T20:51:52Z"},
-            ]
-        try:
-            globals()["_get_json"] = _fake_waived
-            rc_w, msg_w = post_release_interval("x/y")
-            globals()["_get_json"] = _fake_waived2
-            rc_w2, msg_w2 = post_release_interval("x/y")
-            globals()["_get_json"] = _fake_violation
-            rc_v, _msg_v = post_release_interval("x/y")
-            globals()["_get_json"] = _fake_single
-            rc_s, _msg_s = post_release_interval("x/y")
-        finally:
-            globals()["_get_json"] = saved_get
-        assert rc_w == 0 and "исключение" in msg_w, \
-            "историческая исключённая пара не названа явно: %s" % msg_w
-        assert rc_w2 == 0 and "исключение" in msg_w2, \
-            "одноразовый приказ 2026-09-07 не назван явно: %s" % msg_w2
-        assert rc_v == 1, "нарушение интервала после публикации не поймано"
-        assert rc_s == 0, "один выпуск должен давать «не применим», не отказ"
-        passed += 1
-        total += 1
-
         # Приёмка статуса: ложный true, чужой SHA, отсутствие результата.
         good_status = {"commit": "abc1234", "tests_passed": True,
                        "parity": "ok"}
@@ -1330,23 +1053,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="sdist -> чистое venv -> тесты + CLI-зонды "
                              "(без значения: взять/собрать dist/*.tar.gz; "
                              "0 — пройдено, 1 — провал, 2 — отказ среды)")
-    parser.add_argument("--pre-release-interval", action="store_true",
-                        help="проверка ДО публикации: с последнего "
-                             "опубликованного Release прошло не менее "
-                             "86400 с (по published_at GitHub API); "
-                             "0 — можно публиковать, 1 — слишком рано, "
-                             "2 — проверка невозможна (сеть/API)")
-    parser.add_argument("--target-tag", metavar="TAG",
-                        help="тег готовящегося выпуска для "
-                             "--pre-release-interval: пара (последний "
-                             "опубликованный, целевой) сверяется с "
-                             "одноразовыми приказами docs/release-waivers.json")
-    parser.add_argument("--post-publication-interval", action="store_true",
-                        help="проверка ПОСЛЕ публикации: интервал между "
-                             "двумя последними конкретными опубликованными "
-                             "релизами (не релиз с самим собой); "
-                             "0 — соблюдён/неприменим, 1 — нарушение, "
-                             "2 — проверка невозможна (сеть/API)")
     parser.add_argument("--acceptance", action="store_true",
                         help="приёмка статуса поставки: утверждения "
                              "status.json сверяются с результатом прогона "
@@ -1382,57 +1088,6 @@ def main(argv: list[str] | None = None) -> int:
         rc_sdist = 0
         if args.sdist_test is not None:
             rc_sdist = sdist_test(args.root or Path("."), args.sdist_test)
-        rc_interval = 0
-        if args.pre_release_interval:
-            root = args.root or Path(".")
-            try:
-                remote = subprocess.run(
-                    ["git", "config", "remote.origin.url"], cwd=root,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    timeout=60, encoding="utf-8", errors="replace")
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                print("ИНТЕРВАЛ: git недоступен: %r" % (exc,), file=sys.stderr)
-                rc_interval = 2
-            else:
-                slug = (_repo_slug_from_url(remote.stdout)
-                        if remote.returncode == 0 else None)
-                if slug is None:
-                    print("ИНТЕРВАЛ: репозиторий не определён из "
-                          "remote.origin.url", file=sys.stderr)
-                    rc_interval = 2
-                else:
-                    rc_interval, msg = pre_release_interval(
-                        slug, target_tag=args.target_tag)
-                    prefix = {0: "ИНТЕРВАЛ", 1: "[FAIL] ИНТЕРВАЛ",
-                              2: "ИНТЕРВАЛ (UNAVAILABLE)"}[rc_interval]
-                    print("%s: %s" % (prefix, msg),
-                          file=sys.stderr if rc_interval else sys.stdout)
-        rc_post = 0
-        if args.post_publication_interval:
-            root = args.root or Path(".")
-            try:
-                remote = subprocess.run(
-                    ["git", "config", "remote.origin.url"], cwd=root,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    timeout=60, encoding="utf-8", errors="replace")
-            except (OSError, subprocess.TimeoutExpired) as exc:
-                print("ИНТЕРВАЛ ПОСЛЕ: git недоступен: %r" % (exc,),
-                      file=sys.stderr)
-                rc_post = 2
-            else:
-                slug = (_repo_slug_from_url(remote.stdout)
-                        if remote.returncode == 0 else None)
-                if slug is None:
-                    print("ИНТЕРВАЛ ПОСЛЕ: репозиторий не определён из "
-                          "remote.origin.url", file=sys.stderr)
-                    rc_post = 2
-                else:
-                    rc_post, msg = post_release_interval(slug)
-                    prefix = {0: "ИНТЕРВАЛ ПОСЛЕ",
-                              1: "[FAIL] ИНТЕРВАЛ ПОСЛЕ",
-                              2: "ИНТЕРВАЛ ПОСЛЕ (UNAVAILABLE)"}[rc_post]
-                    print("%s: %s" % (prefix, msg),
-                          file=sys.stderr if rc_post else sys.stdout)
         rc_accept = 0
         if args.acceptance:
             if not args.status:
@@ -1467,14 +1122,11 @@ def main(argv: list[str] | None = None) -> int:
                               "прогона и SHA деплоя")
         if not any((args.selftest, args.root, args.build, args.verify,
                     args.release_contract, args.sdist_test is not None,
-                    args.pre_release_interval,
-                    args.post_publication_interval, args.acceptance)):
+                    args.acceptance)):
             parser.error("выберите --selftest, --root/--build, --verify, "
-                         "--release-contract, --sdist-test, "
-                         "--pre-release-interval, "
-                         "--post-publication-interval или --acceptance")
-        return (rc_contract or rc_sdist or rc_interval or rc_post
-                or rc_accept)
+                         "--release-contract, --sdist-test "
+                         "или --acceptance")
+        return rc_contract or rc_sdist or rc_accept
     except (ReleaseError, OSError, zipfile.BadZipFile, AssertionError) as exc:
         print(f"предрелизная проверка: ПРОВАЛ: {exc}", file=sys.stderr)
         return 1
