@@ -9,8 +9,9 @@ Model Context Protocol поверх stdio: JSON-RPC 2.0, newline-delimited
 свою последнюю).
 
 Инструменты (humanizer_scan, humanizer_markers, humanizer_polish,
-humanizer_detect, humanizer_facts, humanizer_report — те же шесть, что в
-contract.v1.json и tools/list) и их схемы ГЕНЕРИРУЮТСЯ из канонического
+humanizer_clean, humanizer_detect, humanizer_facts, humanizer_report —
+те же семь, что в contract.v1.json и tools/list) и их схемы ГЕНЕРИРУЮТСЯ
+из канонического
 контракта contract.v1.json (функция generate_tool_defs ниже; отдельный
 гейт сверяет tools/list с генератором). Semantics:
 
