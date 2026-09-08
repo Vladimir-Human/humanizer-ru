@@ -72,6 +72,13 @@ jobs:
           python3 -m unittest discover -s tests
           python3 scripts/check_demo_parity.py
           printf '{"sha":"%s","tests_passed":true,"parity":"ok"}\n' "${{ steps.deploy_sha.outputs.sha }}" > run-result.json
+      - name: Обновить теги перед расчётом статуса
+        # Релизный тег может быть запушен за секунды до release-события:
+        # раннер способен его ещё не видеть (гонка распространения ref),
+        # и status.json публиковал устаревший published_tag (воспроизведено
+        # на v3.35.1). Принудительный fetch тегов делает расчёт
+        # published_tag/published_commit детерминированным.
+        run: git fetch --tags --force origin
       - name: Сгенерировать status.json деплоя
         # Статус собирается из точного SHA деплоя и результата прогона:
         # Pages не может отдать статус чужого коммита, гонка
