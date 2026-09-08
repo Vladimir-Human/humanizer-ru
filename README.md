@@ -37,10 +37,17 @@ rc=1 означает «найдены маркеры» — это ожидае�
 ```json
 {
   "mcpServers": {
-    "humanizer-ru": { "command": "humanizer-mcp" }
+    "humanizer-ru": {
+      "command": "uvx",
+      "args": ["--from", "humanizer-ru==3.35.2", "humanizer-mcp"]
+    }
   }
 }
 ```
+
+Форма `uvx` устанавливает закреплённый выпуск PyPI и запускает stdio-сервер.
+При локальной установке эквивалентны `pip install humanizer-ru` и запуск
+`humanizer-mcp`.
 
 ## Матрица проверенных возможностей и границ
 

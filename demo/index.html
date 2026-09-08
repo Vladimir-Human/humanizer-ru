@@ -67,8 +67,8 @@
   </div>
   <div class="cols">
     <section>
-      <h2>Текст</h2>
-      <textarea id="text" placeholder="Вставьте текст, скопированный из чата с ИИ, — покажем следы и объясним каждый. Текст не покидает браузер."></textarea>
+      <h2 id="textHeading">Текст</h2>
+      <textarea id="text" aria-labelledby="textHeading" placeholder="Вставьте текст, скопированный из чата с ИИ, — покажем следы и объясним каждый. Текст не покидает браузер."></textarea>
     </section>
     <section>
       <h2>Совпадения</h2>
@@ -91,6 +91,7 @@
   const onlyA = document.getElementById("onlyA");
   const showAll = document.getElementById("showAll");
   const runBtn = document.getElementById("run");
+  const counts = document.getElementById("counts");
   // Единый объект результата: список, подсветка, строка итога и отчёт
   // строятся из одного вычисления; копирование до завершения debounce
   // пересчитывает результат, а не читает устаревший DOM.
