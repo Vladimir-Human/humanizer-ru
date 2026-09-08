@@ -368,6 +368,104 @@ def merge_o4(sessions_path, results_path):
     print("O4 слит в %s" % results_path)
 
 
+O5_TASKS = os.path.join(TB, "o5-tasks.json")
+
+
+def o5_keyword_baseline():
+    """Прозрачный keyword baseline O5 (заморожен предрегистрацией):
+    детерминированное сопоставление ключевых слов задачи с операцией.
+    Публикуется любой результат, включая проигрыш базовому уровню."""
+    mapping = [
+        (("покажи", "вставлено", "сноски"), "humanizer-markers", ""),
+        (("удали", "очищенный"), "humanizer-clean", ""),
+        (("факт", "нарушени"), "humanizer-facts", "--no-additions"),
+        (("типографик", "кавычки"), "humanizer-polish", "--typographic"),
+        (("связок", "машинный"), "humanizer-detect", ""),
+        (("токен", "отчёт правки"), "humanizer-report", ""),
+    ]
+    with open(O5_TASKS, encoding="utf-8") as fh:
+        tasks = json.load(fh)["tasks"]
+    answers = []
+    for t in tasks:
+        text = t["text"].lower()
+        tool, mode = "humanizer-scan", ""
+        for keys, mapped_tool, mapped_mode in mapping:
+            if any(k in text for k in keys):
+                tool, mode = mapped_tool, mapped_mode
+                break
+        answers.append({"task_id": t["task_id"], "tool": tool,
+                        "mode": mode})
+    return answers
+
+
+def _o5_grade(answers, key):
+    correct = 0
+    for a in answers:
+        want = key.get(str(a.get("task_id"))) or {}
+        if a.get("tool") == want.get("tool") and all(
+                f in (a.get("mode") or "")
+                for f in want.get("required_flags", [])):
+            correct += 1
+    return correct
+
+
+def merge_o5(sessions_path, key_path, results_path):
+    with open(sessions_path, encoding="utf-8") as fh:
+        sessions = json.load(fh)
+    with open(key_path, "rb") as fh:
+        key_bytes = fh.read()
+    key = json.loads(key_bytes.decode("utf-8"))
+    with open(O5_TASKS, encoding="utf-8") as fh:
+        tasks_spec = json.load(fh)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                          capture_output=True, text=True,
+                          timeout=60).stdout.strip()
+    graded = []
+    for s in sessions:
+        want = key.get(str(s.get("task_id"))) or {}
+        ans = None
+        for line in (s.get("response") or "").splitlines():
+            line = line.strip()
+            if line.startswith("{"):
+                try:
+                    doc = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(doc, dict) and "tool" in doc:
+                    ans = doc
+                    break
+        ok = bool(ans) and ans.get("tool") == want.get("tool") and all(
+            f in (ans.get("mode") or "")
+            for f in want.get("required_flags", []))
+        graded.append({"task_id": str(s.get("task_id")), "ok": ok})
+    correct = sum(1 for g in graded if g["ok"])
+    noop = [{"task_id": t["task_id"], "tool": "humanizer-scan", "mode": ""}
+            for t in tasks_spec["tasks"]]
+    keyword = o5_keyword_baseline()
+    o5 = {"status": "ok", "sessions": sessions, "answer_key": key,
+          "key_sha256": hashlib.sha256(key_bytes).hexdigest(),
+          "tasks_spec": tasks_spec, "graded": graded,
+          "correct": correct, "total": len(sessions),
+          "pass": correct >= 5 and len(sessions) == 6,
+          "tree_commit": head,
+          "baselines": {
+              "noop": {"answers": noop,
+                       "correct": _o5_grade(noop, key)},
+              "keyword": {"answers": keyword,
+                          "correct": _o5_grade(keyword, key)}}}
+    with open(results_path, encoding="utf-8") as fh:
+        results = json.load(fh)
+    results["o5"] = o5
+    _rebuild_losses(results)
+    with open(results_path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(results, fh, ensure_ascii=False, indent=1)
+        fh.write("\n")
+    print("O5 слит в %s: correct %d/%d (noop %d, keyword %d)"
+          % (results_path, correct, len(sessions),
+             o5["baselines"]["noop"]["correct"],
+             o5["baselines"]["keyword"]["correct"]))
+
+
 def _rebuild_losses(results):
     losses = []
     for op in ("o1", "o2", "o3"):
@@ -380,6 +478,15 @@ def _rebuild_losses(results):
         losses.append({"op": "o4",
                        "reason": "правильных выборов %d из %d (порог 5/6)"
                        % (o4["correct"], o4["total"])})
+    o5 = results.get("o5")
+    if o5 and o5.get("status") == "BLOCKED":
+        losses.append({"op": "o5", "reason": "BLOCKED: " + o5["reason"]})
+    elif o5 and o5.get("status") == "ok" and not o5.get("pass"):
+        losses.append({"op": "o5",
+                       "reason": "нейтральный выбор: правильных %d из %d "
+                                 "(порог 5/6)"
+                       % (o5.get("correct"),
+                          len(o5.get("sessions") or []))})
     results["losses"] = losses
     results["summary"] = {
         "o1_pass": results["o1"]["pass"],
@@ -449,6 +556,9 @@ def main(argv=None):
         return selftest()
     if argv and argv[0] == "--merge-o4":
         merge_o4(argv[1], argv[2])
+        return 0
+    if argv and argv[0] == "--merge-o5":
+        merge_o5(argv[1], argv[2], argv[3])
         return 0
     v2 = bool(argv and argv[0] == "--v2")
     prereg_rel = ("research/task-benchmark/prereg-v2.md" if v2
