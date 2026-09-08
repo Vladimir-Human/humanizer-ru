@@ -97,3 +97,62 @@
 - 2026-09-07: статус KPI не изменился — новых внешних обращений о
   реальном использовании нет; окно наблюдения до 2026-10-06, PENDING.
 
+- 2026-09-08: выпуск 3.35.0 опубликован. Правило интервала публикаций
+  (>= 86400 с) ОТМЕНЕНО приказом владельца от 2026-09-08 и удалено из
+  проекта целиком (механизмы check_release.py, workflow-шаги,
+  docs/release-waivers.json; PR #158, #159; записи отмены в RELEASE.md,
+  GOVERNANCE.md раздел 2 пункт 5, AGENTS.md, CHANGELOG 3.35.0;
+  отсутствие правила закреплено тестами). Состав публикации:
+  GitHub Release 2026-09-08T06:39:44Z
+  (https://github.com/Vladimir-Human/humanizer-ru/releases/tag/v3.35.0;
+  тег v3.35.0 annotated, подписан опубликованным ключом проекта,
+  tagger — автономный контур сопровождения; целевой commit
+  e6a396ab75990073c074b763b5b360a6561b85ce; ассет humanizer-ru.zip
+  sha256 ef5170c8319b02aae1b0a6f8461769ee15adef5ca8bba6c1d30d135427796b02
+  и откреплённая подпись .zip.asc, gpg verify — Good signature;
+  детерминированная сборка check_release.py --build). PyPI 3.35.0
+  (wheel sha256 e009a7fd2aa96b8469c51a7ca601a6a50dae64f60df45caaa54b442d6aea5f4b,
+  sdist sha256 8c5cf68b95026d35b148c25d839f5564046d0a28febfc3b73aaf0b02262288be,
+  Trusted Publishing, прогон CI
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34195646425;
+  приёмка публикации впервые включала установленные пользовательские
+  сценарии для wheel и sdist — механизм PR #151). Скачанные
+  опубликованные байты сверены: sha256 совпали с PyPI, metadata прошли
+  check_pypi_metadata, sdist-test на опубликованном sdist — PROBES OK и
+  upgrade-smoke 3.34.0 -> 3.35.0; установленные сценарии на скачанном
+  wheel — Ran 11, OK, 0 пропусков. Официальный реестр MCP: version
+  3.35.0, status active, isLatest true (прогон CI
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34195646680,
+  запись перечитана обратно; установка по записи в чистую venv,
+  tools/list — 7 инструментов, схема humanizer_facts несёт
+  no_additions). Проверка релиза по тегу (прогон CI
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34195633124):
+  SUCCESS; локальный полный strict на дереве тега — 155 гейтов, FAIL 0,
+  SKIP 0. Pages: release-триггер (механизм PR #153) отработал — первый
+  деплой с тега отклонён environment-политикой (разрешала только
+  ветки), политика дополнена теговым паттерном v* (настройка
+  репозитория администрацией, зафиксирована здесь), повторный прогон
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34195646408
+  SUCCESS; status.json: published_tag=v3.35.0,
+  published_commit=e6a396a, parity ok, tests_passed true;
+  check_pages_router --live-pages — целы; check_demo_browser по
+  опубликованному URL — все проверки пройдены;
+  check_live_distribution --json — rc=0, problems=[], deep_files
+  verified. Скан логов четырёх релизных прогонов и diff тега на
+  приватные токены — 0 попаданий.
+- 2026-09-08: каталоги (датированные снимки 2026-09-08T06:55:57Z):
+  skills.sh — основная карточка
+  https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru
+  ОБНОВЛЕНА до 3.35.0; алиас https://skills.sh/vladimir-human/humanizer-ru
+  отдаёт устаревшую 3.25.4 (снимки 2026-09-07T23:12Z и 2026-09-08T06:55Z
+  одинаковы) — подана одна содержательная заявка разрешённым механизмом:
+  https://github.com/vercel-labs/skills/issues/2173; решение каталога —
+  внешнее, статус PENDING. Glama
+  https://glama.ai/mcp/servers/@Vladimir-Human/humanizer-ru — страница
+  200, карточка несёт 6 инструментов без humanizer_clean (снимок
+  устарел относительно контракта 3.35.0); каталог пересобирается
+  автоматически, статус PENDING, заявка не подавалась (механизм
+  обновления — автоматический).
+- 2026-09-08: статус KPI не изменился — новых внешних обращений о
+  реальном использовании на момент публикации нет; окно наблюдения до
+  2026-10-06, PENDING.
