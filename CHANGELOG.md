@@ -20,9 +20,13 @@
 
 ## 3.35.2 — 2026-09-08
 
-- Исправлены гейты машинного контракта и совместимости: проверяются union-типы JSON Schema, успешные facts/report-конверты и структурные MCP input-схемы; несовместимые required/type изменения блокируются.
-- MCP Registry metadata теперь содержит явный uvx launcher humanizer-mcp; установленный smoke проверяет --version у всех console entry points.
-- Release, PyPI и MCP publish workflows проверяют выбранный annotated tag через checkout ref; llms.txt синхронизирован с семью MCP-инструментами.
+- Исправлены гейты машинного контракта и совместимости: проверяются
+  union-типы JSON Schema, успешные facts/report-конверты и структурные MCP
+  input-схемы; несовместимые required/type изменения блокируются.
+- MCP Registry metadata теперь содержит явный uvx launcher humanizer-mcp;
+  установленный smoke проверяет --version у всех console entry points.
+- Release, PyPI и MCP publish workflows проверяют выбранный annotated tag
+  через checkout ref; llms.txt синхронизирован с семью MCP-инструментами.
 ## 3.35.1 — 2026-09-08
 
 - Выпуск 3.35.1 (патч: публичные metadata и приёмка, поведение продукта
