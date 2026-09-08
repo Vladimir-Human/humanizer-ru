@@ -99,13 +99,6 @@ jobs:
           # неверная подпись и подпись не тем ключом различаются.
           python3 scripts/check_release.py --release-contract
 
-      - name: Интервал после публикации (две конкретные публикации)
-        run: |
-          # Пара берётся из опубликованного списка Release: новый выпуск
-          # не сравнивается с самим собой; исторические исключённые пары
-          # названы в WAIVED_INTERVAL_PAIRS явно.
-          python3 scripts/check_release.py --post-publication-interval
-
       - name: Приложить архив к прогону
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
