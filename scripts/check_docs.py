@@ -89,6 +89,10 @@ TOP_LEVEL_MANIFEST = frozenset((
  "server.json",
  # 2026-09-04: лицензии зависимостей/корпусов и реестр действий владельца.
  "LICENSES.md", "OWNER-ACTIONS.md", "OWNER-TODO.md", "POSITIONING.md", "assets",
+ # 2026-09-08: maintainer-заявка каталога Glama (документированный
+ # механизм glama.json: состав maintainer'ов листинга; claim и re-sync —
+ # на стороне каталога после признания файла).
+ "glama.json",
 ))
 
 def _tracked_top_levels(root):
