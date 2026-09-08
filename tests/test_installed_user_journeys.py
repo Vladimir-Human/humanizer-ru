@@ -34,10 +34,20 @@ FENCED_DOC = ("Проза \"цитата\".\n\n```text\n" + THINK_OPEN
               + "\n```\n\nКонец.\n")
 
 
+def _clean_env():
+    """Окружение без PYTHONPATH/PYTHONHOME: установленные сценарии не
+    должны наследовать пути исходного дерева (иначе venv импортирует src
+    вместо site-packages и «установленная» проверка теряет смысл)."""
+    env = dict(os.environ)
+    for key in ("PYTHONPATH", "PYTHONHOME"):
+        env.pop(key, None)
+    return env
+
+
 def run(py, args, cwd=None, input_text=None):
     return subprocess.run([py] + args, capture_output=True, text=True,
                           cwd=cwd, input=input_text, encoding="utf-8",
-                          errors="replace")
+                          errors="replace", env=_clean_env())
 
 
 def console_exe(name):

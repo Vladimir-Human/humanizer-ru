@@ -15,7 +15,29 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 sys.path.insert(0, SRC)
-os.environ["PYTHONPATH"] = SRC + os.pathsep + os.environ.get("PYTHONPATH", "")
+# Подпроцессы получают PYTHONPATH из scoped-фикстуры модуля: прежняя
+# мутация os.environ ПРИ ИМПОРТЕ утекала в другие тесты процесса
+# (discovery импортирует все модули до исполнения — установленные
+# сценарии начинали импортировать src вместо site-packages).
+_SUB_ENV = dict(os.environ)
+_SUB_ENV["PYTHONPATH"] = SRC + os.pathsep + _SUB_ENV.get("PYTHONPATH", "")
+_SAVED_PP = None
+
+
+def setUpModule():
+    """PYTHONPATH нужен in-process MCP-вызовам (subprocess внутри
+    mcp_server наследует окружение); установка — только на время модуля,
+    с восстановлением в tearDownModule."""
+    global _SAVED_PP
+    _SAVED_PP = os.environ.get("PYTHONPATH")
+    os.environ["PYTHONPATH"] = _SUB_ENV["PYTHONPATH"]
+
+
+def tearDownModule():
+    if _SAVED_PP is None:
+        os.environ.pop("PYTHONPATH", None)
+    else:
+        os.environ["PYTHONPATH"] = _SAVED_PP
 
 from humanizer_ru import facts_diff as fd  # noqa: E402
 from humanizer_ru import mcp_server as m  # noqa: E402
@@ -27,7 +49,8 @@ def run_cli(args):
     return subprocess.run([sys.executable, "-X", "utf8",
                            "-m", "humanizer_ru.facts_diff"] + args,
                           capture_output=True, text=True,
-                          encoding="utf-8", errors="replace")
+                          encoding="utf-8", errors="replace",
+                          env=_SUB_ENV)
 
 
 class NumericSemanticsTests(unittest.TestCase):
@@ -165,7 +188,8 @@ class NumericSurfaceParityTests(unittest.TestCase):
             p = subprocess.run([sys.executable, "-X", "utf8",
                                 "-m", "humanizer_ru.edit_report", b, a,
                                 "--json"], capture_output=True, text=True,
-                               encoding="utf-8", errors="replace")
+                               encoding="utf-8", errors="replace",
+                               env=_SUB_ENV)
             # humanizer-report по контракту всегда rc=0: отчёт информативен,
             # потеря фактов видна в конверте, а не в коде выхода.
             self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
@@ -254,7 +278,8 @@ class IdenticalAndStrictTests(unittest.TestCase):
             p = subprocess.run([sys.executable, "-X", "utf8", "-m",
                                 "humanizer_ru.edit_report", b, a, "--json"],
                                capture_output=True, text=True,
-                               encoding="utf-8", errors="replace")
+                               encoding="utf-8", errors="replace",
+                               env=_SUB_ENV)
             self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
             facts = json.loads(p.stdout)["files"][0]["facts"]
             # unchanged НЕ переопределён (добавления в него не входят);
