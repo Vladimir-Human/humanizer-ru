@@ -6,7 +6,7 @@
 (матрица поддерживаемых и неподдерживаемая), capabilities, framing
 (newline-delimited, уведомления без ответа), семантика ошибок JSON-RPC
 (-32700/-32600/-32601/-32602), cancellation, tools/list = схемам из
-контракта, tools/call для всех четырёх инструментов: находка (CLI-код 1)
+контракта, tools/call для всех семи инструментов: находка (CLI-код 1)
 — успешный tool result, structuredContent соответствует outputSchema
 контракта (мини-валидатор check_contract), out-of-scope, режимы polish,
 словари жанров.
@@ -245,6 +245,33 @@ class TestMcpTools(unittest.TestCase):
         self.assertEqual(sc["files"][0]["genre"], "prose")
         self.assertEqual(self.schema_errors(sc, self._schema("humanizer_detect")),
                          [])
+
+    def test_facts_success_matches_schema(self):
+        resps, _ = _session([_INIT, _req(2, "tools/call", {
+            "name": "humanizer_facts",
+            "arguments": {
+                "text_before": "В 2024 году было 3 заявки.",
+                "text_after": "В 2024 году было 3 заявки."
+            }})])
+        r = resps[1]["result"]
+        self.assertIs(r["isError"], False)
+        self.assertEqual(
+            self.schema_errors(r["structuredContent"],
+                               self._schema("humanizer_facts")), [])
+
+    def test_report_success_with_nullable_mtld_matches_schema(self):
+        resps, _ = _session([_INIT, _req(2, "tools/call", {
+            "name": "humanizer_report",
+            "arguments": {
+                "text_before": "Короткий русский текст.",
+                "text_after": "Короткий русский текст."
+            }})])
+        r = resps[1]["result"]
+        self.assertIs(r["isError"], False)
+        self.assertIsNone(r["structuredContent"]["files"][0]["mtld"]["before"])
+        self.assertEqual(
+            self.schema_errors(r["structuredContent"],
+                               self._schema("humanizer_report")), [])
 
     def test_marker_class_param(self):
         text = ":contentReference[oaicite:1]{index=1} и ассистентом\u200b"

@@ -99,6 +99,26 @@ def norm(value, key=None):
         return value
     return value
 
+
+SCHEMA_KEYS = {
+    "type", "enum", "const", "required", "additionalProperties",
+    "minItems", "maxItems", "minLength", "maxLength", "pattern",
+    "items", "properties", "anyOf", "oneOf",
+}
+
+def schema_shape(value, key=None):
+    """Сохранить структурные ограничения inputSchema, отбросив описания."""
+    if isinstance(value, dict):
+        return {k: schema_shape(v, k) for k, v in value.items()
+                if k in SCHEMA_KEYS}
+    if isinstance(value, list):
+        out = [schema_shape(v, key) for v in value]
+        if key in ("required", "enum"):
+            return sorted(out, key=repr)
+        return out
+    return value
+
+
 def w(name, text):
     p = os.path.join(T, name)
     with open(p, "w", encoding="utf-8", newline="") as fh:
@@ -174,8 +194,13 @@ try:
     # словаря (допустимо), аддитивный параметр — новый элемент списка
     # props (каждый OLD-элемент обязан иметь типизированную пару в NEW).
     tools_rec = {d["name"]: {
+        # Старые поля сохраняются для читаемого отчёта; полная структурная
+        # форма нужна, чтобы ловить смену type/enum/required, а не только
+        # переименование свойства.
         "props": sorted(d["inputSchema"]["properties"]),
-        "required": sorted(d["inputSchema"]["required"])} for d in defs}
+        "required": sorted(d["inputSchema"]["required"]),
+        "input_schema": schema_shape(d["inputSchema"])}
+        for d in defs}
     out.append({"label": "mcp:tools", "rc": 0, "payload": tools_rec})
     state = {}
     r = ms.handle_message(json.dumps({
@@ -294,6 +319,16 @@ def _compat_problems(old, new, path, key=None) -> list:
                 problems.extend(_compat_problems(old[k], new[k], path, k))
         return problems
     if t_old == "list":
+        if key == "required":
+            old_set, new_set = set(old), set(new)
+            problems = []
+            for item in sorted(old_set - new_set, key=repr):
+                problems.append("%s: обязательное поле %r удалено "
+                                "в новой версии" % (path, item))
+            for item in sorted(new_set - old_set, key=repr):
+                problems.append("%s: добавлено новое обязательное поле %r "
+                                "(ломает старых клиентов)" % (path, item))
+            return problems
         problems = []
         pool = list(new)
         for i, item in enumerate(old):
@@ -317,6 +352,9 @@ def _compat_problems(old, new, path, key=None) -> list:
             else:
                 pool.pop(hit)
         return problems
+    if key == "type" and old != new:
+        return ["%s: поле type: тип OLD=%r NEW=%r"
+                % (path, old, new)]
     if old != new:
         return ["%s: поле %s: OLD=%r NEW=%r" % (path, key or "-", old, new)]
     return []
@@ -630,6 +668,29 @@ def selftest() -> int:
                                            "date_like": True}]}}]
     p, _r, _a = compare(typed_old, typed_added)
     case("добавленное вложенное поле аддитивно", p == [])
+
+    schema_old = [{"label": "mcp:tools", "rc": 0, "payload": {
+        "humanizer_scan": {"required": ["text"], "input_schema": {
+            "type": "object", "required": ["text"],
+            "properties": {"text": {"type": "string"}}}}}}]
+    schema_required = [{"label": "mcp:tools", "rc": 0, "payload": {
+        "humanizer_scan": {"required": ["text", "genre"],
+                            "input_schema": {
+                                "type": "object",
+                                "required": ["text", "genre"],
+                                "properties": {
+                                    "text": {"type": "string"},
+                                    "genre": {"type": "string"}}}}}}]
+    p, _r, _a = compare(schema_old, schema_required)
+    case("новый required-параметр MCP ловится (негатив)",
+         any("обязательное поле" in x for x in p))
+    schema_type = [{"label": "mcp:tools", "rc": 0, "payload": {
+        "humanizer_scan": {"required": ["text"], "input_schema": {
+            "type": "object", "required": ["text"],
+            "properties": {"text": {"type": "integer"}}}}}}]
+    p, _r, _a = compare(schema_old, schema_type)
+    case("смена type MCP ловится (негатив)",
+         any("тип" in x for x in p))
 
     # Новые операции: отсутствует в OLD, присутствует в NEW — аддитивность.
     absent_old = [{"label": "clean:a", "absent": True}]

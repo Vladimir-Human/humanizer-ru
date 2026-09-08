@@ -288,7 +288,9 @@ def _registry_checks(loc, opener=None):
     else:
         pkg = pypi_pkgs[0]
         rec["package"] = {"identifier": pkg.get("identifier"),
-                          "version": pkg.get("version")}
+                          "version": pkg.get("version"),
+                          "runtimeHint": pkg.get("runtimeHint"),
+                          "packageArguments": pkg.get("packageArguments")}
         if pkg.get("identifier") != "humanizer-ru":
             problems.append("реестр MCP: идентификатор пакета %r != "
                             "humanizer-ru (чужой пакет)"
@@ -296,6 +298,16 @@ def _registry_checks(loc, opener=None):
         if pkg.get("version") != ver:
             problems.append("реестр MCP: версия пакета %s != локальная %s"
                             % (pkg.get("version"), ver))
+        args = pkg.get("packageArguments") or []
+        launch_values = [a.get("value") for a in args
+                         if isinstance(a, dict)
+                         and a.get("type") == "positional"]
+        if pkg.get("runtimeHint") != "uvx":
+            problems.append("реестр MCP: для pypi runtimeHint обязан быть "
+                            "uvx, получено %r" % pkg.get("runtimeHint"))
+        if "humanizer-mcp" not in launch_values:
+            problems.append("реестр MCP: packageArguments не запускают "
+                            "humanizer-mcp")
     note = ((server.get("_meta") or {})
             .get("io.modelcontextprotocol.registry/publisher-provided")
             or {})
@@ -561,7 +573,11 @@ def selftest():
         "server": {"name": REGISTRY_NAME, "version": ver,
                    "packages": [{"registryType": "pypi",
                                  "identifier": "humanizer-ru",
-                                 "version": ver}],
+                                 "version": ver,
+                                 "runtimeHint": "uvx",
+                                 "packageArguments": [{
+                                     "type": "positional",
+                                     "value": "humanizer-mcp"}]}],
                    "_meta": {
                        "io.modelcontextprotocol.registry/"
                        "publisher-provided": {
@@ -672,6 +688,15 @@ def selftest():
     _r, p, _u = run(m, deep_files=False)
     case("мутант: чужой пакет MCP ловится",
          any("идентификатор" in x for x in p))
+
+    # Мутант 6b: запись активна, но consumer не знает entry point пакета.
+    m = dict(base_map)
+    reg_launcher = json.loads(json.dumps(registry_ok))
+    del reg_launcher["server"]["packages"][0]["packageArguments"]
+    m[REGISTRY] = reg_launcher
+    _r, p, _u = run(m, deep_files=False)
+    case("мутант: MCP без launcher packageArguments ловится",
+         any("packageArguments" in x for x in p))
 
     # Мутант 7: чужое имя записи MCP.
     m = dict(base_map)

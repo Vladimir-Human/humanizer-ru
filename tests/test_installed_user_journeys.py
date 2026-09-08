@@ -148,7 +148,9 @@ class DeveloperJourneyTests(unittest.TestCase):
             self.assertTrue(os.path.isfile(exe),
                             "нет точки входа %s" % t["command"])
         for name in ("humanizer-scan", "humanizer-markers",
-                     "humanizer-polish", "humanizer-detect"):
+                     "humanizer-polish", "humanizer-detect",
+                     "humanizer-clean", "humanizer-facts",
+                     "humanizer-report", "humanizer-mcp"):
             proc = run(console_exe(name), ["--version"])
             self.assertEqual(proc.returncode, 0, name)
             self.assertRegex(proc.stdout.strip(), r"^\d+\.\d+\.\d+$")

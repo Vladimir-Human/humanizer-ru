@@ -70,8 +70,9 @@
 - MCP-сервер (Model Context Protocol, stdio): `pip install humanizer-ru`,
   в конфигурации MCP-клиента команда `humanizer-mcp` (без аргументов;
   JSON-RPC 2.0, newline-delimited). Инструменты `humanizer_scan`,
-  `humanizer_markers`, `humanizer_polish`, `humanizer_detect`,
-  `humanizer_facts`, `humanizer_report` — шесть, как в contract.v1.json и
+  `humanizer_markers`, `humanizer_polish`, `humanizer_clean`,
+  `humanizer_detect`, `humanizer_facts`, `humanizer_report` — семь, как в
+  contract.v1.json и
   в ответе `tools/list`; их схемы
   генерируются из contract.v1.json, находка возвращается как успешный
   tool result (isError false), ошибка входа — isError true с конвертом.

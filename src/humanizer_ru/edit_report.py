@@ -206,6 +206,12 @@ SHORT_RU = "Проверяемая гигиена вставки из чата �
 
 
 def main(argv=None):
+    raw = list(sys.argv[1:] if argv is None else argv)
+    divider = raw.index("--") if "--" in raw else len(raw)
+    if "--version" in raw[:divider]:
+        from humanizer_ru import __version__
+        print(__version__)
+        return 0
     ap = argparse.ArgumentParser(prog="humanizer-report")
     ap.add_argument("before")
     ap.add_argument("after")
