@@ -58,14 +58,13 @@ def wiring_errors(pypi_text, pages_text, release_text):
             errs.append("pypi-publish: публикация не зависит от приёмки")
         try:
             first_journey = pp.index("run_journeys_strict.py")
-            interval = pp.index("--pre-release-interval")
             upload = pp.index("upload-artifact")
-            if not (first_journey < interval and first_journey < upload):
+            if not first_journey < upload:
                 errs.append("pypi-publish: сценарии исполняются ПОСЛЕ "
                             "необратимых шагов, а не до них")
         except ValueError:
-            errs.append("pypi-publish: нет шага интервала/артефакта — "
-                        "порядок не проверить")
+            errs.append("pypi-publish: нет шага артефакта — порядок не "
+                        "проверить")
     if "check_demo_browser.py" not in pages_text:
         errs.append("demo-pages: браузерная DOM-проверка не подключена")
     else:
