@@ -27,6 +27,7 @@ import argparse
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -66,14 +67,23 @@ def links_absolute(links) -> list:
 
 
 def http_status(url: str) -> int:
-    """HTTP-код HEAD-запроса (редиректы разрешены); OSError пробрасывается."""
+    """HTTP-код HEAD-запроса с коротким retry при сетевом разрыве."""
     req = urllib.request.Request(url, method="HEAD", headers={
         "User-Agent": "humanizer-ru-check-pages-router"})
-    try:
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            return resp.status
-    except urllib.error.HTTPError as exc:
-        return exc.code
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                return resp.status
+        except urllib.error.HTTPError as exc:
+            return exc.code
+        except OSError as exc:
+            last = exc
+            if attempt < 2:
+                time.sleep(0.5 * (attempt + 1))
+                continue
+            raise
+    raise last  # pragma: no cover - цикл всегда возвращает или выбрасывает
 
 
 def check_static() -> list:
