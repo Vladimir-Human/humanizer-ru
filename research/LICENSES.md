@@ -10,7 +10,7 @@
 - Собственные тексты проекта и цитаты из публичных источников с атрибуцией
   в research/fixtures/marker-sources.json (source_url, accessed).
 - Заимствований из MultiSocial нет: файлы записи Zenodo 13846152 restricted
-  (доступ по запросу с академической почты), проект их не скачивал
+  (доступ по запросу с authorized institutional account), проект их не скачивал
   (проверено 2026-09-04: каталог не содержит файлов MultiSocial).
 
 ## research/validation/adversarial и boundary
@@ -29,7 +29,7 @@
 - OpenCorpora: CC BY-SA; используется как архивный до-LLM корпус (отсечение
   не позже 2019-2020).
 - MultiSocial: cc-by-4.0, но файлы restricted — в корпусах проекта
-  отсутствует; строка OWNER-ACTIONS.md на случай доступа владельца.
+  отсутствует; строка project operations на случай доступа проекта.
 - Mendeley 10.17632/4ynxfp3w53.2: CC BY 4.0 (явное поле Licence карточки).
 
 ## research/prereg-stamps

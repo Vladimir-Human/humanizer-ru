@@ -45,7 +45,7 @@ SERVICE_LOGINS = {"dependabot[bot]", "renovate[bot]", "github-actions[bot]",
 # (эвристика для сортировки внимания; зачёт остаётся за человеком).
 _SIGNAL_VERSION = re.compile(r"\b\d+\.\d+(?:\.\d+)?\b")
 _SIGNAL_COMMAND = re.compile(
-    r"(humanizer[-_](?:scan|markers|polish|detect|facts|report|mcp)"
+    r"(humanizer[-_](?:scan|markers|polish|detect|clean|facts|report|mcp)"
     r"|pip install|python3? |check_all|unittest|--json|--remove)",
     re.IGNORECASE)
 _SIGNAL_PROBLEM = re.compile(
@@ -381,6 +381,8 @@ def selftest():
         failed += 0 if ok else 1
 
     ver = "%d.%d.%d" % (3, 32, 1)
+    case("команда humanizer-clean распознаётся как использование",
+         bool(_SIGNAL_COMMAND.search("humanizer-clean input.txt")))
     issues_payload = [
         {"user": {"login": "external-user"},
          "created_at": "2026-09-07T10:00:00Z",
