@@ -12,8 +12,8 @@ on:
                        # гонка «тег раньше Release» не требует пересоздания тега
     inputs:
       tag:
-        description: 'Проверяемый тег (по умолчанию последний v*)'
-        required: false
+        description: 'Проверяемый annotated тег выпуска'
+        required: true
         type: string
 
 permissions:
@@ -33,18 +33,18 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - name: Установить build
         # Гейты pypi-metadata и sdist-теста в --strict обязаны выполняться,
         # а не SKIP: без модуля build они не проверены и блокируют прогон.
         run: python3 -m pip install --user build
 
-      - name: Релизный тег (явный input, ref или последний v*)
+      - name: Релизный тег из checkout
         id: tag
         run: |
-          if [[ -n "${{ inputs.tag }}" ]]; then T="${{ inputs.tag }}";
-          elif [[ "$GITHUB_REF_NAME" == v* ]]; then T="$GITHUB_REF_NAME";
-          else T=$(git tag --sort=-v:refname | head -1); fi
+          T="${{ inputs.tag || github.ref_name }}"
+          [[ "$T" == v* ]] || { echo "FAIL: нужен тег vX.Y.Z, получено $T"; exit 1; }
           echo "value=$T" >> "$GITHUB_OUTPUT"
           echo "проверяемый тег: $T"
 
