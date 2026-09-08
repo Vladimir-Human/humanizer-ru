@@ -53,6 +53,125 @@ def _sha256(path):
         return hashlib.sha256(fh.read()).hexdigest()
 
 
+def _parse_answer(response):
+    """Первый JSON-объект с tool/mode из текста ответа сессии."""
+    for line in (response or "").splitlines():
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                doc = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(doc, dict) and "tool" in doc:
+                return doc
+    return None
+
+
+def _key_vs_contract(key, problems, where):
+    """Ключ проверяется по контракту: инструменты и режимы реальны."""
+    try:
+        with open(os.path.join(ROOT, "contract.v1.json"),
+                  encoding="utf-8") as fh:
+            contract = json.load(fh)
+    except (OSError, ValueError) as exc:
+        problems.append("%s: контракт не читается: %r" % (where, exc))
+        return
+    tools = {t.get("command"): t for t in contract.get("tools", [])}
+    for tid in sorted(key):
+        want = key[tid] or {}
+        tool = tools.get(want.get("tool"))
+        if tool is None:
+            problems.append("%s: ключ %s — инструмент %r отсутствует в "
+                            "контракте" % (where, tid, want.get("tool")))
+            continue
+        modes = " ".join(tool.get("modes", []))
+        for flag in want.get("required_flags", []):
+            if flag not in modes:
+                problems.append("%s: ключ %s — требуемый флаг %r "
+                                "отсутствует в modes контракта (%s)"
+                                % (where, tid, flag, modes[:60]))
+
+
+def _regrade(sessions, key):
+    """Независимая оценка ответов: [bool] по порядку сессий."""
+    out = []
+    for s in sessions:
+        want = key.get(str(s.get("task_id")))
+        ans = _parse_answer(s.get("response"))
+        if want is None or ans is None:
+            out.append(False)
+            continue
+        tool_ok = ans.get("tool") == want.get("tool")
+        flags_ok = all(f in (ans.get("mode") or "")
+                       for f in want.get("required_flags", []))
+        out.append(bool(tool_ok and flags_ok))
+    return out
+
+
+def _verify_choice_section(sec, tasks_path, where, problems,
+                           spec=None, expect_sessions=6,
+                           isolation_required=False):
+    """Общая проверка секции выбора операции (o4/o5): состав сессий,
+    уникальность task_id, независимый перегрейдинг из текстов ответов
+    (graded.ok НЕ является источником истины), ключ против контракта.
+
+    isolation_required=True (протокол O5): файл задач НЕ может содержать
+    answer_key — ключ обязан быть недоступен испытуемому. Для O4 файл
+    исторически содержит ключ — это дефект прежнего протокола, раскрыт
+    эрратой; исторические протоколы задним числом не отвергаются."""
+    try:
+        if spec is None:
+            with open(tasks_path, encoding="utf-8") as fh:
+                spec = json.load(fh)
+    except (OSError, ValueError) as exc:
+        problems.append("%s: файл задач не читается: %r" % (where, exc))
+        return
+    if isolation_required and "answer_key" in spec:
+        problems.append("%s: файл задач содержит answer_key — ключ "
+                        "доступен испытуемому" % where)
+    key = sec.get("answer_key") or spec.get("answer_key") or {}
+    if not key:
+        problems.append("%s: ключ ответов отсутствует" % where)
+        return
+    _key_vs_contract(key, problems, where)
+    tasks_ids = {str(t.get("task_id")) for t in spec.get("tasks", [])}
+    sessions = sec.get("sessions") or []
+    if len(sessions) != expect_sessions:
+        problems.append("%s: сессий %s != %d (замороженный протокол)"
+                        % (where, len(sessions), expect_sessions))
+    seen = set()
+    for s in sessions:
+        for field in ("task_id", "prompt", "response", "model", "provider"):
+            if not s.get(field):
+                problems.append("%s: сессия без поля %s — запись неполна"
+                                % (where, field))
+        tid = str(s.get("task_id"))
+        if tid in seen:
+            problems.append("%s: task_id %s встречается дважды — "
+                            "уникальность нарушена" % (where, tid))
+        seen.add(tid)
+    if seen != tasks_ids:
+        problems.append("%s: состав задач сессий %r != замороженный %r"
+                        % (where, sorted(seen), sorted(tasks_ids)))
+    regraded = _regrade(sessions, key)
+    recorded_ok = [bool(g.get("ok")) for g in (sec.get("graded") or [])]
+    if recorded_ok and len(recorded_ok) != len(regraded):
+        problems.append("%s: записей graded %s != сессий %s"
+                        % (where, len(recorded_ok), len(regraded)))
+    for i, (rec, fresh) in enumerate(zip(recorded_ok, regraded)):
+        if rec != fresh:
+            problems.append("%s: вердикт сессии %d (task %s) не "
+                            "пересчитывается из response: graded=%s, "
+                            "независимая оценка=%s — подмена ответов или "
+                            "оценки" % (where, i + 1,
+                                        sessions[i].get("task_id"),
+                                        rec, fresh))
+    correct = sum(1 for x in regraded if x)
+    if sec.get("correct") != correct:
+        problems.append("%s: correct %s != независимый пересчёт из "
+                        "response %s" % (where, sec.get("correct"), correct))
+
+
 def verify(results, live=True):
     """Список нарушений протокола (пустой — протокол пригоден)."""
     runner = _load_runner()
@@ -136,22 +255,55 @@ def verify(results, live=True):
             if not o4.get("reason"):
                 problems.append("o4 BLOCKED без причины")
         elif o4.get("status") == "ok":
-            if len(o4.get("sessions") or []) != 6:
-                problems.append("o4: сессий %s != 6 (замороженный протокол)"
-                                % len(o4.get("sessions") or []))
-            for s in o4.get("sessions") or []:
-                for field in ("task_id", "prompt", "response", "model",
-                              "provider"):
-                    if not s.get(field):
-                        problems.append("o4: сессия без поля %s — запись "
-                                        "неполна" % field)
-            graded = o4.get("graded") or []
-            correct = sum(1 for g in graded if g.get("ok"))
-            if o4.get("correct") != correct:
-                problems.append("o4: correct %s != пересчёт по graded %s"
-                                % (o4.get("correct"), correct))
+            _verify_choice_section(o4, os.path.join(TB, "o4-tasks.json"),
+                                   "o4", problems)
         else:
             problems.append("o4: неизвестный статус %r" % o4.get("status"))
+    # O5 (нейтральный пересмотр выбора операции): необязательная секция,
+    # но если заявлена — проверяется полностью, включая изоляцию ключа
+    # (файл задач НЕ содержит ключ) и хеш ключа из предрегистрации.
+    o5 = results.get("o5")
+    if isinstance(o5, dict) and o5.get("status") == "ok":
+        o5_problems = []
+        _verify_choice_section(o5, os.path.join(TB, "o5-tasks.json"),
+                               "o5", o5_problems,
+                               spec=o5.get("tasks_spec"),
+                               isolation_required=True)
+        problems.extend(o5_problems)
+        key_hash = o5.get("key_sha256")
+        if not key_hash:
+            problems.append("o5: нет key_sha256 — связь ключа с "
+                            "предрегистрацией не проверить")
+        else:
+            try:
+                with open(os.path.join(TB, "o5-prereg.md"),
+                          encoding="utf-8") as fh:
+                    o5_prereg = fh.read()
+                if key_hash not in o5_prereg:
+                    problems.append("o5: хеш ключа %s не заморожен в "
+                                    "предрегистрации — ключ изменён после "
+                                    "заморозки" % key_hash[:12])
+            except OSError:
+                problems.append("o5: предрегистрация o5-prereg.md не "
+                                "читается")
+        for base_name in ("noop", "keyword"):
+            base = (o5.get("baselines") or {}).get(base_name)
+            if not base:
+                problems.append("o5: базовый уровень %s отсутствует "
+                                "(no-op и прозрачный baseline обязательны)"
+                                % base_name)
+                continue
+            answers = base.get("answers") or []
+            key = o5.get("answer_key") or {}
+            fresh = sum(1 for a in answers
+                        if key.get(str(a.get("task_id")), {}).get("tool")
+                        == a.get("tool"))
+            if base.get("correct") != fresh:
+                problems.append("o5: baseline %s correct %s != пересчёт %s"
+                                % (base_name, base.get("correct"), fresh))
+    elif isinstance(o5, dict) and o5.get("status") == "BLOCKED":
+        if not o5.get("reason"):
+            problems.append("o5 BLOCKED без причины")
     # Потери: независимый пересчёт.
     want_losses = []
     for op in ("o1", "o2", "o3"):
@@ -168,6 +320,18 @@ def verify(results, live=True):
                                 "reason": "правильных выборов %d из %d "
                                           "(порог 5/6)"
                                 % (o4.get("correct"), o4.get("total"))})
+    o5_loss = results.get("o5")
+    if isinstance(o5_loss, dict):
+        if o5_loss.get("status") == "BLOCKED":
+            want_losses.append({"op": "o5",
+                                "reason": "BLOCKED: "
+                                + o5_loss.get("reason", "")})
+        elif o5_loss.get("status") == "ok" and not o5_loss.get("pass"):
+            want_losses.append({"op": "o5",
+                                "reason": "нейтральный выбор: правильных "
+                                          "%d из %d (порог 5/6)"
+                                % (o5_loss.get("correct"),
+                                   len(o5_loss.get("sessions") or []))})
     got_losses = results.get("losses")
     if got_losses is None:
         problems.append("нет секции losses — потери не публикуются")
@@ -203,12 +367,24 @@ def selftest():
     axes_doc = {k: ref_old.get(k) for k in runner._AXES}
     o2 = runner.run_o2()
     o3 = runner.run_o3()
-    o4_ok = {"status": "ok", "sessions": [
-        {"task_id": i, "prompt": "p%d" % i, "response": "r%d" % i,
-         "model": "test-model", "provider": "test-provider",
-         "temperature": 0} for i in range(1, 7)],
-        "graded": [{"task_id": str(i), "ok": True} for i in range(1, 7)],
-        "correct": 6, "total": 6, "pass": True}
+    with open(os.path.join(TB, "o4-tasks.json"), encoding="utf-8") as fh:
+        o4_spec = json.load(fh)
+    o4_key = o4_spec["answer_key"]
+
+    def o4_session(i):
+        want = o4_key[str(i)]
+        resp = json.dumps({"task_id": i, "tool": want["tool"],
+                           "mode": " ".join(want["required_flags"])},
+                          ensure_ascii=False)
+        return {"task_id": i, "prompt": "p%d" % i, "response": resp,
+                "model": "test-model", "provider": "test-provider",
+                "temperature": 0}
+
+    o4_ok = {"status": "ok",
+             "sessions": [o4_session(i) for i in range(1, 7)],
+             "graded": [{"task_id": str(i), "ok": True}
+                        for i in range(1, 7)],
+             "correct": 6, "total": 6, "pass": True}
     results = {
         "schema": "task-benchmark.v1", "date": "2026-09-08",
         "prereg_sha256": _sha256(PREREG),
@@ -276,6 +452,38 @@ def selftest():
     bad["prereg_sha256"] = results["prereg_sha256"]
     case("мутант: хеш v1 в протоколе v2 ловится",
          any("предрегистрации" in p for p in verify(bad, live=False)))
+
+    # O4/O5: независимый перегрейдинг и изоляция ключа.
+    bad = copy.deepcopy(results)
+    ans = json.loads(bad["o4"]["sessions"][0]["response"])
+    ans["tool"] = "humanizer-scan"
+    bad["o4"]["sessions"][0]["response"] = json.dumps(ans,
+                                                      ensure_ascii=False)
+    case("мутант: подмена O4-ответа при сохранённом graded ловится "
+         "пересчётом из response",
+         any("не пересчитывается" in p or "correct" in p
+             for p in verify(bad, live=False)))
+
+    bad = copy.deepcopy(results)
+    bad["o4"]["sessions"][1]["task_id"] = bad["o4"]["sessions"][0]["task_id"]
+    case("мутант: дубликат task_id O4 ловится",
+         any("дважды" in p for p in verify(bad, live=False)))
+
+    bad = copy.deepcopy(results)
+    bad["o4"]["answer_key"] = {str(i): dict(o4_key[str(i)])
+                               for i in range(1, 7)}
+    bad["o4"]["answer_key"]["3"]["required_flags"] = ["--no-such-flag"]
+    case("мутант: флаг ключа вне modes контракта ловится",
+         any("отсутствует в modes" in p for p in verify(bad, live=False)))
+
+    bad = copy.deepcopy(results)
+    bad["o5"] = {"status": "ok", "key_sha256": "a" * 64,
+                 "tasks_spec": {"tasks": [], "answer_key": {"1": {}}},
+                 "sessions": [], "correct": 0, "baselines": {}}
+    errs5 = verify(bad, live=False)
+    case("мутант: O5 — ключ в файле задач и отсутствие baselines ловятся",
+         any("answer_key" in p for p in errs5)
+         and any("базовый уровень" in p for p in errs5))
 
     print("САМОПРОВЕРКА check_task_benchmark: %d/%d PASS"
           % (passed, passed + failed))
