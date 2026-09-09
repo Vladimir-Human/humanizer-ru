@@ -115,7 +115,9 @@ marker are expected losses; check the report for no other losses and confirm
 that the URL and `42` remain. This checks only these invariants; it does not
 determine authorship or assess prose quality.
 
-All four commands read stdin via `-`. Sample output (markers on a chat
+`humanizer-scan`, `humanizer-markers`, `humanizer-polish` and
+`humanizer-detect` read stdin via `-`; `humanizer-facts` and
+`humanizer-report` take two files. Sample output (markers on a chat
 interface line):
 
 ```sh
