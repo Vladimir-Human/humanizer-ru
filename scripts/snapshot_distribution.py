@@ -107,11 +107,21 @@ def selftest() -> int:
         return Response(b"catalog")
 
     good = snapshot(opener=opener)
-    bad = dict(good); bad["surfaces"] = dict(good["surfaces"])
-    bad["surfaces"]["pypi"] = {"status": "drift"}
-    bad["status"] = "drift"
-    cases = [good["status"] == "ok", all(v["status"] == "ok" for v in good["surfaces"].values()), bad["status"] == "drift"]
-    for ok, label in zip(cases, ("synthetic snapshot is ok", "all surfaces represented", "drift is distinct")):
+    def drift_opener(req, timeout=20):
+        if "pypi.org" in req.full_url:
+            return Response(b'{"info":{"version":"0.0.0"}}')
+        return opener(req, timeout)
+
+    def unavailable_opener(req, timeout=20):
+        raise OSError("synthetic network failure")
+
+    drift = _surface("pypi", SOURCES["pypi"], _local_version(), drift_opener)
+    unavailable = _surface("pypi", SOURCES["pypi"], _local_version(), unavailable_opener)
+    cases = [good["status"] == "ok",
+             all(v["status"] == "ok" for v in good["surfaces"].values()),
+             drift["status"] == "drift",
+             unavailable["status"] == "unavailable"]
+    for ok, label in zip(cases, ("synthetic snapshot is ok", "all surfaces represented", "drift is detected", "unavailable is explicit")):
         print(("PASS: " if ok else "FAIL: ") + label)
     print("САМОПРОВЕРКА snapshot_distribution: %d/%d PASS" % (sum(cases), len(cases)))
     return 0 if all(cases) else 1
