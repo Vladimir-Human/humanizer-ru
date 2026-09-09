@@ -17,3 +17,9 @@ result. Catalog HTML hashes are diagnostic only and do not gate releases.
 
 The command is deliberately outside the release workflow. Reproduce a local
 check with `python scripts/snapshot_distribution.py --selftest`.
+
+For a machine-readable Agent Skills installation receipt, run
+`python scripts/install_receipt.py --json`. It records the source commit and
+deterministic hashes for the root skill, the DSH skill, and the MCP contract.
+This is a project receipt, not an official Agent Skills lockfile or a security
+certificate. Use `--strict` when the receipt must describe a clean git tree.

@@ -44,6 +44,7 @@
 | `research/findability-2026-09.md` | повторный замер находимости (2 из 5, порог достигнут впритык) |
 | `research/mcp-conformance-protocol.md` | протокол MCP-conformance (stdlib-сервер, Inspector, SDK) |
 | `scripts/snapshot_distribution.py` + `research/distribution-snapshots/` | read-only snapshot версий и статусов публичных поверхностей |
+| `scripts/install_receipt.py` | машиночитаемый receipt commit/hash для skill surfaces, не официальный lockfile |
 | `research/BACKLOG.md` | очередь режима роста (условия входа зафиксированы) |
 | `docs/CHANGELOG-archive.md` | журнал версий до 3.10.0 дословно |
 
