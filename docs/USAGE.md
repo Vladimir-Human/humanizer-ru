@@ -275,6 +275,14 @@ docs/THREAT-MODEL.md.
 `permissions: contents: read`, текст не покидает раннер. Пример вызова — в
 `action/action.yml`.
 
+### Политика CI по результату
+
+Для владельца CI правило простое: класс **A** — blocking (исправить артефакт
+и повторить job); класс **B** — non-blocking review/warn (проверить контекст
+вручную); `rc=2` — operational failure (исправить вход или путь). A и B не
+являются вердиктом об авторстве. Синтетические строки для пробы лежат в
+`tests/fixtures/ci-policy-cases.md`, а машинные коды — в `contract.v1.json`.
+
 
 ## Архитектура
 
