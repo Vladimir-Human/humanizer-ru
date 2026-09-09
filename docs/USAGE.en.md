@@ -211,6 +211,15 @@ are not authorship verdicts. Synthetic probe lines are in
 `tests/fixtures/ci-policy-cases.md`; machine codes are in `contract.v1.json`.
 
 
+### Check a DOCX before sharing
+
+For DOCX, inspect container edit history and the text layer with
+`python tools/docx_evidence.py file.docx --json`. The report exposes core/app
+fields and an `rsid` count as context; it does not prove authorship and is not
+complete anonymization. Run `python tools/docx_evidence.py --selftest` for a
+synthetic check without user documents. This scenario is DOCX-only; PDFs and
+images need separate verification.
+
 ## Architecture
 
 Short map; details live in the directories themselves:
