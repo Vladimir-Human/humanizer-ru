@@ -35,6 +35,27 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Выбранный ref — релизный тег и HEAD
+        env:
+          RELEASE_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess, sys
+          ref = os.environ['RELEASE_REF']
+          if not re.fullmatch(r'v\d+\.\d+\.\d+', ref):
+              sys.exit(f'недопустимый ref: {ref!r}')
+          version = open('src/humanizer_ru/__init__.py', encoding='utf-8').read()
+          m = re.search(r'__version__\s*=\s*"(\d+\.\d+\.\d+)"', version)
+          if not m or ref[1:] != m.group(1):
+              sys.exit(f'ref {ref} не совпадает с версией пакета')
+          tag_commit = subprocess.check_output(['git', 'rev-list', '-n', '1', ref], text=True).strip()
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if tag_commit != head:
+              sys.exit(f'HEAD {head} не совпадает с commit тега {tag_commit}')
+          print('ref/version/HEAD согласованы:', ref, head)
+          PY
 
       - name: Версия server.json равна версии пакета
         run: |
