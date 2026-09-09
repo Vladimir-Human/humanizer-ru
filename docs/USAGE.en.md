@@ -103,6 +103,15 @@ Package commands:
 - `humanizer-scan` — soft-signal counter, calibrates the edit scope.
 - `humanizer-facts` — fact diff of two text versions (numbers, dates, URLs, names, quotes, negations, modals): lost/added/changed with positions; exit 1 on lost or inverted fact; no authorship or quality verdicts.
 
+### Reproducible Markdown-safe scenario
+
+Use `--preserve-markup` for Markdown: supported traces are removed from prose
+while URLs, numbers and fenced code are preserved. On
+`tests/fixtures/media-markdown-safe.md`, first make a working copy, then run
+`humanizer-markers --scan`, `humanizer-clean --preserve-markup --in-place` and
+`humanizer-facts --no-additions`. This checks only these invariants; it does
+not determine authorship or assess prose quality.
+
 All four commands read stdin via `-`. Sample output (markers on a chat
 interface line):
 
