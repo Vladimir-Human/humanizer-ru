@@ -205,7 +205,7 @@ def generate_tool_defs(contract) -> list:
             "annotations": {
                 "readOnlyHint": cmd not in ("humanizer-polish",
                                             "humanizer-clean"),
-                "destructiveHint": False,
+                "destructiveHint": cmd in ("humanizer-polish", "humanizer-clean"),
                 "idempotentHint": True,
                 "openWorldHint": False,
             },
