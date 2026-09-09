@@ -103,8 +103,15 @@ jobs:
 
       - name: Чтение опубликованной записи
         run: |
-          sleep 5
           EXPECTED=$(python3 -c 'import json; print(json.load(open("server.json", encoding="utf-8"))["version"])')
-          curl --fail --silent --show-error --location \
-            "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest" \
-            | EXPECTED="$EXPECTED" python3 -c 'import json, os, sys; d=json.load(sys.stdin); s=d.get("server") or {}; actual=s.get("version"); expected=os.environ["EXPECTED"]; print("реестр: версия", actual, "статус", ((d.get("_meta") or {}).get("io.modelcontextprotocol.registry/official") or {}).get("status")); sys.exit(0 if actual == expected else "реестр вернул %s, ожидалась %s" % (actual, expected))'
+          URL="https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest"
+          for attempt in $(seq 1 10); do
+            echo "проверка реестра: попытка $attempt"
+            if curl --fail --silent --show-error --location "$URL" -o registry.json \
+              && EXPECTED="$EXPECTED" python3 -c 'import json, os, sys; d=json.load(open("registry.json", encoding="utf-8")); s=d.get("server") or {}; meta=((d.get("_meta") or {}).get("io.modelcontextprotocol.registry/official") or {}); actual=s.get("version"); expected=os.environ["EXPECTED"]; ok=(s.get("name")=="io.github.Vladimir-Human/humanizer-ru" and actual==expected and (s.get("packages") or [{}])[0].get("version")==expected and meta.get("status")=="active"); print("реестр: версия", actual, "статус", meta.get("status")); sys.exit(0 if ok else 1)'; then
+              exit 0
+            fi
+            [ "$attempt" -lt 10 ] && sleep 30
+          done
+          echo "реестр не подтвердил опубликованную запись" >&2
+          exit 1
