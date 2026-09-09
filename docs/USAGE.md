@@ -149,13 +149,15 @@ DeepSeek Harness (dsh): глобально — тот же клон в `~/.agent
 
 ### Воспроизводимый Markdown-safe сценарий
 
-Для Markdown используйте `--preserve-markup`: поддержанные следы в прозе
+Для Markdown используйте явную очистку `humanizer-clean`: поддержанные следы
 снимаются, а URL, числа и fenced-код сохраняются. На фикстуре
-`tests/fixtures/media-markdown-safe.md` сначала сделайте рабочую копию, затем
-выполните `humanizer-markers --scan`, `humanizer-clean --preserve-markup --in-place`
-и
-`humanizer-facts --no-additions`. Сценарий проверяет только эти инварианты;
-он не определяет авторство и не оценивает качество прозы.
+`tests/fixtures/media-markdown-safe.md` сначала сделайте две рабочие копии
+`before.md` и `after.md`, затем выполните `humanizer-markers --scan before.md`,
+`humanizer-clean --in-place after.md` и
+`humanizer-facts diff before.md after.md --json`. Удаление чисел внутри
+самого маркера ожидаемо; в отчёте проверьте, что других потерь нет, а URL и
+число `42` сохранены. Сценарий проверяет только эти инварианты; он не
+определяет авторство и не оценивает качество прозы.
 - `humanizer-markers` — поиск артефактов копипасты, классы A и B;
   `--remove` снимает невидимые метки по классификации риска: safe
   автоматически, ambiguous только opt-in, dangerous никогда; таблица в
