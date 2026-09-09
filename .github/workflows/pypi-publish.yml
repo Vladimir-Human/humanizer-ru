@@ -60,7 +60,7 @@ jobs:
           PY
 
       - name: Установить build
-        run: python3 -m pip install --user build
+        run: python3 -m pip install --user 'build==1.5.0'
 
       - name: Собрать sdist и wheel
         run: python3 -m build
@@ -107,7 +107,7 @@ jobs:
         # проверенной. Браузерная среда — инфраструктура CI, не runtime
         # продукта (stdlib-only поставка не меняется).
         run: |
-          python3 -m pip install --quiet playwright
+          python3 -m pip install --quiet 'playwright==1.62.0'
           python3 -m playwright install --with-deps chromium
           python3 -m http.server 8478 --directory demo &
           SERVER_PID=$!
