@@ -28,7 +28,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: link-check-${{ github.ref }}
@@ -53,6 +52,9 @@ jobs:
     if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
