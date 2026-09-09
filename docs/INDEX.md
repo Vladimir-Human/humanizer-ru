@@ -43,6 +43,7 @@
 | `research/survey-prereg-2026-09.md` | предрегистрация ежемесячного слепого опроса (старт 2026-10-01) |
 | `research/findability-2026-09.md` | повторный замер находимости (2 из 5, порог достигнут впритык) |
 | `research/mcp-conformance-protocol.md` | протокол MCP-conformance (stdlib-сервер, Inspector, SDK) |
+| `scripts/snapshot_distribution.py` + `research/distribution-snapshots/` | read-only snapshot версий и статусов публичных поверхностей |
 | `research/BACKLOG.md` | очередь режима роста (условия входа зафиксированы) |
 | `docs/CHANGELOG-archive.md` | журнал версий до 3.10.0 дословно |
 
