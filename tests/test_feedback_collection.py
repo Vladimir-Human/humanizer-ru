@@ -84,6 +84,15 @@ class BodyAndSignalsTests(unittest.TestCase):
         self.assertTrue(com[0]["body_excerpt"])
         self.assertTrue(com[0]["signals"]["has_problem"])
 
+    def test_excerpt_redacts_contact_data_and_urls(self):
+        row = CF._row("reader-external", "issue", "https://github.com/x/y/1",
+                      "2026-09-06", "тест",
+                      body="пишите me@example.org или https://example.org/a")
+        self.assertNotIn("me@example.org", row["body_excerpt"])
+        self.assertNotIn("https://example.org", row["body_excerpt"])
+        self.assertIn("[email]", row["body_excerpt"])
+        self.assertIn("[url]", row["body_excerpt"])
+
 
 @SKIP_OUTSIDE
 class PaginationTests(unittest.TestCase):
