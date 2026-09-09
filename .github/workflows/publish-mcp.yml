@@ -49,14 +49,19 @@ jobs:
               sys.exit("server.json version %s != пакет %s"
                        % (server.get("version"), m.group(1)))
           print("версии совпадают:", m.group(1))
+
+      - name: Контракт релиза до OIDC-публикации
+        run: python3 scripts/check_release.py --release-contract
           PY
 
       - name: Установить mcp-publisher
         run: |
-          # Имена ассетов релиза реестра: mcp-publisher_<os>_<arch>.tar.gz
-          # (проверено по asset-ам releases/latest 2026-09-07).
-          curl -sSL -o mcp-publisher.tar.gz \
-            "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz"
+          # Пин версии и SHA-256 исключают подмену бинарника через latest.
+          # Контрольная сумма взята из checksums релиза registry v1.8.1.
+          ASSET="mcp-publisher_linux_amd64.tar.gz"
+          URL="https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/$ASSET"
+          curl --fail --silent --show-error --location --output mcp-publisher.tar.gz "$URL"
+          echo "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  mcp-publisher.tar.gz" | sha256sum --check --status
           tar xzf mcp-publisher.tar.gz mcp-publisher
           ./mcp-publisher --version
 
@@ -79,5 +84,7 @@ jobs:
       - name: Чтение опубликованной записи
         run: |
           sleep 5
-          curl -sS "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest" \
-            | python3 -c "import json,sys; d=json.load(sys.stdin); s=d.get('server') or {}; print('реестр: версия', s.get('version'), 'статус', ((d.get('_meta') or {}).get('io.modelcontextprotocol.registry/official') or {}).get('status'))"
+          EXPECTED=$(python3 -c 'import json; print(json.load(open("server.json", encoding="utf-8"))["version"])')
+          curl --fail --silent --show-error --location \
+            "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest" \
+            | EXPECTED="$EXPECTED" python3 -c 'import json, os, sys; d=json.load(sys.stdin); s=d.get("server") or {}; actual=s.get("version"); expected=os.environ["EXPECTED"]; print("реестр: версия", actual, "статус", ((d.get("_meta") or {}).get("io.modelcontextprotocol.registry/official") or {}).get("status")); sys.exit(0 if actual == expected else "реестр вернул %s, ожидалась %s" % (actual, expected))'
