@@ -57,4 +57,14 @@ Security fixes are released for the latest version on the default branch.
   every 7 days until resolved; fixes ship on the main branch.
 - General questions and issues: no promised deadline, best effort; never
   post private data in public issues.
+## Developer-tooling boundaries
+
+The repository also applies explicit controls outside the user-facing skill:
+
+- `eval/ainl_calibration.py` accepts only HTTPS from two allowlisted hosts and
+  caps responses at 250 MiB; the corpus is temporary and never shipped.
+- External-feedback workflow excerpts redact email addresses and URLs while
+  retaining signals and the link to the original public message.
+- CI checkouts do not persist credentials in `.git/config`; GitHub API access is
+  granted only to the job that calls it.
 
