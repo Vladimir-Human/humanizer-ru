@@ -118,6 +118,6 @@ jobs:
         # playwright не поднялся) роняет шаг так же, как FAIL:
         # непроверенное состояние не публикуется как зелёное.
         run: |
-          python3 -m pip install --user playwright
+          python3 -m pip install --user 'playwright==1.62.0'
           python3 -m playwright install --with-deps chromium
           python3 scripts/check_demo_browser.py --url "${{ steps.deployment.outputs.page_url }}index.html"
