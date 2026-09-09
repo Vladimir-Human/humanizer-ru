@@ -65,6 +65,8 @@ jobs:
       PYTHONUTF8: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка гейта UTF-8 вывода
         shell: bash
         run: |
@@ -81,6 +83,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка валидатора
         run: python3 scripts/check_spec.py --selftest
       - name: Строгая проверка SKILL.md
@@ -92,6 +96,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка валидатора
         run: python3 scripts/check_fixture_sources.py --selftest
       - name: Гейт доказательств для зарегистрированных маркеров
@@ -103,6 +109,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Каждое выражение CASES задокументировано в chatbot-artifacts.md
         run: python3 scripts/check_markers.py --parity
 
@@ -112,6 +120,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: count_style_markers --selftest
         run: python3 scripts/count_style_markers.py --selftest
 
@@ -121,6 +131,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: scan_soft_signals --selftest (умеет падать)
         run: python3 scripts/scan_soft_signals.py --selftest
 
@@ -130,6 +142,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: check_all --selftest (раннер умеет падать)
         run: python3 scripts/check_all.py --selftest
 
@@ -139,6 +153,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Human 0, raw только BOM, boundary совпал
         run: python3 scripts/check_corpus.py
 
@@ -148,6 +164,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка валидатора
         run: python3 scripts/check_examples.py --selftest
       - name: Правка не дописывает факты за автора
@@ -159,6 +177,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка валидатора
         run: python3 scripts/check_readme_parity.py --selftest
       - name: Числа, разделы и оформление критичности совпадают
@@ -170,6 +190,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка валидатора
         run: python3 scripts/check_budget.py --selftest
       - name: Лимиты name / description / compatibility и размер SKILL.md
@@ -181,6 +203,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка гарнесса (умеет падать)
         run: python3 eval/run_eval.py --selftest
       - name: Прогон manifest.v1.json
@@ -192,6 +216,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: run_triggers (scope-фразы описания целы, near-miss держится)
         run: python3 eval/run_triggers.py
       - name: run_triggers --selftest (умеет падать)
@@ -203,6 +229,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка метрик и обезличивания
         run: python3 eval/blind_eval.py --selftest
       - name: Отчёт без данных не выпускается
@@ -223,6 +251,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       # Только selftest: реальный прогон требует живого демона Ollama, которого
       # в CI нет. Самопроверка проверяет детерминированную логику агрегации
       # и формат FP-блока и умеет падать.
@@ -235,6 +265,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: check_release.py --selftest
         run: python3 scripts/check_release.py --selftest
       - name: Сборка + верификация архива (allowlist, без research/tests/.github)
@@ -248,6 +280,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: python -m compileall
         run: python3 -m compileall -q scripts eval
 
@@ -257,6 +291,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Самопроверка перф-гейта (умеет падать)
         run: python3 scripts/check_perf.py --selftest
       - name: Ни одно выражение не дольше 0.5 с на 30 000 символов
@@ -268,6 +304,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: filemarks --selftest (умеет падать)
         run: python3 scripts/filemarks/filemarks.py --selftest
   unit-tests:
@@ -276,6 +314,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Синхронность PyPI-пакета с scripts/
         run: python3 scripts/check_pkg_sync.py
       - name: Все unit-тесты
