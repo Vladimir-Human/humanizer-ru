@@ -151,6 +151,15 @@ $ humanizer-scan --json notes.txt
 Machine interface (output schemas, exit codes, when not to use):
 `contract.v1.json`; agent entry point: `llms.txt`.
 
+### A short evidence handoff
+
+Run `humanizer-markers --scan --json file` when handing a finding to a
+colleague. It is enough to share `file`, `line`, `marker`, `class` and
+`fragment` from the envelope, together with: “A — fix the artifact; B — check
+the context; rc=2 — fix the input.” Do not send the whole source document
+unless the work requires it. These fields describe the text path and
+coordinates, not authorship.
+
 ## Batch check statuses
 
 A batch report row carries the check status of the file: ok — both layers
