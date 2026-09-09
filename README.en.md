@@ -37,10 +37,17 @@ a paste trace, not an error; rc=0 — no traces, rc=2 — input unreadable
 ```json
 {
   "mcpServers": {
-    "humanizer-ru": { "command": "humanizer-mcp" }
+    "humanizer-ru": {
+      "command": "uvx",
+      "args": ["--from", "humanizer-ru==3.35.2", "humanizer-mcp"]
+    }
   }
 }
 ```
+
+The `uvx` form installs the pinned PyPI release and starts the stdio server.
+With a local installation, `pip install humanizer-ru` followed by
+`humanizer-mcp` is equivalent.
 
 ## Matrix of verified capabilities and boundaries
 
@@ -82,7 +89,7 @@ and tests actually verify; boundaries list what a surface does not do.
 - Agent clients supporting agentskills.io (opencode, DeepSeek Harness): unpack the text bundle from the release archive.
 - A browser extension was declined: a new surface (permissions, store review) does not pay off; idea queue — [research/BACKLOG.md](research/BACKLOG.md).
 
-Каталоги: [Glama MCP](https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru) · [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru).
+Directories: [Glama MCP](https://glama.ai/mcp/servers/Vladimir-Human/humanizer-ru) · [skills.sh](https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru).
 
 ## Same-name projects
 

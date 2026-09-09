@@ -177,7 +177,10 @@ def build_js(doc):
             "rules": rules}
     return ("/* Автогенерация из markers.v1.json скриптом generate_js_rules.py. */\n"
             "const HUMANIZER_MARKERS = " +
-            json.dumps(data, ensure_ascii=False, indent=2) + ";" + NL + 'window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;' + NL)
+            json.dumps(data, ensure_ascii=False, indent=2) + ";" + NL
+            + 'if (typeof window !== "undefined") {' + NL
+            + '  window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;' + NL
+            + '}' + NL)
 
 
 def build_sw(js_text, index_text="", engine_text="", sample_text=""):

@@ -162,6 +162,7 @@ def _github_facts(opener=None):
             else:
                 commit = obj.get("sha")
         rec["tag_commit"] = commit
+        rec["release_commit"] = commit
         head = fetch_json(REPO_API + "/commits/main", opener=opener)
         rec["main_head"] = head.get("sha")
     except LiveUnavailable as exc:

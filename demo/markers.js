@@ -530,4 +530,6 @@ const HUMANIZER_MARKERS = {
     }
   ]
 };
-window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;
+if (typeof window !== "undefined") {
+  window.HUMANIZER_MARKERS = HUMANIZER_MARKERS;
+}
