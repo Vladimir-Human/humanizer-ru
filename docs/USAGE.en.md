@@ -207,7 +207,7 @@ Short map; details live in the directories themselves:
 - `tests/fixtures/` — marker and polish fixtures.
 - `action/`, `demo/`, `dsh/` — CI action, browser demo, dsh bundle.
 
-The full checklist runs in one command: `python scripts/check_all.py` — 123 gates in the full checklist (112 in --quick). Unit tests: `python -m unittest discover -s tests`.
+The full checklist runs in one command: `python scripts/check_all.py` — 155 gates in the full checklist (144 in --quick). Unit tests: `python -m unittest discover -s tests`.
 
 ## Security
 
@@ -236,4 +236,3 @@ marker cannot be removed: that would be a hole in the detector.
   and per-file licenses: `research/validation/README.md`. Borrowed
   fragments stay under their own licenses; the project MIT covers the
   code and original texts, not third-party inserts.
-

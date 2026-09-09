@@ -279,7 +279,7 @@ docs/THREAT-MODEL.md.
 - `action/`, `demo/`, `dsh/` — CI-экшен, браузерное демо, бандл dsh.
 - `METRICS.md`, `RELEASE.md`, `identity.v1.json`, `server.json` — витрина измерений, регламент выпусков, машиночитаемая идентичность и метаданные MCP-реестра.
 
-Полный чек-лист — одна команда: `python scripts/check_all.py` — 123 гейта полного чек-листа (112 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
+Полный чек-лист — одна команда: `python scripts/check_all.py` — 155 гейтов полного чек-листа (144 в --quick). Юнит-тесты — `python -m unittest discover -s tests`.
 
 ### Содержательные паттерны
 
@@ -338,4 +338,3 @@ Perplexity `ppl-ai-file-upload` как документированную при
 - Проверочные корпусы `eval/manifest.v1.json` содержат дословные фрагменты
   общественного достояния Wikisource и тексты проекта в регистре
   Википедии/Викиновостей; источники и лицензии — в `research/validation/README.md`; MIT покрывает код и свои тексты.
-
