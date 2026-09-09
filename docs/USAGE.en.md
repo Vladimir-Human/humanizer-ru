@@ -105,12 +105,15 @@ Package commands:
 
 ### Reproducible Markdown-safe scenario
 
-Use `--preserve-markup` for Markdown: supported traces are removed from prose
-while URLs, numbers and fenced code are preserved. On
-`tests/fixtures/media-markdown-safe.md`, first make a working copy, then run
-`humanizer-markers --scan`, `humanizer-clean --preserve-markup --in-place` and
-`humanizer-facts --no-additions`. This checks only these invariants; it does
-not determine authorship or assess prose quality.
+Use the explicit `humanizer-clean` command for Markdown: supported traces are
+removed while URLs, numbers and fenced code are preserved. On
+`tests/fixtures/media-markdown-safe.md`, first make two working copies named
+`before.md` and `after.md`, then run `humanizer-markers --scan before.md`,
+`humanizer-clean --in-place after.md` and
+`humanizer-facts diff before.md after.md --json`. Numbers inside the removed
+marker are expected losses; check the report for no other losses and confirm
+that the URL and `42` remain. This checks only these invariants; it does not
+determine authorship or assess prose quality.
 
 All four commands read stdin via `-`. Sample output (markers on a chat
 interface line):
