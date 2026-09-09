@@ -39,6 +39,26 @@ jobs:
           fetch-depth: 0   # гейты git-depth и attribution требуют полную историю
           ref: ${{ inputs.tag || github.ref_name }}
 
+      - name: Выбранный ref — релизный тег и HEAD
+        env:
+          RELEASE_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess, sys
+          ref = os.environ['RELEASE_REF']
+          if not re.fullmatch(r'v\d+\.\d+\.\d+', ref):
+              sys.exit(f'недопустимый ref: {ref!r}')
+          version = open('src/humanizer_ru/__init__.py', encoding='utf-8').read()
+          m = re.search(r'__version__\s*=\s*"(\d+\.\d+\.\d+)"', version)
+          if not m or ref[1:] != m.group(1):
+              sys.exit(f'ref {ref} не совпадает с версией пакета')
+          tag_commit = subprocess.check_output(['git', 'rev-list', '-n', '1', ref], text=True).strip()
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if tag_commit != head:
+              sys.exit(f'HEAD {head} не совпадает с commit тега {tag_commit}')
+          print('ref/version/HEAD согласованы:', ref, head)
+          PY
+
       - name: Установить build
         run: python3 -m pip install --user build
 
@@ -91,11 +111,9 @@ jobs:
           python3 -m playwright install --with-deps chromium
           python3 -m http.server 8478 --directory demo &
           SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           sleep 2
           python3 scripts/check_demo_browser.py --url http://localhost:8478/index.html
-          RC=$?
-          kill $SERVER_PID 2>/dev/null || true
-          exit $RC
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
