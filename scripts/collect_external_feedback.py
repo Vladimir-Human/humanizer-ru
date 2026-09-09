@@ -33,6 +33,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 
 OWNER = "Vladimir-Human"
 REPO_NAME = "humanizer-ru"
@@ -81,12 +82,25 @@ def _default_runner(args):
         cmd = ["gh", "api"] + args
     else:
         cmd = ["gh", "api", "--paginate", "-X", "GET"] + args
-    try:
-        r = subprocess.run(cmd,
-                           capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=180)
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return None, "gh не запустился: %r" % (exc,)
+    transient = re.compile(r"connectex|timed out|timeout|temporar|502|503|504|reset|eof",
+                           re.IGNORECASE)
+    r = None
+    for attempt in range(3):
+        try:
+            r = subprocess.run(cmd,
+                               capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", timeout=180)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            if attempt < 2 and transient.search(str(exc)):
+                time.sleep(2)
+                continue
+            return None, "gh не запустился: %r" % (exc,)
+        if r.returncode == 0:
+            break
+        if attempt < 2 and transient.search((r.stderr or "")[:500]):
+            time.sleep(2)
+            continue
+        break
     if r.returncode != 0:
         return None, "gh api %s: код %d: %s" % (
             args[0] if args else "?", r.returncode,
