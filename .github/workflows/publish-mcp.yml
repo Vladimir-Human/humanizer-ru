@@ -73,7 +73,6 @@ jobs:
 
       - name: Контракт релиза до OIDC-публикации
         run: python3 scripts/check_release.py --release-contract
-          PY
 
       - name: Установить mcp-publisher
         run: |
