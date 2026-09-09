@@ -162,7 +162,7 @@ def commits_after_anchor_errors() -> list:
         sha, committer, subject = parts[0], parts[1], parts[2]
         body = parts[3] if len(parts) > 3 else ""
         if committer_needs_mark(committer):
-            if not message_marked(subject + " " + body):
+            if not message_marked(committer + " " + subject + " " + body):
                 errors.append("коммит %s (%s): автономный коммитер без "
                               "пометки «%s» (GOVERNANCE §4.1)"
                               % (sha[:12], committer, MARK))
@@ -193,6 +193,8 @@ def selftest() -> int:
     case("пометка в сообщении распознаётся регистронезависимо",
          message_marked("Fix X\n\nAutonomous Run: by agent")
          and not message_marked("Fix X"))
+    case("маркер в имени коммитера учитывается",
+         message_marked("Codex autonomous run Fix X"))
     line = governance_line()
     m = SLICE_RX.search(line) if line else None
     case("генерируемая строка среза соответствует формату GOVERNANCE",
