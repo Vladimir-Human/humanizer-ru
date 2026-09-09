@@ -60,6 +60,7 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from urllib.parse import urlparse
 from collections import defaultdict
 from pathlib import Path
 
@@ -91,6 +92,8 @@ SELECTED = [
     "inanimate_intent",   # неодушевлённый субъект
 ]
 GENRES_TO_RUN = ("neutral", "academic")
+_DOWNLOAD_HOSTS = {"raw.githubusercontent.com", "huggingface.co"}
+_MAX_DOWNLOAD_BYTES = 250 * 1024 * 1024
 
 
 def _human_url_kind() -> str:
@@ -107,12 +110,29 @@ def _urls_for(split: str) -> list[str]:
 
 
 def _download(url: str, dest: Path) -> bool:
-    """Качает url в dest с таймаутом; True — успех, False — сеть/404."""
+    """Качает разрешённый HTTPS-источник с лимитом; True — успех."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname not in _DOWNLOAD_HOSTS:
+        return False
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "humanizer-ru-ainl-calibration"})
         with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 (фикс https)
-            data = resp.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError):
+            length = resp.headers.get("Content-Length")
+            if length and int(length) > _MAX_DOWNLOAD_BYTES:
+                return False
+            chunks = []
+            total = 0
+            while True:
+                chunk = resp.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > _MAX_DOWNLOAD_BYTES:
+                    return False
+                chunks.append(chunk)
+            data = b"".join(chunks)
+    except (ValueError, urllib.error.URLError, urllib.error.HTTPError,
+            OSError, TimeoutError):
         return False
     if not data:
         return False
