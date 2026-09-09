@@ -54,7 +54,7 @@ jobs:
       - name: pnpm на PATH и закреплённая версия dsh
         run: |
           set -euo pipefail
-          npm install -g pnpm@10
+          npm install -g pnpm@10.28.0
           npm install -g "@deepseek-ai/dsh@${DSH_PINNED}"
           echo "dsh $(dsh --version), pnpm $(pnpm --version)"
 
@@ -103,7 +103,7 @@ jobs:
         # повседневной работы — DSH_PINNED в env (0.1.0-rc.8).
         run: |
           set -euo pipefail
-          npm install -g pnpm@10
+          npm install -g pnpm@10.28.0
           npm install -g "@deepseek-ai/dsh@${{ matrix.dsh }}"
           echo "dsh $(dsh --version), pnpm $(pnpm --version)"
 
