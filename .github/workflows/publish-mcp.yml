@@ -71,6 +71,7 @@ jobs:
               sys.exit("server.json version %s != пакет %s"
                        % (server.get("version"), m.group(1)))
           print("версии совпадают:", m.group(1))
+          PY
 
       - name: Контракт релиза до OIDC-публикации
         run: python3 scripts/check_release.py --release-contract
