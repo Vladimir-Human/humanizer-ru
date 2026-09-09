@@ -202,6 +202,14 @@ runs the same scripts, inputs `fail-on: class-a` or `soft-threshold`,
 `permissions: contents: read`, text never leaves the runner. Example:
 `action/action.yml`.
 
+### CI result policy
+
+For a CI owner, the mapping is: class **A** is blocking (fix the artifact and
+rerun the job); class **B** is a non-blocking review/warn (check the context
+manually); `rc=2` is an operational failure (fix the input or path). A and B
+are not authorship verdicts. Synthetic probe lines are in
+`tests/fixtures/ci-policy-cases.md`; machine codes are in `contract.v1.json`.
+
 
 ## Architecture
 
