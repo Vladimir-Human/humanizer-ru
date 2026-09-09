@@ -477,6 +477,12 @@ def selftest() -> int:
     case("отчёт имеет documents и genre_muting",
          rep["documents"] and rep["genre_muting_any_pct"])
 
+    # 5. Сетевой слой принимает только задокументированные HTTPS-источники.
+    case("загрузчик отклоняет неподдержанный host",
+         urlparse("https://example.org/data.csv").hostname not in _DOWNLOAD_HOSTS)
+    case("загрузчик принимает только HTTPS",
+         urlparse("http://raw.githubusercontent.com/x/y").scheme != "https")
+
     print("САМОПРОВЕРКА: %d/%d PASS" % (passed, passed + failed))
     return 0 if failed == 0 else 1
 
