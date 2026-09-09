@@ -57,6 +57,7 @@ runs:
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         ref: ${{ inputs.ref }}
+        persist-credentials: false
         clean: false  # не стирать untracked-файлы вызывающего workflow (фикстуры, артефакты предыдущих шагов)
 
     - name: Запуск humanizer-сканера
