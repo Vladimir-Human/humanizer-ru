@@ -57,6 +57,15 @@ _SIGNAL_PROBLEM = re.compile(
 _SIGNAL_SOLICITATION = re.compile(
     r"(awesome[- ]|add .* to .*(list|repo)|would you be up for|submit"
     r"|star\b|upvote|приглаш|добавьте в каталог)", re.IGNORECASE)
+_EMAIL = re.compile(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b")
+_URL = re.compile(r"https?://\S+", re.IGNORECASE)
+
+
+def _safe_excerpt(body):
+    """Return a short review hint without copying contact data or URLs."""
+    text = (body or "")[:200].replace("\n", " ")
+    text = _EMAIL.sub("[email]", text)
+    return _URL.sub("[url]", text)
 
 
 def _default_runner(args):
@@ -138,7 +147,7 @@ def _row(author, kind, url, date, title, body="", synthetic=False,
         "signals": sig,
         "concrete_usage_signs": concrete,
         "synthetic": synthetic,
-        "body_excerpt": (body or "")[:200].replace("\n", " "),
+        "body_excerpt": _safe_excerpt(body),
     }
 
 
