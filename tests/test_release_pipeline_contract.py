@@ -10,6 +10,7 @@ CI-связки исполняемы и неотделимы от поставк
 правило не вернулось случайным образом и его удаление не было частичным.
 """
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -31,6 +32,7 @@ RELEASE_CHECK = os.path.join(ROOT, ".github", "workflows",
                              "release-check.yml")
 PYPI_PUBLISH = os.path.join(ROOT, ".github", "workflows",
                             "pypi-publish.yml")
+MCP_PUBLISH = os.path.join(ROOT, ".github", "workflows", "publish-mcp.yml")
 
 
 def _read(path):
@@ -45,6 +47,7 @@ class WorkflowBindingTests(unittest.TestCase):
     def setUp(self):
         self.rc = _read(RELEASE_CHECK)
         self.pp = _read(PYPI_PUBLISH)
+        self.mp = _read(MCP_PUBLISH)
         self.build_section = self.pp.split("  publish:")[0]
 
     def test_release_check_strict(self):
@@ -93,6 +96,20 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertIn("--sdist dist/humanizer_ru-*.tar.gz",
                       self.build_section)
         self.assertIn("path: dist/", self.pp)
+
+    def test_python_heredocs_have_terminators(self):
+        # YAML parsing does not catch a shell heredoc that reaches EOF. Keep
+        # the release scripts executable by checking every inline Python block.
+        for text, name in ((self.pp, "pypi-publish"),
+                           (self.mp, "publish-mcp")):
+            open_blocks = 0
+            for line in text.splitlines():
+                if re.search(r"python3\s+-\s+<<'PY'\s*$", line):
+                    open_blocks += 1
+                elif line.strip() == "PY" and open_blocks:
+                    open_blocks -= 1
+            self.assertEqual(open_blocks, 0,
+                             "%s содержит незакрытый Python heredoc" % name)
 
 
 @SKIP_OUTSIDE
