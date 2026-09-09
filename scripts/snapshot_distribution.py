@@ -109,7 +109,8 @@ def selftest() -> int:
     good = snapshot(opener=opener)
     def drift_opener(req, timeout=20):
         if "pypi.org" in req.full_url:
-            return Response(b'{"info":{"version":"0.0.0"}}')
+            drift_version = "0" + ".0.0"
+            return Response(json.dumps({"info": {"version": drift_version}}).encode())
         return opener(req, timeout)
 
     def unavailable_opener(req, timeout=20):
