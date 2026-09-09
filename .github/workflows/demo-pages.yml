@@ -42,6 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           fetch-depth: 0  # теги нужны write_status для честного лага
       - name: Разрешить SHA деплоя до коммита
         # Для события release github.sha может быть объектом аннотированного
