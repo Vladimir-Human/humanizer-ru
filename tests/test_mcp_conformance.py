@@ -188,6 +188,14 @@ class TestMcpTools(unittest.TestCase):
         by = {r.get("id"): r for r in resps}
         self.assertEqual(by[2]["result"]["tools"], self.defs)
 
+    def test_mutating_tools_advertise_destructive_hint(self):
+        annotations = {d["name"]: d["annotations"] for d in self.defs}
+        self.assertTrue(annotations["humanizer_polish"]["destructiveHint"])
+        self.assertTrue(annotations["humanizer_clean"]["destructiveHint"])
+        for name, item in annotations.items():
+            if name not in ("humanizer_polish", "humanizer_clean"):
+                self.assertFalse(item["destructiveHint"], name)
+
     def test_markers_finding_is_success_result(self):
         text = ("Согласно :contentReference[oaicite:12]{index=12}, заявок "
                 "стало больше на 12% — https://example.com/r?utm_source=chatgpt.com")
