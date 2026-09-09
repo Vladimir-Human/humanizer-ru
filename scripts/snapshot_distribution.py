@@ -63,7 +63,17 @@ def _surface(name: str, url: str, version: str, opener=None) -> dict:
             item["version"] = server.get("version")
             item["official_status"] = ((doc.get("_meta") or {}).get(
                 "io.modelcontextprotocol.registry/official") or {}).get("status")
-            if item["version"] != version or item["official_status"] != "active":
+            package = next((p for p in server.get("packages") or []
+                            if p.get("registryType") == "pypi"), {})
+            item["package_identifier"] = package.get("identifier")
+            item["package_version"] = package.get("version")
+            item["transport"] = (package.get("transport") or {}).get("type")
+            item["runtime_hint"] = package.get("runtimeHint")
+            if (item["version"] != version or item["package_version"] != version
+                    or item["package_identifier"] != "humanizer-ru"
+                    or item["transport"] != "stdio"
+                    or item["runtime_hint"] != "uvx"
+                    or item["official_status"] != "active"):
                 item["status"] = "drift"
         elif name == "pages":
             doc = json.loads(raw.decode("utf-8"))
@@ -98,7 +108,7 @@ def selftest() -> int:
         if "pypi.org" in url:
             return Response(json.dumps({"info": {"version": _local_version()}}).encode())
         if "registry.modelcontextprotocol" in url:
-            return Response(json.dumps({"server": {"version": _local_version()}, "_meta": {"io.modelcontextprotocol.registry/official": {"status": "active"}}}).encode())
+            return Response(json.dumps({"server": {"version": _local_version(), "packages": [{"registryType": "pypi", "identifier": "humanizer-ru", "version": _local_version(), "runtimeHint": "uvx", "transport": {"type": "stdio"}}]}, "_meta": {"io.modelcontextprotocol.registry/official": {"status": "active"}}}).encode())
         if "api.github.com" in url:
             return Response(b'{"sha":"abc"}')
         if "status.json" in url:
