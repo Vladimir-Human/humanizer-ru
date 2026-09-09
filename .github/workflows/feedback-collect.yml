@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  issues: read
 
 concurrency:
   group: feedback-collect-${{ github.ref }}
@@ -25,6 +24,9 @@ jobs:
     name: Сбор кандидатов и покрытие источников
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
