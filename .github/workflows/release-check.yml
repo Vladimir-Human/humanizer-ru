@@ -78,7 +78,7 @@ jobs:
 
       - name: Финальный прогон всех валидаторов
         run: |
-          # Полный релизный чек-лист одной командой: 155 гейтов, включая
+          # Полный релизный чек-лист одной командой: 156 гейтов, включая
           # pkg-sync, confidence, facts, polish, conj, selfattack, contract, markers-export, adversarial, filemarks, release-contract.
           # Режим --strict: без FAIL и без непроверенных SKIP.
           # Заменяет рукописный список: ручной перечень
