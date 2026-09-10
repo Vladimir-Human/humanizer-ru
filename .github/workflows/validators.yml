@@ -146,6 +146,8 @@ jobs:
           persist-credentials: false
       - name: check_all --selftest (раннер умеет падать)
         run: python3 scripts/check_all.py --selftest
+      - name: Distribution receipt selftest
+        run: python3 scripts/install_receipt.py --selftest
 
   corpus:
     name: Регрессия корпусов валидации
