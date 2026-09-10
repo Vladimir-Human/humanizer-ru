@@ -48,11 +48,62 @@ def _files(paths):
             found.append((name.replace("\\", "/"), path.read_bytes()))
         elif path.is_dir():
             for child in path.rglob("*"):
+                if child.is_symlink():
+                    raise OSError("symlink is not a distributable file: %s" % child)
                 if child.is_file():
                     found.append((child.relative_to(ROOT).as_posix(), child.read_bytes()))
         else:
             raise FileNotFoundError(name)
     return sorted(found, key=lambda item: item[0])
+
+
+def _tracked_target_files(paths):
+    """Return regular files in HEAD under paths, including their blob ids."""
+    args = ["git", "ls-tree", "-r", "-z", "HEAD", "--", *paths]
+    try:
+        p = subprocess.run(args, cwd=ROOT, capture_output=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if p.returncode != 0:
+        return None
+    result = {}
+    for entry in p.stdout.split(b"\0"):
+        if not entry:
+            continue
+        meta, name = entry.split(b"\t", 1)
+        mode, obj_type, oid = meta.split()
+        if obj_type != b"blob" or mode != b"100644":
+            return None
+        result[name.decode("utf-8")] = oid.decode("ascii")
+    return result
+
+
+def _matches_head(paths):
+    tracked = _tracked_target_files(paths)
+    if tracked is None:
+        return False
+    try:
+        current = dict(_files(paths))
+    except (OSError, FileNotFoundError):
+        return False
+    if set(current) != set(tracked):
+        return False
+    algorithm = "sha256" if len(next(iter(tracked.values()), "")) == 64 else "sha1"
+    for name, data in current.items():
+        blob = ("blob %d\0" % len(data)).encode("ascii") + data
+        if hashlib.new(algorithm, blob).hexdigest() != tracked[name]:
+            return False
+    return True
+
+
+def _output_is_safe(output):
+    if output is None:
+        return True
+    try:
+        output.resolve().relative_to(ROOT.resolve())
+    except ValueError:
+        return True
+    return False
 
 
 def _hash(paths):
@@ -72,7 +123,8 @@ def receipt():
     return {"schema": 1, "product": "humanizer-ru", "version": _version(),
             "source": {"repository": REPOSITORY,
                        "commit": _git("rev-parse", "HEAD"),
-                       "clean": _git("status", "--porcelain") == ""},
+                       "clean": _git("status", "--porcelain") == "" and
+                                all(_matches_head(paths) for paths in TARGETS.values())},
             "artifacts": artifacts,
             "verification": [{"command": c} for c in VERIFY_COMMANDS],
             "note": "local distribution receipt; not an official Agent Skills lockfile"}
@@ -98,6 +150,9 @@ def main(argv=None):
     except (OSError, ValueError, FileNotFoundError) as exc:
         print("receipt unavailable: %s" % exc, file=sys.stderr); return 2
     text = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    if not _output_is_safe(args.out):
+        print("receipt unavailable: --out must be outside repository", file=sys.stderr)
+        return 2
     if args.out: args.out.parent.mkdir(parents=True, exist_ok=True); args.out.write_text(text, encoding="utf-8")
     if args.json or not args.out: print(text, end="")
     if args.strict and (not data["source"]["commit"] or not data["source"]["clean"]): return 1
