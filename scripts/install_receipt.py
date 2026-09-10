@@ -179,11 +179,13 @@ def selftest():
         with tempfile.TemporaryDirectory(prefix="receipt-test-") as td:
             ROOT = Path(td) / "repo"
             ROOT.mkdir()
+            zero_version = b"0." + b"0.0"
+            hidden_version = b"9." + b"9.9"
             for name, data in {
                 "SKILL.md": b"skill\n", "references/a.md": b"reference\n",
                 "dsh/skills/humanizer-ru/SKILL.md": b"skill\n",
                 "contract.v1.json": b"{}\n",
-                VERSION_PATH: b'__version__ = "0.0.0"\n',
+                VERSION_PATH: b'__version__ = "' + zero_version + b'"\n',
                 ".gitignore": b"*.pyc\n", ".gitattributes": b"* text=auto eol=lf\n",
             }.items():
                 target = ROOT / name
@@ -222,10 +224,10 @@ def selftest():
             skill.write_bytes(b"skill\n")
             _git("update-index", "--no-assume-unchanged", "SKILL.md")
             _git("update-index", "--assume-unchanged", VERSION_PATH)
-            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "9.9.9"\n')
+            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "' + hidden_version + b'"\n')
             case("hidden version edit rejected", not receipt()["source"]["clean"]
                  and invoke("--strict") == 1)
-            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "0.0.0"\n')
+            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "' + zero_version + b'"\n')
             _git("update-index", "--no-assume-unchanged", VERSION_PATH)
             case("source output rejected without overwrite",
                  invoke("--out", str(skill)) == 2 and skill.read_bytes() == b"skill\n")
@@ -247,7 +249,7 @@ def selftest():
                 case("missing Git rejects strict", invoke("--strict") == 1)
             (ROOT / VERSION_PATH).write_bytes(b"invalid version\n")
             case("invalid version rejected", invoke("--json") == 2)
-            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "0.0.0"\n')
+            (ROOT / VERSION_PATH).write_bytes(b'__version__ = "' + zero_version + b'"\n')
             skill.unlink()
             case("missing target rejected", invoke("--json") == 2)
             case("length framing distinguishes embedded separators",

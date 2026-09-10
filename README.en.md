@@ -1,6 +1,13 @@
 # humanizer-ru
 Verifiable chat-paste hygiene for Russian text
 
+Artifact cleanup and fact comparison also accept English input. Pass
+`--language en` to `humanizer-clean`, `humanizer-polish`, `humanizer-facts`,
+or `humanizer-report` (or use `--language auto`). This profile does not apply
+Russian style heuristics and never infers authorship. It preserves code, URLs,
+Markdown, and checked facts, and records the selected language in machine output.
+The Russian profile remains the default for compatibility.
+
 ![The humanizer-markers terminal highlights machine-text traces and explains the reason behind each flag](assets/hero.svg)
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)

@@ -6,7 +6,7 @@
   1. selftest модуля facts_diff зелёный (негативы внутри);
   2. CLI коды выхода: потери/инверсия -> 1, чисто -> 0, добавленная дата -> 0
      с непустым added в конверте;
-  3. конверт стабилен: {tool, schema, counts, diff};
+  3. конверт стабилен: {tool, schema, counts, diff, language};
   4. контракт содержит humanizer-facts с двумя входами;
   5. SKILL.md предписывает прогон diff после переписывания;
   6. check_examples.py использует facts_diff (защита от тихого отключения).
@@ -91,7 +91,7 @@ def check():
             errors.append("чистая пара дала код %d" % proc.returncode)
         env = json.loads(proc.stdout)
         if sorted(env.keys()) != ["counts", "diff", "files", "identical",
-                                  "schema", "tool"]:
+                                  "language", "schema", "tool"]:
             errors.append("конверт изменился: %s" % sorted(env.keys()))
         if env.get("identical") is not True:
             errors.append("идентичная пара: identical != true")
