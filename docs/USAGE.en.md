@@ -2,6 +2,15 @@
 
 The short screen and trust section live in README.en.md; details live here.
 
+## English artifact profile
+
+`humanizer-clean`, `humanizer-polish`, `humanizer-facts`, and
+`humanizer-report` accept `--language en` (or `--language auto`). The profile
+cleans registered chat-paste artifacts and reports fact differences in English.
+It does not apply the Russian soft-style heuristics or infer authorship. The
+default remains `ru` for compatibility; a machine-readable response records
+the selected profile.
+
 ## What to give it
 
 Give the skill a finished fragment of Russian text. It finds generation

@@ -176,6 +176,16 @@ def generate_tool_defs(contract) -> list:
                                "русская публикационная типографика без "
                                "снятия разметки.",
             }
+        if cmd in ("humanizer-polish", "humanizer-clean",
+                   "humanizer-facts", "humanizer-report"):
+            props["language"] = {
+                "type": "string",
+                "enum": ["ru", "en", "auto"],
+                "default": "ru",
+                "description": "Языковой профиль: en/auto разрешают "
+                               "английские артефакты и факты; русские "
+                               "стилевые эвристики не применяются.",
+            }
         if cmd == "humanizer-markers":
             classes = _markers_classes(t)
             if classes:
@@ -239,9 +249,14 @@ def _tool_argv(tool_name, arguments, text_path):
         argv = argv + ["diff", text_path, text_path + ".after", "--json"]
         if arguments.get("no_additions"):
             argv.append("--no-additions")
+        if arguments.get("language"):
+            argv += ["--language", arguments["language"]]
         return argv
     if tool_name == "humanizer_report":
-        return argv + [text_path, text_path + ".after", "--json"]
+        argv += [text_path, text_path + ".after", "--json"]
+        if arguments.get("language"):
+            argv += ["--language", arguments["language"]]
+        return argv
     if tool_name == "humanizer_markers":
         argv.append("--scan")
     argv.append("--json")
@@ -256,6 +271,9 @@ def _tool_argv(tool_name, arguments, text_path):
             argv.append("--preserve-markup")
         elif mode == "typographic":
             argv.append("--typographic")
+    if tool_name in ("humanizer_polish", "humanizer_clean") \
+            and arguments.get("language"):
+        argv += ["--language", arguments["language"]]
     argv.append(text_path)
     return argv
 

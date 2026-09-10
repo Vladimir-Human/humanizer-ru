@@ -1,6 +1,13 @@
 # humanizer-ru
 Проверяемая гигиена вставки из чата для русского текста
 
+Очистка артефактов вставки и сверка фактов доступны и для английского текста:
+добавьте `--language en` к `humanizer-clean`, `humanizer-polish`,
+`humanizer-facts` или `humanizer-report` (либо `--language auto`). Это не
+включает русские стилевые эвристики и не даёт вердиктов об авторстве; профиль
+сохраняет код, URL, Markdown и проверяемые факты. Русский профиль остаётся
+значением по умолчанию для совместимости.
+
 ![Терминал humanizer-markers подсвечивает следы машинного текста и объясняет причину каждого флага](assets/hero.svg)
 
 [![License: MIT](https://img.shields.io/github/license/Vladimir-Human/humanizer-ru)](LICENSE)

@@ -124,7 +124,9 @@ stdout).
 - [README](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.md)
   — установка и использование (рус).
 - [README (English entry)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md)
-  — документация для не-русских читателей; продукт остаётся русскоязычным.
+  — English entrypoint. Artifact cleanup and fact/report tools accept
+  `--language en` or `--language auto`; Russian style heuristics remain
+  Russian-only.
 - [Методология проверяемости](https://github.com/Vladimir-Human/humanizer-ru/blob/main/docs/FRAMEWORK.md) и
   [эррата](https://github.com/Vladimir-Human/humanizer-ru/blob/main/ERRATA.md)
   — датированные отзывы опубликованных чисел.

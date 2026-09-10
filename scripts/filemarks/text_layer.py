@@ -743,7 +743,7 @@ def _facts_part(before, cleaned):
     return _er.facts_part(before, cleaned)
 
 
-def _scope_note(text):
+def _scope_note(text, language="ru"):
     """Статус «вне области» через polish.scope_note (единый определитель)."""
     try:
         from . import polish as _polish
@@ -752,7 +752,7 @@ def _scope_note(text):
         import sys as _sys_s
         _sys_s.path.insert(0, _os_s.dirname(_os_s.abspath(__file__)))
         import polish as _polish
-    return _polish.scope_note(text)
+    return _polish.scope_note(text, language)
 
 
 def _protected_report(before, cleaned):
@@ -842,6 +842,8 @@ def clean_main(argv=None) -> int:
                     help="атомарная запись на место (копия .bak)")
     ap.add_argument("--dry-run", action="store_true",
                     help="отчёт без записи")
+    ap.add_argument("--language", choices=["ru", "en", "auto"], default="ru",
+                    help="профиль входа: ru (по умолчанию), en или auto")
     ap.add_argument("--selftest", action="store_true",
                     help="самопроверка текстового слоя")
     try:
@@ -939,7 +941,7 @@ def clean_main(argv=None) -> int:
             residual = a_count or 0
             if problems or residual:
                 rc = 1 if rc == 0 else rc
-            note = _scope_note(before)
+            note = _scope_note(before, args.language)
             entry = {
                 "file": label,
                 "changed": changed,
@@ -951,6 +953,7 @@ def clean_main(argv=None) -> int:
                 "residual": a_markers,
                 "facts": facts,
                 "invariants": problems,
+                "language": args.language,
             }
             if note:
                 entry["status"] = "out-of-scope"
@@ -1053,4 +1056,3 @@ if __name__ == "__main__":
     # Точка входа python -m humanizer_ru.text_layer — CLI очистки
     # (humanizer-clean); MCP-контур вызывает модуль этим путём.
     _sys.exit(clean_main())
-
