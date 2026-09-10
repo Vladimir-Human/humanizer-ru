@@ -1,13 +1,13 @@
 ---
 name: humanizer-ru
-description: "Не для обхода детекторов; не для текста, который тебе не принадлежит. Находит следы машинного текста в русском и объясняет их; переписывает только по явной просьбе; вердиктов об авторстве нет. Отвечает на просьбы вида «очеловечь», «убери гпт-шность», «звучит как нейросеть», «проверь на ИИ», «убери штампы», «убери канцелярит», «сделай живым», «вставка из чата», «копипаста из ChatGPT», contentReference, utm_source, невидимые символы, машинная типографика (40 regex-маркеров, у 38 полная запись доказательств). Finds machine-text traces in Russian and explains them; rewrites only on explicit request; no authorship detection verdict. Не предназначен для текста не на русском и исходного кода; в юридических документах и художественной прозе — только детерминированная очистка артефактов вставки. Демо: vladimir-human.github.io/humanizer-ru"
+description: "Не для обхода детекторов; не для текста, который тебе не принадлежит. Находит следы машинного текста в русском и объясняет их; переписывает только по явной просьбе; вердиктов об авторстве нет. Отвечает на просьбы вида «очеловечь», «убери гпт-шность», «звучит как нейросеть», «проверь на ИИ», «убери штампы», «убери канцелярит», «сделай живым», «вставка из чата», «копипаста из ChatGPT», contentReference, utm_source, невидимые символы, машинная типографика (40 regex-маркеров, у 38 полная запись доказательств). Finds machine-text traces in Russian and explains them; rewrites only on explicit request; no authorship detection verdict. Английский профиль: только артефакты/факты; исходный код не обрабатывается; юридические и художественные тексты — только детерминированная очистка артефактов. Демо: vladimir-human.github.io/humanizer-ru"
 license: MIT
 allowed-tools: "Read Grep Glob"
 compatibility: DeepSeek Harness (dsh), Claude.ai, Claude Code, opencode и другие агенты с поддержкой agentskills.io. Только текст.
 metadata:
   author: Vladimir-Human
   version: "3.35.2"
-  last_reviewed: "2026-09-08"
+  last_reviewed: "2026-09-10"
   next_review_due: "2026-11-14"
   tags: "writing, editing, russian, ai-cleanup, humanizer"
   documentation: "https://github.com/Vladimir-Human/humanizer-ru#readme"
