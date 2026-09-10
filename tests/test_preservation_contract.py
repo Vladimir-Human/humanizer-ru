@@ -199,6 +199,16 @@ class CliPreservationTests(unittest.TestCase):
         self.assertTrue(entry["changed"])       # проза приведена
         self.assertEqual(entry["invariants"], [])  # нарушений сохранения нет
 
+    def test_english_artifact_profile_is_explicit(self):
+        proc, _p, _td, _after = self._run(
+            ["--dry-run", "--preserve-markup", "--language", "en", "--json"],
+            "Plain English\u200b text with a URL.\n")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        entry = json.loads(proc.stdout)["files"][0]
+        self.assertEqual(entry["language"], "en")
+        self.assertTrue(entry["changed"])
+        self.assertNotIn("status", entry)
+
     def test_in_place_writes_and_keeps_bak(self):
         import shutil
         import tempfile

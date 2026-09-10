@@ -273,7 +273,7 @@ class CleanMcpTests(unittest.TestCase):
         self.assertIn("humanizer_clean", tools)
         clean = tools["humanizer_clean"]
         self.assertEqual(sorted(clean["inputSchema"]["properties"]),
-                         ["text"])
+                         ["language", "text"])
         res3 = _by_id(resp, 3).get("result", {})
         self.assertIs(res3.get("isError"), False)
         sc = res3.get("structuredContent", {})
@@ -429,7 +429,7 @@ class ContractSurfaceTests(unittest.TestCase):
         self.assertIn("humanizer_clean", by_name)
         clean = by_name["humanizer_clean"]
         self.assertEqual(sorted(clean["inputSchema"]["properties"]),
-                         ["text"])
+                         ["language", "text"])
         self.assertEqual(clean["inputSchema"]["required"], ["text"])
         mk = by_name["humanizer_markers"]
         self.assertIn("по MCP не вызывается", mk["description"])

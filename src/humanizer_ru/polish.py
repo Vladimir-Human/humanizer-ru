@@ -266,16 +266,30 @@ def _cyrillic_share(text: str) -> float:
     return cyr / len(letters)
 
 
-def scope_note(text: str) -> str:
-    """Пометка «вне области»: пустой и не-русский вход — вне домена скилла.
+def _latin_share(text: str) -> float:
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 0.0
+    latin = sum(1 for c in letters if "A" <= c <= "Z" or "a" <= c <= "z")
+    return latin / len(letters)
+
+
+def scope_note(text: str, language: str = "ru") -> str:
+    """Return an out-of-scope note for the selected language profile.
 
     Градуированный ответ остаётся непустым (контракт): механика типографики
     отрабатывает на любом входе, но честный статус входа агент обязан видеть.
     """
     if not text.strip():
-        return "вне области: пустой вход"
-    if _cyrillic_share(text) < 0.1:
+        return "out of scope: empty input" if language == "en" else "вне области: пустой вход"
+    if language not in {"ru", "en", "auto"}:
+        return "unsupported language profile: %s" % language
+    if language == "ru" and _cyrillic_share(text) < 0.1:
         return "вне области: текст не на русском (область скилла — русский текст)"
+    if language == "en" and _latin_share(text) < 0.1:
+        return "out of scope: text is not English (English profile)"
+    if language == "auto" and max(_cyrillic_share(text), _latin_share(text)) < 0.1:
+        return "out of scope: no supported natural-language signal"
     return ""
 
 
@@ -557,6 +571,8 @@ def main(argv=None) -> int:
                          "--preserve-markup")
     ap.add_argument("--json", action="store_true",
                     help="машиночитаемый отчёт (схема 1)")
+    ap.add_argument("--language", choices=["ru", "en", "auto"], default="ru",
+                    help="профиль входа: ru (по умолчанию), en или auto")
     ap.add_argument("--gate", metavar="ПУТЬ",
                     help="режим гейта: проверить инварианты по файлам/каталогу")
     ap.add_argument("--selftest", action="store_true",
@@ -602,7 +618,7 @@ def main(argv=None) -> int:
         if problems:
             rc = 1
         changed = after != before
-        note = scope_note(before)
+        note = scope_note(before, args.language)
         entry = {
             "file": "<stdin>" if path == "-" else path,
             "changed": changed,
@@ -610,6 +626,7 @@ def main(argv=None) -> int:
             "chars_after": len(after),
             "preserve_markup": bool(args.preserve_markup),
             "typographic": bool(args.typographic),
+            "language": args.language,
             "invariants": problems,
         }
         if note:

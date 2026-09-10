@@ -33,7 +33,12 @@
       "humanizer-detect",
       "humanizer-facts",
       "humanizer-report"
-    ]
+    ],
+    "supported_profiles": {
+      "ru": "full profile",
+      "en": "artifact cleanup and facts/report profile; no Russian style heuristics",
+      "auto": "Russian or English artifact cleanup and facts/report profile"
+    }
   },
   "claims_forbidden": [
     "обход детекторов как гарантия",

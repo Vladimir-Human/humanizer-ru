@@ -8,7 +8,7 @@
 | Документ | О чём |
 |---|---|
 | `README.md` | установка, использование, границы честности, источники |
-| `README.en.md` | вход для не-русских читателей (продукт остаётся русскоязычным) |
+| `README.en.md` | English entrypoint; artifact and facts profiles accept `--language en` |
 | `RELEASE.md` | регламент выпусков: SemVer-нарезка, кадэнс, цикл, запреты |
 | `METRICS.md` | фактические снимки проекта (звёзды, загрузки, внешние issue/PR) и регламент обновления |
 | `CHANGELOG.md` | журнал версий (до 3.10.0 — в `docs/CHANGELOG-archive.md`) |

@@ -543,7 +543,7 @@ def envelope(before: str, after: str, files=None) -> dict:
 SHORT_RU = "Проверяемая гигиена вставки из чата для русского текста"
 
 
-def _scope_note(text: str) -> str:
+def _scope_note(text: str, language: str = "ru") -> str:
     """Статус «вне области» — единый определитель (polish.scope_note)."""
     try:
         from humanizer_ru.polish import scope_note
@@ -551,7 +551,7 @@ def _scope_note(text: str) -> str:
         import os
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from polish import scope_note
-    return scope_note(text)
+    return scope_note(text, language)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -578,6 +578,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                              "фактов считаются нарушением (код 1) даже без "
                              "потерь и изменений; по умолчанию added не "
                              "влияет на код выхода")
+    p_diff.add_argument("--language", choices=["ru", "en", "auto"], default="ru",
+                        help="профиль области: ru (по умолчанию), en или auto")
     parser.add_argument("--selftest", action="store_true")
     parser.description = SHORT_RU + "\n\n" + (parser.description or "")
     try:
@@ -643,13 +645,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # counts/diff/files сохраняют прежнюю семантику.
     notes = []
     for side_label, side_text in (("до", before), ("после", after)):
-        note = _scope_note(side_text)
+        note = _scope_note(side_text, args.language)
         if note:
             notes.append("%s: %s" % (side_label, note))
     if notes:
         env["status"] = "out-of-scope"
         env["scope_note"] = "; ".join(notes)
         print(env["scope_note"], file=sys.stderr)
+    env["language"] = args.language
     if args.json:
         print(json.dumps(env, ensure_ascii=False, indent=2))
     else:
