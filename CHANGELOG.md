@@ -26,6 +26,41 @@
   (`git fetch --tags --force`), расчёт `published_tag`/`published_commit`
   стал детерминированным. Актуальный статус пересчитан повторным
   workflow_dispatch.
+- Поверхности поставки приведены в соответствие правилам пакетного
+  сканера HOL (`plugin-scanner`), правило-уровневые статусы и команда
+  воспроизведения — `docs/PLUGIN-SCANNER-NOTES.md`. Node-обвязки
+  `check_demo_parity.py` и `check_demo_perf.py` загружают
+  `demo/markers.js` через `require()` вместо динамического выполнения
+  прочитанной строки; поведение не изменилось —
+  `python scripts/check_demo_parity.py --selftest` (10/10 PASS,
+  негативы на мутациях) и `python scripts/check_demo_perf.py --selftest`
+  (квадратичный мутант ловится) зелёные. Добавлены снимки разрешённых
+  зависимостей: корневой `uv.lock` (`uv lock`, runtime-зависимостей нет)
+  и `dsh/pnpm-lock.yaml` (`pnpm install --lockfile-only`, pnpm 10.28.0 —
+  версия пина `dsh-install.yml`; состав нулевой, версию продукта снимки
+  не встраивают). Dependabot покрыл npm-поверхность `/dsh` записью в
+  корневом `.github/dependabot.yml`; пакетная декларация той же политики
+  для инструментов с корнем в каталоге пакета —
+  `dsh/.github/dependabot.yml` (действующим конфигом GitHub остаётся
+  корневой). Бандл `dsh/` получил `LICENSE` (побайтовая копия корневого
+  MIT, `fc /b` без различий) и `SECURITY.md` (границы бандла и указатель
+  на корневую политику вместо второй копии). Манифест
+  `.codex-plugin/plugin.json`: `author` объектом с `name`/`url`,
+  `skills` указывает на каталог `./dsh/skills` (байт-синхронная
+  вендорная копия скилла, гейт `check_bundle_sync.py`), в `interface`
+  добавлены `termsOfServiceURL` (текст MIT-лицензии — отдельных условий
+  использования проект не публикует) и существующие ассеты
+  (`composerIcon` — `./demo/favicon.svg`, `logo` — `./assets/hero.svg`,
+  `screenshots` — `./assets/demo-screenshot.png`). В корне добавлен
+  `.codexignore` — граница контекста Codex-агента (корпусы `research/`,
+  прогоны `eval/`, тестовые фикстуры, локальные окружения и секреты;
+  поставка скилла не исключается). Манифест состава корня
+  `scripts/check_docs.py` дополнен `.codexignore` и `uv.lock`. Локальный
+  прогон `plugin-scanner scan . --profile default --min-score 80
+  --fail-on-severity high`: 98/100 (0 critical, 0 high, 1 medium —
+  документированная граница патч-онли бандла `DSH_RUNTIME_APPLY_MISSING`)
+  на версиях 3.0.123 (пин каталога awesome-ai-plugins) и 3.0.143 (пин
+  `hol-plugin-scanner.yml`).
 
 ## 3.35.2 — 2026-09-08
 
