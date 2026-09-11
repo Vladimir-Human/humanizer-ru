@@ -114,7 +114,11 @@ const path = require('path');
 const root = process.argv[2];
 const vecFile = process.argv[3];
 global.window = global;  // markers.js пишет window.HUMANIZER_MARKERS
-eval(fs.readFileSync(path.join(root, 'demo', 'markers.js'), 'utf8'));
+// require() вместо динамического выполнения прочитанной строки:
+// markers.js — скрипт с guard-присваиванием
+// window.HUMANIZER_MARKERS; под require он исполняется в модульной области
+// и пишет в global.window без динамического выполнения строк.
+require(path.join(root, 'demo', 'markers.js'));
 const engine = require(path.join(root, 'demo', 'engine.js'));
 const rules = window.HUMANIZER_MARKERS.rules.map(function (r) {
   return {id: r.id, class: r.class, source: r.source, flags: r.flags,
