@@ -378,3 +378,41 @@ smithery-mechanics-notes.md; снапшоты карточек T15-*, T1255Z-*, 
   и статья), #223 (числа первого экрана README), dependabot #217–#219
   (actions/checkout v7, actions/upload-artifact v7,
   ai-plugin-scanner-action v1.2.651). main ba7e9b6, push-CI 9/9 SUCCESS.
+
+- 2026-09-11: выпуск 3.36.0 опубликован по постоянному поручению
+  (GOVERNANCE.md раздел 2 пункт 5). Состав: GitHub Release
+  2026-09-11T18:13:39Z
+  (https://github.com/Vladimir-Human/humanizer-ru/releases/tag/v3.36.0;
+  тег v3.36.0 annotated, подписан опубликованным ключом проекта
+  023E1F146B59348F, git verify-tag — Good signature; целевой commit
+  7cd87b1; ассет humanizer-ru.zip 745710 байт, sha256
+  2297fd3ec92d5df19daeb5ce18bef33d12d88268af6942df74d8dfe91682bda1 —
+  локальная сборка check_release.py --build равна верификации --verify;
+  откреплённая подпись .zip.asc). Приёмка до тега: check_all --strict
+  156 гейтов FAIL 0 SKIP 0, unittest 480 OK, sdist-test в чистом venv
+  (Ran 450 tests OK, skipped=140) c upgrade-smoke 3.35.2 -> 3.36.0.
+  PyPI 3.36.0 — Trusted Publishing OIDC (прогон CI
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34632087911);
+  официальный реестр MCP — version 3.36.0 (прогон CI
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34632087625);
+  release-check на теге SUCCESS (прогон
+  https://github.com/Vladimir-Human/humanizer-ru/actions/runs/34631935076).
+  Перечитывание поверхностей в тот же день: PyPI info.version 3.36.0
+  (https://pypi.org/pypi/humanizer-ru/json), реестр MCP 3.36.0,
+  Pages status.json published_tag v3.36.0 / lag_commits 0 после
+  повторного workflow_dispatch (гонка деплоя: push-прогон записал статус
+  за 35 секунд до распространения тега — пересчёт штатным механизмом),
+  check_live_distribution rc=0, check_pages_router --live-pages PASS.
+  Смоук чистой venv опубликованного пакета: восемь входов 3.36.0,
+  коды выхода по контракту (артефакт 1, нечитаемый вход 2 с JSON-конвертом
+  в stdout, чистый текст 0), --language en снимает oacite из английского
+  текста. Дефект, пойманный релизным гейтом и исправленный в этом выпуске:
+  test_ci_policy_fixture падал в sdist вместо корректного пропуска
+  (конвенция skipUnless(REPO_ONLY) восстановлена).
+- 2026-09-11: каталог awesome-ai-plugins — remediation rule-level находок
+  слит в main (PR #225, bc17d2b): локальный счёт пином каталога
+  (plugin-scanner 3.0.123) 79/100 -> 98/100 (A), 0 critical / 0 high /
+  1 medium (документированная граница патч-онли бандла), подтверждено
+  вторым пином 3.0.143; re-review запрошен комментарием
+  https://github.com/hashgraph-online/awesome-ai-plugins/pull/244#issuecomment-5638656478.
+  Листинг не заявляется до свипа каталога с порогом >= 80.
