@@ -1,6 +1,12 @@
 # humanizer-ru
 Verifiable chat-paste hygiene for Russian text
 
+40 regex markers for chat-interface paste artifacts; 38 of them carry a full
+evidence record. Class A false positives on 12314 non-carrier texts: zero;
+class B: 8, that is 0.00065 (Wilson 95% CI from 0.0003 to 0.0013; measured
+2026-09-04 under a frozen preregistration). Every number carries a date and a
+reproduction command in [Project in numbers](#project-in-numbers).
+
 Artifact cleanup and fact comparison also accept English input. Pass
 `--language en` to `humanizer-clean`, `humanizer-polish`, `humanizer-facts`,
 or `humanizer-report` (or use `--language auto`). This profile does not apply
