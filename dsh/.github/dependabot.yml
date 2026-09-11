@@ -1,0 +1,17 @@
+# Пакетная декларация обновлений для каталога dsh/ (бандл DeepSeek Harness).
+#
+# GitHub Dependabot читает только .github/dependabot.yml в КОРНЕ репозитория:
+# действующая конфигурация этой поверхности — запись package-ecosystem: "npm",
+# directory: "/dsh" в корневом файле. Эта копия объявляет ту же политику для
+# инструментов, которые рассматривают каталог пакета как корень (пакетные
+# сканеры, проверка состава бандла).
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci"

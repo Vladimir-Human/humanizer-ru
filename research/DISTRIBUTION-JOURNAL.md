@@ -293,3 +293,52 @@ smithery-mechanics-notes.md; снапшоты карточек T15-*, T1255Z-*, 
   имени файла (strftime %H:%M) записал данные в NTFS alternate data
   stream; снимки пересохранены с именами без двоеточий (T1255Z-*),
   артефакт удалён.
+
+### 2026-09-11. Свип каталога awesome-ai-plugins: 79/100 на main, находки закрыты локально до 98/100 (PR #225)
+
+- Свежий свип каталога hashgraph-online/awesome-ai-plugins (закреплённый
+  workflow sweep-open-prs.yml, SHA экшена caba2e96 = plugin-scanner
+  3.0.123, mode=scan, min_score=80, fail_on_severity=high,
+  trust_repository_policy=false, online=false) отклонил PR #244:
+  79/100 (critical:0, high:6, medium:6, low:3, info:6) на клоне ветки по
+  умолчанию — job
+  https://github.com/hashgraph-online/awesome-ai-plugins/actions/runs/34609031384/job/103294663075.
+  Инструкция каталога: rule-level remediate-or-document, пересканировать
+  исходник и каталог, запросить re-review при счёте ≥80.
+- Локально свип воспроизведён тем же пакетом (plugin-scanner==3.0.123,
+  отдельный venv, скан свежего экспорта дерева): базовые 79/100 и состав
+  находок совпали с job-логом. Закрытие по правилам — в PR #225 и
+  docs/PLUGIN-SCANNER-NOTES.md (секция на правило: триггер, диспозиция,
+  подтверждающая команда): high×6 DANGEROUS_DYNAMIC_EXECUTION устранены
+  (node-обвязки check_demo_parity/check_demo_perf загружают
+  demo/markers.js через require вместо динамического выполнения
+  прочитанной строки; selftest'ы обоих гейтов зелёные, мутанты ловятся);
+  DEPENDENCY_LOCKFILE_MISSING — uv.lock в корне (нулевой состав,
+  runtime-зависимостей нет) и dsh/pnpm-lock.yaml (pnpm 10.28.0,
+  --lockfile-only, нулевой состав); SKILLS_DIR_MISSING — skills в
+  .codex-plugin/plugin.json переведён на каталог ./dsh/skills
+  (байт-синхронная вендорная копия, check_bundle_sync зелёный);
+  SECURITY_MD_MISSING/LICENSE_MISSING — dsh/SECURITY.md (границы бандла +
+  указатель на корневую политику) и dsh/LICENSE (побайтовая копия
+  корневого MIT); DEPENDABOT_MISSING — npm-запись /dsh в корневом
+  dependabot.yml плюс пакетная декларация dsh/.github/dependabot.yml;
+  info-находки — author объектом и interface-ассеты
+  (termsOfServiceURL=текст MIT, composerIcon/logo/screenshots —
+  существующие файлы) в codex-манифесте, .codexignore в корне
+  (зарегистрирован в TOP_LEVEL_MANIFEST check_docs.py вместе с uv.lock).
+  DSH_RUNTIME_APPLY_MISSING (medium, патч-онли бандл dsh/) — оставлен
+  задокументированным: правило живо и в 3.0.123, и в 3.0.143, несмотря на
+  hol-guard#2862, закрытый completed 2026-09-09; подделывать apply(ctx)
+  значило бы искажать устройство бандла.
+- Локальный счёт после правок: 98/100 (A) на обоих пинах — 3.0.123 (пин
+  каталога) и 3.0.143 (пин hol-plugin-scanner.yml): critical:0, high:0,
+  medium:1 (документированная граница), low:0, info:0; код возврата 0 при
+  --min-score 80 --fail-on-severity high. Trust 59.2 → 70.93.
+  check_all --quick на дереве после rebase на ba7e9b6: 145 гейтов,
+  FAIL 0, SKIP 1 (средозависимый, как и до правок).
+- Статус: PR #225
+  (https://github.com/Vladimir-Human/humanizer-ru/pull/225, метка
+  meta/autonomous) — до вычитки человеком и слияния. Свип каталога
+  клонирует ветку по умолчанию, поэтому пересканирование и запрос
+  re-review по hashgraph-online/awesome-ai-plugins#244 возможны только
+  после слияния в main.
