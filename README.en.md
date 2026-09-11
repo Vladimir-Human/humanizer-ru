@@ -52,7 +52,7 @@ a paste trace, not an error; rc=0 — no traces, rc=2 — input unreadable
   "mcpServers": {
     "humanizer-ru": {
       "command": "uvx",
-      "args": ["--from", "humanizer-ru==3.35.2", "humanizer-mcp"]
+      "args": ["--from", "humanizer-ru==3.36.0", "humanizer-mcp"]
     }
   }
 }

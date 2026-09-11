@@ -52,7 +52,7 @@ rc=1 означает «найдены маркеры» — это ожидае�
   "mcpServers": {
     "humanizer-ru": {
       "command": "uvx",
-      "args": ["--from", "humanizer-ru==3.35.2", "humanizer-mcp"]
+      "args": ["--from", "humanizer-ru==3.36.0", "humanizer-mcp"]
     }
   }
 }
@@ -107,11 +107,11 @@ rc=1 означает «найдены маркеры» — это ожидае�
 
 ## Одноимённые проекты
 
-На GitHub есть скиллы с тем же именем и другим содержанием. Снимок 2026-09-05
+На GitHub есть скиллы с тем же именем и другим содержанием. Снимок 2026-09-11
 (проверка: `gh repo view <владелец>/humanizer-ru --json stargazerCount`):
 
-- [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) — 284 звезды: позиционирование «убирает признаки нейросети», публичного реестра чисел нет.
-- [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) — 148 звёзд: детерминированный линтер; единственный тёзка, включённый в [LEADERBOARD.md](LEADERBOARD.md) как кандидат (парный прогон 2026-09-03).
+- [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) — 333 звезды: позиционирование «убирает признаки нейросети», публичного реестра чисел нет; приглашён к совместному публичному бенчмарку ([issue 220](https://github.com/Vladimir-Human/humanizer-ru/issues/220)).
+- [smixs/humanizer-ru](https://github.com/smixs/humanizer-ru) — 154 звезды: детерминированный линтер; единственный тёзка, включённый в [LEADERBOARD.md](LEADERBOARD.md) как кандидат (парный прогон 2026-09-03).
 - Этот проект — проверяемая гигиена вставки из чат-интерфейсов: каждое число из детерминированных снимков и [реестра фактов](eval/facts/facts.v1.json), границы — в [THREAT-MODEL](docs/THREAT-MODEL.md), ложные срабатывания — в [бенчмарке](demo/benchmark/index.html).
 
 Пришли по имени — выбирайте по способу проверки, а не по звёздам.
