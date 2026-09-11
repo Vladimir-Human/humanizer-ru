@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>:contentReference[oaicite:N] — что это и как убрать</title>
+<meta name="description" content="Служебная сноска :contentReference[oaicite:N]{index=N} попадает в текст при копировании ответа ChatGPT. Как проверить и снять метку: демо в браузере, команды humanizer-ru, честные границы.">
+<link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/oaicite/">
+<meta property="og:type" content="article">
+<meta property="og:title" content=":contentReference[oaicite:N] — что это и как убрать">
+<meta property="og:description" content="Служебная сноска :contentReference[oaicite:N]{index=N} попадает в текст при копировании ответа ChatGPT. Как проверить и снять метку: демо в браузере, команды humanizer-ru, честные границы.">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/oaicite/">
+<meta property="og:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="humanizer-ru">
+<meta property="og:locale" content="ru_RU">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../brand.css">
+<style>
+  main { max-width: 46rem; margin: 0 auto; padding: 20px; }
+  nav.site { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  nav.site a { margin-right: 14px; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  code { font-family: var(--font-mono); font-size: 0.92em; word-break: break-word; }
+  footer.site { border-top: 1px solid var(--line); padding: 12px 20px; color: var(--muted); font-size: 13px; }
+  .note { color: var(--muted); font-size: 13px; }
+  .cta { display: inline-block; padding: 8px 14px; border-radius: 6px; background: var(--accent1); color: #fff; text-decoration: none; }
+  h2 { margin-top: 1.7em; }
+  li { overflow-wrap: anywhere; }
+  .src { font-size: 13px; color: var(--muted); }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Что означает :contentReference[oaicite:N]{index=N} в тексте?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Это внутренняя метка ссылки в ответе ChatGPT: интерфейс рисует на её месте сноску на источник, а при копировании разметка иногда остаётся в тексте. Вручную такие метки не пишут."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Как убрать метки oaicite из текста?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Вставьте текст в браузерное демо humanizer-ru: сканер подсветит метки и объяснит каждую. В терминале установите пакет (pip install humanizer-ru), проверьте текст командой humanizer-markers --scan и снимите поддерживаемые артефакты командой humanizer-clean."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Если в тексте найдена метка oaicite, это доказывает машинное авторство?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Метка класса A фиксирует факт вставки: текст копировали из чат-интерфейса. Вердиктов об авторстве инструмент не выносит."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Поможет ли снятие меток обойти детектор ИИ-текста?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Проект не обещает обход детекторов и не измеряет его. Снятие меток — это гигиена вставки: из текста уходит служебная разметка чат-интерфейса, которой в документе быть не должно."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<nav class="site">
+  <a href="../index.html">Демо-сканер</a>
+  <a href="../invisible/">Невидимые символы</a>
+  <a href="../utm/">utm-метки</a>
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">Репозиторий</a>
+</nav>
+<main>
+<h1>:contentReference[oaicite:N]{index=N} — что это и как убрать</h1>
+
+<p>Короткий ответ: это служебная метка ссылки из ответа ChatGPT. Интерфейс рисует на её месте сноску на источник, а при копировании текста наружу иногда уезжает вся разметка. В рукописном тексте таких меток не бывает — их оставляет чат-интерфейс.</p>
+
+<p><a class="cta" href="../index.html">Проверить текст в браузерном демо</a> <span class="note">текст не покидает браузер</span></p>
+
+<h2>Как метка выглядит в тексте</h2>
+
+<p>Так вставку видно в редакторе:</p>
+
+<pre><code>Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.</code></pre>
+
+<p>У одной и той же служебной разметки несколько форм:</p>
+<ul>
+  <li>полная обёртка <code>:contentReference[oaicite:20]{index=20}</code> — номер сноски в квадратных скобках дублируется в фигурных;</li>
+  <li>усечённая форма <code>oaicite:7</code> — внутренний фрагмент той же метки;</li>
+  <li>другой формат сноски <code>oai_citation:0&#8225;wellington.scoop.co.nz</code> — номер и домен источника разделяет символ &#8225; (U+2021);</li>
+  <li>JSON-поле атрибуции <code>{"attribution":{"attributableIndex":"1009-1"}}</code> — встречается в ответах с инструментами;</li>
+  <li>невидимая обвязка: вокруг меток цитирования стоят символы приватной области U+E200–U+E204, которые редактор не отображает. Отдельный <a href="../invisible/">разбор невидимых символов</a> — на соседней странице.</li>
+</ul>
+
+<h2>Откуда берутся эти метки</h2>
+
+<p>Формы задокументированы по живым копиям ответов ChatGPT, которые пользователи перенесли в публичные документы. Каждая запись реестра доказательств humanizer-ru привязана к снимку конкретной ревизии с датой доступа.</p>
+
+<ul>
+  <li>Июнь 2025 года, страница обсуждения статьи Sial (tribe) в английской Википедии: копия ответа ChatGPT с десятью обёртками <code>:contentReference[oaicite:N]{index=N}</code>, номера от 16 до 25. Снимок ревизии проверен 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&amp;oldid=1294765751">en.wikipedia.org, ревизия 1294765751</a></span></li>
+  <li>Июнь 2025 года, страница обсуждения Independent Together: шесть меток <code>oai_citation:N&#8225;</code> и ссылки с параметром <code>utm_source=chatgpt.com</code> в одном тексте. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135">en.wikipedia.org, ревизия 1296028135</a></span></li>
+  <li>Июнь 2026 года, черновик из примеров страницы Wikipedia:Signs of AI writing: одиннадцать JSON-полей <code>attributableIndex</code>; происхождение копии из ChatGPT подкрепляют utm-метки и <code>oai_citation</code> в том же тексте. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&amp;oldid=1358429496">en.wikipedia.org, ревизия 1358429496</a></span></li>
+  <li>Февраль 2025 года, статья List of English-medium schools in Bangladesh: вокруг меток цитирования остались двенадцать невидимых символов U+E200–U+E202. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396">en.wikipedia.org, ревизия 1274664396</a></span></li>
+</ul>
+
+<p class="note">Оговорка честности: атрибуция конкретной версии ChatGPT в этих записях не подтверждена. Метка говорит о пути текста — копирование из чат-интерфейса, — а не о версии модели и не об авторе.</p>
+
+<h2>Как проверить и снять</h2>
+
+<p>Быстрее всего — <a href="../index.html">демо в браузере</a>. Вставьте текст: сканер подсветит метки и объяснит каждую находку. Расчёт идёт на вашей машине, текст никуда не отправляется.</p>
+
+<p>В терминале:</p>
+
+<pre><code>pip install humanizer-ru
+humanizer-markers --scan файл.txt
+humanizer-clean файл.txt</code></pre>
+
+<ul>
+  <li><code>humanizer-markers --scan</code> печатает находки с классом и номером строки; код возврата 1 означает «метки найдены», 0 — чисто, 2 — вход не читается;</li>
+  <li><code>humanizer-clean</code> снимает поддерживаемые артефакты вставки с проверкой до и после: невидимые метки текстового слоя и видимые артефакты класса A вне защищённых областей (код, URL, HTML-атрибуты). Неподдерживаемые находки остаются явным остатком, полная чистота не заявляется;</li>
+  <li>в агентной среде работает тот же набор через MCP, конфигурация одной строкой:
+  <pre><code>{"mcpServers":{"humanizer-ru":{"command":"uvx","args":["--from","humanizer-ru","humanizer-mcp"]}}}</code></pre></li>
+</ul>
+
+<h2>Честные границы</h2>
+
+<ul>
+  <li>Класс A — факт вставки, а не вердикт об авторстве. Метка показывает, что текст прошёл через копирование из чат-интерфейса; кто его написал, инструмент не решает.</li>
+  <li>Снятие меток не обещает «обход детекторов». Проект таких гарантий не даёт и не измеряет их.</li>
+  <li>Совпадение с базой антиплагиата снятие меток не устраняет.</li>
+  <li>Невидимые символы с меткой dangerous (структурные разделители) не снимаются ни в каком режиме.</li>
+  <li>Текст не покидает вашу машину: демо считает в браузере; команды пакета и MCP-сервер работают локально и ничего не отправляют.</li>
+</ul>
+
+<h2>Вопросы и ответы</h2>
+
+<h3>Что означает :contentReference[oaicite:N]{index=N} в тексте?</h3>
+<p>Это внутренняя метка ссылки в ответе ChatGPT: интерфейс рисует на её месте сноску на источник, а при копировании разметка иногда остаётся в тексте. Вручную такие метки не пишут.</p>
+
+<h3>Как убрать метки oaicite из текста?</h3>
+<p>Вставьте текст в браузерное демо humanizer-ru: сканер подсветит метки и объяснит каждую. В терминале установите пакет (<code>pip install humanizer-ru</code>), проверьте текст командой <code>humanizer-markers --scan</code> и снимите поддерживаемые артефакты командой <code>humanizer-clean</code>.</p>
+
+<h3>Если в тексте найдена метка oaicite, это доказывает машинное авторство?</h3>
+<p>Нет. Метка класса A фиксирует факт вставки: текст копировали из чат-интерфейса. Вердиктов об авторстве инструмент не выносит.</p>
+
+<h3>Поможет ли снятие меток обойти детектор ИИ-текста?</h3>
+<p>Проект не обещает обход детекторов и не измеряет его. Снятие меток — это гигиена вставки: из текста уходит служебная разметка чат-интерфейса, которой в документе быть не должно.</p>
+
+<h2>Источники</h2>
+<ul>
+  <li class="src">Ревизия страницы обсуждения Talk:Sial (tribe), английская Википедия (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&amp;oldid=1294765751">https://en.wikipedia.org/w/index.php?title=Talk:Sial_(tribe)&amp;oldid=1294765751</a></li>
+  <li class="src">Ревизия страницы обсуждения Talk:Independent Together (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135">https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135</a></li>
+  <li class="src">Пример черновика на Wikipedia:Signs of AI writing (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&amp;oldid=1358429496">https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing/Examples/Aleftina_Evdokimova&amp;oldid=1358429496</a></li>
+  <li class="src">Ревизия статьи List of English-medium schools in Bangladesh (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396">https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396</a></li>
+  <li class="src">Снимок страницы Wikipedia:Signs of AI writing, короткая форма меток цитирования (дата доступа 2026-07-14): <a href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&amp;oldid=1363998845">https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&amp;oldid=1363998845</a></li>
+</ul>
+</main>
+<footer class="site">
+  humanizer-ru — проверяемая гигиена вставки из чата для русского текста.
+  <a href="../index.html">Демо</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">репозиторий</a> ·
+  <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>.
+  Разборы: <a href="../invisible/">невидимые символы</a> ·
+  <a href="../utm/">utm_source=chatgpt.com</a>.
+  Аналитики и трекеров на странице нет: проект ничего не собирает.
+</footer>
+</body>
+</html>
