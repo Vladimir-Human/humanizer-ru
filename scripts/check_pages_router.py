@@ -8,9 +8,15 @@ llms.txt отдаётся с двух хостов (GitHub и Pages), поэто
 эррата, robots.txt, /.well-known/llms.txt) обязаны быть перечислены в
 шаге копирования workflow Pages и, после деплоя, отдаваться с Pages.
 
+Пояснительные SEO-страницы (SEO_PAGES) живут в самом demo/ и публикуются
+вместе с артефактом Pages; статическая проверка требует их наличия в demo/
+и объявления в demo/sitemap.xml, а --live-pages дополнительно сверяет их
+доступность после деплоя.
+
 Режимы:
     python3 scripts/check_pages_router.py              # ссылки llms.txt (HEAD)
                                                        # + статика workflow
+                                                       # + SEO-страницы
     python3 scripts/check_pages_router.py --live-pages # дополнительно HEAD
                                                        # всех копий на Pages
                                                       # (после деплоя)
@@ -45,7 +51,16 @@ PAGES_PATHS = ["llms.txt", ".well-known/llms.txt", "contract.v1.json",
                "ERRATA.md", "README.md", "README.en.md", "SKILL.md",
                "docs/FRAMEWORK.md", "eval/facts/facts.v1.json", "robots.txt",
                "favicon.svg", "identity.v1.json", "og-image.png",
-               "sitemap.xml", "eval/facts/self-audit.v1.json"]
+               "sitemap.xml", "eval/facts/self-audit.v1.json",
+               "oaicite/index.html", "invisible/index.html",
+               "utm/index.html", "articles/two-humanizer-ru/index.html"]
+# Пояснительные SEO-страницы живут в самом demo/ и публикуются вместе с
+# артефактом Pages: (файл в demo/, канонический URL-суффикс в sitemap.xml).
+SEO_PAGES = [("oaicite/index.html", "oaicite/"),
+             ("invisible/index.html", "invisible/"),
+             ("utm/index.html", "utm/"),
+             ("articles/two-humanizer-ru/index.html",
+              "articles/two-humanizer-ru/")]
 # Строки, которые обязан содержать шаг копирования workflow (статическая
 # проверка до деплоя: на PR ветке Pages ещё старый, сеть по Pages не
 # проверяется, но состав артефакта виден из workflow).
@@ -86,10 +101,34 @@ def http_status(url: str) -> int:
     raise last  # pragma: no cover - цикл всегда возвращает или выбрасывает
 
 
+def seo_errors(demo_root=None, sitemap_text=None) -> list:
+    """SEO-страницы лежат в demo/ и перечислены в sitemap.xml (до деплоя)."""
+    demo_root = demo_root or os.path.join(ROOT, "demo")
+    errors = []
+    for rel, _canon in SEO_PAGES:
+        if not os.path.isfile(os.path.join(demo_root,
+                                           rel.replace("/", os.sep))):
+            errors.append("demo/%s отсутствует — SEO-страница не попадёт "
+                          "в артефакт Pages" % rel)
+    if sitemap_text is None:
+        try:
+            with open(os.path.join(demo_root, "sitemap.xml"),
+                      encoding="utf-8") as fh:
+                sitemap_text = fh.read()
+        except OSError as exc:
+            return errors + ["demo/sitemap.xml не читается: %r" % exc]
+    for _rel, canon in SEO_PAGES:
+        if (PAGES_BASE + canon) not in sitemap_text:
+            errors.append("demo/sitemap.xml: нет URL %s%s — страница "
+                          "не объявлена поисковикам" % (PAGES_BASE, canon))
+    return errors
+
+
 def check_static() -> list:
     errors = []
     if not os.path.isfile(os.path.join(ROOT, "demo", "robots.txt")):
         errors.append("demo/robots.txt отсутствует (Pages отдаёт /robots.txt)")
+    errors.extend(seo_errors())
     try:
         with open(WORKFLOW, encoding="utf-8") as fh:
             wf = fh.read()
@@ -162,6 +201,19 @@ def selftest() -> int:
     wf_missing = "name: x\nsteps:\n  - run: cp llms.txt demo/\n"
     miss = [n for n in WORKFLOW_REQUIRED if n not in wf_missing]
     case("неполный шаг копирования ловится (негатив)", len(miss) >= 5)
+    case("SEO-страницы на месте и объявлены в sitemap", seo_errors() == [])
+    case("пропавшая SEO-страница ловится (негатив)",
+         seo_errors(demo_root=os.path.join(ROOT, "scripts"),
+                    sitemap_text="") != [])
+    try:
+        with open(os.path.join(ROOT, "demo", "sitemap.xml"),
+                  encoding="utf-8") as fh:
+            sm = fh.read()
+    except OSError:
+        sm = ""
+    case("sitemap без URL SEO-страницы ловится (негатив)",
+         seo_errors(sitemap_text=sm.replace("/oaicite/", "/net-takoi/"))
+         != [])
     print("САМОПРОВЕРКА check_pages_router: %d/%d PASS"
           % (passed, passed + failed))
     return 1 if failed else 0

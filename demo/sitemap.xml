@@ -6,6 +6,26 @@
     <changefreq>weekly</changefreq>
   </url>
   <url>
+    <loc>https://vladimir-human.github.io/humanizer-ru/oaicite/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://vladimir-human.github.io/humanizer-ru/invisible/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://vladimir-human.github.io/humanizer-ru/utm/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://vladimir-human.github.io/humanizer-ru/articles/two-humanizer-ru/</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://vladimir-human.github.io/humanizer-ru/llms.txt</loc>
     <lastmod>2026-09-03</lastmod>
     <changefreq>weekly</changefreq>
