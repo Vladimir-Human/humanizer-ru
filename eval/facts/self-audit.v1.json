@@ -1,8 +1,8 @@
 {
   "registry": "humanizer-ru self-audit: самоприменение детерминированного слоя к публичным файлам поставки",
-  "version": "3.35.2",
-  "date": "2026-09-10",
-  "measured_commit": "7202fa910427564f55ed12f25c09d3e9e950ad9c",
+  "version": "3.36.0",
+  "date": "2026-09-11",
+  "measured_commit": "726f9f6a8b180703ab0d1a4fb5289ad07af7c83c",
   "commit_note": "числа измерены на рабочем дереве; отчёт-committed рядом с измеряемыми правками — сам отчёт в скоуп измерения не входит, поэтому числа соответствуют дереву коммита, содержащего отчёт",
   "scope_files": 44,
   "methods": {
@@ -25,12 +25,12 @@
   "totals": {
     "markers_class_a": 0,
     "markers_class_b": 0,
-    "own_style_max": 65,
+    "own_style_max": 64,
     "own_style_max_file": "SKILL.md",
     "scan_max_features": 11,
     "detect": {
-      "not-applicable": 31,
-      "not-validated": 13,
+      "not-applicable": 32,
+      "not-validated": 12,
       "works": 0
     }
   },
@@ -45,7 +45,7 @@
       "markers_b": 0,
       "scan_features": 1,
       "scan_categories": 1,
-      "style_total": 32,
+      "style_total": 37,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -56,7 +56,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 23,
+      "style_total": 26,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -78,7 +78,7 @@
       "markers_b": 0,
       "scan_features": 2,
       "scan_categories": 2,
-      "style_total": 65,
+      "style_total": 64,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -123,7 +123,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 7,
+      "style_total": 25,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
@@ -267,9 +267,9 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 0,
-      "detect_status": "not-validated",
-      "detect_genre": "prose",
+      "style_total": 60,
+      "detect_status": "not-applicable",
+      "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
     },
     {
@@ -300,7 +300,7 @@
       "markers_b": 0,
       "scan_features": 0,
       "scan_categories": 0,
-      "style_total": 76,
+      "style_total": 77,
       "detect_status": "not-applicable",
       "detect_genre": "web",
       "detect_note": "значения сравниваются только в пределах заявленного домена; вердикт об авторстве не выносится"
