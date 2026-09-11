@@ -55,12 +55,14 @@ CAP_80K_MS = 4000.0    # заморожено до оптимизации
 RUN_TIMEOUT_S = 180    # конечный таймаут одного node-замера
 
 MEASURE_JS = """
-const fs = require('fs');
 const path = require('path');
 const enginePath = process.argv[2];
 const markersPath = process.argv[3];
 global.window = global;
-eval(fs.readFileSync(markersPath, 'utf8'));
+// require() вместо динамического выполнения прочитанной строки:
+// markers.js пишет window.HUMANIZER_MARKERS через guard и под require
+// исполняется как обычный модуль.
+require(markersPath);
 const engine = require(enginePath);
 const rules = window.HUMANIZER_MARKERS.rules.map(r => ({
   id: r.id, class: r.class, source: r.source, flags: r.flags,

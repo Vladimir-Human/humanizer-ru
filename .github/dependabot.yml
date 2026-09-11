@@ -10,3 +10,14 @@ updates:
       prefix: "ci"
     labels:
       - "ci"
+  # npm-поверхность бандла dsh/ (dsh/package.json). Runtime-зависимостей
+  # у бандла нет; поверхность объявлена, чтобы будущие зависимости не
+  # оказались вне обновлений.
+  - package-ecosystem: "npm"
+    directory: "/dsh"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci"

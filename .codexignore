@@ -1,0 +1,58 @@
+# .codexignore — что агентуру Codex не тянуть в контекст из этого репозитория.
+# Поставка скилла (SKILL.md, references/, knowledge/, commands/, scripts/,
+# манифесты плагинов) НЕ исключается: это рабочий материал агента.
+#
+# Исключено: крупные исследовательские корпусы и результаты прогонов
+# (сотни текстовых файлов, контекст не экономят), тестовые фикстуры
+# (содержат намеренные образцы артефактов — вне задач правки скилла это шум),
+# собранные артефакты, локальные окружения и секретные пути.
+
+# Исследовательские корпусы и прогоны
+eval/runs/
+eval/results/
+eval/detect-results/
+research/raw/
+research/validation/
+research/superposition/
+research/findability-runs/
+research/prereg-stamps/
+research/ab/
+research/adversarial-2026-09/
+research/benchmark-2026-09-04/
+research/di-control-2026-09/
+research/f8-2026-09/
+research/fp-corpus-2026-09/
+research/leaderboard/
+research/marker-lr-2026-09/
+research/soft-threshold-sweep/
+research/task-benchmark/
+research/distribution-snapshots/
+
+# Тестовые фикстуры (намеренные образцы артефактов)
+tests/fixtures/
+
+# Собранные артефакты и кэши
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+
+# Локальные окружения разработки
+.venv/
+.venv*/
+venv/
+
+# Секреты и локальное состояние
+.env
+.env.*
+.agent/
+.qwen/
+.claude/
+.codex/
+docs/status.json
+demo/status.json
