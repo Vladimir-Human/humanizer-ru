@@ -26,7 +26,7 @@ jobs:
         # HOL's scanner is an external advisory surface. Keep its report
         # visible while product CI remains governed by repository gates.
         continue-on-error: true
-        uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f # v1.2.635
+        uses: hashgraph-online/ai-plugin-scanner-action@bb4f519048c0fd1cd9d7b42056072d6070b8ad7d # v1.2.651
         with:
           mode: verify
           plugin_dir: "."
