@@ -5,7 +5,10 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
 
+
+@unittest.skipUnless(REPO_ONLY, "вне репозитория: нужен scripts/check_markers")
 class CiPolicyFixtureTests(unittest.TestCase):
     def test_class_a_fixture_is_blocking_signal(self):
         fixture = os.path.join(ROOT, "tests", "fixtures", "ci-policy-cases.md")
