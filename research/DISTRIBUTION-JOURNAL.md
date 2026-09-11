@@ -342,3 +342,39 @@ smithery-mechanics-notes.md; снапшоты карточек T15-*, T1255Z-*, 
   клонирует ветку по умолчанию, поэтому пересканирование и запрос
   re-review по hashgraph-online/awesome-ai-plugins#244 возможны только
   после слияния в main.
+- 2026-09-11: спрос и витрина — день внешних действий и первой авторской
+  публикации. Owner-only метрики GitHub (traffic/views: 1304 просмотра,
+  490 уникальных за 14 дней; referrers: Google 420/229, github.com 171/61,
+  yandex.ru 9/7, web.telegram 5/2; clones 15122/1552 — ряд загрязнён
+  собственным CI, оговорка METRICS.md в силе; команды:
+  `gh api repos/Vladimir-Human/humanizer-ru/traffic/{views,clones,popular/referrers}`).
+  skills.sh: 633 установки (снимок страницы 11.09; 603 на 06.09).
+  Звёзды 123, последняя 04.09; KPI-окно без изменений: внешних обращений
+  о реальном использовании нет, PENDING. Тёзка ilyautov/humanizer-ru:
+  333 звезды, 21 форк (`gh api repos/ilyautov/humanizer-ru`, 11.09) —
+  снимок в README «Одноимённые проекты» обновлён до 2026-09-11.
+- 2026-09-11: каналы. Topics репозитория расширены до 20 (добавлены mcp,
+  claude-code, cursor; снятые 08.09 вводящие теги не возвращались).
+  Внешние нитки: ilyautov/humanizer-ru#57 — принят публичный бенчмарк
+  (comment 5636044084; после ответа второй стороны о формате открыт
+  протокол у нас — issue #220: заморозка корпуса sha256, команда
+  воспроизведения на каждое число, публикация неудобных результатов,
+  отказ от вердиктов об авторстве); issue #119 — статус-апдейт по свежему
+  свипу каталога awesome-ai-plugins (comment 5636044451; свип 11.09:
+  79/100 при пороге 80, remediation rule-level находок начата).
+- 2026-09-11: первая авторская публикация проекта. Статья «Два
+  humanizer-ru: я отозвал свою лучшую метрику и зову тёзку на бенчмарк»
+  опубликована на Pages:
+  https://vladimir-human.github.io/humanizer-ru/articles/two-humanizer-ru/
+  (HTTP 200, 11.09; числа из реестра фактов и ERRATA, humanizer-scan по
+  телу — 0 признаков, check_outward — 0 FAIL). Три пояснительные страницы
+  под поисковые запросы артефактов вставки: /oaicite/, /invisible/, /utm/
+  (все HTTP 200; sitemap.xml и robots.txt обновлены; live-проверка:
+  `python3 scripts/check_pages_router.py --live-pages` — PASS). Анонс:
+  Discussions #224. Авторские каналы (Habr, vc.ru, Telegram) остаются
+  заблокированными отсутствием учётных записей; материалы готовы
+  (контент-пакет 11.09: статья, серия из 4 постов, стартер канала).
+- 2026-09-11: слиты PR #221 (согласованность витрины), #222 (SEO-страницы
+  и статья), #223 (числа первого экрана README), dependabot #217–#219
+  (actions/checkout v7, actions/upload-artifact v7,
+  ai-plugin-scanner-action v1.2.651). main ba7e9b6, push-CI 9/9 SUCCESS.
