@@ -31,8 +31,10 @@
   с `--include-ambiguous` и предупреждением, dangerous (разделители
   строк, аннотации) показывается и не снимается никогда; теги
   эмодзи-флагов не трогает. Контейнерные файлы (PNG/DOCX/PDF) —
-  `scripts/filemarks` в репозитории. humanizer-scan и humanizer-detect читают stdin; humanizer-polish, humanizer-markers и humanizer-clean принимают файл или stdin; humanizer-facts и humanizer-report принимают два файла; stdin
-  через «-».
+  `scripts/filemarks` в репозитории. humanizer-scan и humanizer-detect
+  читают stdin; humanizer-polish, humanizer-markers и humanizer-clean
+  принимают файл или stdin; humanizer-facts и humanizer-report принимают
+  два файла; stdin через «-».
 - Явно очистить поддерживаемые артефакты вставки одним сценарием
   (проверка до, снятие, проверка после): `humanizer-clean` — невидимые
   метки слоя A и видимые артефакты класса A вне защищённых областей

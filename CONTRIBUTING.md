@@ -19,7 +19,7 @@
    - три уровня проверочных образцов (прямой/отрицательный/граничный) — в `tests/test-fixtures.md`;
    - запись `CASES` и `CLASS_OF` в `scripts/check_markers.py`;
    - запись в `research/fixtures/marker-sources.json` (immutable URL, дата доступа, дословный образец, класс доказательства);
-   - секция в `tests/test-fixtures-cases.md` и имя в `REGISTERED_CASES` (`scripts/check_fixture_sources.py`);
+   - секция в `tests/test-fixtures-cases.md`; область действия гейта доказательств выводится из реестра `research/fixtures/marker-sources.json`, отдельный список не правится (`scripts/check_fixture_sources.py`);
    - регенерация `markers.v1.json` (`scripts/export_markers.py`) и демо (`demo/generate_js_rules.py`).
 3. Прогоните валидаторы — все должны проходить:
    ```sh
