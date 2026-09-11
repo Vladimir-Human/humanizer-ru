@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://vladimir-human.github.io/humanizer-ru/sitemap.xml
+
 # humanizer-ru: статическое демо и машинные файлы.
 # Машинный вход: /llms.txt и /.well-known/llms.txt
 # Репозиторий: https://github.com/Vladimir-Human/humanizer-ru

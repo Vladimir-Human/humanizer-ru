@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Невидимые символы после ChatGPT: как найти и удалить</title>
+<meta name="description" content="Нулевые пробелы, PUA-символы цитат ChatGPT, Unicode-теги и узкий неразрывный пробел U+202F: откуда они берутся в тексте, что снимается безопасно, а что не снимается никогда.">
+<link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/invisible/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Невидимые символы после ChatGPT: как найти и удалить">
+<meta property="og:description" content="Нулевые пробелы, PUA-символы цитат ChatGPT, Unicode-теги и узкий неразрывный пробел U+202F: откуда они берутся в тексте, что снимается безопасно, а что не снимается никогда.">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/invisible/">
+<meta property="og:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="humanizer-ru">
+<meta property="og:locale" content="ru_RU">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../brand.css">
+<style>
+  main { max-width: 46rem; margin: 0 auto; padding: 20px; }
+  nav.site { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  nav.site a { margin-right: 14px; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  code { font-family: var(--font-mono); font-size: 0.92em; word-break: break-word; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  footer.site { border-top: 1px solid var(--line); padding: 12px 20px; color: var(--muted); font-size: 13px; }
+  .note { color: var(--muted); font-size: 13px; }
+  .cta { display: inline-block; padding: 8px 14px; border-radius: 6px; background: var(--accent1); color: #fff; text-decoration: none; }
+  h2 { margin-top: 1.7em; }
+  li { overflow-wrap: anywhere; }
+  .src { font-size: 13px; color: var(--muted); }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Как удалить невидимые символы из текста после ChatGPT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Проверьте текст в браузерном демо humanizer-ru или в терминале: pip install humanizer-ru, затем humanizer-markers --scan файл.txt. Снимает safe-символы команда humanizer-markers --remove, полный сценарий с проверкой до и после — humanizer-clean файл.txt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Нулевой пробел в тексте доказывает, что его написала нейросеть?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Нулевые пробелы заносятся и другим копированием: сайты, CMS, рассылки. Находка указывает на путь текста и требует проверки происхождения, вердикта об авторстве нет."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "U+202F — это водяной знак ИИ? Можно ли его удалить?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "U+202F — узкий неразрывный пробел, легитимный типографский символ, а не сертифицированный знак происхождения. В таблице humanizer-ru он относится к классу ambiguous: замена на обычный пробел возможна только в явном режиме --include-ambiguous, инструмент показывает изменения и предупреждает о риске."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Правда ли, что инструмент удаляет все невидимые символы?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Опасные структурные символы (разделители строк и абзацев, межстрочные аннотации) показываются в отчёте и не снимаются никогда; невидимый символ вне таблицы считается опасным. Массового режима «удалить всё невидимое» не существует по построению."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Гарантирует ли снятие невидимых символов обход детекторов ИИ?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Проект не обещает обход детекторов как гарантию и не измеряет его. Снятие символов — гигиена вставки для контента, которым вы владеете."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<nav class="site">
+  <a href="../index.html">Демо-сканер</a>
+  <a href="../oaicite/">Метки oaicite</a>
+  <a href="../utm/">utm-метки</a>
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">Репозиторий</a>
+</nav>
+<main>
+<h1>Невидимые символы в тексте после ChatGPT: как найти и удалить</h1>
+
+<p>Невидимые символы — это кодовые точки, которых не показывает редактор, но которые хранит файл. После копирования из чата в тексте остаются обвязки цитат. Реже встречаются скрытые переносы и специальные пробелы. На глаз их не найти: нужна проверка посимвольно.</p>
+
+<p><a class="cta" href="../index.html">Проверить текст в браузерном демо</a> <span class="note">текст не покидает браузер</span></p>
+
+<h2>Что обычно остаётся после чата</h2>
+
+<p>Следующие диапазоны таблица снятия humanizer-ru относит к классу safe: это обвязка копипасты, она снимается автоматически.</p>
+
+<ul>
+  <li><code>U+200B</code> — нулевой пробел (zero-width space);</li>
+  <li><code>U+2060</code> — соединитель слов (word joiner);</li>
+  <li><code>U+FEFF</code> — маркер порядка байтов (BOM), встречается и после правок кодировок;</li>
+  <li><code>U+00AD</code> — мягкий перенос: ломает поиск по документу и сравнение строк;</li>
+  <li><code>U+E200–U+E204</code> и <code>U+EA01–U+EA02</code> — символы приватной области, которыми интерфейс ChatGPT обрамляет цитаты и скрытые блоки;</li>
+  <li><code>U+E0000–U+E007F</code> — Unicode-теги вне эмодзи-флагов.</li>
+</ul>
+
+<p>Живые примеры из реестра доказательств humanizer-ru (каждая запись привязана к снимку ревизии с датой доступа):</p>
+
+<ul>
+  <li>Август 2024 года, статья Amu Television в английской Википедии: в скопированном тексте двадцать три нулевых пробела <code>U+200B</code>. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Amu_Television&amp;oldid=1241301672">en.wikipedia.org, ревизия 1241301672</a></span></li>
+  <li>Февраль 2025 года, статья List of English-medium schools in Bangladesh: двенадцать невидимых символов <code>U+E200–U+E202</code> вокруг меток цитирования ChatGPT. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396">en.wikipedia.org, ревизия 1274664396</a></span></li>
+  <li>Июль 2025 года, снимок страницы Wikipedia:Signs of AI writing: короткая форма сносок ChatGPT — цифра между невидимыми символами <code>U+EA01</code> и <code>U+EA02</code>. Проверено 2026-07-14.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&amp;oldid=1363998845">en.wikipedia.org, ревизия 1363998845</a></span></li>
+</ul>
+
+<p class="note">Оговорка честности: нулевые пробелы и невидимая разметка — находки класса B. Их заносят и другие источники: сайты, CMS, почтовые рассылки. Модель в примерах выше не атрибутирована, вердиктом об авторстве такая находка не является.</p>
+
+<h2>Unicode-теги и стеганографические «водяные знаки»</h2>
+
+<p>Блок тегов <code>U+E0000–U+E007F</code> используют и исследовательские схемы скрытой маркировки. В работе SteganoPrompt (arXiv:2605.16336, AIES 2026) печатная нагрузка кодируется символами этого блока по правилу <code>chr(0xE0000 + ord(c))</code>: закодированный текст визуально неотличим от исходного и переживает копирование между редакторами. Проверено 2026-08-25.</p>
+
+<p class="src"><a href="https://arxiv.org/abs/2605.16336v2">arxiv.org/abs/2605.16336v2</a></p>
+
+<p>Теги внутри эмодзи-флагов (Англия, Шотландия, Уэльс) легитимны и не снимаются ни в каком режиме: проверка отличает флаг от одиночных тегов.</p>
+
+<h2>U+202F: не «водяной знак», а узкий неразрывный пробел</h2>
+
+<p>Запрос «удалить водяные знаки U+202F» встречается часто, поэтому ответим прямо. <code>U+202F</code> (narrow no-break space) — типографский символ из набора Юникода. У него нет владельца и нет сертификата происхождения: его ставят и системы вёрстки, и чат-интерфейсы, и человек с клавиатурой. Называть его водяным знаком нельзя.</p>
+
+<p>Публичный разбор классов меток watermarks-remover (MIT) описывает снимаемый слой: мягкий перенос <code>0x00AD</code>, наборные пробелы <code>0x2000–0x200A</code>, вариационные селекторы <code>0xFE00–0xFE0F</code>. Русская редакция таблицы исключает неразрывный пробел <code>U+00A0</code> и узкий неразрывный пробел <code>U+202F</code> — это норма набора. Проверено 2026-08-26.</p>
+
+<p class="src"><a href="https://github.com/guillaumemeyer/watermarks-remover/blob/f10efaa7efc75591b4744cc1d885874a79f5f7ee/skills/remove-ai-marks/scripts/text_unicode.py">github.com, watermarks-remover, снимок f10efaa7</a></p>
+
+<p>В таблице снятия humanizer-ru <code>U+202F</code> относится к классу ambiguous: замена на обычный пробел возможна только в явном режиме <code>--include-ambiguous</code>, инструмент показывает изменения и предупреждает о риске.</p>
+
+<h2>Что снимается, а что нет</h2>
+
+<table>
+  <tr><th>Класс</th><th>Примеры</th><th>Действие</th></tr>
+  <tr>
+    <td>safe</td>
+    <td>нулевой пробел, мягкий перенос, BOM, PUA-обвязка цитат ChatGPT, Unicode-теги вне флагов</td>
+    <td>снимаются автоматически; результат проверяем повторным прогоном</td>
+  </tr>
+  <tr>
+    <td>ambiguous</td>
+    <td>ZWJ/ZWNJ, bidi-метки, вариационные селекторы, спецпробелы (NBSP, U+2009, U+202F)</td>
+    <td>только в явном режиме <code>--include-ambiguous</code>; спецпробелы заменяются обычным пробелом, а не удаляются</td>
+  </tr>
+  <tr>
+    <td>dangerous</td>
+    <td>разделитель строк U+2028, разделитель абзацев U+2029, межстрочные аннотации U+FFF9–U+FFFB</td>
+    <td>показываются в отчёте и не снимаются никогда; символ вне таблицы считается dangerous</td>
+  </tr>
+</table>
+
+<p>Массового режима «удалить всё невидимое» не существует по построению: снятие структурных символов склеивает строки и теряет чтение.</p>
+
+<h2>Как проверить и снять</h2>
+
+<p>Без установки: <a href="../index.html">демо в браузере</a> подсвечивает находки, в том числе невидимые, и объясняет каждую. Расчёт идёт локально.</p>
+
+<p>В терминале:</p>
+
+<pre><code>pip install humanizer-ru
+humanizer-markers --scan файл.txt
+humanizer-markers --remove файл.txt
+humanizer-clean файл.txt</code></pre>
+
+<ul>
+  <li><code>--scan</code> — отчёт: какие символы найдены, в каких строках, какого класса;</li>
+  <li><code>--remove</code> — снимает safe-диапазоны, ambiguous только с флагом <code>--include-ambiguous</code>, dangerous показывает и не трогает;</li>
+  <li><code>humanizer-clean</code> — полный сценарий: проверка до, снятие поддерживаемых артефактов, проверка после; неподдерживаемые находки остаются явным остатком;</li>
+  <li>в агентной среде тот же набор доступен через MCP, конфигурация одной строкой:
+  <pre><code>{"mcpServers":{"humanizer-ru":{"command":"uvx","args":["--from","humanizer-ru","humanizer-mcp"]}}}</code></pre></li>
+</ul>
+
+<h2>Честные границы</h2>
+
+<ul>
+  <li>Находка невидимых символов — факт о тексте, а не вердикт об авторстве. Кроме служебных меток интерфейсов такие символы приносит обычное копирование.</li>
+  <li>Снятие не обещает «обход детекторов». Проект таких гарантий не даёт.</li>
+  <li>Снятие выполняется для контента, которым вы владеете; ответственность за использование результата остаётся на вас.</li>
+  <li>Текст не покидает вашу машину: демо считает в браузере; команды пакета и MCP-сервер работают локально. Телеметрии нет.</li>
+</ul>
+
+<h2>Вопросы и ответы</h2>
+
+<h3>Как удалить невидимые символы из текста после ChatGPT?</h3>
+<p>Проверьте текст в браузерном демо humanizer-ru или в терминале: <code>pip install humanizer-ru</code>, затем <code>humanizer-markers --scan файл.txt</code>. Снимает safe-символы команда <code>humanizer-markers --remove</code>, полный сценарий с проверкой до и после — <code>humanizer-clean файл.txt</code>.</p>
+
+<h3>Нулевой пробел в тексте доказывает, что его написала нейросеть?</h3>
+<p>Нет. Нулевые пробелы заносятся и другим копированием: сайты, CMS, рассылки. Находка указывает на путь текста и требует проверки происхождения, вердикта об авторстве нет.</p>
+
+<h3>U+202F — это водяной знак ИИ? Можно ли его удалить?</h3>
+<p><code>U+202F</code> — узкий неразрывный пробел, легитимный типографский символ, а не сертифицированный знак происхождения. В таблице humanizer-ru он относится к классу ambiguous: замена на обычный пробел возможна только в явном режиме <code>--include-ambiguous</code>, инструмент показывает изменения и предупреждает о риске.</p>
+
+<h3>Правда ли, что инструмент удаляет все невидимые символы?</h3>
+<p>Нет. Опасные структурные символы (разделители строк и абзацев, межстрочные аннотации) показываются в отчёте и не снимаются никогда; невидимый символ вне таблицы считается опасным. Массового режима «удалить всё невидимое» не существует по построению.</p>
+
+<h3>Гарантирует ли снятие невидимых символов обход детекторов ИИ?</h3>
+<p>Нет. Проект не обещает обход детекторов как гарантию и не измеряет его. Снятие символов — гигиена вставки для контента, которым вы владеете.</p>
+
+<h2>Источники</h2>
+<ul>
+  <li class="src">Ревизия статьи Amu Television, английская Википедия (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Amu_Television&amp;oldid=1241301672">https://en.wikipedia.org/w/index.php?title=Amu_Television&amp;oldid=1241301672</a></li>
+  <li class="src">Ревизия статьи List of English-medium schools in Bangladesh (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396">https://en.wikipedia.org/w/index.php?title=List_of_English-medium_schools_in_Bangladesh&amp;oldid=1274664396</a></li>
+  <li class="src">Снимок страницы Wikipedia:Signs of AI writing (дата доступа 2026-07-14): <a href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&amp;oldid=1363998845">https://en.wikipedia.org/w/index.php?title=Wikipedia:Signs_of_AI_writing&amp;oldid=1363998845</a></li>
+  <li class="src">Aiersilan, Yousefi, Pless. On Seeding Watermarks to Detect Verbatim LLM Copy-Paste Responses (дата доступа 2026-08-25): <a href="https://arxiv.org/abs/2605.16336v2">https://arxiv.org/abs/2605.16336v2</a></li>
+  <li class="src">Публичный разбор классов невидимых меток watermarks-remover, MIT (дата доступа 2026-08-26): <a href="https://github.com/guillaumemeyer/watermarks-remover/blob/f10efaa7efc75591b4744cc1d885874a79f5f7ee/skills/remove-ai-marks/scripts/text_unicode.py">снимок f10efaa7 в репозитории guillaumemeyer/watermarks-remover</a></li>
+</ul>
+</main>
+<footer class="site">
+  humanizer-ru — проверяемая гигиена вставки из чата для русского текста.
+  <a href="../index.html">Демо</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">репозиторий</a> ·
+  <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>.
+  Разборы: <a href="../oaicite/">:contentReference[oaicite:N]</a> ·
+  <a href="../utm/">utm_source=chatgpt.com</a>.
+  Аналитики и трекеров на странице нет: проект ничего не собирает.
+</footer>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Два humanizer-ru: я отозвал свою лучшую метрику и зову тёзку на бенчмарк</title>
+<meta name="description" content="На GitHub два проекта с именем humanizer-ru. Мой создан 21.01.2026, соседний 03.04.2026. На 11.09.2026 у соседа 333 звезды, у меня 123: в 2,7 раза больше, набрано за два с половиной месяца.">
+<link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/articles/two-humanizer-ru/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Два humanizer-ru: я отозвал свою лучшую метрику и зову тёзку на бенчмарк">
+<meta property="og:description" content="На GitHub два проекта с именем humanizer-ru. Мой создан 21.01.2026, соседний 03.04.2026. На 11.09.2026 у соседа 333 звезды, у меня 123: в 2,7 раза больше, набрано за два с половиной месяца.">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/articles/two-humanizer-ru/">
+<meta property="og:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="humanizer-ru">
+<meta property="og:locale" content="ru_RU">
+<meta property="article:published_time" content="2026-09-11">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../brand.css">
+<style>
+  main { max-width: 46rem; margin: 0 auto; padding: 20px; }
+  nav.site { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  nav.site a { margin-right: 14px; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  code { font-family: var(--font-mono); font-size: 0.92em; word-break: break-word; }
+  footer.site { border-top: 1px solid var(--line); padding: 12px 20px; color: var(--muted); font-size: 13px; }
+  .note { color: var(--muted); font-size: 13px; }
+  .byline { color: var(--muted); margin-top: 2.2em; border-top: 1px solid var(--line); padding-top: 10px; }
+  h2 { margin-top: 1.7em; }
+  li, p { overflow-wrap: anywhere; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Два humanizer-ru: я отозвал свою лучшую метрику и зову тёзку на бенчмарк",
+  "description": "На GitHub два проекта с именем humanizer-ru. Мой создан 21.01.2026, соседний 03.04.2026. На 11.09.2026 у соседа 333 звезды, у меня 123: в 2,7 раза больше, набрано за два с половиной месяца.",
+  "inLanguage": "ru",
+  "datePublished": "2026-09-11",
+  "author": {
+    "@type": "Person",
+    "name": "Vladimir-Human",
+    "url": "https://github.com/Vladimir-Human"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "humanizer-ru",
+    "url": "https://github.com/Vladimir-Human/humanizer-ru"
+  },
+  "mainEntityOfPage": "https://vladimir-human.github.io/humanizer-ru/articles/two-humanizer-ru/",
+  "image": "https://vladimir-human.github.io/humanizer-ru/og-image.png"
+}
+</script>
+</head>
+<body>
+<nav class="site">
+  <a href="../../index.html">Демо-сканер</a>
+  <a href="../../oaicite/">Метки oaicite</a>
+  <a href="../../invisible/">Невидимые символы</a>
+  <a href="../../utm/">utm-метки</a>
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">Репозиторий</a>
+</nav>
+<main>
+<article>
+<h1>Два humanizer-ru: я отозвал свою лучшую метрику и зову тёзку на бенчмарк</h1>
+
+<h2>Два проекта с одним именем</h2>
+
+<p>На GitHub два проекта с именем humanizer-ru. Мой создан 21.01.2026, соседний 03.04.2026. На 11.09.2026 у соседа 333 звезды, у меня 123: в 2,7 раза больше, набрано за два с половиной месяца. Проверка: <code>gh repo view &lt;владелец&gt;/humanizer-ru --json stargazerCount</code> и <code>gh api repos/&lt;владелец&gt;/humanizer-ru --jq .created_at</code>.</p>
+
+<p>Разница не только в звёздах. Описание соседа обещает «64 признака нейросети, 21 жёсткий бан, сканер в комплекте» (дословно: <code>gh api repos/ilyautov/humanizer-ru --jq .description</code>, снято 11.09.2026). В моём проекте такие обещания запрещены списком: identity.v1.json перечисляет формулировки, которых проект не имеет права произносить. «Обход детекторов как гарантия», «доказывает, что текст написан человеком», «не искажая смысла» и ещё пять. Гейт check_identity.py сверяет их дрейф по всем носителям (коммит c54c46a).</p>
+
+<p>Почему я отказался от слов, которые продают лучше? Измерил собственное обещание, и лучшее число пришлось отозвать самому.</p>
+
+<h2>Число, которое я опубликовал, а потом снял</h2>
+
+<p>25.08.2026 я опубликовал дельту детектируемости: на 12 парах средний скор судейской оценки падал после переписывания с 0.846 до 0.438. Дельта −0.408, знак-тест p=0.006, ниже в 11 парах из 12. Воспроизведение: <code>python3 eval/reproduce.py</code>, данные в eval/detect-results/2026-08-25-detect-axis-12-glm53.json.</p>
+
+<p>Я поставил три контроля, и один убил результат. Реплика на других судейских линиях падение повторила, контроль метки держался. Сломал контроль формата: одна уборка оформления перед переписыванием (шапка обвязки, переносы, разметка, дефисы вместо тире) воспроизводит падение скора почти целиком. Разложение по трём семьям судей: интервал без нуля у канала «формат» в трёх из трёх, у канала «смысл сверх формата» ни в одном (ERRATA.md от 01.09.2026, разбор в research/AXIS-RUBRIC-RETRACTION-2026-09-01.md). Значит −0.408 измеряла не живость текста, а снятие оформления. Интерпретацию я отозвал, число оставил в данных как замер своей величины. Нюанс про судей: одна линия панели повторяла семью, давшую исходное число; независимых линий три.</p>
+
+<p>Второй провал: положительный контроль читательской метрики 03.09.2026, сырой машинный текст против согласованного человеческого, та же панель и слепая подача, предрегистрация заморожена хешем. Вердикт FAIL: панель не отличила сырой машинный текст от человеческого, две семьи судей из трёх дали инверсию, выбирали машинный текст как «более человеческий». Отчёт: research/DI-CONTROL-2026-09.md. Читательское измерение слепо на контрасте, которым я собирался показывать качество переписывания: выводы по этой оси неинтерпретируемы, переписывание переехало в класс C, по явной просьбе и без заявлений о качестве. У таких замеров теперь гриф «судьи LLM, до человеческого контроля». Числа записи контроля приостановлены эрратой 06.09.2026: воспроизведение упирается в данные приватного прогона, цитировать их публично до раскрытия было бы нечестно (ERRATA.md). Исторический отчёт открыт.</p>
+
+<h2>Что проверки пережили</h2>
+
+<p>Уцелел детерминированный слой: он не судит текст, а ищет следы вставки; его числа воспроизводятся из публичных данных.</p>
+
+<p>Ложные срабатывания маркеров на 12314 текстах-неносителях лёгкого домена (04.09.2026, один проход по замороженной предрегистрации): класс A дал 0, класс B 8, это 0.00065 с Wilson 95% интервалом [0.0003; 0.0013]. Все восемь объяснены: BOM вики-шаблонов, нулевая ширина, bidi-маркеры, переносы из PDF. Воспроизведение <code>python tools/fp_corpus_measure.py</code>, отчёт research/FP-CORPUS-2026.md.</p>
+
+<p>Человеческий контроль: парный прогон 03.09.2026, 0 срабатываний на 26 человеческих текстах, Wilson [0%; 12.9%]. Воспроизведение: <code>python3 eval/run_eval.py</code> + <code>python3 scripts/check_confidence.py --check</code>, корпус eval/manifest.v1.json с хешами. Ноль публикуется как ноль и ходит с интервалом: 0 из 26 это наблюдение, не обещание.</p>
+
+<p>Мягкий статистический слой как детектор мёртв, говорю это вслух. На реалистичном корпусе (90 машинных против 440 человеческих) нет рабочей точки «recall выше нуля при нуле ложных обвинений»: при T=1/K=1 recall 0.211 [0.140; 0.306] при доле ложных обвинений 0.491 [0.445; 0.538] (ERRATA.md от 01.09.2026). Прежнее заявление «62.5% recall при FP=0» отозвано там же. AUC мягкого счёта: 0.6068 и 0.6487 по поколениям генераторов, на тяжёлом домене 0.1626, инверсия (research/F8-UMBRELLA-2026.md, 04.09.2026, <code>tools/f8_corpus_build.py</code> + <code>tools/f8_measure.py</code>). У мягких признаков осталась одна честная роль: калибровать объём правки, а не выносить вердикты.</p>
+
+<h2>Зову тёзку на публичный бенчмарк</h2>
+
+<p>03.09.2026 я открыл issue #57 в соседнем репозитории: открытый протокол после-измерения и репликационный комплект без условий, каждый прогоняет его на своём проекте. 07.09.2026 автор ответил, цитата: «опубликовать тестовые данные. Ну типа, публичный тест, публичные данные. Сделать бенч для хуманайзеров. Буду рад поучаствовать». 10.09.2026 автор закрыл issue как отработанный. Ветка: <a href="https://github.com/ilyautov/humanizer-ru/issues/57">https://github.com/ilyautov/humanizer-ru/issues/57</a>, воспроизведение: <code>gh api repos/ilyautov/humanizer-ru/issues/57</code> и /comments. Манифест метода: research/REWRITE-MEASUREMENT-2026-09.md.</p>
+
+<p>Предложение принимаю. Условия уже работают у меня:</p>
+
+<ol>
+  <li>Публичные данные: корпуса с хешами, прогон одной командой.</li>
+  <li>Предрегистрация до прогона, правило свёртки результата заморожено хешем.</li>
+  <li>Каждое число с датой и командой; недоступное публикуется как недоступное, с причиной (METRICS.md).</li>
+  <li>Никаких таблиц с чужими именами: сравнение только парным прогоном одной даты на общем корпусе (LEADERBOARD.md).</li>
+  <li>Никаких вердиктов об авторстве: детекторные метрики относительные.</li>
+</ol>
+
+<h2>Что инструмент делает на самом деле</h2>
+
+<p>Ядро детерминированное: 40 regex-маркеров, 31 класса A и 9 класса B (count/class_a_count/class_b_count в markers.v1.json, коммит c54c46a). Класс A: жёсткие артефакты копипасты, <code>:contentReference[oaicite:N]</code>, <code>?utm_source=chatgpt.com</code>, <code>grok_card://</code>, метки шагов агента, адреса песочниц. Класс B: контекстные индикаторы, невидимые символы, заглушки шаблонов, символы приватной области. У 38 маркеров из 40 есть запись доказательства с URL и дословным образцом (research/fixtures/marker-sources.json).</p>
+
+<p>Невидимые символы разделены на 23 диапазона по риску: 9 safe снимаются (zero-width space, BOM, мягкий перенос), 11 ambiguous только с явным согласием, они легитимны в эмодзи и смешанных направлениях письма, 3 dangerous не снимаются никогда: U+2028 и U+2029 держат структуру строк и абзацев (markers.v1.json, invisible_classes). Режима «удалить всё невидимое одним движением» нет по построению, это тоже пункт запрещённых обещаний.</p>
+
+<p>Маркер класса A означает факт вставки и статус «источник требует проверки»; вердикта об авторстве нет ни по A, ни по B: совпадения класса B мало даже для рекомендации проверить. Это Главное правило скилла.</p>
+
+<p>Носители: CLI из восьми команд (<code>pip install humanizer-ru</code>, 3.35.2 от 08.09.2026, <a href="https://pypi.org/pypi/humanizer-ru/json">https://pypi.org/pypi/humanizer-ru/json</a>, stdlib), MCP-сервер из семи инструментов, active в официальном реестре (11.09.2026, <a href="https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest">https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Vladimir-Human%2Fhumanizer-ru/versions/latest</a>), GitHub Action с гейтом вставки, браузерное демо, где текст не покидает браузер (<a href="https://vladimir-human.github.io/humanizer-ru/">https://vladimir-human.github.io/humanizer-ru/</a>).</p>
+
+<h2>Честные границы</h2>
+
+<p>Перефраз и гладкий машинный текст без артефактов слой не ловит: статистика как детектор не работает (показано выше). Короткий текст не ловится: сигналов меньше, чем слов. Водяные знаки без ключа невидимы по построению. Смешанное авторство инструмент не разбирает, английские детекторы не импортирует. Тяжёлый домен остаётся зоной риска: ложных срабатываний на порядок чаще (оба замера 04.09.2026, числа выше). Полные границы: docs/THREAT-MODEL.md.</p>
+
+<p>Собственная чистилка побеждает собственный детектор: после <code>humanizer-polish --remove</code> recall внедрённых маркеров падает с 1.0 до 0.1579, порог 0.5 не выполнен (research/ADVERSARIAL-ROBUSTNESS-V2-2026.md, 04.09.2026, воспроизведение <code>tools/mutants_build.py</code>, <code>tools/f3v2_measure.py</code>, <code>tools/f3v2_rewrite_measure.py</code>). Слепая перезапись теряет факты: доля пар с потерей 0.5699 [0.4685; 0.6658], с добавлением нового 0.3441 (research/FACT-LOSS-2026.md, 04.09.2026, <code>python tools/factloss_measure.py</code>). Поэтому переписывание идёт со сверкой <code>humanizer-facts diff</code>, а обещание «смысл сохранится» в запрещённом списке.</p>
+
+<p>Главная граница: проект почти не видят. Предрегистрированный замер находимости 03.09.2026 дал 2 находки из 5, порог пройден впритык (research/findability-prereg-2026-09-03.md, следующий замер не раньше 1 октября). Из 490 посетителей репо за 14 дней 229 пришли из Google (<code>gh api repos/Vladimir-Human/humanizer-ru/traffic/popular/referrers</code>, owner-only, окно 28.08–10.09.2026). Авторских публикаций нет: на 11.09.2026 я не нашёл ни одной от имени проекта; запросы <code>"Vladimir-Human" habr</code>, <code>"Vladimir-Human" vc.ru</code>, <code>humanizer-ru статья</code> возвращают только репозиторий и автокаталоги. Установки skills.sh растут: 603 на 06.09.2026 (research/DISTRIBUTION-JOURNAL.md), 633 на 11.09.2026 (<a href="https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru">https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru</a>). PyPI: 2605 за неделю на 11.09.2026 (<a href="https://pypistats.org/api/packages/humanizer-ru/recent">https://pypistats.org/api/packages/humanizer-ru/recent</a>), внутри собственный CI, чистой аудитории счётчик не даёт (METRICS.md). Если эта статья выйдет, она будет первой авторской публикацией проекта.</p>
+
+<h2>Вместо вывода</h2>
+
+<p>Я не могу написать в описании репозитория «64 признака и 21 бан»: identity.v1.json запрещает, гейт сверяет все носители. Что могу показать: реестр из 28 чисел, где 2 proven, 23 limited и 3 withdrawn на 08.09.2026 (eval/facts/facts.v1.json, пересчёт статусов: <code>jq -r '.entries[].status' eval/facts/facts.v1.json | sort | uniq -c</code>), эррату с шестью датированными записями (заголовки ERRATA.md на 11.09.2026), лидерборд с парным прогоном одной даты, приглашение к бенчмарку. Инструмент, который отзывает собственное лучшее число, остаётся должен читателю одно: всё остальное пересчитывается.</p>
+
+<p class="byline">Автор: Vladimir-Human, проект humanizer-ru (<a href="https://github.com/Vladimir-Human/humanizer-ru">https://github.com/Vladimir-Human/humanizer-ru</a>).</p>
+</article>
+</main>
+<footer class="site">
+  humanizer-ru — проверяемая гигиена вставки из чата для русского текста.
+  <a href="../../index.html">Демо</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">репозиторий</a> ·
+  <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>.
+  Разборы: <a href="../../oaicite/">:contentReference[oaicite:N]</a> ·
+  <a href="../../invisible/">невидимые символы</a> ·
+  <a href="../../utm/">utm_source=chatgpt.com</a>.
+  Аналитики и трекеров на странице нет: проект ничего не собирает.
+</footer>
+</body>
+</html>

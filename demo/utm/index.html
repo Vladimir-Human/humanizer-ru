@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>utm_source=chatgpt.com в тексте: что это и как убрать</title>
+<meta name="description" content="Параметр utm_source=chatgpt.com помечает ссылки из ответов ChatGPT: откуда метка берётся в скопированном тексте и как снять её, не ломая ссылку.">
+<link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/utm/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="utm_source=chatgpt.com в тексте: что это и как убрать">
+<meta property="og:description" content="Параметр utm_source=chatgpt.com помечает ссылки из ответов ChatGPT: откуда метка берётся в скопированном тексте и как снять её, не ломая ссылку.">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/utm/">
+<meta property="og:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="humanizer-ru">
+<meta property="og:locale" content="ru_RU">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../brand.css">
+<style>
+  main { max-width: 46rem; margin: 0 auto; padding: 20px; }
+  nav.site { padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  nav.site a { margin-right: 14px; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow: auto; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  code { font-family: var(--font-mono); font-size: 0.92em; word-break: break-word; }
+  footer.site { border-top: 1px solid var(--line); padding: 12px 20px; color: var(--muted); font-size: 13px; }
+  .note { color: var(--muted); font-size: 13px; }
+  .cta { display: inline-block; padding: 8px 14px; border-radius: 6px; background: var(--accent1); color: #fff; text-decoration: none; }
+  h2 { margin-top: 1.7em; }
+  li { overflow-wrap: anywhere; }
+  .src { font-size: 13px; color: var(--muted); }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Что такое utm_source=chatgpt.com в тексте?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Это параметр ссылки, которым ChatGPT помечает исходящие адреса в ответах: сайт получает отметку источника трафика. Когда ответ копируют в документ или письмо, метка уезжает в текст вместе с адресом."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Как убрать utm-метку из ссылки?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Вручную вырежьте параметр вместе с предшествующим знаком ? или & — адрес страницы сохранится. Автоматически это делает humanizer-clean: команда снимает из URL только параметр, а не всю ссылку. Проверить текст можно в браузерном демо или командой humanizer-markers --scan файл.txt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Доказывает ли utm_source=chatgpt.com, что текст написан ChatGPT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Метка прикреплена к ссылке, а не к тексту: она показывает, что адрес скопирован из интерфейса ChatGPT. Вердиктов об авторстве текста инструмент не выносит."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Перестанет ли ссылка работать без utm-параметра?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Нет. Адрес страницы сохраняется, исчезает только отметка источника для счётчиков аналитики."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<nav class="site">
+  <a href="../index.html">Демо-сканер</a>
+  <a href="../oaicite/">Метки oaicite</a>
+  <a href="../invisible/">Невидимые символы</a>
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">Репозиторий</a>
+</nav>
+<main>
+<h1>utm_source=chatgpt.com в тексте: что это и как убрать</h1>
+
+<p>UTM-метки — это параметры в адресе ссылки для счётчиков трафика: они сообщают сайту, откуда пришёл посетитель. ChatGPT добавляет к ссылкам в ответах параметр <code>utm_source=chatgpt.com</code>. Когда ответ копируют в документ или письмо, метка уезжает в текст вместе с адресом.</p>
+
+<p><a class="cta" href="../index.html">Проверить текст в браузерном демо</a> <span class="note">текст не покидает браузер</span></p>
+
+<h2>Как метка выглядит</h2>
+
+<pre><code>https://example.com/article?utm_source=chatgpt.com</code></pre>
+
+<ul>
+  <li><code>?utm_source=chatgpt.com</code> — первый параметр после вопросительного знака;</li>
+  <li><code>&amp;utm_source=chatgpt.com</code> — та же метка среди других параметров;</li>
+  <li><code>?utm_source=openai</code> — общая форма для инструментов OpenAI;</li>
+  <li><code>?utm_source=copilot.com</code> — метка Microsoft Copilot;</li>
+  <li><code>?referrer=grok.com</code> — навигационный параметр xAI.</li>
+</ul>
+
+<h2>Откуда берётся и где замечена</h2>
+
+<p>Записи реестра доказательств humanizer-ru привязаны к снимкам публичных страниц с датами доступа.</p>
+
+<ul>
+  <li>Июнь 2025 года, копия ответа ChatGPT на странице обсуждения Independent Together в английской Википедии: шесть ссылок с <code>utm_source=chatgpt.com</code>; в том же тексте стоят метки <code>oai_citation</code>. Реестр фиксирует форму как метку ссылок, сгенерированных до августа 2025 года. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135">en.wikipedia.org, ревизия 1296028135</a></span></li>
+  <li>Позже ссылки инструментов OpenAI чаще несут общую форму <code>utm_source=openai</code>: в ревизии статьи Valencia High School от 6 августа 2026 года такая метка стоит в вики-сноске; полнотекстовый поиск по английской Википедии нашёл шесть статей с ней. Проверено 2026-08-06.<br>
+  <span class="src"><a href="https://en.wikipedia.org/w/index.php?title=Valencia_High_School_(Santa_Clarita,_California)&amp;oldid=1368000622">en.wikipedia.org, ревизия 1368000622</a></span></li>
+  <li>Microsoft Copilot ставит свою метку <code>utm_source=copilot.com</code>: коммит студенческой исследовательской работы от 11 июля 2026 года хранит пять ссылок с ней, включая запись в списке литературы. Проверено 2026-08-07.<br>
+  <span class="src"><a href="https://github.com/tectijuana/interfaz/blob/cdc97fc53f6b3030aa14285da456eef7a329d60a/entregas/2026a/research/Arquitecturas%20ARM%20aplicadas%20a%20sistemas%20multimedia/readme.md">github.com, снимок cdc97fc5 в репозитории tectijuana/interfaz</a></span></li>
+  <li>xAI добавляет параметр <code>referrer=grok.com</code> к навигационным ссылкам на официальном сайте (проверено 2026-07-13). Оговорка реестра: параметр встречается и в обычных ссылках, сам по себе он не доказывает генерацию текста.<br>
+  <span class="src"><a href="https://x.ai/grok">x.ai/grok</a></span></li>
+</ul>
+
+<p class="note">Оговорка честности: UTM-метка прикреплена к ссылке, а не к тексту. Она показывает путь адреса — копирование из интерфейса чата, — но не называет автора текста и не утверждает генерацию всего документа.</p>
+
+<h2>Чем метка мешает в тексте</h2>
+
+<p>Ссылка с параметром рабочая: это не поломка. Мешает другое. Параметр передаёт счётчикам сайта источник трафика. Ещё он удлиняет адрес и выдаёт вставку из чат-интерфейса. Для документа, который уходит в публикацию или заказчику, это вопрос гигиены вставки.</p>
+
+<h2>Как проверить и снять</h2>
+
+<p>Без установки: <a href="../index.html">демо в браузере</a> находит utm-метки в ссылках и объясняет каждую. Расчёт идёт локально, текст никуда не отправляется.</p>
+
+<p>В терминале:</p>
+
+<pre><code>pip install humanizer-ru
+humanizer-markers --scan файл.txt
+humanizer-clean файл.txt</code></pre>
+
+<ul>
+  <li><code>humanizer-markers --scan</code> показывает находки с классом и номером строки: utm-метки относятся к классу A;</li>
+  <li><code>humanizer-clean</code> снимает из URL только параметр, а не всю ссылку: адрес страницы сохраняется;</li>
+  <li>вручную: вырежьте параметр <code>utm_*</code> вместе с предшествующим знаком <code>?</code> или <code>&amp;</code>. Если параметр был последним, ссылка останется прежней;</li>
+  <li>в агентной среде тот же набор доступен через MCP, конфигурация одной строкой:
+  <pre><code>{"mcpServers":{"humanizer-ru":{"command":"uvx","args":["--from","humanizer-ru","humanizer-mcp"]}}}</code></pre></li>
+</ul>
+
+<h2>Честные границы</h2>
+
+<ul>
+  <li>Класс A — факт вставки, а не вердикт об авторстве: метка фиксирует происхождение ссылки из интерфейса чата.</li>
+  <li>Снятие метки не обещает «обход детекторов». Проект таких гарантий не даёт и не измеряет их.</li>
+  <li>UTM — легитимный механизм веб-аналитики. В самой метке нет ничего запрещённого; решение снять её относится к аккуратности публикации.</li>
+  <li>Текст не покидает вашу машину: демо считает в браузере; команды пакета и MCP-сервер работают локально. Телеметрии нет.</li>
+</ul>
+
+<h2>Вопросы и ответы</h2>
+
+<h3>Что такое utm_source=chatgpt.com в тексте?</h3>
+<p>Это параметр ссылки, которым ChatGPT помечает исходящие адреса в ответах: сайт получает отметку источника трафика. Когда ответ копируют в документ или письмо, метка уезжает в текст вместе с адресом.</p>
+
+<h3>Как убрать utm-метку из ссылки?</h3>
+<p>Вручную вырежьте параметр вместе с предшествующим знаком <code>?</code> или <code>&amp;</code> — адрес страницы сохранится. Автоматически это делает <code>humanizer-clean</code>: команда снимает из URL только параметр, а не всю ссылку. Проверить текст можно в браузерном демо или командой <code>humanizer-markers --scan файл.txt</code>.</p>
+
+<h3>Доказывает ли utm_source=chatgpt.com, что текст написан ChatGPT?</h3>
+<p>Нет. Метка прикреплена к ссылке, а не к тексту: она показывает, что адрес скопирован из интерфейса ChatGPT. Вердиктов об авторстве текста инструмент не выносит.</p>
+
+<h3>Перестанет ли ссылка работать без utm-параметра?</h3>
+<p>Нет. Адрес страницы сохраняется, исчезает только отметка источника для счётчиков аналитики.</p>
+
+<h2>Источники</h2>
+<ul>
+  <li class="src">Ревизия страницы обсуждения Talk:Independent Together, английская Википедия (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135">https://en.wikipedia.org/w/index.php?title=Talk:Independent_Together&amp;oldid=1296028135</a></li>
+  <li class="src">Ревизия статьи Valencia High School (Santa Clarita, California) (дата доступа 2026-08-06): <a href="https://en.wikipedia.org/w/index.php?title=Valencia_High_School_(Santa_Clarita,_California)&amp;oldid=1368000622">https://en.wikipedia.org/w/index.php?title=Valencia_High_School_(Santa_Clarita,_California)&amp;oldid=1368000622</a></li>
+  <li class="src">Снимок студенческой исследовательской работы в репозитории tectijuana/interfaz, коммит cdc97fc5 от 11 июля 2026 года (дата доступа 2026-08-07): <a href="https://github.com/tectijuana/interfaz/blob/cdc97fc53f6b3030aa14285da456eef7a329d60a/entregas/2026a/research/Arquitecturas%20ARM%20aplicadas%20a%20sistemas%20multimedia/readme.md">github.com, readme.md на cdc97fc5</a></li>
+  <li class="src">Официальный сайт xAI, параметр referrer (дата доступа 2026-07-13): <a href="https://x.ai/grok">https://x.ai/grok</a></li>
+  <li class="src">Общее описание UTM-параметров: <a href="https://en.wikipedia.org/wiki/UTM_parameters">en.wikipedia.org/wiki/UTM_parameters</a></li>
+</ul>
+</main>
+<footer class="site">
+  humanizer-ru — проверяемая гигиена вставки из чата для русского текста.
+  <a href="../index.html">Демо</a> ·
+  <a href="https://github.com/Vladimir-Human/humanizer-ru">репозиторий</a> ·
+  <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>.
+  Разборы: <a href="../oaicite/">:contentReference[oaicite:N]</a> ·
+  <a href="../invisible/">невидимые символы</a>.
+  Аналитики и трекеров на странице нет: проект ничего не собирает.
+</footer>
+</body>
+</html>
