@@ -16,7 +16,7 @@ Design guarantees:
 
 **Legal framing of label removal.** The removal layer (`scripts/filemarks/`,
 `references/removal-matrix.md`) works on content the user owns; responsibility
-for how the result is used rests with the user. The project is not positioned
+for how the result is used rests with the user.
 Usage-scenario restrictions (the prohibited_uses block) were removed by
 project policy on 2026-09-05: the tool does not evaluate the purpose of
 use. Detector bypass is not promised: only relative before/after
@@ -57,9 +57,11 @@ Security fixes are released for the latest version on the default branch.
   every 7 days until resolved; fixes ship on the main branch.
 - General questions and issues: no promised deadline, best effort; never
   post private data in public issues.
-## Developer-tooling boundaries
 
-The repository also applies explicit controls outside the user-facing skill:
+## Directories and their audits (skills.sh)
+
+Additional measures for developer tooling — the repository also applies
+explicit controls outside the user-facing skill:
 
 - `eval/ainl_calibration.py` accepts only HTTPS from two allowlisted hosts and
   caps responses at 250 MiB; the corpus is temporary and never shipped.
@@ -67,4 +69,40 @@ The repository also applies explicit controls outside the user-facing skill:
   retaining signals and the link to the original public message.
 - CI checkouts do not persist credentials in `.git/config`; GitHub API access is
   granted only to the job that calls it.
+
+Directory audits (Gen Agent Trust Hub, Socket, Snyk) scan the ENTIRE
+repository, including dev/CI scripts that are not part of the skill bundle
+(17 files: SKILL.md, references/, knowledge/) and are not shipped to the
+user. Interpretation of the 2026-09-05 snapshot findings:
+
+- INDIRECT_PROMPT_INJECTION (Trust Hub): the essence of the product is
+  processing untrusted text; SKILL.md prescribes isolating the input with
+  tags and ignoring instructions inside it (the audit itself notes this as
+  a protection). Mitigation: allowed-tools is limited to Read/Grep/Glob.
+- DYNAMIC_EXECUTION (Trust Hub): eval/run_eval.py --candidate executes a
+  local candidate script — a developer bench harness, not part of the
+  bundle or the package, run only by a human in CI or locally.
+- EXTERNAL_DOWNLOADS (Trust Hub): eval/ainl_calibration.py downloads
+  datasets from raw.githubusercontent.com and huggingface.co — legitimate
+  acquisition of calibration data, dev-only.
+- COMMAND_EXECUTION (Trust Hub): subprocess in scripts/ and eval/ — local
+  dev/CI tools (git, marker scanners); not in the bundle.
+- Socket, scripts/check_compatibility.py: installs the previous package
+  version into a temporary venv and runs probes — a CI regression harness,
+  dev-only; the audit snippet is truncated at PROBE, the full probe text is
+  visible in the file.
+- Socket, scripts/filemarks/rewrite_text.py: shell=True was replaced with
+  shlex.split without a shell on 2026-09-06 (see the hardening commit); the
+  HUMANIZER_REWRITE_CMD template is set by the operator, metacharacters are
+  not interpreted.
+- Socket, dsh/cordis.patch.yml: JS in YAML — a vendored patch of the dsh
+  bundle, loaded only by the dsh host on the operator's explicit choice;
+  not part of the skill bundle.
+- "2 malicious URL" (Trust Hub): detection signatures (Perplexity S3
+  addresses, sandbox links) are samples of INPUT artifacts to search for,
+  not addresses from which the project downloads anything.
+
+Snyk: Pass. After the hardening commits, the audits rescan the repository
+on their own schedule; finding snapshots are recorded in the sprint log
+with dates.
 
