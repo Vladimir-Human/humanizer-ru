@@ -34,6 +34,19 @@ The Russian profile remains the default for compatibility.
 
 The shortest path is “find → clean → verify”:
 
+The shortest path is “find → clean → verify”:
+
+```text
+pip install humanizer-ru
+humanizer-markers --scan input.txt       # find traces (rc=1 = finding)
+humanizer-clean --in-place input.txt     # remove supported artifacts
+humanizer-markers --scan input.txt       # verify no residue (rc=0)
+```
+
+For English input add `--language en`; use `--language auto` for mixed text.
+Cleaning does not rewrite style or meaning: review the result and run
+`humanizer-facts diff before.txt after.txt --no-additions` after editorial edits.
+
 ```text
 pip install humanizer-ru
 humanizer-markers --scan input.txt       # find traces (rc=1 = finding)

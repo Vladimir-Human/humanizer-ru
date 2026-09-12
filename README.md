@@ -34,6 +34,19 @@
 
 Самый короткий путь «нашёл → убрал → проверил»:
 
+Самый короткий путь «нашёл → убрал → проверил»:
+
+```text
+pip install humanizer-ru
+humanizer-markers --scan input.txt       # найти следы (rc=1 = находка)
+humanizer-clean --in-place input.txt     # снять поддержанные артефакты
+humanizer-markers --scan input.txt       # убедиться, что остатка нет (rc=0)
+```
+
+Для английского входа добавьте `--language en`; для смешанного — `--language auto`.
+Очистка не переписывает стиль и смысл: проверьте результат вручную и используйте
+`humanizer-facts diff до.txt после.txt --no-additions` после редакторской правки.
+
 ```text
 pip install humanizer-ru
 humanizer-markers --scan input.txt       # найти следы (rc=1 = находка)
