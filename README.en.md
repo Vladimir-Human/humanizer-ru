@@ -84,7 +84,7 @@ and tests actually verify; boundaries list what a surface does not do.
 |---|---|---|---|---|---|
 | CLI (`humanizer-markers`, `-polish`, `-facts`, `-report`) | yes, with coordinates and classes A/B | strip / --preserve-markup / --typographic modes with preservation invariants | humanizer-facts (fact categories) | --json, exit codes per contract | does not check semantics; no authorship verdicts |
 | MCP (`humanizer-mcp`, tool set of contract.v1.json) | same commands over stdio | same modes via humanizer_polish | humanizer_facts | JSON-RPC envelopes, isError per contract | text never leaves the process |
-| Pages demo | yes, source-range highlighting in the browser | no (check and report only) | no | report copied from a single result | offline in browser, no install |
+| Pages demo | yes, source-range highlighting in the browser | yes, preview + explicit Apply + Undo for supported artifacts | no | report copied from a single result | offline in browser, no install |
 | GitHub Action | paste gate + text-path autofix (class A) | action_fix outside fenced/code | no | gate rc | fix never touches protected regions |
 | Text skill (SKILL.md) | agent procedures via references | stylistic edits only on explicit request | no | none (skill prose) | no guarantees of naturalness or meaning preservation |
 

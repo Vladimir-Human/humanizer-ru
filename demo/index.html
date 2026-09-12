@@ -18,6 +18,8 @@
 <title>Проверяемая гигиена вставки из чата для русского текста</title>
 <script src="markers.js"></script>
 <script src="engine.js"></script>
+<script src="cleaner-rules.js"></script>
+<script src="cleaner.js"></script>
 <script src="sample.js"></script>
 <style>
   :root { --a: #b3261e; --b: #8a6d00; --bg: #f6f5f2; --line: #d9d5cc; }
@@ -45,7 +47,7 @@
   .note { color:#666; font-size:13px; }
   .next-step { padding:12px 14px; border:1px solid var(--line); border-left:5px solid #1f6f4a; border-radius:6px; background:var(--panel); }
   .next-step h2 { margin-top:0; }
-  .next-step pre { max-width:100%; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere; overflow:auto; }
+  .next-step pre, #cleanupDiff { max-width:100%; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere; overflow:auto; }
   .next-step a { color:var(--link); font-weight:bold; }
   summary { cursor:pointer; font-weight:bold; }
 </style>
@@ -67,6 +69,8 @@
     <button id="insertSample" type="button" title="Реальная вставка из чат-интерфейса: contentReference, utm-метка, невидимый символ">Вставить образец</button>
     <button id="ownText" type="button">Очистить поле</button>
     <button id="copyReport" type="button">Скопировать отчёт</button>
+    <button id="applyCleanup" type="button" hidden>Применить безопасную очистку</button>
+    <button id="undoCleanup" type="button" hidden>Отменить очистку</button>
     <span id="copyStatus" role="status" aria-live="polite"></span>
     <button id="shareBtn" type="button">Поделиться</button>
     <span id="counts" class="note"></span>
@@ -99,13 +103,19 @@
   </section>
   <aside class="next-step" aria-labelledby="nextStepHeading">
     <h2 id="nextStepHeading">Нужно убрать найденные артефакты?</h2>
-    <p>Демо только проверяет текст. Для поддерживаемой очистки установите пакет
-      и выполните короткий путь «найти → убрать → проверить» в README.</p>
+    <p>Демо показывает обратимый diff и применяет только очистку без нарушений
+      инвариантов. Для файлового сценария установите пакет и выполните короткий
+      путь «найти → убрать → проверить» в README.</p>
     <pre><code>pip install humanizer-ru
 humanizer-clean --in-place input.txt
 humanizer-markers --scan input.txt</code></pre>
     <a href="https://github.com/Vladimir-Human/humanizer-ru#попробовать-за-30-секунд">Открыть команду humanizer-clean</a>
   </aside>
+  <section id="cleanupPreview" hidden aria-labelledby="cleanupHeading">
+    <h2 id="cleanupHeading">Предпросмотр очистки</h2>
+    <p id="cleanupSummary" class="note"></p>
+    <pre id="cleanupDiff"></pre>
+  </section>
 </main>
 
 <script>
@@ -118,11 +128,36 @@ humanizer-markers --scan input.txt</code></pre>
   const onlyA = document.getElementById("onlyA");
   const showAll = document.getElementById("showAll");
   const runBtn = document.getElementById("run");
+  const applyCleanupBtn = document.getElementById("applyCleanup");
+  const undoCleanupBtn = document.getElementById("undoCleanup");
+  const cleanupPreview = document.getElementById("cleanupPreview");
+  const cleanupSummary = document.getElementById("cleanupSummary");
+  const cleanupDiff = document.getElementById("cleanupDiff");
   const counts = document.getElementById("counts");
   // Единый объект результата: список, подсветка, строка итога и отчёт
   // строятся из одного вычисления; копирование до завершения debounce
   // пересчитывает результат, а не читает устаревший DOM.
   let lastResult = null;
+  let undoText = null;
+
+  function renderCleanup(text) {
+    if (typeof HumanizerCleaner === "undefined" || !text.trim()) {
+      cleanupPreview.hidden = true;
+      applyCleanupBtn.hidden = true;
+      return;
+    }
+    const cleaned = HumanizerCleaner.cleanText(text);
+    const changed = cleaned.text !== text;
+    cleanupPreview.hidden = !changed && cleaned.invariants.length === 0;
+    applyCleanupBtn.hidden = !changed || cleaned.invariants.length > 0;
+    cleanupSummary.textContent = cleaned.invariants.length
+      ? "Автоматическое применение заблокировано: " + cleaned.invariants.join("; ")
+      : (changed ? "Изменения обратимы: исходный текст останется доступен кнопкой «Отменить очистку»." : "Поддерживаемых артефактов для снятия не найдено.");
+    cleanupDiff.textContent = changed
+      ? "ДО:\n" + text + "\n\nПОСЛЕ:\n" + cleaned.text
+      : "";
+    applyCleanupBtn.dataset.cleaned = cleaned.text;
+  }
 
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
   const rules = ((DATA && DATA.rules) || []).map(r => ({
@@ -261,6 +296,7 @@ humanizer-markers --scan input.txt</code></pre>
       : "состояние: готово к проверке";
     renderList(matches);
     renderPreview(text, matches);
+    renderCleanup(text);
     if (location.hash.length > 1 && text.trim()) {
       summary.textContent += " Текст загружен из ссылки — проверьте его происхождение.";
     }
@@ -271,6 +307,24 @@ humanizer-markers --scan input.txt</code></pre>
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);
   runBtn.addEventListener("click", run);
+  applyCleanupBtn.addEventListener("click", () => {
+    const cleaned = applyCleanupBtn.dataset.cleaned;
+    if (typeof cleaned !== "string") return;
+    undoText = textarea.value;
+    textarea.value = cleaned;
+    undoCleanupBtn.hidden = false;
+    history.replaceState(null, "", location.pathname + location.search);
+    run();
+    textarea.focus();
+  });
+  undoCleanupBtn.addEventListener("click", () => {
+    if (undoText === null) return;
+    textarea.value = undoText;
+    undoText = null;
+    undoCleanupBtn.hidden = true;
+    run();
+    textarea.focus();
+  });
   document.getElementById("insertSample").addEventListener("click", () => {
     if (typeof HUMANIZER_SAMPLE === "undefined") return;
     textarea.value = HUMANIZER_SAMPLE;
