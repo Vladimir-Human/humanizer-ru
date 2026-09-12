@@ -8,8 +8,58 @@
 снимаемые доказуемо безпотерно. Снятие детерминированное и проверяемое
 повторным прогоном детектора.
 """
+import os
 import re
+import tempfile
 import unicodedata
+from pathlib import Path
+
+
+def _assert_safe_destination(path):
+    """Reject a destination or any parent that is a symbolic link."""
+    dest = Path(path)
+    probe = dest
+    while True:
+        if probe.is_symlink():
+            raise OSError("отказ писать через симлинк в цепочке: %s" % probe)
+        parent = probe.parent
+        if parent == probe:
+            break
+        probe = parent
+
+
+def _safe_write_text(path, text):
+    """Write atomically; preserve existing permissions and reject symlinks.
+
+    Parent checks are best-effort, not protection against a concurrent rename
+    of a parent directory. New backup files keep mkstemp's private mode.
+    """
+    dest = Path(path)
+    _assert_safe_destination(dest)
+    parent = dest.parent
+    mode = (dest.stat().st_mode & 0o777) if dest.exists() else 0o600
+    fd, tmp_name = tempfile.mkstemp(
+        prefix="." + dest.name + ".", suffix=".tmp", dir=str(parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            fd = None  # The stream now owns the descriptor, including on error.
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+            if os.name != "nt":
+                os.fchmod(fh.fileno(), mode)
+        os.replace(tmp_name, dest)
+    except BaseException:
+        if fd is not None:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
 
 _MARKER_CASES = {}
 _CM_IS_URL_MARKER = None
@@ -979,20 +1029,17 @@ def clean_main(argv=None) -> int:
                         # Атомарность: копия .bak, запись во временный файл
                         # и os.replace; ошибка записи оставляет исходный
                         # файл целым (состояние уходит в errors, код 2).
-                        tmp = path + ".tmp-clean"
                         try:
-                            with open(path + ".bak", "w", encoding="utf-8",
-                                      newline="") as fh:
-                                fh.write(before)
-                            with open(tmp, "w", encoding="utf-8",
-                                      newline="") as fh:
-                                fh.write(cleaned)
-                            os.replace(tmp, path)
+                            # Validate both destinations before touching the
+                            # backup, then use private mkstemp files for the
+                            # backup and replacement.  This prevents a
+                            # predictable temp path or symlink parent from
+                            # redirecting an in-place write.
+                            _assert_safe_destination(path)
+                            _assert_safe_destination(path + ".bak")
+                            _safe_write_text(path + ".bak", before)
+                            _safe_write_text(path, cleaned)
                         except OSError as exc:
-                            try:
-                                os.unlink(tmp)
-                            except OSError:
-                                pass
                             print("НЕ ЗАПИСАНО %s: %r (исходный файл не "
                                   "изменён)" % (path, exc), file=sys.stderr)
                             errors.append({"file": label,

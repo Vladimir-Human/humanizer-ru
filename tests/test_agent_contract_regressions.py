@@ -173,6 +173,10 @@ class CleanCliScenarioTests(unittest.TestCase):
     def test_in_place_writes_and_backs_up(self):
         work = os.path.join(TMP, "inplace.txt")
         shutil.copyfile(os.path.join(TMP, "art.txt"), work)
+        predictable_tmp = work + ".tmp-clean"
+        with open(predictable_tmp, "w", encoding="utf-8",
+                  newline="\n") as fh:
+            fh.write("sentinel")
         rc, out, _err = _run_entry("cli", "clean_main", ["--in-place",
                                                          "inplace.txt"])
         self.assertEqual(rc, 0)
@@ -181,6 +185,10 @@ class CleanCliScenarioTests(unittest.TestCase):
         self.assertNotIn(":contentReference", cleaned)
         with open(work + ".bak", encoding="utf-8") as fh:
             self.assertEqual(fh.read(), ART)
+        with open(predictable_tmp, encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), "sentinel",
+                             "предсказуемый temp-файл не должен "
+                             "перезаписываться")
 
     def test_in_place_error_preserves_original(self):
         work = os.path.join(TMP, "blocked.txt")
