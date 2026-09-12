@@ -30,7 +30,7 @@
 
 - [Демо в браузере](https://vladimir-human.github.io/humanizer-ru/): ничего не устанавливать, текст не покидает браузер.
 - Сообщить о проблеме или опыте использования: [issue в репозитории](https://github.com/Vladimir-Human/humanizer-ru/issues/new); пользовательский текст не передаётся автоматически ни демо, ни сборщиком обратной связи.
-- В терминале:
+- Проверка конкретной вставки:
 
 Самый короткий путь «нашёл → убрал → проверил»:
 
@@ -46,7 +46,6 @@ humanizer-markers --scan input.txt       # убедиться, что остат
 `humanizer-facts diff до.txt после.txt --no-additions` после редакторской правки.
 
 ```text
-pip install humanizer-ru
 python -c "open('primer.txt','w',encoding='utf-8').write('Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.\n')"
 humanizer-markers --scan primer.txt; echo "rc=$?"
   primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.

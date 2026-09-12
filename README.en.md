@@ -30,7 +30,7 @@ The Russian profile remains the default for compatibility.
 
 - [Browser demo](https://vladimir-human.github.io/humanizer-ru/): nothing to install, your text never leaves the browser.
 - Report a problem or share usage experience: [an issue in the repository](https://github.com/Vladimir-Human/humanizer-ru/issues/new); user text is never sent automatically by the demo or by the feedback collector.
-- In a terminal:
+- Check a concrete pasted fragment:
 
 The shortest path is “find → clean → verify”:
 
@@ -46,7 +46,6 @@ Cleaning does not rewrite style or meaning: review the result and run
 `humanizer-facts diff before.txt after.txt --no-additions` after editorial edits.
 
 ```text
-pip install humanizer-ru
 python -c "open('primer.txt','w',encoding='utf-8').write('Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.\n')"
 humanizer-markers --scan primer.txt; echo "rc=$?"
   primer.txt:1 [contentReference] Согласно отчёту :contentReference[oaicite:3]{index=3}, рост заявок.
