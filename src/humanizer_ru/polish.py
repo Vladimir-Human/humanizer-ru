@@ -77,6 +77,53 @@ import json
 import os
 import re
 import sys
+import tempfile
+from pathlib import Path
+
+
+def _assert_safe_destination(path):
+    """Reject a destination or any parent that is a symbolic link."""
+    dest = Path(path)
+    probe = dest
+    while True:
+        if probe.is_symlink():
+            raise OSError("отказ писать через симлинк в цепочке: %s" % probe)
+        parent = probe.parent
+        if parent == probe:
+            break
+        probe = parent
+
+
+def _safe_write_text(path, text):
+    """Write UTF-8 text through a private, atomic, symlink-safe temp file."""
+    dest = Path(path)
+    _assert_safe_destination(dest)
+    parent = dest.parent
+    fd, tmp_name = tempfile.mkstemp(
+        prefix="." + dest.name + ".", suffix=".tmp", dir=str(parent))
+    try:
+        mask = os.umask(0)
+        os.umask(mask)
+        mode = 0o666 & ~mask
+        try:
+            os.fchmod(fd, mode)
+        except AttributeError:  # pragma: no cover - Windows
+            os.chmod(tmp_name, mode)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, dest)
+    except BaseException:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -651,20 +698,17 @@ def main(argv=None) -> int:
                     # подмена (tmp + os.replace). Ошибка записи не оставляет
                     # частичный «успешный» результат: исходный файл цел,
                     # временный убирается, состояние уходит в errors с кодом 2.
-                    tmp = path + ".tmp-polish"
                     try:
-                        with open(path + ".bak", "w", encoding="utf-8",
-                                  newline="") as fh:
-                            fh.write(before)
-                        with open(tmp, "w", encoding="utf-8",
-                                  newline="") as fh:
-                            fh.write(after)
-                        os.replace(tmp, path)
+                        # Validate both destinations before touching the
+                        # backup, then use private mkstemp files for the
+                        # backup and replacement.  This prevents a
+                        # predictable temp path or symlink parent from
+                        # redirecting an in-place write.
+                        _assert_safe_destination(path)
+                        _assert_safe_destination(path + ".bak")
+                        _safe_write_text(path + ".bak", before)
+                        _safe_write_text(path, after)
                     except OSError as exc:
-                        try:
-                            os.unlink(tmp)
-                        except OSError:
-                            pass
                         print("НЕ ЗАПИСАНО %s: %r (исходный файл не изменён)"
                               % (path, exc), file=sys.stderr)
                         errors.append({"file": path, "error": repr(exc)})

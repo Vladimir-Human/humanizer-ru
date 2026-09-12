@@ -216,6 +216,10 @@ class CliPreservationTests(unittest.TestCase):
             path = os.path.join(td, "q.md")
             with open(path, "w", encoding="utf-8", newline="") as fh:
                 fh.write(DOC)
+            predictable_tmp = path + ".tmp-polish"
+            with open(predictable_tmp, "w", encoding="utf-8",
+                      newline="") as fh:
+                fh.write("sentinel")
             proc = subprocess.run(
                 [sys.executable, "-X", "utf8", self.POLISH, path,
                  "--in-place", "--typographic"],
@@ -228,8 +232,10 @@ class CliPreservationTests(unittest.TestCase):
                 bak = fh.read()
             self.assertEqual(bak, DOC)
             self.assertIn(URL, after)
-            self.assertNotIn(path + ".tmp-polish",
-                             json.dumps(os.listdir(td)))
+            with open(predictable_tmp, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), "sentinel",
+                                 "предсказуемый temp-файл не должен "
+                                 "перезаписываться")
             shutil.rmtree(td, ignore_errors=True)
 
 

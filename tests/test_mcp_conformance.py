@@ -281,6 +281,49 @@ class TestMcpTools(unittest.TestCase):
             self.schema_errors(r["structuredContent"],
                                self._schema("humanizer_report")), [])
 
+    def test_results_hide_host_temp_paths_for_all_tools(self):
+        """MCP metadata uses stable placeholders, while input text is intact."""
+        calls = [
+            ("humanizer_scan", {"text": "Обычный русский текст."}),
+            ("humanizer_markers", {
+                "text": "Согласно :contentReference[oaicite:1]{index=1}"}),
+            ("humanizer_polish", {"text": "Текст — с тире…"}),
+            ("humanizer_clean", {
+                "text": "Согласно :contentReference[oaicite:1]{index=1}"}),
+            ("humanizer_detect", {"text": "Обычный русский текст."}),
+            ("humanizer_facts", {
+                "text_before": "В 2024 году было 3 заявки.",
+                "text_after": "В 2025 году было 4 заявки."}),
+            ("humanizer_report", {
+                "text_before": "Короткий русский текст.",
+                "text_after": "Другой русский текст."}),
+        ]
+        lines = [_INIT]
+        for i, (name, arguments) in enumerate(calls, start=2):
+            lines.append(_req(i, "tools/call", {
+                "name": name, "arguments": arguments}))
+        resps, _ = _session(lines)
+        for response, (name, _arguments) in zip(resps[1:], calls):
+            with self.subTest(tool=name):
+                result = response["result"]
+                self.assertNotIn("mcp-tool-", json.dumps(result))
+                self.assertNotIn("mcp-facts-", json.dumps(result))
+                self.assertNotIn("AppData\\Local\\Temp",
+                                  json.dumps(result))
+                self.assertNotIn("C:\\\\Users\\vovap",
+                                  json.dumps(result))
+                envelope = result["structuredContent"]
+                if name in ("humanizer_facts",):
+                    self.assertEqual(envelope["files"],
+                                     ["<input.txt>", "<input.txt.after>"])
+                elif name == "humanizer_report":
+                    item = envelope["files"][0]
+                    self.assertEqual(item["before"], "<input.txt>")
+                    self.assertEqual(item["after"], "<input.txt.after>")
+                else:
+                    self.assertEqual(envelope["files"][0]["file"],
+                                     "<input.txt>")
+
     def test_marker_class_param(self):
         text = ":contentReference[oaicite:1]{index=1} и ассистентом\u200b"
         resps, _ = _session([_INIT, _req(2, "tools/call", {

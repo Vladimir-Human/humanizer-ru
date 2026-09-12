@@ -46,7 +46,7 @@
   .next-step { padding:12px 14px; border:1px solid var(--line); border-left:5px solid #1f6f4a; border-radius:6px; background:var(--panel); }
   .next-step h2 { margin-top:0; }
   .next-step pre { max-width:100%; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere; overflow:auto; }
-  .next-step a { color:#1558a6; font-weight:bold; }
+  .next-step a { color:var(--link); font-weight:bold; }
   summary { cursor:pointer; font-weight:bold; }
 </style>
   <meta name="twitter:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
@@ -65,7 +65,7 @@
     <label><input type="checkbox" id="showAll" checked> показывать полный текст с подсветкой</label>
     <button id="run">Проверить</button>
     <button id="insertSample" type="button" title="Реальная вставка из чат-интерфейса: contentReference, utm-метка, невидимый символ">Вставить образец</button>
-    <button id="ownText" type="button">Проверить свой</button>
+    <button id="ownText" type="button">Очистить поле</button>
     <button id="copyReport" type="button">Скопировать отчёт</button>
     <span id="copyStatus" role="status" aria-live="polite"></span>
     <button id="shareBtn" type="button">Поделиться</button>
@@ -175,6 +175,7 @@ humanizer-markers --scan input.txt</code></pre>
   }
 
   function renderPreview(text, matches) {
+    document.getElementById("previewSection").hidden = !text.trim();
     if (!showAll.checked) { preview.textContent = text; return; }
     const ranges = mergedRanges(matches);
     let html = "";
@@ -285,6 +286,7 @@ humanizer-markers --scan input.txt</code></pre>
     textarea.value = "";
     // N33: переход к своему тексту очищает share-state в URL.
     history.replaceState(null, "", location.pathname + location.search);
+    hasShareHash = false;
     textarea.focus();
     updateCounts();
     run();
@@ -350,13 +352,22 @@ humanizer-markers --scan input.txt</code></pre>
     const text = shareableText();
     if (text === null) return;
     location.hash = encodeURIComponent(text);
+    hasShareHash = true;
     summary.textContent = "Ссылка с текстом создана. Скопируйте адрес из строки браузера.";
   });
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
   });
   let _timer;
+  let hasShareHash = location.hash.length > 1;
   textarea.addEventListener("input", () => {
+    // Editing text loaded from a share link invalidates that link. Remove the
+    // old fragment before the next debounce so a copied URL cannot expose the
+    // previous text after the user starts replacing it.
+    if (hasShareHash) {
+      history.replaceState(null, "", location.pathname + location.search);
+      hasShareHash = false;
+    }
     clearTimeout(_timer);
     updateCounts();
     _timer = setTimeout(run, 250);

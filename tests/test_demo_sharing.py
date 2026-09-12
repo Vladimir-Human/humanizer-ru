@@ -46,15 +46,19 @@ const document = {
   createElement() { return { className: '', innerHTML: '', appendChild() {} }; },
   addEventListener(type, fn) { (documentHandlers[type] ||= []).push(fn); },
 };
-let hash = '';
+let hash = '#shared%20text';
 let hashWrites = 0;
+let replaceWrites = 0;
 const location = {
   pathname: '/', search: '',
   get hash() { return hash; },
   set hash(value) { hash = value && value[0] === '#' ? value : '#' + value; hashWrites++; },
 };
 const context = {
-  document, location, navigator: {}, history: { replaceState() {} },
+  document, location, navigator: {}, history: { replaceState(_a, _b, url) {
+    replaceWrites++;
+    hash = String(url).includes('#') ? String(url).slice(String(url).indexOf('#')) : '';
+  } },
   HUMANIZER_MARKERS: { rules: [] }, HUMANIZER_SAMPLE: '',
   TextEncoder, encodeURIComponent, decodeURIComponent, setTimeout, clearTimeout,
   console, JSON, Object, String, Array, RegExp, Error,
@@ -69,6 +73,10 @@ function click() { share.emit('click'); }
   // The page must reset it before every showModal() call.
   function escapeDialog() { dialog.emit('close'); }
 function result() {
+  const loaded = { text: text.value, hash };
+  text.value = 'edited shared text';
+  text.emit('input');
+  const edited = { text: text.value, hash, replaceWrites };
   text.value = '';
   click();
   const empty = { shown: dialog.shown, writes: hashWrites, hash };
@@ -96,8 +104,9 @@ function result() {
   const beforeMalformed = { shown: dialog.shown, writes: hashWrites, hash };
   click();
   const malformed = { shown: dialog.shown, writes: hashWrites, hash };
-  return { empty, pending, cancelled, confirmed, escaped, boundary, oversize,
-           beforeBoundary, beforeOversize, malformed, beforeMalformed };
+  return { loaded, edited, empty, pending, cancelled, confirmed, escaped,
+           boundary, oversize, beforeBoundary, beforeOversize, malformed,
+           beforeMalformed };
 }
 process.stdout.write(JSON.stringify(result()));
 """
@@ -117,6 +126,10 @@ class DemoSharingTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         data = json.loads(proc.stdout)
 
+        self.assertEqual(data["loaded"]["text"], "shared text")
+        self.assertEqual(data["edited"]["text"], "edited shared text")
+        self.assertEqual(data["edited"]["hash"], "")
+        self.assertEqual(data["edited"]["replaceWrites"], 1)
         self.assertEqual(data["empty"]["writes"], 0)
         self.assertEqual(data["empty"]["shown"], 0)
         self.assertEqual(data["pending"]["shown"], 1)
