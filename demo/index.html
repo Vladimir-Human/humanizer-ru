@@ -39,6 +39,9 @@
   .match { font-family: "Courier New", monospace; font-size:13px; color:#333; }
   .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
   button { padding:8px 14px; border:0; border-radius:6px; background:#1f6f4a; color:#fff; cursor:pointer; }
+  dialog { max-width:32rem; padding:20px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--fg); }
+  #shareDialog button { color:var(--bg); }
+  dialog::backdrop { background:rgb(0 0 0 / 45%); }
   .note { color:#666; font-size:13px; }
   summary { cursor:pointer; font-weight:bold; }
 </style>
@@ -66,6 +69,16 @@
     <span id="summary" class="note" aria-live="polite"></span>
 <span id="scanState" class="rule" role="status" aria-live="polite"></span>
   </div>
+  <dialog id="shareDialog" aria-labelledby="shareHeading" aria-describedby="shareWarning">
+    <h2 id="shareHeading">Создать ссылку с текстом?</h2>
+    <p id="shareWarning">Ссылка получит ваш текст целиком. Он останется в истории браузера
+      и может попасть в синхронизацию. Любой получатель ссылки сможет прочитать текст.
+      Не создавайте ссылку с личными или конфиденциальными сведениями.</p>
+    <form method="dialog" class="controls">
+      <button value="cancel" autofocus>Отмена</button>
+      <button value="share">Создать ссылку с текстом</button>
+    </form>
+  </dialog>
   <div class="cols">
     <section>
       <h2 id="textHeading">Текст</h2>
@@ -291,20 +304,40 @@
       st.textContent = "буфер обмена недоступен";
     }
   });
-  document.getElementById("shareBtn").addEventListener("click", () => {
+  const shareDialog = document.getElementById("shareDialog");
+  function shareableText() {
     const text = textarea.value;
+    if (!text.trim()) {
+      summary.textContent = "Сначала вставьте текст, которым хотите поделиться.";
+      return null;
+    }
     // N33: лимит считаем в байтах ПОСЛЕ кодирования, не в символах.
-    const bytes = new TextEncoder().encode(encodeURIComponent(text)).length;
+    let bytes;
+    try {
+      bytes = new TextEncoder().encode(encodeURIComponent(text)).length;
+    } catch (e) {
+      summary.textContent = "Текст содержит повреждённый символ — ссылка не создаётся.";
+      return null;
+    }
     if (bytes > 65536) {
       summary.textContent = "Текст после кодирования длиннее 64 КиБ — " +
         "ссылка не создаётся.";
-      return;
+      return null;
     }
-    // Предупреждение ДО помещения текста в URL.
-    summary.textContent = "Ссылка получит ваш текст: история браузера, " +
-      "синхронизация и пересылка ссылки раскрывают его; fragment не " +
-      "отправляется серверу, но остаётся в истории и копируется ссылкой.";
+    return text;
+  }
+  document.getElementById("shareBtn").addEventListener("click", () => {
+    if (shareableText() === null) return;
+    // Reset the previous decision: Escape after a successful share is cancellation.
+    shareDialog.returnValue = "";
+    shareDialog.showModal();
+  });
+  shareDialog.addEventListener("close", () => {
+    if (shareDialog.returnValue !== "share") return;
+    const text = shareableText();
+    if (text === null) return;
     location.hash = encodeURIComponent(text);
+    summary.textContent = "Ссылка с текстом создана. Скопируйте адрес из строки браузера.";
   });
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
