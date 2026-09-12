@@ -43,6 +43,9 @@
   #shareDialog button { color:var(--bg); }
   dialog::backdrop { background:rgb(0 0 0 / 45%); }
   .note { color:#666; font-size:13px; }
+  .next-step { padding:12px 14px; border:1px solid var(--line); border-left:5px solid #1f6f4a; border-radius:6px; background:var(--panel); }
+  .next-step h2 { margin-top:0; }
+  .next-step a { color:#1558a6; font-weight:bold; }
   summary { cursor:pointer; font-weight:bold; }
 </style>
   <meta name="twitter:image" content="https://vladimir-human.github.io/humanizer-ru/og-image.png">
@@ -93,6 +96,12 @@
     <h2>Текст с подсветкой <span class="rule">(красный — класс A, жёлтый — класс B)</span></h2>
     <pre id="preview"></pre>
   </section>
+  <aside class="next-step" aria-labelledby="nextStepHeading">
+    <h2 id="nextStepHeading">Нужно убрать найденные артефакты?</h2>
+    <p>Демо только проверяет текст. Для поддерживаемой очистки установите пакет
+      и выполните короткий путь «найти → убрать → проверить» в README.</p>
+    <a href="https://github.com/Vladimir-Human/humanizer-ru#попробовать-за-30-секунд">Открыть команду humanizer-clean</a>
+  </aside>
 </main>
 
 <script>
