@@ -64,7 +64,13 @@ CALL_TIMEOUT = 60
 # ------------------------------------------------------------- контракт
 
 def _contract_path():
-    """contract.v1.json: данные установленного пакета, иначе дерево репо."""
+    """contract.v1.json: checkout data first, installed package in sdist."""
+    # A checkout must win over an older package already installed on the host.
+    here = os.path.dirname(os.path.abspath(__file__))
+    checkout = os.path.join(os.path.dirname(os.path.dirname(here)),
+                            "contract.v1.json")
+    if os.path.isfile(checkout):
+        return checkout
     try:
         from importlib.resources import files
         p = files("humanizer_ru").joinpath("contract.v1.json")
@@ -72,9 +78,7 @@ def _contract_path():
             return str(p)
     except Exception:
         pass
-    here = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(os.path.dirname(os.path.dirname(here)),
-                        "contract.v1.json")
+    return checkout
 
 
 def load_contract(path=None):
