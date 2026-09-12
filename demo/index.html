@@ -71,6 +71,7 @@
     <button id="copyReport" type="button">Скопировать отчёт</button>
     <button id="applyCleanup" type="button" hidden>Применить безопасную очистку</button>
     <button id="undoCleanup" type="button" hidden>Отменить очистку</button>
+    <button id="copyCleaned" type="button" hidden>Скопировать очищенный текст</button>
     <span id="copyStatus" role="status" aria-live="polite"></span>
     <button id="shareBtn" type="button">Поделиться</button>
     <span id="counts" class="note"></span>
@@ -130,6 +131,8 @@ humanizer-markers --scan input.txt</code></pre>
   const runBtn = document.getElementById("run");
   const applyCleanupBtn = document.getElementById("applyCleanup");
   const undoCleanupBtn = document.getElementById("undoCleanup");
+  const copyCleanedBtn = document.getElementById("copyCleaned");
+  const copyStatus = document.getElementById("copyStatus");
   const cleanupPreview = document.getElementById("cleanupPreview");
   const cleanupSummary = document.getElementById("cleanupSummary");
   const cleanupDiff = document.getElementById("cleanupDiff");
@@ -313,6 +316,7 @@ humanizer-markers --scan input.txt</code></pre>
     undoText = textarea.value;
     textarea.value = cleaned;
     undoCleanupBtn.hidden = false;
+    copyCleanedBtn.hidden = false;
     history.replaceState(null, "", location.pathname + location.search);
     run();
     textarea.focus();
@@ -322,8 +326,18 @@ humanizer-markers --scan input.txt</code></pre>
     textarea.value = undoText;
     undoText = null;
     undoCleanupBtn.hidden = true;
+    copyCleanedBtn.hidden = true;
     run();
     textarea.focus();
+  });
+  copyCleanedBtn.addEventListener("click", () => {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+      copyStatus.textContent = "буфер обмена недоступен";
+      return;
+    }
+    navigator.clipboard.writeText(textarea.value).then(
+      () => { copyStatus.textContent = "очищенный текст скопирован"; },
+      () => { copyStatus.textContent = "не удалось скопировать"; });
   });
   document.getElementById("insertSample").addEventListener("click", () => {
     if (typeof HUMANIZER_SAMPLE === "undefined") return;
