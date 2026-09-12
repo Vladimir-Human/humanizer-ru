@@ -284,6 +284,53 @@ def _tool_argv(tool_name, arguments, text_path):
 
 MAX_TEXT_CHARS = 1000000
 
+# MCP results must not expose the host's temporary directory (which commonly
+# contains the local username).  The command line tools still receive and
+# report their real paths; only the MCP envelope is normalized.
+_MCP_INPUT_PLACEHOLDER = "<input.txt>"
+_MCP_AFTER_PLACEHOLDER = "<input.txt.after>"
+
+
+def _path_under_temp(value, temp_root):
+    """Return a stable placeholder for a generated temp path, if applicable."""
+    if not isinstance(value, str) or not temp_root:
+        return value
+    # Child processes on Windows may render backslashes while tests or a
+    # compatible host use forward slashes.  Compare a canonical slash form
+    # without changing user text in non-path fields.
+    raw = value.replace("\\", "/")
+    root = os.path.abspath(temp_root).replace("\\", "/").rstrip("/")
+    root_cmp = root.casefold()
+    raw_cmp = raw.casefold()
+    if raw_cmp == root_cmp + "/input.txt":
+        return _MCP_INPUT_PLACEHOLDER
+    if raw_cmp == root_cmp + "/input.txt.after":
+        return _MCP_AFTER_PLACEHOLDER
+    prefix = root_cmp + "/"
+    if raw_cmp.startswith(prefix):
+        # Preserve only a relative generated filename, never the host prefix.
+        suffix = raw[len(root) + 1:]
+        return "<mcp-temp>/" + suffix
+    return value
+
+
+def _sanitize_envelope(value, temp_root, key=None):
+    """Copy an MCP envelope while replacing generated path metadata only.
+
+    Text fields are deliberately left untouched: input text and marker
+    fragments are user data and must not be rewritten just because they happen
+    to contain a path-like string.  Path-bearing MCP metadata uses ``file``,
+    ``files``, ``before`` and ``after`` keys in the seven tool envelopes.
+    """
+    if isinstance(value, dict):
+        return {k: _sanitize_envelope(v, temp_root, k)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_envelope(v, temp_root, key) for v in value]
+    if isinstance(value, str) and key in {"file", "files", "before", "after"}:
+        return _path_under_temp(value, temp_root)
+    return value
+
 
 def _validate_args(tool_name, arguments, tool_defs):
     """Лишние параметры и enum — единая валидация для всех веток (L9)."""
@@ -299,7 +346,7 @@ def _validate_args(tool_name, arguments, tool_defs):
     return None
 
 
-def _result_from_proc(proc):
+def _result_from_proc(proc, temp_root=None):
     """L9-семантика результата: rc вне {0,1,2} (крах) или непарсящийся вывод
     — isError:true и БЕЗ сырого stdout/stderr: traceback может содержать
     цитаты входного текста и не должен доставляться как «успех»."""
@@ -318,6 +365,8 @@ def _result_from_proc(proc):
         envelope = parsed
     else:
         envelope = None
+    if envelope is not None:
+        envelope = _sanitize_envelope(envelope, temp_root)
     if proc.returncode not in (0, 1, 2):
         content = []
         if envelope is not None:
@@ -389,7 +438,7 @@ def call_tool(tool_name, arguments, tool_defs):
                                   stderr=subprocess.PIPE,
                                   timeout=CALL_TIMEOUT, encoding="utf-8",
                                   errors="replace")
-            result, _env = _result_from_proc(proc)
+            result, _env = _result_from_proc(proc, tmp)
             return result, None
         except UnicodeError as exc:
             return {"content": [{"type": "text",
@@ -432,7 +481,7 @@ def call_tool(tool_name, arguments, tool_defs):
                                  "text": "таймаут инструмента (%d с)"
                                          % CALL_TIMEOUT}],
                     "isError": True}, None
-        result, envelope = _result_from_proc(proc)
+        result, envelope = _result_from_proc(proc, tmp)
         if (tool_name == "humanizer_polish" and proc.returncode in (0, 1)
                 and envelope is not None):
             # Второй прогон без --json: сам нормализованный текст
