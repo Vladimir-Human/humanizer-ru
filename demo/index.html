@@ -286,7 +286,6 @@ humanizer-markers --scan input.txt</code></pre>
     textarea.value = "";
     // N33: переход к своему тексту очищает share-state в URL.
     history.replaceState(null, "", location.pathname + location.search);
-    hasShareHash = false;
     textarea.focus();
     updateCounts();
     run();
@@ -352,21 +351,18 @@ humanizer-markers --scan input.txt</code></pre>
     const text = shareableText();
     if (text === null) return;
     location.hash = encodeURIComponent(text);
-    hasShareHash = true;
     summary.textContent = "Ссылка с текстом создана. Скопируйте адрес из строки браузера.";
   });
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
   });
   let _timer;
-  let hasShareHash = location.hash.length > 1;
   textarea.addEventListener("input", () => {
     // Editing text loaded from a share link invalidates that link. Remove the
     // old fragment before the next debounce so a copied URL cannot expose the
     // previous text after the user starts replacing it.
-    if (hasShareHash) {
+    if (location.hash.length > 1) {
       history.replaceState(null, "", location.pathname + location.search);
-      hasShareHash = false;
     }
     clearTimeout(_timer);
     updateCounts();

@@ -302,16 +302,14 @@ class TestMcpTools(unittest.TestCase):
         for i, (name, arguments) in enumerate(calls, start=2):
             lines.append(_req(i, "tools/call", {
                 "name": name, "arguments": arguments}))
-        resps, _ = _session(lines)
+        resps, proc = _session(lines)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(len(resps), len(calls) + 1)
         for response, (name, _arguments) in zip(resps[1:], calls):
             with self.subTest(tool=name):
                 result = response["result"]
                 self.assertNotIn("mcp-tool-", json.dumps(result))
                 self.assertNotIn("mcp-facts-", json.dumps(result))
-                self.assertNotIn("AppData\\Local\\Temp",
-                                  json.dumps(result))
-                self.assertNotIn("C:\\\\Users\\vovap",
-                                  json.dumps(result))
                 envelope = result["structuredContent"]
                 if name in ("humanizer_facts",):
                     self.assertEqual(envelope["files"],

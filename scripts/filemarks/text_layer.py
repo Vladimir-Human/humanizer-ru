@@ -29,30 +29,32 @@ def _assert_safe_destination(path):
 
 
 def _safe_write_text(path, text):
-    """Write UTF-8 text through a private, atomic, symlink-safe temp file."""
+    """Write atomically; preserve existing permissions and reject symlinks.
+
+    Parent checks are best-effort, not protection against a concurrent rename
+    of a parent directory. New backup files keep mkstemp's private mode.
+    """
     dest = Path(path)
     _assert_safe_destination(dest)
     parent = dest.parent
+    mode = (dest.stat().st_mode & 0o777) if dest.exists() else 0o600
     fd, tmp_name = tempfile.mkstemp(
         prefix="." + dest.name + ".", suffix=".tmp", dir=str(parent))
     try:
-        mask = os.umask(0)
-        os.umask(mask)
-        mode = 0o666 & ~mask
-        try:
-            os.fchmod(fd, mode)
-        except AttributeError:  # pragma: no cover - Windows
-            os.chmod(tmp_name, mode)
         with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            fd = None  # The stream now owns the descriptor, including on error.
             fh.write(text)
             fh.flush()
             os.fsync(fh.fileno())
+            if os.name != "nt":
+                os.fchmod(fh.fileno(), mode)
         os.replace(tmp_name, dest)
     except BaseException:
-        try:
-            os.close(fd)
-        except OSError:
-            pass
+        if fd is not None:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
         try:
             os.unlink(tmp_name)
         except OSError:
