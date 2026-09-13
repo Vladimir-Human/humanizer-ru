@@ -43,15 +43,20 @@ jobs:
 
       - name: Релизный тег из checkout
         id: tag
+        env:
+          RELEASE_REF: ${{ inputs.tag || github.ref_name }}
         run: |
-          T="${{ inputs.tag || github.ref_name }}"
-          [[ "$T" == v* ]] || { echo "FAIL: нужен тег vX.Y.Z, получено $T"; exit 1; }
-          echo "value=$T" >> "$GITHUB_OUTPUT"
-          echo "проверяемый тег: $T"
+          if [[ ! "$RELEASE_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "FAIL: нужен тег vX.Y.Z, получено $RELEASE_REF"
+            exit 1
+          fi
+          echo "value=$RELEASE_REF" >> "$GITHUB_OUTPUT"
+          echo "проверяемый тег: $RELEASE_REF"
 
       - name: Тег annotated (не lightweight)
+        env:
+          TAGREF: ${{ steps.tag.outputs.value }}
         run: |
-          TAGREF="${{ steps.tag.outputs.value }}"
           TYPE=$(git cat-file -t "$TAGREF" 2>/dev/null || echo "")
           if [ "$TYPE" != "tag" ]; then
             echo "FAIL: тег $TAGREF не annotated ($TYPE)"
@@ -60,16 +65,18 @@ jobs:
           echo "OK: annotated tag $TAGREF"
 
       - name: Версия тега == version в SKILL.md metadata
+        env:
+          TAGREF: ${{ steps.tag.outputs.value }}
         run: |
-          TAGREF="${{ steps.tag.outputs.value }}"
           TAG="${TAGREF#v}"
           META=$(grep -oP 'version:\s*"?\K\d+\.\d+\.\d+' SKILL.md | head -1)
           echo "tag=$TAG meta=$META"
           [ "$TAG" = "$META" ] || { echo "FAIL: тег $TAG != metadata $META"; exit 1; }
 
       - name: CHANGELOG содержит запись для версии
+        env:
+          TAGREF: ${{ steps.tag.outputs.value }}
         run: |
-          TAGREF="${{ steps.tag.outputs.value }}"
           TAG="${TAGREF#v}"
           grep -qE "^##\s+${TAG}\b" CHANGELOG.md || {
             echo "FAIL: в CHANGELOG.md нет записи ## ${TAG}"

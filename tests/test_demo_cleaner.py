@@ -146,6 +146,25 @@ class DemoCleanerTests(unittest.TestCase):
              "https://example.org/turn0search0?q=oaicite:3#turn1search1"),
         ])
 
+    def test_source_chains_in_url_paths_are_opaque(self):
+        # ``+N`` chains are removable citation glue in prose, but may be
+        # ordinary path characters in a URL.  The destination must survive
+        # byte-for-byte while the same syntax outside the URL is cleaned.
+        self.assert_examples([
+            ("Reuters+3BBC+2; см. https://example.org/Reuters+3BBC+2",
+             "ReutersBBC; см. https://example.org/Reuters+3BBC+2"),
+            ("https://example.org/Reuters+3BBC+2?utm_source=openai&x=1",
+             "https://example.org/Reuters+3BBC+2?x=1"),
+            ("https://x.test/Foo_(bar)/turn0search0",
+             "https://x.test/Foo_(bar)/turn0search0"),
+            ("https://[::1]/Foo+3Bar+2",
+             "https://[::1]/Foo+3Bar+2"),
+            ("https://x.test/?utm_source=openai&amp;x=2",
+             "https://x.test/?x=2"),
+            ("https://x.test/?id=1&amp;utm_source=openai&amp;x=2",
+             "https://x.test/?id=1&amp;x=2"),
+        ])
+
     def test_code_runs_closed_fences_and_frontmatter(self):
         self.assert_examples([
             ("`turn0search0` and turn1search1", "`turn0search0` and "),

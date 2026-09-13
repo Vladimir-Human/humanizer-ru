@@ -27,7 +27,9 @@
     }
     return {rx: compile(rule), urls: rule.protect_urls};
   });
-  const utm = rules.utm.map(compile);
+  const utm = rules.utm.map(rule => compile({
+    ...rule, source: rule.source.replace("[?&]", "(?:[?&]|&amp;)")
+  }));
   const url = compile(rules.url);
   const tagOpen = compile(rules.tag_open);
   const fenceOpen = compile(rules.fence_open);
@@ -112,7 +114,25 @@
   }
 
   function urlSpans(text) {
-    return matches(url, text).map(m => [m.index, m.index + m[0].length]);
+    // Keep balanced path parentheses and IPv6 brackets inside the URL while
+    // treating an unmatched closing delimiter as markdown punctuation.
+    const starts = /(?:https?:\/\/|www\.)/gu;
+    const spans = [];
+    for (const match of text.matchAll(starts)) {
+      let i = match.index + match[0].length;
+      let parens = 0, brackets = 0;
+      for (; i < text.length; i++) {
+        const ch = text[i];
+        if (/\s/u.test(ch) || /[\u001c-\u001f\u0085]/u.test(ch) ||
+            '<>\"\'«»'.includes(ch)) break;
+        if (ch === '(') parens++;
+        else if (ch === ')') { if (parens) parens--; else break; }
+        else if (ch === '[') brackets++;
+        else if (ch === ']') { if (brackets) brackets--; else break; }
+      }
+      spans.push([match.index, i]);
+    }
+    return spans;
   }
   function mergeSpans(spans) {
     const merged = [];
@@ -231,7 +251,9 @@
       if (!match) break;
       const start = match.index, end = start + match[0].length;
       count++;
-      if (text[start] === "?" && text[end] === "&") {
+      if (text[start] === "?" && text.slice(end, end + 5) === "&amp;") {
+        text = text.slice(0, start) + "?" + text.slice(end + 5);
+      } else if (text[start] === "?" && text[end] === "&") {
         text = text.slice(0, start) + "?" + text.slice(end + 1);
       } else text = text.slice(0, start) + text.slice(end);
     }
@@ -244,10 +266,21 @@
       text = result[0]; count += result[1];
     }
     apply(segment => substitute(segment, think), false, true);
-    apply(stripChain, false, true);
+    // Citation chains can be part of a URL path (for example,
+    // ``Reuters+3BBC+2``). Keep URL spans opaque so cleanup cannot change the
+    // destination. Tracking parameters are handled separately below.
+    apply(stripChain, true, true);
     for (const rule of markup) apply(segment => substitute(segment, rule.rx), rule.urls);
     for (const rx of utm) apply(segment => stripUtm(segment, rx));
     return [text, count];
+  }
+
+  function cleanAllowedUrl(text) {
+    // The only supported URL mutation is removal of registered tracking
+    // parameters. Everything else must remain byte-for-byte identical.
+    let value = text;
+    for (const rx of utm) value = stripUtm(value, rx)[0];
+    return value;
   }
   function cleanSupported(text) {
     let invisible = 0, visible = 0;
@@ -288,7 +321,18 @@
     for (const kind of Array.from(byKind.keys()).sort()) {
       const fragments = byKind.get(kind);
       if (kind === "url") {
-        report.push({kind, regions: fragments.length, note: "UTM/referrer parameters may be removed."});
+        const expected = fragments.map(cleanAllowedUrl);
+        const actual = urlSpans(after).map(([start, end]) => after.slice(start, end));
+        const missing = expected.length !== actual.length ||
+          expected.some((fragment, index) => fragment !== actual[index])
+          ? fragments : [];
+        report.push({kind, regions: fragments.length,
+          unchanged: missing.length === 0,
+          note: "UTM/referrer parameters may be removed."});
+        for (const fragment of missing) {
+          invariants.push("Protected url region changed or removed: "
+            + JSON.stringify(Array.from(fragment).slice(0, 120).join("")));
+        }
         continue;
       }
       const missing = Array.from(new Set(fragments)).filter(fragment => !after.includes(fragment));

@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -77,7 +78,7 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 def _safe_rel(path: str) -> PurePosixPath:
-    if "\\" in path:
+    if "\\" in path or "\x00" in path or re.match(r"^[A-Za-z]:", path):
         raise ReleaseError(f"обратный слеш в пути архива: {path!r}")
     p = PurePosixPath(path)
     if p.is_absolute() or not p.parts or any(part in {"", ".", ".."} for part in p.parts):
@@ -869,6 +870,59 @@ def _sdist_resolve(root: Path, arg: str) -> Path:
     return cands[-1]
 
 
+def _safe_extract_tar(tf, destination: Path) -> None:
+    """Extract a source archive without trusting member paths or links.
+
+    ``TarFile.extractall(filter="data")`` is only available on Python 3.12+
+    while this project supports Python 3.9+.  Keep equivalent fail-closed
+    behaviour on older interpreters: reject traversal, absolute paths,
+    duplicate members, links and special files before writing anything.
+    """
+    destination = destination.resolve()
+    seen = set()
+    members = tf.getmembers()
+    for member in members:
+        name = member.name
+        if not isinstance(name, str) or not name:
+            raise ReleaseError(f"небезопасный путь sdist: {name!r}")
+        try:
+            rel = _safe_rel(name)
+        except ReleaseError as exc:
+            raise ReleaseError(f"небезопасный путь sdist: {name!r}") from exc
+        key = rel.as_posix()
+        if key in seen:
+            raise ReleaseError(f"дублированный путь sdist: {name!r}")
+        seen.add(key)
+        target = (destination / Path(*rel.parts)).resolve()
+        try:
+            target.relative_to(destination)
+        except ValueError as exc:  # defence in depth for platform path rules
+            raise ReleaseError(f"путь sdist выходит из временного каталога: {name!r}") from exc
+        if member.issym() or member.islnk():
+            raise ReleaseError(f"ссылки в sdist запрещены: {name!r}")
+        if member.isdev() or member.isfifo() or member.ischr() or member.isblk():
+            raise ReleaseError(f"специальный файл в sdist запрещён: {name!r}")
+        if not (member.isdir() or member.isfile()):
+            raise ReleaseError(f"неподдерживаемый тип файла в sdist: {name!r}")
+
+    destination.mkdir(parents=True, exist_ok=True)
+    for member in members:
+        rel = PurePosixPath(member.name)
+        target = destination.joinpath(*rel.parts)
+        if member.isdir():
+            target.mkdir(parents=True, exist_ok=True)
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source = tf.extractfile(member)
+        if source is None:  # regular files must have readable payloads
+            raise ReleaseError(f"файл sdist без содержимого: {member.name!r}")
+        with source, target.open("xb") as output:
+            shutil.copyfileobj(source, output)
+        mode = member.mode & 0o777
+        if mode:
+            target.chmod(mode)
+
+
 def sdist_test(root: Path, arg: str) -> int:
     """sdist -> чистое venv -> тесты + CLI-зонды (housekeeping-патч).
 
@@ -891,10 +945,7 @@ def sdist_test(root: Path, arg: str) -> int:
     tmp = Path(tempfile.mkdtemp(prefix="sdist-test-"))
     try:
         with tarfile.open(sdist, "r:gz") as tf:
-            try:
-                tf.extractall(tmp, filter="data")
-            except TypeError:      # Python < 3.12: аргумента filter нет
-                tf.extractall(tmp)
+            _safe_extract_tar(tf, tmp)
         pkgs = [d for d in tmp.iterdir() if d.is_dir() and (d / "tests").is_dir()]
         if not pkgs:
             print("SDIST-TEST: в sdist нет tests/ — MANIFEST.in не сработал",
@@ -1031,6 +1082,10 @@ def sdist_test(root: Path, arg: str) -> int:
                   file=sys.stderr)
             return 2
         return 0
+    except ReleaseError as exc:
+        print(f"SDIST-TEST: архив не прошёл безопасную распаковку: {exc}",
+              file=sys.stderr)
+        return 1
     except (OSError, tarfile.TarError, subprocess.TimeoutExpired) as exc:
         print(f"SDIST-TEST: отказ среды: {exc!r}", file=sys.stderr)
         return 2

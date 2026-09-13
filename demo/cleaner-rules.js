@@ -170,19 +170,19 @@ const HUMANIZER_CLEANER_RULES = {
   ],
   "utm": [
     {
-      "source": "[?&]utm_source=chatgpt\\.com(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
+      "source": "(?:[?&]|&amp;)utm_source=chatgpt\\.com(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
       "flags": "gu"
     },
     {
-      "source": "[?&]utm_source=openai(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
+      "source": "(?:[?&]|&amp;)utm_source=openai(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
       "flags": "gu"
     },
     {
-      "source": "[?&]utm_source=copilot\\.com(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
+      "source": "(?:[?&]|&amp;)utm_source=copilot\\.com(?![A-Za-z0-9_.-])[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
       "flags": "gu"
     },
     {
-      "source": "[?&]referrer=grok\\.com[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
+      "source": "(?:[?&]|&amp;)referrer=grok\\.com[^\\t\\n\\v\\f\\r\\u001c-\\u001f\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000&#)`<>\"'«»]*",
       "flags": "gu"
     }
   ],

@@ -223,6 +223,25 @@ def _markers_remove(parsed) -> int:
 
     from . import text_layer
 
+    def _write_in_place(path, before, after):
+        """Записать резервную копию и очищенный текст.
+
+        Возвращает исключение записи вместо того, чтобы оставлять JSON-режим
+        без конверта из-за неожиданного traceback.  Порядок записей сохраняет
+        исходный файл до замены его очищенной версией.
+        """
+        try:
+            # Use the text-layer writer used by humanizer-clean: it rejects
+            # symlink destinations, fsyncs and replaces private temp files,
+            # while retaining the public .bak contract.
+            text_layer._assert_safe_destination(path)
+            text_layer._assert_safe_destination(path + ".bak")
+            text_layer._safe_write_text(path + ".bak", before)
+            text_layer._safe_write_text(path, after)
+        except (OSError, ValueError) as exc:
+            return exc
+        return None
+
     if not parsed.files:
         print("нет файлов для --remove; «-» читает stdin", file=sys.stderr)
         if parsed.json:
@@ -268,6 +287,15 @@ def _markers_remove(parsed) -> int:
             "changed": after != before,
         }
         if parsed.json:
+            # JSON — это только формат отчёта, а не режим dry-run.  Раньше
+            # ранний continue здесь пропускал --in-place: в конверте было
+            # changed=true, но исходный файл и .bak не появлялись.
+            if (parsed.in_place and not parsed.dry_run and path != "-"
+                    and entry["changed"]):
+                write_error = _write_in_place(path, before, after)
+                if write_error is not None:
+                    entry["error"] = "не удалось записать: %s" % write_error
+                    rc = 2
             report_files.append(entry)
             continue
         if parsed.diff:
@@ -291,11 +319,13 @@ def _markers_remove(parsed) -> int:
             continue
         if parsed.in_place and path != "-":
             if entry["changed"]:
-                with open(path + ".bak", "w", encoding="utf-8",
-                          newline="") as fh:
-                    fh.write(before)
-                with open(path, "w", encoding="utf-8", newline="") as fh:
-                    fh.write(after)
+                write_error = _write_in_place(path, before, after)
+                if write_error is not None:
+                    print("НЕ ЗАПИСАНО %s: %s (исходный файл не изменён)"
+                          % (label, write_error),
+                          file=sys.stderr)
+                    rc = 2
+                    continue
             print(("ЗАПИСАНО " if entry["changed"] else "БЕЗ ИЗМЕНЕНИЙ ")
                   + label)
             continue

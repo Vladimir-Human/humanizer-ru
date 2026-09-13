@@ -52,9 +52,12 @@ import subprocess
 import sys
 import tempfile
 
+if hasattr(sys.stdin, "reconfigure"):
+    sys.stdin.reconfigure(encoding="utf-8", errors="strict")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
-    sys.stderr.reconfigure(errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"]
 LATEST_PROTOCOL = PROTOCOL_VERSIONS[0]
@@ -333,13 +336,42 @@ def _sanitize_envelope(value, temp_root, key=None):
 
 
 def _validate_args(tool_name, arguments, tool_defs):
-    """Лишние параметры и enum — единая валидация для всех веток (L9)."""
+    """Проверить объект arguments по сгенерированной JSON-схеме (L9).
+
+    Валидация выполняется до записи файлов и построения argv.  JSON Schema
+    ``type`` проверяется явно: например, строка ``"false"`` не является
+    допустимым boolean для ``no_additions``.
+    """
+    if not isinstance(arguments, dict):
+        return (-32602, "arguments обязан быть объектом")
     schema = next(d for d in tool_defs if d["name"] == tool_name)["inputSchema"]
     props = schema["properties"]
+    for key in schema.get("required", []):
+        if key not in arguments:
+            return (-32602, "обязательный параметр отсутствует: %s" % key)
     for key, value in arguments.items():
         if key not in props:
             return (-32602, "лишний параметр: %s" % key)
         spec = props[key]
+        expected = spec.get("type")
+        if expected == "string":
+            valid_type = isinstance(value, str)
+        elif expected == "boolean":
+            valid_type = isinstance(value, bool)
+        elif expected == "number":
+            valid_type = isinstance(value, (int, float)) and not isinstance(value, bool)
+        elif expected == "integer":
+            valid_type = isinstance(value, int) and not isinstance(value, bool)
+        elif expected == "null":
+            valid_type = value is None
+        elif expected == "array":
+            valid_type = isinstance(value, list)
+        elif expected == "object":
+            valid_type = isinstance(value, dict)
+        else:
+            valid_type = True
+        if not valid_type:
+            return (-32602, "%s: ожидался тип %s" % (key, expected))
         if "enum" in spec and value not in spec["enum"]:
             return (-32602, "%s: значение %r вне enum %r"
                     % (key, value, spec["enum"]))
@@ -564,7 +596,12 @@ def handle_message(raw_line, state, tool_defs):
 def _dispatch(msg, state, tool_defs):
     method = msg["method"]
     id_ = msg.get("id")
-    params = msg.get("params") or {}
+    if "params" in msg:
+        params = msg["params"]
+        if not isinstance(params, dict):
+            return _err(id_, -32602, "invalid params: params обязан быть объектом")
+    else:
+        params = {}
     is_notification = "id" not in msg
 
     if method == "initialize":
@@ -612,9 +649,13 @@ def _dispatch(msg, state, tool_defs):
         if not isinstance(params["name"], str):
             return _err(id_, -32602,
                         "tools/call: params.name обязан быть строкой")
-        arguments = params.get("arguments") or {}
-        if not isinstance(arguments, dict):
-            return _err(id_, -32602, "tools/call: arguments обязан быть объектом")
+        if "arguments" in params:
+            arguments = params["arguments"]
+            if not isinstance(arguments, dict):
+                return _err(id_, -32602,
+                            "tools/call: arguments обязан быть объектом")
+        else:
+            arguments = {}
         result, rpc_err = call_tool(params["name"], arguments, tool_defs)
         if rpc_err is not None:
             return _err(id_, rpc_err[0], rpc_err[1])

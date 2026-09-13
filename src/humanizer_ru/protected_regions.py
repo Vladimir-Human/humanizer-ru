@@ -40,7 +40,10 @@ EMOJI_CONTEXT = "\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\U0001F1E6-\U0001F1FF"
 _EMOJI_CH_RX = re.compile("[" + EMOJI_CONTEXT + "]")
 
 # URL-спан: то же выражение, что URL_MASK_RX детектора.
+# Kept for the generated metadata; url_spans below applies balanced-delimiter
+# semantics that a single regular expression cannot express safely.
 URL_RX = re.compile(r"(?:https?://|www\.)[^\s<>«»\"')\]]+")
+_URL_START_RX = re.compile(r"(?:https?://|www\.)")
 
 # HTML-тег: открывающий/закрывающий/комментарий/doctype. Выражение —
 # ориентир для документации; фактические границы считает сканер
@@ -216,8 +219,37 @@ def frontmatter_line_indices(lines: list) -> set:
 
 
 def url_spans(text: str) -> list:
-    """Интервалы (start, end) URL в тексте (работает и для одной строки)."""
-    return [(m.start(), m.end()) for m in URL_RX.finditer(text)]
+    """Интервалы URL, сохраняя балансируемые скобки и IPv6-хосты.
+
+    Закрывающие ``)``/``]`` завершают URL только если не закрывают открытый
+    фрагмент адреса. Это сохраняет markdown-обёртку, но не обрывает валидные
+    пути вроде ``/Foo_(bar)`` или хосты ``https://[::1]/``.
+    """
+    spans = []
+    for match in _URL_START_RX.finditer(text):
+        i = match.end()
+        parens = brackets = 0
+        while i < len(text):
+            ch = text[i]
+            if ch.isspace() or ch in '<>\"\'«»':
+                break
+            if ch == '(':
+                parens += 1
+            elif ch == ')':
+                if parens:
+                    parens -= 1
+                else:
+                    break
+            elif ch == '[':
+                brackets += 1
+            elif ch == ']':
+                if brackets:
+                    brackets -= 1
+                else:
+                    break
+            i += 1
+        spans.append((match.start(), i))
+    return spans
 
 
 def merge_spans(spans: list) -> list:
