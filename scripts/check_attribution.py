@@ -198,7 +198,7 @@ def selftest() -> int:
     line = governance_line()
     m = SLICE_RX.search(line) if line else None
     case("генерируемая строка среза соответствует формату GOVERNANCE",
-         bool(m))
+         bool(m) or not history_available())
     case("строка GOVERNANCE на месте и не расходится с пересчётом",
          governance_errors() == [])
     print("САМОПРОВЕРКА check_attribution: %d/%d PASS"
