@@ -183,21 +183,44 @@ def build_js(doc):
             + '}' + NL)
 
 
-def build_sw(js_text, index_text="", engine_text="", sample_text=""):
-    """Кэш service worker версионируется хэшем ВСЕХ исполняемых ресурсов:
-    правила, движок, образец и страница (инлайн-скрипты). Изменение любого
-    из них — например engine.js без правки правил — инвалидирует кэш:
-    клиент со старым кешем не остаётся на прежнем исполняемом коде."""
+_STATIC_ASSETS = (
+    "./", "./index.html", "./brand.css", "./markers.js",
+    "./engine.js", "./sample.js", "./favicon.svg", "./manifest.json",
+    "./cleaner-rules.js", "./cleaner.js",
+)
+
+
+def build_sw(js_text, index_text="", engine_text="", sample_text="",
+             brand_text="", favicon_text="", manifest_text="",
+             cleaner_rules_text="", cleaner_text=""):
+    """Build a service worker whose cache key covers every precached asset.
+
+    The first four parameters are retained for callers that used the original
+    generator.  Assets added to ``STATIC`` must also be represented in the
+    content map below; otherwise a changed file could remain in an old cache.
+    Including the path in the digest prevents concatenation collisions.
+    """
     import hashlib
-    digest = hashlib.sha256(
-        (js_text + engine_text + sample_text + index_text).encode("utf-8")
-    ).hexdigest()[:12]
+    contents = {
+        "./": index_text,
+        "./index.html": index_text,
+        "./brand.css": brand_text,
+        "./markers.js": js_text,
+        "./engine.js": engine_text,
+        "./sample.js": sample_text,
+        "./favicon.svg": favicon_text,
+        "./manifest.json": manifest_text,
+        "./cleaner-rules.js": cleaner_rules_text,
+        "./cleaner.js": cleaner_text,
+    }
+    payload = "".join(name + "\0" + contents[name] + "\0"
+                       for name in _STATIC_ASSETS)
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
     return (
         "/* Автогенерация generate_js_rules.py: кэш версионируется хэшем "
-        "правил, движка, образца и страницы. */\n"
+        "каждого precache-ресурса. */\n"
         "const CACHE = \"humanizer-ru-" + digest + "\";\n"
-        "const STATIC = [\"./\", \"./index.html\", \"./brand.css\", \"./markers.js\",\n"
-        "  \"./engine.js\", \"./sample.js\", \"./favicon.svg\", \"./manifest.json\"];\n"
+        "const STATIC = " + json.dumps(_STATIC_ASSETS) + ";\n"
         "self.addEventListener(\"install\", (e) => {\n"
         "  self.skipWaiting();\n"
         "  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(STATIC)));\n"
@@ -239,9 +262,21 @@ def main():
     if os.path.isfile(sample_path):
         with open(sample_path, encoding="utf-8") as fh:
             sample_text = fh.read()
+
+    def read_asset(name):
+        path = os.path.join(HERE, name)
+        if not os.path.isfile(path):
+            return ""
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
+
     with open(os.path.join(HERE, "sw.js"), "w", encoding="utf-8",
               newline="\n") as fh:
-        fh.write(build_sw(out, index_text, engine_text, sample_text))
+        fh.write(build_sw(
+            out, index_text, engine_text, sample_text,
+            read_asset("brand.css"), read_asset("favicon.svg"),
+            read_asset("manifest.json"), read_asset("cleaner-rules.js"),
+            read_asset("cleaner.js")))
     print("Записан %s: правил %d" % (OUT, doc["count"]))
 
 

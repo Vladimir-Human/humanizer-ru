@@ -100,6 +100,39 @@ async () => {
   const rep = captured[captured.length - 1] || '';
   out.copy_consistent = rep.includes('Найдено 1 след')
     && rep.includes('Reference[oaicite:') && !rep.includes('0 следов');
+
+  const apply = document.getElementById('applyCleanup');
+  const undo = document.getElementById('undoCleanup');
+  const copy = document.getElementById('copyCleaned');
+  const original = 'Проверка ' + MARK + ' завершена.';
+  await type(original);
+  out.cleanup_preview_available = !apply.hidden;
+  apply.click();
+  const cleaned = ta.value;
+  copy.click();
+  await wait(0);
+  out.cleanup_apply_and_copy = cleaned !== original && !cleaned.includes(MARK)
+    && !undo.hidden && captured[captured.length - 1] === cleaned;
+  undo.click();
+  out.cleanup_undo_restores = ta.value === original && undo.hidden && copy.hidden;
+  apply.click();
+  ta.value = 'Новая ручная правка ' + MARK;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  undo.click();
+  apply.click();
+  out.cleanup_edit_invalidates = ta.value === 'Новая ручная правка ' + MARK
+    && undo.hidden && copy.hidden && apply.hidden;
+  await wait(400);
+  apply.click();
+  document.getElementById('ownText').click();
+  undo.click();
+  out.cleanup_clear_invalidates = ta.value === '' && undo.hidden && copy.hidden;
+  await type(original);
+  apply.click();
+  document.getElementById('insertSample').click();
+  const sample = ta.value;
+  undo.click();
+  out.cleanup_sample_invalidates = ta.value === sample && undo.hidden && copy.hidden;
   return out;
 }
 """
@@ -128,7 +161,11 @@ async () => {
   await new Promise(r => setTimeout(r, 400));
   const found = Array.from(document.getElementById('preview')
     .querySelectorAll('mark')).some(m => m.textContent === MARK);
-  return { offline_works: found };
+  const apply = document.getElementById('applyCleanup');
+  const canClean = !apply.hidden;
+  apply.click();
+  return { offline_works: found,
+    offline_cleanup_works: canClean && !ta.value.includes(MARK) };
 }
 """
 
@@ -153,7 +190,20 @@ def main(argv=None):
         page.set_viewport_size({"width": 375, "height": 667})
         page.wait_for_timeout(200)
         result.update(page.evaluate(MOBILE_JS))
+        page.evaluate("async () => { await navigator.serviceWorker.ready; }")
+        page.wait_for_function("navigator.serviceWorker.controller !== null")
+        result["offline_cleaner_precached"] = page.evaluate("""async () => {
+          for (const key of await caches.keys()) {
+            if (!key.startsWith('humanizer-ru-')) continue;
+            const cache = await caches.open(key);
+            if (await cache.match(new URL('cleaner.js', location.href).href)
+                && await cache.match(new URL('cleaner-rules.js', location.href).href))
+              return true;
+          }
+          return false;
+        }""")
         page.context.set_offline(True)
+        page.reload()
         result.update(page.evaluate(OFFLINE_JS))
         browser.close()
     fails = [k for k, v in sorted(result.items()) if v is not True]

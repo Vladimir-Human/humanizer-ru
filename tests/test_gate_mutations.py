@@ -11,10 +11,16 @@
 | гомоглифная таблица только латиница->кириллица | оператор мутации меняет вход | _mut != CLEAN, selftest ловит | test_homoglyph_* |
 | [\p{M}] в классе переноса \w | паритет Python/JS по фактической семантике | py_to_js не содержит \p{M} | test_word_class_without_M |
 """
+import contextlib
+import io
+import json
 import os
+from pathlib import Path
 import random
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_ONLY = os.path.isdir(os.path.join(ROOT, "scripts"))
@@ -131,6 +137,56 @@ class GeneratorClassTests(unittest.TestCase):
         self.assertIn("u", flags)
         src2, _flags2 = G.py_to_js("\\w \\W")
         self.assertNotIn("\\p{M}", src2)
+
+    def test_service_worker_precaches_cleaner_assets(self):
+        sw = G.build_sw("markers", "index", "engine", "sample",
+                        "css", "favicon", "manifest", "rules", "cleaner")
+        static = json.loads(sw.split("const STATIC = ", 1)[1].split(";", 1)[0])
+        self.assertEqual(set(static), {
+            "./", "./index.html", "./brand.css", "./markers.js",
+            "./engine.js", "./sample.js", "./favicon.svg", "./manifest.json",
+            "./cleaner-rules.js", "./cleaner.js",
+        })
+        self.assertEqual(len(static), len(set(static)))
+
+    def test_service_worker_digest_covers_every_precached_asset(self):
+        values = ["markers", "index", "engine", "sample", "css", "favicon",
+                  "manifest", "rules", "cleaner"]
+        baseline = G.build_sw(*values)
+        for i, value in enumerate(values):
+            changed = list(values)
+            changed[i] = value + " changed"
+            mutated = G.build_sw(*changed)
+            self.assertNotEqual(baseline.split("\n", 3)[1],
+                                mutated.split("\n", 3)[1],
+                                "service-worker cache digest ignores asset %d" % i)
+
+    def test_service_worker_generation_hashes_disk_assets(self):
+        # Isolated output proves main() passes the disk contents to build_sw;
+        # mutating only build_sw's argument test would miss a forgotten read.
+        assets = ("index.html", "engine.js", "sample.js", "brand.css",
+                  "favicon.svg", "manifest.json", "cleaner-rules.js",
+                  "cleaner.js")
+        with tempfile.TemporaryDirectory(prefix="demo-sw-") as directory:
+            root = Path(directory)
+            for name in assets:
+                (root / name).write_bytes(name.encode("utf-8"))
+            registry = root / "markers.v1.json"
+            registry.write_bytes(b'{"count": 0}')
+            with mock.patch.multiple(G, HERE=directory, IN=str(registry),
+                                     OUT=str(root / "markers.js")), \
+                    mock.patch.object(G, "build_js", return_value="markers"), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                G.main()
+                baseline = (root / "sw.js").read_text(encoding="utf-8")
+                for name in assets:
+                    with self.subTest(asset=name):
+                        (root / name).write_bytes((name + " changed").encode("utf-8"))
+                        G.main()
+                        mutated = (root / "sw.js").read_text(encoding="utf-8")
+                        self.assertNotEqual(baseline.splitlines()[1],
+                                            mutated.splitlines()[1])
+                        (root / name).write_bytes(name.encode("utf-8"))
 
 
 if __name__ == "__main__":
