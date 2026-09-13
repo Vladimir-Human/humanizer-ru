@@ -64,7 +64,7 @@ rc=1 означает «найдены маркеры» — это ожидае�
   "mcpServers": {
     "humanizer-ru": {
       "command": "uvx",
-      "args": ["--from", "humanizer-ru==3.36.1", "humanizer-mcp"]
+      "args": ["--from", "humanizer-ru==3.36.2", "humanizer-mcp"]
     }
   }
 }
