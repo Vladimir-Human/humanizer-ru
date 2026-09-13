@@ -1,5 +1,5 @@
 /* Автогенерация generate_js_rules.py: кэш версионируется хэшем каждого precache-ресурса. */
-const CACHE = "humanizer-ru-df319ad07c40";
+const CACHE = "humanizer-ru-f0b91bc7f3df";
 const STATIC = ["./", "./index.html", "./brand.css", "./markers.js", "./engine.js", "./sample.js", "./favicon.svg", "./manifest.json", "./cleaner-rules.js", "./cleaner.js"];
 self.addEventListener("install", (e) => {
   self.skipWaiting();

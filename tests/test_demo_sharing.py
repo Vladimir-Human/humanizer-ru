@@ -27,7 +27,7 @@ const elements = new Map();
 function element(id) {
   const handlers = Object.create(null);
   const e = {
-    id, value: '', checked: id === 'showAll', innerHTML: '', textContent: '',
+    id, value: '', checked: id === 'showAll', innerHTML: '', textContent: '', dataset: {},
     returnValue: '', focused: false, shown: 0,
     addEventListener(type, fn) { (handlers[type] ||= []).push(fn); },
     emit(type, event = {}) { for (const fn of (handlers[type] || [])) fn(event); },

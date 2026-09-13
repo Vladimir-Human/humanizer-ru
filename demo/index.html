@@ -144,7 +144,6 @@ humanizer-markers --scan input.txt</code></pre>
   let undoText = null;
 
   function clearCleanupCandidate() {
-    if (!applyCleanupBtn || !applyCleanupBtn.dataset || !cleanupPreview || !cleanupSummary || !cleanupDiff) return;
     delete applyCleanupBtn.dataset.cleaned;
     delete applyCleanupBtn.dataset.source;
     applyCleanupBtn.hidden = true;
@@ -156,13 +155,12 @@ humanizer-markers --scan input.txt</code></pre>
   function invalidateManualCleanup() {
     clearCleanupCandidate();
     undoText = null;
-    if (undoCleanupBtn) undoCleanupBtn.hidden = true;
-    if (copyCleanedBtn) copyCleanedBtn.hidden = true;
-    if (copyStatus) copyStatus.textContent = "";
+    undoCleanupBtn.hidden = true;
+    copyCleanedBtn.hidden = true;
+    copyStatus.textContent = "";
   }
 
   function renderCleanup(text) {
-    if (!applyCleanupBtn || !applyCleanupBtn.dataset || !cleanupPreview || !cleanupSummary || !cleanupDiff) return;
     clearCleanupCandidate();
     if (typeof HumanizerCleaner === "undefined" || !text.trim()) {
       return;
@@ -341,7 +339,6 @@ humanizer-markers --scan input.txt</code></pre>
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);
   runBtn.addEventListener("click", run);
-  if (applyCleanupBtn && undoCleanupBtn && copyCleanedBtn) {
   applyCleanupBtn.addEventListener("click", () => {
     const cleaned = applyCleanupBtn.dataset.cleaned;
     if (typeof cleaned !== "string" ||
@@ -375,7 +372,6 @@ humanizer-markers --scan input.txt</code></pre>
       () => { copyStatus.textContent = "очищенный текст скопирован"; },
       () => { copyStatus.textContent = "не удалось скопировать"; });
   });
-  }
   document.getElementById("insertSample").addEventListener("click", () => {
     if (typeof HUMANIZER_SAMPLE === "undefined") return;
     invalidateManualCleanup();
@@ -514,7 +510,7 @@ humanizer-markers --scan input.txt</code></pre>
 </details>
 <footer style="border-top:1px solid var(--line);background:#fff;padding:10px 20px;color:#666;font-size:13px;">
   <span id="buildinfo" class="rule"></span>
-  humanizer-ru v3.36.2 · демо детерминированного слоя проверки вставки; переписывание и детектор связок — в
+  humanizer-ru v3.36.3 · демо детерминированного слоя проверки вставки; переписывание и детектор связок — в
   <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории</a> и
   <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>. Машинные файлы:
   <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt">llms.txt</a> ·
