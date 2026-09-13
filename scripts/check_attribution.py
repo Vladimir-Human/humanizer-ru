@@ -5,7 +5,7 @@
 Проект, который ловит следы машинного происхождения текстов, обязан
 помечать машинное происхождение собственных коммитов. Правила:
 
-  1. Якорь: релизный коммит bb2b2b3712fe257006e88c5bd6090f062f3a1d04
+  1. Якорь: релизный коммит 5fd806fb01e46833e4b42654b38b16f02d3caef0
      (метка якоря собирается в коде из частей — гейт зашитых версий не
      разрешает литерал X.Y.Z в скриптах).
      Каждый коммит ПОСЛЕ якоря, чей коммитер не является человеком-
@@ -44,7 +44,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 GOVERNANCE = os.path.join(ROOT, "GOVERNANCE.md")
 
-ANCHOR = "bb2b2b3712fe257006e88c5bd6090f062f3a1d04"   # релиз-якорь правила
+# Current commit of the release anchor after the documented history migration.
+ANCHOR = "5fd806fb01e46833e4b42654b38b16f02d3caef0"
 # Версии собираются из частей: гейт зашитых версий сканирует этот файл,
 # а литерал X.Y.Z устаревал бы и путал поиск по истории.
 ANCHOR_LABEL = "v%d.%d.%d" % (3, 16, 10)
@@ -88,7 +89,18 @@ def _git(args, root=ROOT):
 
 def history_available(root=ROOT) -> bool:
     proc = _git(["cat-file", "-e", ANCHOR + "^{commit}"], root)
-    return proc.returncode == 0
+    if proc.returncode != 0:
+        return False
+    return _git(["merge-base", "--is-ancestor", ANCHOR, "HEAD"], root).returncode == 0
+
+
+def missing_history_errors() -> list:
+    shallow = _git(["rev-parse", "--is-shallow-repository"])
+    if shallow.returncode == 0 and shallow.stdout.strip() == "true":
+        print("SKIP: shallow-чекаут — история атрибуции не проверена")
+        return []
+    return ["якорь атрибуции отсутствует в истории HEAD полного checkout; "
+            "проверьте соответствие якоря опубликованному тегу"]
 
 
 def anchor_slice_count(root=ROOT):
@@ -107,6 +119,10 @@ def governance_line() -> str:
     n = anchor_slice_count()
     if n is None:
         return ""
+    return format_governance_line(n)
+
+
+def format_governance_line(n: int) -> str:
     return ("Срез на %s (%s): %d из последних 100 коммитов несут пометку "
             "`autonomous run` в сообщении или идентификаторе коммитера "
             "(предыдущий срез на 2026-08-21 фиксировал 34 из 100 — окно "
@@ -134,23 +150,21 @@ def governance_errors() -> list:
     stored = int(m.group(1))
     if history_available():
         fresh = anchor_slice_count()
-        if fresh is not None and fresh != stored:
+        if fresh is None:
+            errors.append("пересчёт среза GOVERNANCE не выполнен")
+        elif fresh != stored:
             errors.append("GOVERNANCE.md §4: срез %d != пересчёту %d — "
                           "обновить строку: python scripts/"
                           "check_attribution.py --governance-line"
                           % (stored, fresh))
     else:
-        print("SKIP: история до якоря недоступна (shallow-чекаут) — срез "
-              "GOVERNANCE сверен только по формату")
+        errors.extend(missing_history_errors())
     return errors
 
 
 def commits_after_anchor_errors() -> list:
     if not history_available():
-        print("SKIP: якорь %s недостижим (shallow-чекаут) — коммиты после "
-              "якоря не проверены; полная проверка в релизном CI "
-              "(fetch-depth 0)" % ANCHOR_LABEL)
-        return []
+        return missing_history_errors()
     proc = _git(["log", ANCHOR + "..HEAD", "--format=%H%x09%cn%x09%s%x09%b"])
     if proc.returncode != 0:
         return ["git log %s..HEAD не исполнен" % ANCHOR_LABEL]
@@ -195,10 +209,9 @@ def selftest() -> int:
          and not message_marked("Fix X"))
     case("маркер в имени коммитера учитывается",
          message_marked("Codex autonomous run Fix X"))
-    line = governance_line()
-    m = SLICE_RX.search(line) if line else None
+    m = SLICE_RX.search(format_governance_line(17))
     case("генерируемая строка среза соответствует формату GOVERNANCE",
-         bool(m) or not history_available())
+         bool(m) and m.group(1) == "17")
     case("строка GOVERNANCE на месте и не расходится с пересчётом",
          governance_errors() == [])
     print("САМОПРОВЕРКА check_attribution: %d/%d PASS"
