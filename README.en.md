@@ -57,6 +57,62 @@ rc=1 means "markers found" — the expected outcome on the sample carrying
 a paste trace, not an error; rc=0 — no traces, rc=2 — input unreadable
 (with --json the error envelope goes to stdout).
 
+### Full scenario: find, clean safely, verify, report
+
+1. **Find the paste artifact.** `humanizer-markers --scan file.md` prints
+   findings with coordinates and class: A — hard copy-paste artifacts of
+   chat interfaces, B — contextual indicators like invisible characters
+   and hidden layout; rc=1 means findings. The
+   [demo page](https://vladimir-human.github.io/humanizer-ru/) does the
+   same in the browser without installation and highlights the source
+   ranges. Soft signals of machine writing are counted by
+   `humanizer-scan`: they calibrate the edit scope and give no verdict.
+
+2. **Clean safely.** `humanizer-clean --in-place file.md` runs the before
+   check, removal of supported artifacts, after check and fact cross-check
+   in one command; the original stays in a `.bak` copy. It removes layer A
+   invisible marks and visible class A artifacts outside protected regions
+   (code, frontmatter, URLs, HTML attributes, emoji ZWJ clusters). Style
+   and meaning are not rewritten; unsupported findings like class B marks,
+   wiki markup and placeholders remain as an explicit residue with return
+   code 1, and full cleanliness is not claimed. An invariant violation of
+   protected regions leaves the result unwritten. Invisible characters can
+   also be removed pointwise by risk class from the `invisible_classes`
+   field of `markers.v1.json`: `humanizer-markers --remove file.md` strips
+   safe automatically, ambiguous only with the explicit
+   `--include-ambiguous` flag, and shows dangerous without removing it.
+   Typography without meaning edits is normalized by `humanizer-polish`;
+   on markup use the `--preserve-markup` and `--typographic` modes.
+
+3. **Verify the diff.** `humanizer-clean --diff file.md` prints the
+   unified before/after diff without writing; the `--json` envelope
+   carries the fact cross-check and the residue list. After manual edits
+   cross-check facts separately:
+   `humanizer-facts diff before.txt after.txt --no-additions` compares
+   numbers, dates, URLs, names, quotes, negations and modals; the lost and
+   changed fields must be empty, otherwise return the facts to the text.
+
+4. **Report the outcome.** `humanizer-report before.txt after.txt` builds
+   an edit report with a fact cross-check. To hand a finding to a
+   colleague use `humanizer-markers --scan --json file.md`: forward the
+   file, line, marker, class and fragment fields, not the whole document.
+   A class A finding establishes the fact of a paste, not the author: mark
+   the source the artifact pointed to as “needs verification”. Neither
+   the tools nor the skill issue authorship verdicts — that is the main
+   rule of SKILL.md.
+
+The scenario as one block:
+
+```text
+humanizer-markers --scan paste.md               # 1: find; rc=1 = findings
+humanizer-clean --diff paste.md                 # 2: show what will be removed
+humanizer-clean --in-place paste.md             # 2: clean; original goes to .bak
+humanizer-facts diff paste.md.bak paste.md --no-additions  # 3: fact cross-check
+humanizer-report paste.md.bak paste.md          # 4: edit report
+```
+
+Command and mode details: [docs/USAGE.en.md](docs/USAGE.en.md#usage).
+
 ### MCP in one config
 
 ```json
