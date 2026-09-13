@@ -347,6 +347,9 @@ def _utm_patterns():
     out = []
     for name, fallback in _UTM_FALLBACK:
         pat = _det(name) or fallback
+        # Rich-text editors often encode query separators as ``&amp;``.
+        # Treat that entity as a delimiter while retaining all other URL text.
+        pat = pat.replace(r"[?&]", r"(?:[?&]|&amp;)", 1)
         out.append((re.compile(pat + _UTM_TAIL), name))
     return out
 
@@ -360,7 +363,10 @@ def _utm_sub_segment(seg, rx):
             break
         start, end = m.start(), m.end()
         count += 1
-        if seg[start:start + 1] == "?" and seg[end:end + 1] == "&":
+        if seg[start:start + 1] == "?" and seg[end:end + 5] == "&amp;":
+            # HTML-encoded separator: remove it together with the parameter.
+            seg = seg[:start] + "?" + seg[end + 5:]
+        elif seg[start:start + 1] == "?" and seg[end:end + 1] == "&":
             # "?param&rest" -> "?rest" (оставляем начало query-строки)
             seg = seg[:start] + "?" + seg[end + 1:]
         else:
@@ -453,7 +459,11 @@ def clean_markup(text):
         text, lambda seg: _THINK_RX.subn("", seg))
     count += n
 
-    text, n = _map_outside_protected_multiline(text, _strip_source_chain)
+    # Source chains can occur in a URL path (for example, a provider's
+    # ``Reuters+3BBC+2`` slug).  They are citation glue only in prose; keep
+    # URL spans opaque so cleanup cannot silently change the destination.
+    text, n = _map_outside_protected_multiline(
+        text, _strip_source_chain, protect_urls=True)
     count += n
 
     for name, rx in _compiled_markup():
@@ -826,10 +836,21 @@ def _protected_report(before, cleaned):
     for kind in sorted(by_kind):
         frags = by_kind[kind]
         if kind == "url":
+            # Tracking parameters are the one documented URL edit.  Compare
+            # every URL with the exact result of that narrow operation; any
+            # other mutation (or removal) is an invariant violation and the
+            # caller must refuse to apply the candidate.
+            expected_urls = [_clean_utm(frag)[0] for frag in frags]
+            actual_urls = [cleaned[s:e] for s, e in _PR.url_spans(cleaned)]
+            missing = (frags if expected_urls != actual_urls else [])
             report.append({"kind": kind, "regions": len(frags),
+                           "unchanged": not missing,
                            "note": "utm/referrer-параметры снимаются "
                                    "согласно границе детектора; прочее "
                                    "содержимое URL не трогается"})
+            for frag in missing:
+                problems.append("сохранение URL: защищённая область изменена "
+                                "или удалена: %r" % frag[:120])
             continue
         missing = [f for f in set(frags) if f not in cleaned]
         report.append({"kind": kind, "regions": len(frags),

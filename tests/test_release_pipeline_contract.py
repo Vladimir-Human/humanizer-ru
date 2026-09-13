@@ -10,10 +10,14 @@ CI-связки исполняемы и неотделимы от поставк
 правило не вернулось случайным образом и его удаление не было частичным.
 """
 import os
+import io
 import re
 import subprocess
 import sys
+import tarfile
+import tempfile
 import unittest
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_ONLY = (os.path.isdir(os.path.join(ROOT, "scripts"))
@@ -62,6 +66,15 @@ class WorkflowBindingTests(unittest.TestCase):
         self.assertIn("inputs.tag", self.rc)
         self.assertIn("required: true", self.rc)
         self.assertIn("ref: ${{ inputs.tag || github.ref_name }}", self.rc)
+
+    def test_release_check_shell_uses_validated_environment_tag(self):
+        self.assertIn("RELEASE_REF: ${{ inputs.tag || github.ref_name }}", self.rc)
+        self.assertIn("^v[0-9]+\\.[0-9]+\\.[0-9]+$", self.rc)
+        run_blocks = re.findall(r"(?ms)^\s*run:\s*\|\n(.*?)(?=^\s*- name:|\Z)", self.rc)
+        self.assertTrue(run_blocks)
+        for block in run_blocks:
+            self.assertNotIn("${{", block,
+                             "выражение GitHub нельзя вставлять непосредственно в shell")
 
     def test_publish_workflows_checkout_selected_tag(self):
         self.assertIn("inputs.tag", self.pp)
@@ -168,6 +181,68 @@ class AcceptanceBlockingTests(unittest.TestCase):
         result = {"sha": "abc1234f", "tests_passed": False, "parity": "ok"}
         self.assertTrue(CR.status_acceptance_errors(status, result,
                                                     "abc1234f"))
+
+
+@SKIP_OUTSIDE
+class SafeSdistExtractionTests(unittest.TestCase):
+    """sdist-проверка не должна писать за пределы временного каталога."""
+
+    def _archive(self, members):
+        handle = tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False)
+        handle.close()
+        path = Path(handle.name)
+        with tarfile.open(path, "w:gz") as archive:
+            for info, payload in members:
+                if payload is None:
+                    archive.addfile(info)
+                else:
+                    archive.addfile(info, io.BytesIO(payload))
+        return path
+
+    def test_traversal_member_rejected_before_writing(self):
+        info = tarfile.TarInfo("../escaped.txt")
+        info.size = 4
+        archive = self._archive([(info, b"evil")])
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                destination = Path(td) / "extract"
+                with tarfile.open(archive, "r:gz") as opened:
+                    with self.assertRaises(CR.ReleaseError):
+                        CR._safe_extract_tar(opened, destination)
+                self.assertFalse((Path(td) / "escaped.txt").exists())
+        finally:
+            archive.unlink(missing_ok=True)
+
+    def test_symlink_member_rejected_before_writing(self):
+        info = tarfile.TarInfo("package/link")
+        info.type = tarfile.SYMTYPE
+        info.linkname = "../../escaped.txt"
+        archive = self._archive([(info, None)])
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                destination = Path(td) / "extract"
+                with tarfile.open(archive, "r:gz") as opened:
+                    with self.assertRaises(CR.ReleaseError):
+                        CR._safe_extract_tar(opened, destination)
+                self.assertFalse((Path(td) / "escaped.txt").exists())
+                self.assertFalse(destination.exists())
+        finally:
+            archive.unlink(missing_ok=True)
+
+    def test_regular_sdist_members_extract(self):
+        directory = tarfile.TarInfo("package")
+        directory.type = tarfile.DIRTYPE
+        file_info = tarfile.TarInfo("package/README.md")
+        file_info.size = 2
+        archive = self._archive([(directory, None), (file_info, b"ok")])
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                destination = Path(td) / "extract"
+                with tarfile.open(archive, "r:gz") as opened:
+                    CR._safe_extract_tar(opened, destination)
+                self.assertEqual((destination / "package/README.md").read_bytes(), b"ok")
+        finally:
+            archive.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

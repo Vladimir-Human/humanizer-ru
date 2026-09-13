@@ -188,6 +188,95 @@ class GeneratorClassTests(unittest.TestCase):
                                             mutated.splitlines()[1])
                         (root / name).write_bytes(name.encode("utf-8"))
 
+    def test_service_worker_activation_keeps_foreign_caches(self):
+        """Activation may remove only stale caches owned by this demo."""
+        node = __import__("shutil").which("node")
+        if node is None:
+            self.fail("Node.js is required for service-worker regression tests")
+        source = G.build_sw("markers", "index", "engine", "sample",
+                            "css", "favicon", "manifest", "rules", "cleaner")
+        harness = r'''const vm = require("vm");
+const source = JSON.parse(process.argv[1]);
+const current = source.match(/const CACHE = "([^"]+)"/)[1];
+const listeners = {};
+const deleted = [];
+let activation;
+const context = vm.createContext({
+  self: { addEventListener(type, fn) { listeners[type] = fn; },
+          skipWaiting() {} },
+  clients: { claim() {} },
+  caches: {
+    keys() { return Promise.resolve(["humanizer-ru-old", "other-app-v1", current]); },
+    delete(key) { deleted.push(key); return Promise.resolve(true); },
+    open() { return Promise.resolve({ addAll() {} }); }
+  }, Promise
+});
+vm.runInContext(source, context);
+listeners.activate({ waitUntil(p) { activation = p; } });
+activation.then(() => process.stdout.write(JSON.stringify(deleted)));
+'''
+        proc = __import__("subprocess").run(
+            [node, "-e", harness, json.dumps(source)], cwd=ROOT,
+            text=True, encoding="utf-8", capture_output=True, timeout=30)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout), ["humanizer-ru-old"])
+
+    def test_service_worker_fetch_isolated_and_status_is_fresh(self):
+        """Fetch must not read a foreign cache or cache mutable status.json."""
+        node = __import__("shutil").which("node")
+        if node is None:
+            self.fail("Node.js is required for service-worker regression tests")
+        source = G.build_sw("markers", "index", "engine", "sample",
+                            "css", "favicon", "manifest", "rules", "cleaner")
+        harness = r'''const vm = require("vm");
+const source = JSON.parse(process.argv[1]);
+const listeners = {};
+const calls = [];
+const cache = {
+  match(req) { calls.push(["cache.match", req.url]); return Promise.resolve(); },
+  put(req) { calls.push(["cache.put", req.url]); return Promise.resolve(); }
+};
+let responseNo = 0;
+function fetchStub(req) {
+  calls.push(["fetch", req.url]);
+  const id = ++responseNo;
+  return Promise.resolve({id, clone() { return {id}; }});
+}
+const context = vm.createContext({
+  self: { addEventListener(type, fn) { listeners[type] = fn; },
+          skipWaiting() {} }, clients: { claim() {} },
+  caches: { open() { calls.push(["cache.open"]); return Promise.resolve(cache); },
+           keys() { return Promise.resolve([]); }, delete() { return Promise.resolve(true); } },
+  fetch: fetchStub, URL, Promise
+});
+vm.runInContext(source, context);
+async function dispatch(url) {
+  let result;
+  listeners.fetch({request: {method: "GET", url},
+                  respondWith(p) { result = p; }});
+  return result;
+}
+(async () => {
+  await dispatch("https://example.test/app/index.html");
+  await dispatch("https://example.test/app/status.json");
+  process.stdout.write(JSON.stringify(calls));
+})();
+'''
+        proc = __import__("subprocess").run(
+            [node, "-e", harness, json.dumps(source)], cwd=ROOT,
+            text=True, encoding="utf-8", capture_output=True, timeout=30)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        calls = json.loads(proc.stdout)
+        self.assertIn(["cache.open"], calls)
+        self.assertIn(["cache.match", "https://example.test/app/index.html"], calls)
+        self.assertIn(["cache.put", "https://example.test/app/index.html"], calls)
+        self.assertEqual(
+            [entry for entry in calls if entry[0] == "fetch"],
+            [["fetch", "https://example.test/app/index.html"],
+             ["fetch", "https://example.test/app/status.json"]])
+        self.assertNotIn(["cache.match", "https://example.test/app/status.json"], calls)
+        self.assertNotIn(["cache.put", "https://example.test/app/status.json"], calls)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,6 +6,7 @@
 интерфейсов на текущем дереве."""
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -125,6 +126,22 @@ class McpScenarioTests(unittest.TestCase):
 class ContributorScenarioTests(unittest.TestCase):
     """Внешний контрибьютор: быстрый прогон в CONTRIBUTING, приёмка в
     шаблоне мелкой задачи, вход для сообщения о проблеме."""
+
+    def test_issue_contact_links_remain_visible(self):
+        """A duplicate root key must not hide the private security route."""
+        with open(os.path.join(ROOT, ".github", "ISSUE_TEMPLATE",
+                               "config.yml"), encoding="utf-8") as fh:
+            config = fh.read()
+        root_keys = re.findall(r"^([a-z_]+):", config, re.MULTILINE)
+        self.assertEqual(len(root_keys), len(set(root_keys)),
+                         "Duplicate root keys can silently replace contact links")
+        self.assertEqual(root_keys.count("contact_links"), 1)
+        self.assertRegex(config, r"(?m)^contact_links:\n  - name: \S")
+        urls = re.findall(r"^    url: (\S+)$", config, re.MULTILINE)
+        for expected in (
+                "https://github.com/Vladimir-Human/humanizer-ru/blob/main/SECURITY.md",
+                "https://github.com/Vladimir-Human/humanizer-ru/discussions"):
+            self.assertIn(expected, urls)
 
     def test_entry_points_exist(self):
         contrib = open(os.path.join(ROOT, "CONTRIBUTING.md"),

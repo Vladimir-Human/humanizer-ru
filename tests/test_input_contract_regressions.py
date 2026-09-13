@@ -281,6 +281,67 @@ class RemoveJsonEnvelopeTests(unittest.TestCase):
         doc = _envelope(self, out, "humanizer-markers")
         self.assertEqual(doc["files"][0]["mode"], "remove")
 
+    def test_remove_in_place_text_writes_file_and_backup(self):
+        """Текстовый --remove --in-place сохраняет очищенный файл и .bak."""
+        name = "remove-in-place.txt"
+        original = "Русский текст\u200b с невидимым символом.\n"
+        _write(name, original)
+        rc, out, err = _run_entry("cli", "markers_main",
+                                  ["--remove", "--in-place", name])
+        self.assertEqual(rc, 0, err)
+        self.assertIn("ЗАПИСАНО", out)
+        with open(os.path.join(TMP, name), encoding="utf-8") as fh:
+            self.assertNotIn("\u200b", fh.read())
+        with open(os.path.join(TMP, name + ".bak"), encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), original)
+
+    def test_remove_in_place_json_writes_file_and_backup(self):
+        """--json меняет только формат отчёта, не отключая --in-place."""
+        name = "remove-in-place-json.txt"
+        original = "Русский текст\u200b с невидимым символом.\n"
+        _write(name, original)
+        rc, out, err = _run_entry("cli", "markers_main",
+                                  ["--remove", "--in-place", "--json", name])
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(err, "")
+        doc = _envelope(self, out, "humanizer-markers")
+        entry = doc["files"][0]
+        self.assertTrue(entry["changed"])
+        with open(os.path.join(TMP, name), encoding="utf-8") as fh:
+            self.assertNotIn("\u200b", fh.read())
+        with open(os.path.join(TMP, name + ".bak"), encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), original)
+
+    def test_remove_in_place_json_rejects_symlink(self):
+        """Безопасный writer не следует за symlink при записи --in-place."""
+        target_name = "remove-symlink-target.txt"
+        link_name = "remove-symlink.txt"
+        original = "Русский текст\u200b в цели.\n"
+        target = os.path.join(TMP, target_name)
+        link = os.path.join(TMP, link_name)
+        with open(target, "w", encoding="utf-8", newline="") as fh:
+            fh.write(original)
+        try:
+            os.symlink(target, link)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest("симлинки недоступны на этой платформе: %s" % exc)
+        try:
+            rc, out, err = _run_entry(
+                "cli", "markers_main",
+                ["--remove", "--in-place", "--json", link_name])
+            self.assertEqual(rc, 2)
+            self.assertEqual(err, "")
+            entry = _envelope(self, out, "humanizer-markers")["files"][0]
+            self.assertIn("не удалось записать", entry["error"])
+            with open(target, encoding="utf-8") as fh:
+                self.assertEqual(fh.read(), original)
+            self.assertFalse(os.path.exists(link + ".bak"))
+        finally:
+            try:
+                os.unlink(link)
+            except OSError:
+                pass
+
 
 class FactsInputErrorTests(unittest.TestCase):
     """humanizer-facts: не-UTF-8 и отсутствующий файл — код 2 с конвертом."""
