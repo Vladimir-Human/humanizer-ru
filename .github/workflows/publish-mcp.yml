@@ -74,6 +74,8 @@ jobs:
           PY
 
       - name: Контракт релиза до OIDC-публикации
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/check_release.py --release-contract
 
       - name: Установить mcp-publisher
