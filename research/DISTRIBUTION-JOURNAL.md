@@ -465,3 +465,39 @@ smithery-mechanics-notes.md; снапшоты карточек T15-*, T1255Z-*, 
   (PR-refs не переписываются), страницы коммитов могут отдаваться
   из кэша. Действия по витринам (релизы, PyPI, реестр MCP, Pages)
   не затрагивались.
+- 2026-09-12 (ночь): Habr — статья «Два humanizer-ru: я отозвал свою
+  лучшую метрику и зову тёзку на бенчмарк» отправлена в песочницу
+  (id 303744, https://habr.com/ru/sandbox/303744/); на 13.09.2026 —
+  модерация. Проверка статуса по публичной ссылке недоступна, причина:
+  черновик на премодерации закрыт для посторонних — GET
+  https://habr.com/ru/sandbox/303744/ отдаёт HTTP 403 «Доступ к
+  публикации закрыт» (снято 13.09.2026).
+- 2026-09-12: каталог awesome-ai-plugins — заявка
+  https://github.com/hashgraph-online/awesome-ai-plugins/pull/244
+  (Tools & Integrations) слита 2026-09-12T16:01:34Z, state MERGED
+  (`gh pr view 244 --repo hashgraph-online/awesome-ai-plugins --json
+  state,mergedAt`, снято 13.09.2026).
+- 2026-09-12: vc.ru — опубликован авторский пост проекта «Я проверил
+  свой "очеловечиватель" текста - и отозвал лучшую метрику»,
+  https://vc.ru/ai/3135123-proverka-kachestva-teksta-s-pomoshchyu-humanizer-ru
+  (HTTP 200; datePublished 2026-09-12T17:19:50Z = 20:19 MSK из JSON-LD
+  страницы, снято 13.09.2026).
+- 2026-09-13: опубликованы выпуски 3.36.1, 3.36.2, 3.36.3, 3.36.4 —
+  даты тегов по `git tag --format='%(refname:short) %(creatordate:short)'`:
+  v3.36.1 2026-09-13, v3.36.2 2026-09-13, v3.36.3 2026-09-13,
+  v3.36.4 2026-09-13; целевой commit v3.36.4 — fa3296a, HEAD main
+  (`git rev-parse 'v3.36.4^{commit}'`).
+- 2026-09-13: каталог awesome-claude-code — заявка
+  https://github.com/hesreallyhim/awesome-claude-code/issues/2212
+  (issue, создана 2026-07-12) остаётся OPEN, ожидание мейнтейнера
+  (`gh issue view 2212 --repo hesreallyhim/awesome-claude-code --json
+  state`, снято 13.09.2026).
+- 2026-09-13: skills.sh — счётчик установок 648 (GET страницы
+  https://www.skills.sh/vladimir-human/humanizer-ru/humanizer-ru,
+  HTTP 200, снято 13.09.2026; 633 на 11.09). Карточка показывает
+  SKILL v3.36.3 при актуальном SKILL.md 3.36.4 в репозитории —
+  сторонний индексатор отстаёт, на стороне проекта источник корректен.
+- 2026-09-13: звёзды 124, форки 9 (`gh api
+  repos/Vladimir-Human/humanizer-ru --jq
+  '.stargazers_count,.forks_count'`, снято 13.09.2026; 123 звезды
+  на 11.09).
