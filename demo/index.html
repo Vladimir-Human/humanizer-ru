@@ -143,13 +143,40 @@ humanizer-markers --scan input.txt</code></pre>
   let lastResult = null;
   let undoText = null;
 
+  function clearCleanupCandidate() {
+    if (!applyCleanupBtn || !applyCleanupBtn.dataset || !cleanupPreview || !cleanupSummary || !cleanupDiff) return;
+    delete applyCleanupBtn.dataset.cleaned;
+    delete applyCleanupBtn.dataset.source;
+    applyCleanupBtn.hidden = true;
+    cleanupPreview.hidden = true;
+    cleanupSummary.textContent = "";
+    cleanupDiff.textContent = "";
+  }
+
+  function invalidateManualCleanup() {
+    clearCleanupCandidate();
+    undoText = null;
+    if (undoCleanupBtn) undoCleanupBtn.hidden = true;
+    if (copyCleanedBtn) copyCleanedBtn.hidden = true;
+    if (copyStatus) copyStatus.textContent = "";
+  }
+
   function renderCleanup(text) {
+    if (!applyCleanupBtn || !applyCleanupBtn.dataset || !cleanupPreview || !cleanupSummary || !cleanupDiff) return;
+    clearCleanupCandidate();
     if (typeof HumanizerCleaner === "undefined" || !text.trim()) {
-      cleanupPreview.hidden = true;
-      applyCleanupBtn.hidden = true;
       return;
     }
-    const cleaned = HumanizerCleaner.cleanText(text);
+    let cleaned;
+    try {
+      cleaned = HumanizerCleaner.cleanText(text);
+    } catch (e) {
+      return;
+    }
+    if (!cleaned || typeof cleaned.text !== "string" ||
+        !Array.isArray(cleaned.invariants)) {
+      return;
+    }
     const changed = cleaned.text !== text;
     cleanupPreview.hidden = !changed && cleaned.invariants.length === 0;
     applyCleanupBtn.hidden = !changed || cleaned.invariants.length > 0;
@@ -159,7 +186,10 @@ humanizer-markers --scan input.txt</code></pre>
     cleanupDiff.textContent = changed
       ? "ДО:\n" + text + "\n\nПОСЛЕ:\n" + cleaned.text
       : "";
-    applyCleanupBtn.dataset.cleaned = cleaned.text;
+    if (changed && cleaned.invariants.length === 0) {
+      applyCleanupBtn.dataset.cleaned = cleaned.text;
+      applyCleanupBtn.dataset.source = text;
+    }
   }
 
   const DATA = (typeof HUMANIZER_MARKERS !== "undefined") ? HUMANIZER_MARKERS : null;
@@ -286,6 +316,7 @@ humanizer-markers --scan input.txt</code></pre>
     const state = document.getElementById("scanState");
     if (!engineReady()) {
       // N46: отсутствие движка или правил — явный отказ, не «чисто».
+      invalidateManualCleanup();
       state.textContent = "состояние: ошибка загрузки; проверка не выполнялась";
       summary.textContent = "Движок или правила не загрузились: проверка не " +
         "выполнялась, результат ниже пустой и не означает чистый текст.";
@@ -310,14 +341,17 @@ humanizer-markers --scan input.txt</code></pre>
   onlyA.addEventListener("change", run);
   showAll.addEventListener("change", run);
   runBtn.addEventListener("click", run);
+  if (applyCleanupBtn && undoCleanupBtn && copyCleanedBtn) {
   applyCleanupBtn.addEventListener("click", () => {
     const cleaned = applyCleanupBtn.dataset.cleaned;
-    if (typeof cleaned !== "string") return;
+    if (typeof cleaned !== "string" ||
+        applyCleanupBtn.dataset.source !== textarea.value) return;
     undoText = textarea.value;
     textarea.value = cleaned;
     undoCleanupBtn.hidden = false;
     copyCleanedBtn.hidden = false;
     history.replaceState(null, "", location.pathname + location.search);
+    updateCounts();
     run();
     textarea.focus();
   });
@@ -327,6 +361,8 @@ humanizer-markers --scan input.txt</code></pre>
     undoText = null;
     undoCleanupBtn.hidden = true;
     copyCleanedBtn.hidden = true;
+    copyStatus.textContent = "";
+    updateCounts();
     run();
     textarea.focus();
   });
@@ -339,9 +375,12 @@ humanizer-markers --scan input.txt</code></pre>
       () => { copyStatus.textContent = "очищенный текст скопирован"; },
       () => { copyStatus.textContent = "не удалось скопировать"; });
   });
+  }
   document.getElementById("insertSample").addEventListener("click", () => {
     if (typeof HUMANIZER_SAMPLE === "undefined") return;
+    invalidateManualCleanup();
     textarea.value = HUMANIZER_SAMPLE;
+    updateCounts();
     run();
   });
   function updateCounts() {
@@ -351,6 +390,7 @@ humanizer-markers --scan input.txt</code></pre>
   }
 
   document.getElementById("ownText").addEventListener("click", () => {
+    invalidateManualCleanup();
     textarea.value = "";
     // N33: переход к своему тексту очищает share-state в URL.
     history.replaceState(null, "", location.pathname + location.search);
@@ -426,6 +466,7 @@ humanizer-markers --scan input.txt</code></pre>
   });
   let _timer;
   textarea.addEventListener("input", () => {
+    invalidateManualCleanup();
     // Editing text loaded from a share link invalidates that link. Remove the
     // old fragment before the next debounce so a copied URL cannot expose the
     // previous text after the user starts replacing it.
@@ -473,7 +514,7 @@ humanizer-markers --scan input.txt</code></pre>
 </details>
 <footer style="border-top:1px solid var(--line);background:#fff;padding:10px 20px;color:#666;font-size:13px;">
   <span id="buildinfo" class="rule"></span>
-  humanizer-ru v3.36.0 · демо детерминированного слоя проверки вставки; переписывание и детектор связок — в
+  humanizer-ru v3.36.1 · демо детерминированного слоя проверки вставки; переписывание и детектор связок — в
   <a href="https://github.com/Vladimir-Human/humanizer-ru">репозитории</a> и
   <a href="https://pypi.org/project/humanizer-ru/">PyPI</a>. Машинные файлы:
   <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/llms.txt">llms.txt</a> ·
