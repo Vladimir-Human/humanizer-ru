@@ -84,6 +84,8 @@ jobs:
           }
 
       - name: Финальный прогон всех валидаторов
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Полный релизный чек-лист одной командой: 156 гейтов, включая
           # pkg-sync, confidence, facts, polish, conj, selfattack, contract, markers-export, adversarial, filemarks, release-contract.
