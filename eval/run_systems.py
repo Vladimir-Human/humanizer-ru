@@ -139,8 +139,7 @@ def main() -> int:
             with ThreadPoolExecutor(max_workers=args.workers) as pool:
                 for tid, out, meta in pool.map(work, batch):
                     meta.update({"system": sysdef["name"], "id": tid})
-                    with open(log, "a", encoding="utf-8", newline="
-") as fh:
+                    with open(log, "a", encoding="utf-8", newline="\n") as fh:
                         fh.write(json.dumps(meta, ensure_ascii=False) + "\n")
                     print("%-9s %s %s $%.4f files=%s" % (sysdef["name"], tid, "ERR " + meta["error"] if out is None else "ok",
                                                         meta.get("cost", 0), ",".join(meta.get("files_read", []))))

@@ -138,8 +138,7 @@ def main() -> int:
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for row in pool.map(work, jobs):
-            with open(log, "a", encoding="utf-8", newline="
-") as fh:
+            with open(log, "a", encoding="utf-8", newline="\n") as fh:
                 fh.write(json.dumps(row, ensure_ascii=False) + "\n")
             print(row["id"], row["judge"].split("/")[-1], row["round"],
                   " > ".join(row.get("ranking", [])) or "ERROR " + row.get("error", ""), "$%.4f" % float(row.get("cost") or 0))
