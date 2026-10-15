@@ -13,7 +13,7 @@
     <test file="tests/test_repo.py" title="test_zip_layout" checks="humanizer-ru/SKILL.md at the root, ASCII names, no caches" />
   </entry>
   <entry id="V-M-SKILL" module="M-SKILL" file="skills/humanizer-ru/SKILL.md">
-    <test file="eval/results/final/summary.md" title="blind comparison" checks="ranking against competitors and the one-line prompt; fact errors by judge majority and check_facts; traps" />
+    <test file="eval/results/final3/summary-shipped.md" title="blind comparison 4.1.1" checks="ranking against competitors, the one-line prompt and the previous version; fact errors by majority of three judges and check_facts; traps" />
   </entry>
   <entry id="V-M-EVAL" module="M-EVAL-REPORT" file="eval/report.py">
     <test file="tests/test_eval.py" title="EvalReportTest" checks="one vote per judge: two passes of one judge do not outvote another judge; strict majority of 2 or 3 judges; one-judge runs keep the pass rule; equal-weight means" />

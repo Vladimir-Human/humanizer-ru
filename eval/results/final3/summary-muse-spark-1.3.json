@@ -1,0 +1,829 @@
+{
+  "run": "final3",
+  "judge_errors": 10,
+  "groups": {
+    "ai": {
+      "ids": [
+        "m01",
+        "m02",
+        "m03",
+        "m04",
+        "m05",
+        "m06",
+        "m07",
+        "m08",
+        "m09",
+        "m10",
+        "m11",
+        "m12",
+        "m13",
+        "m14",
+        "m15",
+        "m16",
+        "m17",
+        "m18",
+        "m19",
+        "m20",
+        "m21",
+        "m22",
+        "m23",
+        "m24"
+      ],
+      "table": {
+        "avoidai_ru": {
+          "mean_position": 3.0,
+          "first_places": 3,
+          "passes": 24,
+          "send_as_is": 7.29,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m09",
+            "m11",
+            "m20"
+          ],
+          "script_errors": {
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "Шесть"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Личный"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ПолезноеЧебоксары"
+              }
+            ],
+            "m07": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:00"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:15"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              }
+            ],
+            "m06": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "450 кв. м в исходнике относится к «догов», в правке стоит рядом с «аренд»"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.663
+        },
+        "ilyautov": {
+          "mean_position": 2.67,
+          "first_places": 9,
+          "passes": 24,
+          "send_as_is": 7.5,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m12",
+            "m16"
+          ],
+          "script_errors": {
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m01": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
+            "m07": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:00"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:15"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              }
+            ],
+            "m06": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "450 кв. м в исходнике относится к «догов», в правке стоит рядом с «аренд»"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.813
+        },
+        "ours": {
+          "mean_position": 3.0,
+          "first_places": 5,
+          "passes": 24,
+          "send_as_is": 7.38,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m16"
+          ],
+          "script_errors": {
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m13": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«без больших» в правке стоит без отрицания"
+              }
+            ],
+            "m12": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Немедленно"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
+            "m07": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:00"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:15"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              }
+            ],
+            "m06": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "450 кв. м в исходнике относится к «догов», в правке стоит рядом с «аренд»"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.694
+        },
+        "ours410": {
+          "mean_position": 2.42,
+          "first_places": 5,
+          "passes": 24,
+          "send_as_is": 8.08,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
+            "m07": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:00"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:15"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.733
+        },
+        "prompt": {
+          "mean_position": 3.92,
+          "first_places": 2,
+          "passes": 24,
+          "send_as_is": 6.33,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m11",
+            "m16",
+            "m23",
+            "m24"
+          ],
+          "script_errors": {
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "Шесть"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не уходя» в правке стоит без отрицания"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m12": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Действие"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Провести"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ],
+            "m14": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "250 000 рублей в исходнике относится к «кибер», в правке стоит рядом с «лицея»"
+              }
+            ]
+          },
+          "similarity": 0.618
+        }
+      },
+      "pairwise": {
+        "avoidai_ru>prompt": 0.708,
+        "prompt>avoidai_ru": 0.292,
+        "avoidai_ru>ours410": 0.333,
+        "ours410>avoidai_ru": 0.667,
+        "avoidai_ru>ours": 0.5,
+        "ours>avoidai_ru": 0.5,
+        "avoidai_ru>ilyautov": 0.458,
+        "ilyautov>avoidai_ru": 0.542,
+        "prompt>ours410": 0.167,
+        "ours410>prompt": 0.833,
+        "prompt>ours": 0.292,
+        "ours>prompt": 0.708,
+        "prompt>ilyautov": 0.333,
+        "ilyautov>prompt": 0.667,
+        "ours410>ours": 0.583,
+        "ours>ours410": 0.417,
+        "ours410>ilyautov": 0.5,
+        "ilyautov>ours410": 0.5,
+        "ours>ilyautov": 0.375,
+        "ilyautov>ours": 0.625
+      },
+      "fact_notes": {
+        "avoidai_ru|m09": [
+          "muse-spark-1.3: закончился вместо пришёлся"
+        ],
+        "avoidai_ru|m11": [
+          "muse-spark-1.3: потеряно 'только строго до 11:00'"
+        ],
+        "prompt|m11": [
+          "muse-spark-1.3: добавлен список документов"
+        ],
+        "ilyautov|m12": [
+          "muse-spark-1.3: тема письма: тире заменено запятой"
+        ],
+        "prompt|m16": [
+          "muse-spark-1.3: убрано 'просто' - категоричнее; 'нельзя' смягчено до 'не стоит'"
+        ],
+        "ilyautov|m16": [
+          "muse-spark-1.3: потеряно 'не обещает чудес'"
+        ],
+        "ours|m16": [
+          "muse-spark-1.3: потерян финал про дорогу к звездам"
+        ],
+        "avoidai_ru|m20": [
+          "muse-spark-1.3: закроем вместо поможем закрыть"
+        ],
+        "prompt|m23": [
+          "muse-spark-1.3: добавлено 'и обратно' про автобус"
+        ],
+        "prompt|m24": [
+          "muse-spark-1.3: добавлено «дольше обычного»"
+        ]
+      }
+    },
+    "trap": {
+      "ids": [
+        "h01",
+        "h02",
+        "h03",
+        "h04",
+        "h05",
+        "h06"
+      ],
+      "table": {
+        "avoidai_ru": {
+          "mean_position": 3.17,
+          "first_places": 2,
+          "passes": 6,
+          "send_as_is": 8.33,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.997
+        },
+        "ilyautov": {
+          "mean_position": 3.17,
+          "first_places": 0,
+          "passes": 6,
+          "send_as_is": 8.83,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.884
+        },
+        "ours": {
+          "mean_position": 2.33,
+          "first_places": 2,
+          "passes": 6,
+          "send_as_is": 9.5,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.997
+        },
+        "ours410": {
+          "mean_position": 2.17,
+          "first_places": 1,
+          "passes": 6,
+          "send_as_is": 9.33,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "1"
+              }
+            ]
+          },
+          "similarity": 0.972
+        },
+        "prompt": {
+          "mean_position": 4.17,
+          "first_places": 1,
+          "passes": 6,
+          "send_as_is": 6.5,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h04"
+          ],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.569
+        }
+      },
+      "pairwise": {
+        "ours>ours410": 0.333,
+        "ours410>ours": 0.667,
+        "ours>ilyautov": 0.833,
+        "ilyautov>ours": 0.167,
+        "ours>avoidai_ru": 0.667,
+        "avoidai_ru>ours": 0.333,
+        "ours>prompt": 0.833,
+        "prompt>ours": 0.167,
+        "ours410>ilyautov": 0.667,
+        "ilyautov>ours410": 0.333,
+        "ours410>avoidai_ru": 0.667,
+        "avoidai_ru>ours410": 0.333,
+        "ours410>prompt": 0.833,
+        "prompt>ours410": 0.167,
+        "ilyautov>avoidai_ru": 0.5,
+        "avoidai_ru>ilyautov": 0.5,
+        "ilyautov>prompt": 0.833,
+        "prompt>ilyautov": 0.167,
+        "avoidai_ru>prompt": 0.667,
+        "prompt>avoidai_ru": 0.333
+      },
+      "fact_notes": {
+        "prompt|h04": [
+          "muse-spark-1.3: добавлено 'огромных'; сужение 'делают одно'"
+        ]
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 2 на 24 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (avoidai_ru: 0)",
+      "ok": true,
+      "value": "0"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": true,
+      "value": "71%"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov): не меньше 50%",
+      "ok": false,
+      "value": "38%"
+    },
+    {
+      "name": "Не хуже прошлой версии (ours410): не меньше 50% и ошибок смысла не больше (0)",
+      "ok": false,
+      "value": "42%, 0"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 5 из 6",
+      "ok": true,
+      "value": "6 из 6"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<requirements project="humanizer-ru" version="4.0.0" evidence="SKILL.md, scripts, eval results of 2026-10-15">
+<requirements project="humanizer-ru" version="4.1.1" evidence="SKILL.md, scripts, eval results of 2026-10-15 (results/final3)">
   <requirement id="R-REWRITE-DEFAULT" source="skills/humanizer-ru/SKILL.md: Режимы, Как править">
     Given Russian text with machine traces, the skill rewrites it by default and returns ready-to-send text. Other modes only on request: analysis without edits, a targeted single-layer edit, file mode (prose only), voice by the author's sample.
   </requirement>
