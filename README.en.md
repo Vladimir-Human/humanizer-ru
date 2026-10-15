@@ -33,26 +33,31 @@ contracts and laws are left almost untouched.
 
 ## Comparison
 
-We compared the notable skills of this kind on Russian texts, blind. One executor (Claude
-Sonnet 5.5) applied every skill; Gemini 4 Argon and Kimi K3 ranked the shuffled results by
-"which would you send with the least editing". Twelve skills went through a qualifying round on
-12 texts; the final used 24 fresh AI texts that no version of this skill had seen.
+We compare skills of this kind on Russian texts, blind. One executor (Claude Sonnet 5.5)
+applies every skill; three judges from other labs (Gemini 4 Argon, Kimi K3, Muse Spark 1.3)
+rank the shuffled results by "which would you send with the least editing" and list meaning
+errors. Each judge has one vote; an error counts when two of three judges flag it. The
+thresholds were written down before the texts existed.
 
-| Skill | Stars | Mean place of 8 | Ours ranked higher | Texts with a meaning error |
+Latest run, 4.1.1: 24 fresh AI texts from eleven models that the skill had never seen, plus
+six human "trap" texts.
+
+| Participant | Stars | Mean place of 5 | Ours ranked higher | Texts with a meaning error, of 24 |
 |---|---|---|---|---|
-| **humanizer-ru 4.1** | 125 | **3.08** | — | 4 |
-| ormeilu/avoid-ai-writing-russian | 18 | 3.43 | 54% | 8 |
-| ilyautov/humanizer-ru | 452 | 3.79 | 65% | 3 |
-| fsbtactic-code/pishi-normalno | 5 | 4.72 | 72% | 3 |
-| one-line prompt, no skill | — | 4.88 | 67% | 7 |
-| beaverbeard/chukovsky | 10 | 4.94 | 71% | 10 |
-| blader/humanizer | 57,210 | 5.43 | 83% | 14 |
-| beaverbeard/slopotron | 64 | 5.72 | 79% | 11 |
+| **humanizer-ru 4.1.1** | 125 | **2.38** | — | 2 |
+| ilyautov/humanizer-ru | 452 | 3.10 | 65% | 2 |
+| ormeilu/avoid-ai-writing-russian | 18 | 3.18 | 69% | 9 |
+| one-line prompt, no skill | — | 3.74 | 77% | 8 |
 
-stop-slop, no-ai-slop, avoid-ai-writing and five more skills did not pass the qualifying round.
-Against avoid-ai-writing-russian the result is close: Gemini puts us first by a clear margin,
-Kimi puts them first and us second. Details, every text, answer and judgment: [eval/](eval/).
-The judges are models, not human editors.
+The fifth participant was a new variant of our instructions from three tuning cycles. It did
+not beat the previous instructions (49% of comparisons, same number of errors), so 4.1.1 does
+not ship it. Gemini and Kimi rank humanizer-ru above both rivals; Muse Spark ranks it above
+avoid-ai-writing-russian and level with ilyautov. The skill left all six trap texts intact;
+the one-line prompt damaged three.
+
+The 4.1.0 run had eight participants: blader/humanizer (57k stars) came seventh with the most
+errors; stop-slop, no-ai-slop and avoid-ai-writing did not pass the qualifying round. Every
+text, answer and judgment: [eval/](eval/). The judges are models, not human editors.
 
 ## AI detectors
 

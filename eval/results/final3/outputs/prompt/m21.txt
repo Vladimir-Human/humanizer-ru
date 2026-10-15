@@ -1,0 +1,173 @@
+## Установка и быстрый старт
+
+**`rus-doc-anonymizer`** — открытая Python-библиотека, которая обезличивает персональные данные в документах **`.docx`** и **`.pdf`**.
+
+- Репозиторий: [github.com/sec-lab-ru/rus-doc-anonymizer](https://github.com/sec-lab-ru/rus-doc-anonymizer)
+- Текущая версия: **1.4.0**
+- Дата релиза: **10 ноября 2026 года**
+- Мейнтейнер: **Алексей Петрович Круглов**
+
+---
+
+### 1. Что нужно для работы
+
+Чтобы `rus-doc-anonymizer` 1.4.0 заработал, понадобится:
+
+- **Python 3.11 или новее.** Python 3.10 и более старые версии не поддерживаются.
+- **Не меньше 4 ГБ оперативной памяти.**
+- Документы в формате `.docx` или `.pdf`.
+- **Tesseract OCR версии 5.3 или новее**, если нужно распознавать сканы и изображения внутри PDF. Он должен быть установлен в системе. Если Tesseract нет или его версия ниже 5.3, отсканированные документы могут обрабатываться неправильно или не обрабатываться вовсе.
+
+> **Скорость работы:** документ на 100 страниц обрабатывается примерно за **3,5 секунды** на обычном офисном процессоре.
+
+---
+
+### 2. Установка библиотеки
+
+Лучше ставить пакет в отдельное виртуальное окружение.
+
+#### Linux / macOS
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install rus-doc-anonymizer==1.4.0
+```
+
+#### Windows PowerShell
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install rus-doc-anonymizer==1.4.0
+```
+
+Затем проверьте, какая версия Python используется:
+
+```bash
+python --version
+```
+
+Это должна быть версия **3.11 или выше**.
+
+---
+
+### 3. Установка и проверка Tesseract OCR
+
+Если вы собираетесь работать со сканами в PDF или с картинками внутри PDF, сначала убедитесь, что в системе есть Tesseract OCR версии **5.3 или новее**.
+
+#### Как проверить, что уже установлено
+
+```bash
+tesseract --version
+```
+
+В выводе должна быть версия не ниже 5.3, например:
+
+```text
+tesseract 5.3.1
+```
+
+#### Как установить Tesseract
+
+##### Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install tesseract-ocr
+```
+
+Потом проверьте версию. Если в репозитории вашего дистрибутива лежит более старая, поставьте Tesseract из официального источника или другим способом, который даёт актуальную версию.
+
+##### macOS
+
+```bash
+brew install tesseract
+```
+
+##### Windows
+
+Можно воспользоваться установщиком или менеджером пакетов, например:
+
+```powershell
+choco install tesseract
+```
+
+После этого добавьте путь к исполняемому файлу `tesseract` в переменную окружения `PATH` и проверьте, что он находится:
+
+```powershell
+tesseract --version
+```
+
+---
+
+### 4. Быстрый старт
+
+Вот минимальные примеры обезличивания документов.
+
+#### DOCX
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="contract.docx",
+    output_path="contract_anonymized.docx",
+)
+```
+
+#### Текстовый PDF
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="report.pdf",
+    output_path="report_anonymized.pdf",
+)
+```
+
+#### Отсканированный PDF
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="scan.pdf",
+    output_path="scan_anonymized.pdf",
+)
+```
+
+> **Важно:** чтобы текст в сканах и изображениях распознался, в системе должен быть Tesseract OCR версии не ниже 5.3.
+
+---
+
+### 5. Проверка
+
+После установки можно запустить короткий тест:
+
+```python
+from rus_doc_anonymizer import __version__
+
+print(__version__)
+```
+
+Должно вывестись:
+
+```text
+1.4.0
+```
+
+Если всё так, библиотека установлена правильно и можно приступать к работе с документами.
+
+---
+
+### 6. Обратная связь
+
+Проект развивается в открытом репозитории. Если вы нашли ошибку, заметили нестабильную работу с PDF, проблемы с распознаванием сканов или неверное обезличивание, создайте issue здесь:
+
+[https://github.com/sec-lab-ru/rus-doc-anonymizer/issues](https://github.com/sec-lab-ru/rus-doc-anonymizer/issues)
+
+**До выхода релиза 1.5, который запланирован на февраль 2027 года, просим присылать баг-репорты именно в раздел Issues.** Так мы быстрее исправим ошибки и подготовим стабильную следующую версию.

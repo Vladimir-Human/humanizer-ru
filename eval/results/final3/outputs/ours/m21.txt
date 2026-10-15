@@ -1,0 +1,175 @@
+````markdown
+## Установка и быстрый старт
+
+`rus-doc-anonymizer` — открытая Python-библиотека для обезличивания персональных данных в документах `.docx` и `.pdf`.
+
+- Репозиторий: [github.com/sec-lab-ru/rus-doc-anonymizer](https://github.com/sec-lab-ru/rus-doc-anonymizer)
+- Текущая версия: 1.4.0
+- Дата релиза: 10 ноября 2026 года
+- Мейнтейнер проекта: Алексей Петрович Круглов
+
+---
+
+### 1. Требования к окружению
+
+Для установки и работы `rus-doc-anonymizer` 1.4.0 нужно:
+
+- Python 3.11 или выше. Python 3.10 и более старые версии не поддерживаются.
+- Минимум 4 ГБ оперативной памяти.
+- Входные документы в формате `.docx` или `.pdf`.
+- Для распознавания сканов и изображений внутри PDF нужен установленный в системе Tesseract OCR версии не ниже 5.3. Если его нет или версия ниже, обработка отсканированных документов может выполняться некорректно или не выполняться вовсе.
+
+Документ на 100 страниц обрабатывается примерно за 3,5 секунды на обычном офисном процессоре.
+
+---
+
+### 2. Установка библиотеки
+
+Пакет лучше устанавливать в изолированное виртуальное окружение.
+
+#### Linux / macOS
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install rus-doc-anonymizer==1.4.0
+```
+
+#### Windows PowerShell
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install rus-doc-anonymizer==1.4.0
+```
+
+После установки проверьте версию Python:
+
+```bash
+python --version
+```
+
+Она должна быть 3.11 или выше.
+
+---
+
+### 3. Установка и проверка Tesseract OCR
+
+Если нужно обрабатывать отсканированные PDF или изображения внутри PDF, заранее убедитесь, что в системе есть Tesseract OCR версии 5.3 или новее.
+
+#### Проверка установленного Tesseract
+
+```bash
+tesseract --version
+```
+
+В выводе должна быть версия не ниже 5.3, например:
+
+```text
+tesseract 5.3.1
+```
+
+#### Установка Tesseract
+
+##### Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install tesseract-ocr
+```
+
+Проверьте версию после установки. Если в репозитории дистрибутива более старая версия, установите Tesseract из официального источника или другим способом получите актуальную.
+
+##### macOS
+
+```bash
+brew install tesseract
+```
+
+##### Windows
+
+Подойдёт установщик или менеджер пакетов, например:
+
+```powershell
+choco install tesseract
+```
+
+Затем добавьте путь к исполняемому файлу `tesseract` в переменную окружения `PATH` и проверьте, что он доступен:
+
+```powershell
+tesseract --version
+```
+
+---
+
+### 4. Быстрый старт
+
+Минимальный пример обезличивания документов.
+
+#### Обработка DOCX
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="contract.docx",
+    output_path="contract_anonymized.docx",
+)
+```
+
+#### Обработка текстового PDF
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="report.pdf",
+    output_path="report_anonymized.pdf",
+)
+```
+
+#### Обработка отсканированного PDF
+
+```python
+from rus_doc_anonymizer import anonymize_file
+
+anonymize_file(
+    input_path="scan.pdf",
+    output_path="scan_anonymized.pdf",
+)
+```
+
+> Чтобы текст в отсканированных PDF и изображениях распознался, в системе должен быть доступен Tesseract OCR версии не ниже 5.3.
+
+---
+
+### 5. Проверка работоспособности
+
+После установки можно выполнить короткий тест:
+
+```python
+from rus_doc_anonymizer import __version__
+
+print(__version__)
+```
+
+Ожидаемый вывод:
+
+```text
+1.4.0
+```
+
+Если вывод совпал, можно переходить к обработке документов.
+
+---
+
+### 6. Обратная связь
+
+Проект развивается в открытом репозитории. Если вы нашли ошибку, нестабильную работу с PDF, проблему с распознаванием сканов или неверное обезличивание, создайте issue:
+
+[https://github.com/sec-lab-ru/rus-doc-anonymizer/issues](https://github.com/sec-lab-ru/rus-doc-anonymizer/issues)
+
+До выхода релиза 1.5, запланированного на февраль 2027 года, просим присылать баг-репорты именно в раздел Issues. Так мы быстрее исправим ошибки и подготовим стабильную следующую версию.
+````

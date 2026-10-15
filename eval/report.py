@@ -11,7 +11,8 @@
 # START_MODULE_MAP
 # load: judgments with a valid ranking, corpus index, outputs.
 # aggregate: per-system positions, first places, pairwise wins, send_as_is, fact flags.
-# thresholds: the four usefulness criteria for "ours".
+# fact_flag: one vote per judge, the error counts on a majority of judges.
+# thresholds: usefulness criteria for "ours" (rule set 2, see README).
 # render: Markdown summary.
 # END_MODULE_MAP
 from __future__ import annotations
@@ -32,37 +33,58 @@ sys.modules["check_facts"] = check_facts  # dataclasses look the module up while
 _spec.loader.exec_module(check_facts)
 
 
+def _equal_weight(per_judge: dict):
+    """Mean of per-judge means: every judge (lab) weighs the same, however many passes it made."""
+    means = [sum(v) / len(v) for v in per_judge.values() if v]
+    return sum(means) / len(means) if means else None
+
+
+# START_CONTRACT: fact_flag
+# PURPOSE: Decide whether a (system, text) has a meaning error from the judges' passes.
+# INPUTS: {judge: [flagged passes, all passes]} for one system output.
+# OUTPUTS: (majority: bool, any_judge: bool).
+# RULE: a judge votes "error" when it flagged at least half of its passes; the error counts
+#       when a strict majority of judges vote so (2 of 3, both of 2). With one judge only
+#       (selection runs) the old pass rule applies: at least half of the passes and at least 2.
+# END_CONTRACT: fact_flag
+def fact_flag(votes: dict):
+    voted = [j for j, (bad, n) in votes.items() if n and bad * 2 >= n]
+    if len(votes) == 1:
+        bad, n = next(iter(votes.values()))
+        return bool(n and bad * 2 >= n and bad >= 2), bool(voted)
+    return len(voted) * 2 > len(votes), bool(voted)
+
+
 def aggregate(rows, ids, outputs, sources):
     systems = sorted({s for r in rows for s in r["ranking"]})
-    pos = defaultdict(list)
+    pos = defaultdict(lambda: defaultdict(list))  # system -> judge -> positions
     first = defaultdict(int)
-    wins = defaultdict(lambda: [0, 0])  # (a, b) -> [a above b, comparisons]
-    send = defaultdict(list)
-    fact_votes = defaultdict(lambda: [0, 0])  # (system, id) -> [passes with errors, passes]
+    wins = defaultdict(lambda: defaultdict(list))  # (a, b) -> judge -> [1 if a above b else 0]
+    send = defaultdict(lambda: defaultdict(list))
+    fact_votes = defaultdict(lambda: defaultdict(lambda: [0, 0]))  # (system, id) -> judge -> [flagged, passes]
     fact_notes = defaultdict(list)
     for r in rows:
         if r["id"] not in ids:
             continue
-        rank = r["ranking"]
+        rank, judge = r["ranking"], r["judge"]
         for i, s in enumerate(rank):
-            pos[s].append(i + 1)
+            pos[s][judge].append(i + 1)
         first[rank[0]] += 1
         for i, a in enumerate(rank):
             for b in rank[i + 1:]:
-                wins[(a, b)][0] += 1
-                wins[(a, b)][1] += 1
-                wins[(b, a)][1] += 1
+                wins[(a, b)][judge].append(1)
+                wins[(b, a)][judge].append(0)
         for s, c in (r.get("candidates") or {}).items():
             if isinstance(c.get("send_as_is"), (int, float)):
-                send[s].append(float(c["send_as_is"]))
+                send[s][judge].append(float(c["send_as_is"]))
             errs = [e for e in (c.get("fact_errors") or []) if str(e).strip() and str(e).strip().lower() not in ("нет", "-", "—")]
-            fact_votes[(s, r["id"])][1] += 1
+            fact_votes[(s, r["id"])][judge][1] += 1
             if errs:
-                fact_votes[(s, r["id"])][0] += 1
-                fact_notes[(s, r["id"])].append("; ".join(map(str, errs)))
+                fact_votes[(s, r["id"])][judge][0] += 1
+                fact_notes[(s, r["id"])].append("%s: %s" % (judge.split("/")[-1], "; ".join(map(str, errs))))
     script = {}
     for s in systems:
-        for tid in ids:
+        for tid in sorted(ids):
             out = outputs.get((s, tid))
             if out is None:
                 continue
@@ -70,19 +92,20 @@ def aggregate(rows, ids, outputs, sources):
             script[(s, tid)] = res["errors"]
     table = {}
     for s in systems:
-        flagged = [tid for tid in ids if fact_votes[(s, tid)][1] and
-                   fact_votes[(s, tid)][0] * 2 >= fact_votes[(s, tid)][1] and fact_votes[(s, tid)][0] >= 2]
+        flags = {tid: fact_flag(fact_votes[(s, tid)]) for tid in ids if (s, tid) in fact_votes}
+        mean_pos, mean_send = _equal_weight(pos[s]), _equal_weight(send[s])
         table[s] = {
-            "mean_position": round(sum(pos[s]) / len(pos[s]), 2) if pos[s] else None,
+            "mean_position": round(mean_pos, 2) if mean_pos is not None else None,
             "first_places": first[s],
-            "passes": len(pos[s]),
-            "send_as_is": round(sum(send[s]) / len(send[s]), 2) if send[s] else None,
-            "texts_with_fact_errors": flagged,
+            "passes": sum(len(v) for v in pos[s].values()),
+            "send_as_is": round(mean_send, 2) if mean_send is not None else None,
+            "texts_with_fact_errors": sorted(t for t, (major, _) in flags.items() if major),
+            "texts_flagged_by_any_judge": sorted(t for t, (_, anyj) in flags.items() if anyj),
             "script_errors": {tid: e for (ss, tid), e in script.items() if ss == s and e},
             "similarity": round(sum(difflib.SequenceMatcher(None, sources[t], outputs[(s, t)]).ratio()
                                     for t in ids if (s, t) in outputs) / max(1, sum(1 for t in ids if (s, t) in outputs)), 3),
         }
-    pair = {"%s>%s" % k: round(v[0] / v[1], 3) for k, v in wins.items() if v[1]}
+    pair = {"%s>%s" % k: round(_equal_weight(v), 3) for k, v in wins.items() if _equal_weight(v) is not None}
     notes = {"%s|%s" % k: v for k, v in fact_notes.items()}
     return table, pair, notes
 
@@ -92,6 +115,7 @@ def main() -> int:
     ap.add_argument("--run", required=True)
     ap.add_argument("--ours", default="ours")
     ap.add_argument("--baseline", default="prompt")
+    ap.add_argument("--prev", default="ours410", help="previous version of ours, if it is in the run")
     ap.add_argument("--judgments", default="judgments.jsonl")
     ap.add_argument("--judges", default="", help="only passes of these judges (comma list of model ids)")
     ap.add_argument("--out", default="summary", help="file name without extension for .md and .json")
@@ -143,16 +167,20 @@ def main() -> int:
         result["groups"][gname] = {"ids": ids, "table": table, "pairwise": pair, "fact_notes": notes}
         title = "ИИ-тексты" if gname == "ai" else "Ловушки (человеческие тексты и закон)"
         md += ["## %s: %d текстов" % (title, len(ids)), "",
-               "| Система | Среднее место | 1-е места | Готов к отправке, 1–10 | Тексты с ошибкой фактов (судьи) | Ошибки скрипта сверки | Сходство с исходником |",
-               "|---|---|---|---|---|---|---|"]
+               "| Система | Среднее место | 1-е места | Готов к отправке, 1–10 | Тексты с ошибкой смысла (большинство судей) | Отметил хоть один судья | Ошибки скрипта сверки | Сходство с исходником |",
+               "|---|---|---|---|---|---|---|---|"]
         for s in sorted(table, key=lambda x: table[x]["mean_position"] or 99):
             t = table[s]
-            md.append("| %s | %s | %d из %d | %s | %d | %d | %.2f |" % (
+            md.append("| %s | %s | %d из %d | %s | %d | %d | %d | %.2f |" % (
                 s, t["mean_position"], t["first_places"], t["passes"], t["send_as_is"],
-                len(t["texts_with_fact_errors"]), len(t["script_errors"]), t["similarity"]))
+                len(t["texts_with_fact_errors"]), len(t["texts_flagged_by_any_judge"]),
+                len(t["script_errors"]), t["similarity"]))
+        md.append("")
+        md.append("Среднее место и доли считаются у каждого судьи отдельно, затем усредняются: у каждого "
+                  "судьи один голос, сколько бы проходов он ни сделал.")
         md.append("")
         if args.ours in table:
-            md.append("Доля проходов, где `%s` выше соперника:" % args.ours)
+            md.append("Доля сравнений, где `%s` выше соперника:" % args.ours)
             md.append("")
             for s in sorted(table):
                 if s != args.ours and ("%s>%s" % (args.ours, s)) in pair:
@@ -163,24 +191,40 @@ def main() -> int:
     tr = result["groups"].get("trap", {})
     if ai and args.ours in ai["table"]:
         t = ai["table"][args.ours]
-        competitors = [s for s in ai["table"] if s not in (args.ours, args.baseline, "old_v3")]
+        errs = {s: len(v["texts_with_fact_errors"]) for s, v in ai["table"].items()}
+        others = [s for s in ai["table"] if s not in (args.ours, args.prev)]
+        competitors = [s for s in others if s not in (args.baseline, "old_v3")]
         best = max(competitors, key=lambda s: -ai["table"][s]["mean_position"]) if competitors else None
-        n_err = len(t["texts_with_fact_errors"]) + (len(tr["table"][args.ours]["texts_with_fact_errors"]) if tr else 0)
-        checks = [
-            ("Ошибок фактов не больше 1 на весь корпус (по большинству судей)", n_err <= 1, "%d" % n_err),
-            ("Выше простой просьбы хотя бы в 60% проходов", ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0) >= 0.6,
-             "%.0f%%" % (100 * ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0))),
-        ]
+        careful = min(others, key=lambda s: errs[s]) if others else None
+        n_err = errs[args.ours]
+        # Rule set 2 (fixed on 15.10.2026 before the holdout2 texts existed): one error text
+        # per 12 AI texts at most, and no more than the most careful other participant.
+        limit = max(1, len(ai["ids"]) // 12)
+        ok_err = n_err <= limit and (careful is None or n_err <= errs[careful])
+        cmp = ", и не больше, чем у самого аккуратного из остальных (%s: %d)" % (careful, errs[careful]) if careful else ""
+        checks = [("Тексты с ошибкой смысла (большинство судей): не больше %d на %d ИИ-текстов%s"
+                   % (limit, len(ai["ids"]), cmp), ok_err, "%d" % n_err)]
+        if args.baseline in ai["table"]:
+            share = ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0)
+            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", share >= 0.6, "%.0f%%" % (100 * share)))
+        else:
+            # A tuning run without the baseline must not look as if this threshold had failed or passed.
+            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", None, "просьбы в прогоне нет"))
         if best:
             share = ai["pairwise"].get("%s>%s" % (args.ours, best), 0)
             checks.append(("Не хуже лучшего конкурента (%s): не меньше 50%%" % best, share >= 0.5, "%.0f%%" % (100 * share)))
+        if args.prev in ai["table"]:
+            share = ai["pairwise"].get("%s>%s" % (args.ours, args.prev), 0)
+            checks.append(("Не хуже прошлой версии (%s): не меньше 50%% и ошибок смысла не больше (%d)"
+                           % (args.prev, errs[args.prev]), share >= 0.5 and n_err <= errs[args.prev],
+                           "%.0f%%, %d" % (100 * share, n_err)))
         if tr and args.ours in tr["table"]:
             tt = tr["table"][args.ours]
             ok_traps = sum(1 for tid in tr["ids"] if tid not in tt["texts_with_fact_errors"])
-            checks.append(("Ловушки: без ошибок фактов хотя бы 5 из 6", ok_traps >= 5, "%d из %d" % (ok_traps, len(tr["ids"]))))
+            checks.append(("Ловушки: без ошибок смысла хотя бы 5 из 6", ok_traps >= 5, "%d из %d" % (ok_traps, len(tr["ids"]))))
         else:
             # A run without traps must not look as if the trap threshold had passed.
-            checks.append(("Ловушки: без ошибок фактов хотя бы 5 из 6", None, "ловушек в прогоне нет"))
+            checks.append(("Ловушки: без ошибок смысла хотя бы 5 из 6", None, "ловушек в прогоне нет"))
         md += ["## Пороги полезности", "", "| Условие | Итог | Значение |", "|---|---|---|"]
         for name, ok, val in checks:
             verdict = "не проверено" if gaps or ok is None else ("выполнено" if ok else "не выполнено")

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<requirements project="humanizer-ru" version="4.0.0" evidence="SKILL.md, scripts, eval results of 2026-10-15">
+<requirements project="humanizer-ru" version="4.1.1" evidence="SKILL.md, scripts, eval results of 2026-10-15 (results/final3)">
   <requirement id="R-REWRITE-DEFAULT" source="skills/humanizer-ru/SKILL.md: Режимы, Как править">
     Given Russian text with machine traces, the skill rewrites it by default and returns ready-to-send text. Other modes only on request: analysis without edits, a targeted single-layer edit, file mode (prose only), voice by the author's sample.
   </requirement>
@@ -27,8 +27,8 @@
   <rule id="R-NO-LOCAL-NN" source="owner decision 2026-08-25">
     No local neural models of any runtime in the project.
   </rule>
-  <rule id="R-USEFUL" source="eval/README.md">
-    A behaviour change ships only if the blind comparison does not get worse: fact errors at most 1 on the corpus, ahead of the one-line prompt in at least 60% of judge passes, not behind the best competitor.
+  <rule id="R-USEFUL" source="eval/README.md: Пороги, rule set 2 fixed 2026-10-15 before holdout2 texts existed">
+    Judges from three labs, one vote per judge (passes of one judge are averaged first). A meaning error counts when a majority of judges flag it. On a public run "ours" must have: at most one error text per 12 AI texts and no more than the most careful other participant; a lead over the one-line prompt in at least 60% of comparisons; at least 50% against the best competitor and against the previous version, with no more error texts than the previous version; at least 5 of 6 traps without errors.
   </rule>
   <rule id="R-HOLDOUT" source="review 2026-10-15">
     Rules are tuned on the dev set only. Public claims come from texts the skill was never tuned on; once a set has been used to change the skill, a fresh set is generated for the next public comparison.

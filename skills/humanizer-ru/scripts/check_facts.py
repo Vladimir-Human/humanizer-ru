@@ -4,7 +4,8 @@
 # PURPOSE: Compare an original Russian text with its edited version and report facts that
 #          were lost, invented or rebound: numbers, dates, times, names, URLs, quotes,
 #          negations, hedges and "who got which number" pairs; flags certainty, scope,
-#          condition and attribution words that got rarer and intensifiers that got more frequent.
+#          condition and attribution words that got rarer and intensifiers that got more frequent;
+#          HTML tags of the original that were lost (emphasis tags only as checks).
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -12,7 +13,7 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # extract: text -> Facts (numbers with units, dates, urls, names, quotes, negations, hedges, sentences).
-# compare: (before, after) -> {"errors": [...], "checks": [...]}.
+# compare: (before, after) -> {"errors": [...], "checks": [...]}; markup block counts HTML tags.
 # render: human-readable Russian report.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
 # END_MODULE_MAP
@@ -541,6 +542,24 @@ def compare(before: str, after: str) -> Dict:
         checks.append({"kind": "modality", "what": "уверенность и охват",
                        "detail": "слов вроде «самый», «главный», «лучший» стало больше (%d → %d): не усилено ли утверждение?" % (nb, na)})
     # END_BLOCK_MODALITY_DIFF
+
+    # START_BLOCK_MARKUP_DIFF
+    # HTML in the original is part of the text: structural tags must survive the edit; lost
+    # emphasis tags only need a look (decorative bold may be removed on purpose).
+    # The name ends at a space, "/" or ">": autolinks <https://…> and <a@b.ru> are not tags.
+    tag_rx = re.compile(r"<([a-z][a-z0-9]*)(?:\s[^<>]*)?/?>", re.I)
+    emphasis = {"b", "strong", "i", "em", "mark", "u"}
+    tags_b = [t.lower() for t in tag_rx.findall(before)]
+    if len(tags_b) >= 2:
+        tags_a = [t.lower() for t in tag_rx.findall(after)]
+        for tag in sorted(set(tags_b)):
+            nb, na = tags_b.count(tag), tags_a.count(tag)
+            if na < nb:
+                (checks if tag in emphasis else errors).append(
+                    {"kind": "lost", "what": "разметка", "detail": "<%s> %d → %d" % (tag, nb, na)})
+        for tag in sorted(set(tags_a) - set(tags_b)):
+            checks.append({"kind": "added", "what": "разметка", "detail": "появился тег <%s>" % tag})
+    # END_BLOCK_MARKUP_DIFF
 
     # START_BLOCK_BINDINGS
     # Who got which number: in the original sentence a name and a number stand together;

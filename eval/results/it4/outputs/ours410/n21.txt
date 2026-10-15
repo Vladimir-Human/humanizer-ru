@@ -1,0 +1,92 @@
+```html
+<section class="faq" aria-label="Часто задаваемые вопросы">
+  <h2>Частые вопросы</h2>
+
+  <details class="faq__item">
+    <summary>В какое время вы работаете?</summary>
+    <p>Работаем каждый день с <strong>9:00 до 21:00</strong>, без перерывов и выходных.</p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Сколько стоит диагностика ходовой?</summary>
+    <p>
+      Диагностика ходовой части бесплатна, если сразу делаете ремонт у нас.
+      Без последующего ремонта она стоит <strong>1 500 ₽</strong>.
+    </p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Можно ли привезти свои запчасти?</summary>
+    <p>
+      Да, ставим запчасти клиента. Но гарантию на них мы не даём: ручаться за их качество и происхождение
+      не можем. Гарантия распространяется только на работы.
+    </p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Даёте ли вы гарантию на работы и запчасти?</summary>
+    <p>
+      На все выполненные работы даём гарантию. На запчасти, купленные у нас, действует гарантия производителя.
+      На запчасти, которые привозит клиент, гарантии нет.
+    </p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Можно ли подождать машину в автосервисе?</summary>
+    <p>
+      Да, у нас есть зона ожидания. Пока мастер работает с вашим автомобилем, можно отдохнуть,
+      воспользоваться Wi-Fi и выпить бесплатный кофе.
+    </p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Нужно ли заранее записываться?</summary>
+    <p>
+      Запись желательна: так мы спланируем загрузку мастеров и уделим вашему автомобилю максимум внимания.
+      Если случай срочный, звоните, постараемся принять вас в ближайшее время.
+    </p>
+  </details>
+
+  <details class="faq__item">
+    <summary>Как к вам записаться?</summary>
+    <p>
+      Записаться можно по телефону в рабочее время или в Telegram:
+      <a href="https://t.me/autoservice_north">@autoservice_north</a>.
+    </p>
+  </details>
+</section>
+```
+
+### Пример оформления через CSS (по желанию)
+
+Если используете тему без встроенных стилей, добавьте в свой CSS-файл:
+
+```css
+.faq { max-width: 800px; margin: 0 auto; }
+.faq h2 { margin-bottom: 20px; }
+.faq__item {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 14px 0;
+}
+.faq__item summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  list-style: none;
+  position: relative;
+  padding-right: 30px;
+}
+.faq__item summary::-webkit-details-marker { display: none; }
+.faq__item summary::after {
+  content: "+";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  color: #888;
+  transition: transform .2s;
+}
+.faq__item[open] summary::after { content: "−"; }
+.faq__item p, .faq__item ul { margin-top: 10px; color: #444; line-height: 1.5; }
+```

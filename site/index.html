@@ -92,23 +92,19 @@ a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
 
   <section>
     <h2>Сравнение вслепую, октябрь 2026</h2>
-    <p>Двенадцать навыков сначала сравнили на коротком наборе и отобрали сильных. Финал шёл на 24 свежих ИИ-текстах, которых ни одна версия навыка не видела. Каждый навык применяла одна модель, Claude Sonnet 5.5; перемешанные варианты ранжировали Gemini 4 Argon и Kimi K3 по вопросу «что бы вы отправили с наименьшей доработкой».</p>
+    <p>Последний замер, 4.1.1: 24 свежих ИИ-текста одиннадцати моделей, которых навык не видел, и шесть человеческих текстов-ловушек. Каждый навык применяла одна модель, Claude Sonnet 5.5; перемешанные варианты ранжировали Gemini 4 Argon, Kimi K3 и Muse Spark 1.3 по вопросу «что бы вы отправили с наименьшей доработкой». У каждого судьи один голос, ошибка смысла засчитана, если её отметили двое из трёх. Пороги записаны до того, как появились тексты.</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Навык</th><th>Звёзды</th><th>Среднее место из 8</th><th>Наш выше</th><th>Тексты с ошибкой смысла</th></tr></thead>
+        <thead><tr><th>Участник</th><th>Звёзды</th><th>Среднее место из 5</th><th>Наш выше</th><th>Тексты с ошибкой смысла из 24</th></tr></thead>
         <tbody>
-          <tr class="us"><td>humanizer-ru 4.1</td><td class="n">125</td><td class="n">3.08</td><td class="n">—</td><td class="n">4</td></tr>
-          <tr><td>ormeilu/avoid-ai-writing-russian</td><td class="n">18</td><td class="n">3.43</td><td class="n">54%</td><td class="n">8</td></tr>
-          <tr><td>ilyautov/humanizer-ru</td><td class="n">452</td><td class="n">3.79</td><td class="n">65%</td><td class="n">3</td></tr>
-          <tr><td>fsbtactic-code/pishi-normalno</td><td class="n">5</td><td class="n">4.72</td><td class="n">72%</td><td class="n">3</td></tr>
-          <tr><td>просьба одной строкой</td><td class="n">—</td><td class="n">4.88</td><td class="n">67%</td><td class="n">7</td></tr>
-          <tr><td>beaverbeard/chukovsky</td><td class="n">10</td><td class="n">4.94</td><td class="n">71%</td><td class="n">10</td></tr>
-          <tr><td>blader/humanizer</td><td class="n">57 210</td><td class="n">5.43</td><td class="n">83%</td><td class="n">14</td></tr>
-          <tr><td>beaverbeard/slopotron</td><td class="n">64</td><td class="n">5.72</td><td class="n">79%</td><td class="n">11</td></tr>
+          <tr class="us"><td>humanizer-ru 4.1.1</td><td class="n">125</td><td class="n">2.38</td><td class="n">—</td><td class="n">2</td></tr>
+          <tr><td>ilyautov/humanizer-ru</td><td class="n">452</td><td class="n">3.10</td><td class="n">65%</td><td class="n">2</td></tr>
+          <tr><td>ormeilu/avoid-ai-writing-russian</td><td class="n">18</td><td class="n">3.18</td><td class="n">69%</td><td class="n">9</td></tr>
+          <tr><td>просьба одной строкой</td><td class="n">—</td><td class="n">3.74</td><td class="n">77%</td><td class="n">8</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="soft">stop-slop, no-ai-slop, avoid-ai-writing и ещё пять навыков не прошли отбор. Против avoid-ai-writing-russian результат близкий: Gemini ставит нас первыми, Kimi — вторыми. Судьи — модели, живых редакторов среди них не было. Все тексты, ответы и оценки: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval">eval/</a>.</p>
+    <p class="soft">Пятым участником был новый вариант нашей инструкции из трёх циклов настройки: прошлую он не обогнал (49% сравнений), поэтому в 4.1.1 его нет. Gemini и Kimi ставят humanizer-ru выше обоих соперников, Muse Spark — выше avoid-ai-writing-russian и вровень с ilyautov. В замере 4.1.0 из восьми участников blader/humanizer был седьмым, stop-slop и no-ai-slop не прошли отбор. Судьи — модели, живых редакторов среди них не было. Все тексты, ответы и оценки: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval">eval/</a>.</p>
   </section>
 </main>
 </body>

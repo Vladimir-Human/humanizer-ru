@@ -12,7 +12,7 @@
 # PROMPT: judge instructions (Russian), answer format JSON.
 # build: shuffled candidate block and the label->system key.
 # parse: tolerant JSON extraction from the judge answer.
-# main: CLI --run --judges --rounds --texts.
+# main: CLI --run --judges (model=N for N passes) --rounds --texts.
 # END_MODULE_MAP
 from __future__ import annotations
 
@@ -62,7 +62,11 @@ def parse(text: str):
     if not m:
         return None
     raw = m.group()
-    for attempt in (raw, re.sub(r",\s*([}\]])", r"\1", raw)):
+    # Kimi K3 sometimes closes a candidate before its score: {"A": {"language_errors": []}, "send_as_is": 8}.
+    moved = re.sub(r"\]\s*\}\s*,\s*(\"send_as_is\")", r"], \1", raw)
+    # Depending on how the answer ends, "candidates" is then either closed or still open.
+    closed = re.sub(r"\}\s*,\s*(\"ranking\")", r"}}, \1", moved, count=1) if moved != raw else raw
+    for attempt in (raw, re.sub(r",\s*([}\]])", r"\1", raw), moved, closed):
         try:
             return json.loads(attempt)
         except json.JSONDecodeError:
@@ -73,8 +77,9 @@ def parse(text: str):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    ap.add_argument("--judges", default="google/gemini-4-argon,openai/gpt-6.1-sol")
-    ap.add_argument("--rounds", type=int, default=2)
+    # One vote per judge in report.py; "model=N" gives that judge N passes in different orders.
+    ap.add_argument("--judges", default="google/gemini-4-argon=2,moonshotai/kimi-k3,meta/muse-spark-1.3")
+    ap.add_argument("--rounds", type=int, default=1, help="passes for judges without =N")
     ap.add_argument("--effort", default="medium")
     ap.add_argument("--texts", default="")
     ap.add_argument("--systems", default="", help="only these systems (default: all with outputs)")
@@ -106,8 +111,9 @@ def main() -> int:
             print("skip %s: outputs missing for %s" % (tid, sorted(set(systems) - set(outputs))))
             continue
         source = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (tid + ".txt"))
-        for judge in args.judges.split(","):
-            for rnd in range(args.rounds):
+        for spec in args.judges.split(","):
+            judge, _, n = spec.partition("=")
+            for rnd in range(int(n) if n else args.rounds):
                 if (tid, judge, rnd, tuple(sorted(outputs))) not in done:
                     jobs.append((tid, judge, rnd, source, outputs))
 
