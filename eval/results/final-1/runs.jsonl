@@ -1,0 +1,216 @@
+{"steps": 1, "files_read": [], "cost": 0.0084652, "prompt_tokens": 5889, "completion_tokens": 735, "system": "ours", "id": "t01"}
+{"steps": 1, "files_read": [], "cost": 0.0159832, "prompt_tokens": 6348, "completion_tokens": 1395, "system": "ours", "id": "t02"}
+{"steps": 1, "files_read": [], "cost": 0.0100392, "prompt_tokens": 6136, "completion_tokens": 843, "system": "ours", "id": "t03"}
+{"steps": 1, "files_read": [], "cost": 0.0075112, "prompt_tokens": 5977, "completion_tokens": 622, "system": "ours", "id": "t04"}
+{"steps": 1, "files_read": [], "cost": 0.0242092, "prompt_tokens": 6516, "completion_tokens": 2184, "system": "ours", "id": "t05"}
+{"steps": 1, "files_read": [], "cost": 0.0185612, "prompt_tokens": 6587, "completion_tokens": 1605, "system": "ours", "id": "t06"}
+{"steps": 1, "files_read": [], "cost": 0.0111872, "prompt_tokens": 6155, "completion_tokens": 954, "system": "ours", "id": "t07"}
+{"steps": 1, "files_read": [], "cost": 0.0122392, "prompt_tokens": 6071, "completion_tokens": 1076, "system": "ours", "id": "t08"}
+{"steps": 1, "files_read": [], "cost": 0.0488232, "prompt_tokens": 8438, "completion_tokens": 4261, "system": "ours", "id": "t09"}
+{"steps": 1, "files_read": [], "cost": 0.0140392, "prompt_tokens": 6366, "completion_tokens": 1197, "system": "ours", "id": "t10"}
+{"steps": 1, "files_read": [], "cost": 0.0510912, "prompt_tokens": 8612, "completion_tokens": 4453, "system": "ours", "id": "t11"}
+{"steps": 1, "files_read": [], "cost": 0.0081752, "prompt_tokens": 5924, "completion_tokens": 699, "system": "ours", "id": "t12"}
+{"steps": 1, "files_read": [], "cost": 0.0257332, "prompt_tokens": 6913, "completion_tokens": 2257, "system": "ours", "id": "t13"}
+{"steps": 1, "files_read": [], "cost": 0.0130652, "prompt_tokens": 6229, "completion_tokens": 1127, "system": "ours", "id": "t14"}
+{"steps": 1, "files_read": [], "cost": 0.0090472, "prompt_tokens": 6040, "completion_tokens": 763, "system": "ours", "id": "t15"}
+{"steps": 1, "files_read": [], "cost": 0.0073312, "prompt_tokens": 6132, "completion_tokens": 573, "system": "ours", "id": "t16"}
+{"steps": 1, "files_read": [], "cost": 0.0268292, "prompt_tokens": 7166, "completion_tokens": 2316, "system": "ours", "id": "t17"}
+{"steps": 1, "files_read": [], "cost": 0.0106432, "prompt_tokens": 5928, "completion_tokens": 945, "system": "ours", "id": "t18"}
+{"steps": 1, "files_read": [], "cost": 0.0148752, "prompt_tokens": 6254, "completion_tokens": 1303, "system": "ours", "id": "t19"}
+{"steps": 1, "files_read": [], "cost": 0.0221212, "prompt_tokens": 6937, "completion_tokens": 1891, "system": "ours", "id": "t20"}
+{"steps": 1, "files_read": [], "cost": 0.0166752, "prompt_tokens": 6354, "completion_tokens": 1463, "system": "ours", "id": "t21"}
+{"steps": 1, "files_read": [], "cost": 0.0339512, "prompt_tokens": 7577, "completion_tokens": 2946, "system": "ours", "id": "t22"}
+{"steps": 1, "files_read": [], "cost": 0.0039012, "prompt_tokens": 5867, "completion_tokens": 283, "system": "ours", "id": "t23"}
+{"steps": 1, "files_read": [], "cost": 0.0206992, "prompt_tokens": 6386, "completion_tokens": 1859, "system": "ours", "id": "t24"}
+{"steps": 1, "files_read": [], "cost": 0.0173812, "prompt_tokens": 6382, "completion_tokens": 1528, "system": "ours", "id": "r01"}
+{"steps": 1, "files_read": [], "cost": 0.0120952, "prompt_tokens": 6129, "completion_tokens": 1050, "system": "ours", "id": "r02"}
+{"steps": 1, "files_read": [], "cost": 0.0116792, "prompt_tokens": 6251, "completion_tokens": 984, "system": "ours", "id": "r03"}
+{"steps": 1, "files_read": [], "cost": 0.0283172, "prompt_tokens": 6990, "completion_tokens": 2500, "system": "ours", "id": "r04"}
+{"steps": 1, "files_read": [], "cost": 0.0149992, "prompt_tokens": 6341, "completion_tokens": 1298, "system": "ours", "id": "r05"}
+{"steps": 1, "files_read": [], "cost": 0.0182412, "prompt_tokens": 6687, "completion_tokens": 1553, "system": "ours", "id": "r06"}
+{"steps": 1, "files_read": [], "cost": 0.0039172, "prompt_tokens": 5800, "completion_tokens": 298, "system": "ours", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0115032, "prompt_tokens": 6473, "completion_tokens": 922, "system": "ours", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0111952, "prompt_tokens": 6264, "completion_tokens": 933, "system": "ours", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0037032, "prompt_tokens": 5848, "completion_tokens": 267, "system": "ours", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0058012, "prompt_tokens": 5812, "completion_tokens": 484, "system": "ours", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0014412, "prompt_tokens": 5777, "completion_tokens": 55, "system": "ours", "id": "h06"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md", "knowledge/corrections.md"], "cost": 0.039355, "prompt_tokens": 29416, "completion_tokens": 946, "system": "old_v3", "id": "t01"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.037071, "prompt_tokens": 26319, "completion_tokens": 1337, "system": "old_v3", "id": "t02"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md"], "cost": 0.038969, "prompt_tokens": 29313, "completion_tokens": 928, "system": "old_v3", "id": "t03"}
+{"steps": 1, "files_read": [], "cost": 0.0094815, "prompt_tokens": 7980, "completion_tokens": 799, "system": "old_v3", "id": "t04"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md"], "cost": 0.049329, "prompt_tokens": 30073, "completion_tokens": 1812, "system": "old_v3", "id": "t05"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md"], "cost": 0.046303, "prompt_tokens": 30215, "completion_tokens": 1481, "system": "old_v3", "id": "t06"}
+{"steps": 1, "files_read": [], "cost": 0.0092875, "prompt_tokens": 8158, "completion_tokens": 744, "system": "old_v3", "id": "t07"}
+{"steps": 1, "files_read": [], "cost": 0.0105895, "prompt_tokens": 8074, "completion_tokens": 891, "system": "old_v3", "id": "t08"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.067701, "prompt_tokens": 30499, "completion_tokens": 3564, "system": "old_v3", "id": "t09"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md", "knowledge/corrections.md"], "cost": 0.045163, "prompt_tokens": 30370, "completion_tokens": 1336, "system": "old_v3", "id": "t10"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md", "references/chatbot-artifacts.md"], "cost": 0.071347, "prompt_tokens": 34862, "completion_tokens": 3056, "system": "old_v3", "id": "t11"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.031474999999999996, "prompt_tokens": 25471, "completion_tokens": 947, "system": "old_v3", "id": "t12"}
+{"steps": 1, "files_read": [], "cost": 0.0184035, "prompt_tokens": 8916, "completion_tokens": 1504, "system": "old_v3", "id": "t13"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/false-positives.md", "knowledge/corrections.md"], "cost": 0.053773, "prompt_tokens": 34950, "completion_tokens": 1281, "system": "old_v3", "id": "t14"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.033958999999999996, "prompt_tokens": 25703, "completion_tokens": 1149, "system": "old_v3", "id": "t15"}
+{"steps": 1, "files_read": [], "cost": 0.0072615, "prompt_tokens": 8135, "completion_tokens": 546, "system": "old_v3", "id": "t16"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md"], "cost": 0.06283899999999999, "prompt_tokens": 27333, "completion_tokens": 3711, "system": "old_v3", "id": "t17"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.029101, "prompt_tokens": 25479, "completion_tokens": 708, "system": "old_v3", "id": "t18"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md"], "cost": 0.038611, "prompt_tokens": 25509, "completion_tokens": 1653, "system": "old_v3", "id": "t19"}
+{"steps": 2, "files_read": ["references/removal-matrix.md", "references/chatbot-artifacts.md"], "cost": 0.041643, "prompt_tokens": 26320, "completion_tokens": 1794, "system": "old_v3", "id": "t20"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md"], "cost": 0.037571, "prompt_tokens": 25709, "completion_tokens": 1509, "system": "old_v3", "id": "t21"}
+{"steps": 2, "files_read": ["references/chatbot-artifacts.md", "references/rewrite-guide.md", "knowledge/corrections.md", "references/false-positives.md"], "cost": 0.086215, "prompt_tokens": 41661, "completion_tokens": 3183, "system": "old_v3", "id": "t22"}
+{"steps": 1, "files_read": [], "cost": 0.0061815, "prompt_tokens": 7870, "completion_tokens": 491, "system": "old_v3", "id": "t23"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.041433, "prompt_tokens": 26395, "completion_tokens": 1758, "system": "old_v3", "id": "t24"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "references/chatbot-artifacts.md", "knowledge/corrections.md"], "cost": 0.051917, "prompt_tokens": 30402, "completion_tokens": 2005, "system": "old_v3", "id": "r01"}
+{"steps": 1, "files_read": [], "cost": 0.0133555, "prompt_tokens": 8132, "completion_tokens": 1156, "system": "old_v3", "id": "r02"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.035822999999999994, "prompt_tokens": 26125, "completion_tokens": 1251, "system": "old_v3", "id": "r03"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md", "references/communication-patterns.md"], "cost": 0.063543, "prompt_tokens": 33285, "completion_tokens": 2591, "system": "old_v3", "id": "r04"}
+{"steps": 2, "files_read": ["references/rewrite-guide.md", "knowledge/corrections.md"], "cost": 0.033093, "prompt_tokens": 26305, "completion_tokens": 942, "system": "old_v3", "id": "r05"}
+{"steps": 2, "files_read": ["references/false-positives.md", "references/rewrite-guide.md"], "cost": 0.064591, "prompt_tokens": 35269, "completion_tokens": 2299, "system": "old_v3", "id": "r06"}
+{"steps": 1, "files_read": [], "cost": 0.0093475, "prompt_tokens": 7803, "completion_tokens": 821, "system": "old_v3", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0106235, "prompt_tokens": 8476, "completion_tokens": 814, "system": "old_v3", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0180655, "prompt_tokens": 8267, "completion_tokens": 1600, "system": "old_v3", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0069635, "prompt_tokens": 7851, "completion_tokens": 573, "system": "old_v3", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0056215, "prompt_tokens": 7815, "completion_tokens": 446, "system": "old_v3", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0050215, "prompt_tokens": 7780, "completion_tokens": 393, "system": "old_v3", "id": "h06"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0299942, "prompt_tokens": 15965, "completion_tokens": 835, "system": "ilyautov", "id": "t01"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0214974, "prompt_tokens": 16883, "completion_tokens": 1565, "system": "ilyautov", "id": "t02"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0167994, "prompt_tokens": 16459, "completion_tokens": 1180, "system": "ilyautov", "id": "t03"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0104134, "prompt_tokens": 16141, "completion_tokens": 605, "system": "ilyautov", "id": "t04"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0244294, "prompt_tokens": 17219, "completion_tokens": 1791, "system": "ilyautov", "id": "t05"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0206534, "prompt_tokens": 17361, "completion_tokens": 1385, "system": "ilyautov", "id": "t06"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0161954, "prompt_tokens": 16497, "completion_tokens": 1112, "system": "ilyautov", "id": "t07"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0134994, "prompt_tokens": 16329, "completion_tokens": 876, "system": "ilyautov", "id": "t08"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0627474, "prompt_tokens": 21063, "completion_tokens": 4854, "system": "ilyautov", "id": "t09"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0159494, "prompt_tokens": 16919, "completion_tokens": 1003, "system": "ilyautov", "id": "t10"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0658534, "prompt_tokens": 21411, "completion_tokens": 5095, "system": "ilyautov", "id": "t11"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0104314, "prompt_tokens": 16035, "completion_tokens": 628, "system": "ilyautov", "id": "t12"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0283674, "prompt_tokens": 18013, "completion_tokens": 2026, "system": "ilyautov", "id": "t13"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0163814, "prompt_tokens": 16645, "completion_tokens": 1101, "system": "ilyautov", "id": "t14"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0137054, "prompt_tokens": 16267, "completion_tokens": 909, "system": "ilyautov", "id": "t15"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.012433399999999999, "prompt_tokens": 16451, "completion_tokens": 745, "system": "ilyautov", "id": "t16"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0464194, "prompt_tokens": 18519, "completion_tokens": 3730, "system": "ilyautov", "id": "t17"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.013047399999999999, "prompt_tokens": 16043, "completion_tokens": 888, "system": "ilyautov", "id": "t18"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0187114, "prompt_tokens": 16695, "completion_tokens": 1324, "system": "ilyautov", "id": "t19"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0327434, "prompt_tokens": 18061, "completion_tokens": 2454, "system": "ilyautov", "id": "t20"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0227214, "prompt_tokens": 16895, "completion_tokens": 1685, "system": "ilyautov", "id": "t21"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0543334, "prompt_tokens": 19341, "completion_tokens": 4357, "system": "ilyautov", "id": "t22"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0082334, "prompt_tokens": 15921, "completion_tokens": 431, "system": "ilyautov", "id": "t23"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0232594, "prompt_tokens": 16959, "completion_tokens": 1726, "system": "ilyautov", "id": "t24"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0071534, "prompt_tokens": 16951, "completion_tokens": 117, "system": "ilyautov", "id": "r01"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0136814, "prompt_tokens": 16445, "completion_tokens": 871, "system": "ilyautov", "id": "r02"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0148194, "prompt_tokens": 16689, "completion_tokens": 936, "system": "ilyautov", "id": "r03"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0392954, "prompt_tokens": 18167, "completion_tokens": 3088, "system": "ilyautov", "id": "r04"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.019289399999999998, "prompt_tokens": 16869, "completion_tokens": 1347, "system": "ilyautov", "id": "r05"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0268934, "prompt_tokens": 17561, "completion_tokens": 1969, "system": "ilyautov", "id": "r06"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.012315399999999999, "prompt_tokens": 15787, "completion_tokens": 866, "system": "ilyautov", "id": "h01"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0224374, "prompt_tokens": 17133, "completion_tokens": 1609, "system": "ilyautov", "id": "h02"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0219614, "prompt_tokens": 16715, "completion_tokens": 1645, "system": "ilyautov", "id": "h03"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0085174, "prompt_tokens": 15883, "completion_tokens": 467, "system": "ilyautov", "id": "h04"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.010263399999999999, "prompt_tokens": 15811, "completion_tokens": 656, "system": "ilyautov", "id": "h05"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.009323399999999999, "prompt_tokens": 15741, "completion_tokens": 576, "system": "ilyautov", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.030264, "prompt_tokens": 11681, "completion_tokens": 120, "system": "blader", "id": "t01"}
+{"steps": 1, "files_read": [], "cost": 0.0064024, "prompt_tokens": 12140, "completion_tokens": 379, "system": "blader", "id": "t02"}
+{"steps": 1, "files_read": [], "cost": 0.0047884, "prompt_tokens": 11928, "completion_tokens": 260, "system": "blader", "id": "t03"}
+{"steps": 1, "files_read": [], "cost": 0.0100104, "prompt_tokens": 11769, "completion_tokens": 814, "system": "blader", "id": "t04"}
+{"steps": 1, "files_read": [], "cost": 0.0203784, "prompt_tokens": 12308, "completion_tokens": 1743, "system": "blader", "id": "t05"}
+{"steps": 1, "files_read": [], "cost": 0.0152504, "prompt_tokens": 12379, "completion_tokens": 1216, "system": "blader", "id": "t06"}
+{"steps": 1, "files_read": [], "cost": 0.0096364, "prompt_tokens": 11947, "completion_tokens": 741, "system": "blader", "id": "t07"}
+{"steps": 1, "files_read": [], "cost": 0.0052284, "prompt_tokens": 11863, "completion_tokens": 317, "system": "blader", "id": "t08"}
+{"steps": 1, "files_read": [], "cost": 0.0560924, "prompt_tokens": 14230, "completion_tokens": 4930, "system": "blader", "id": "t09"}
+{"steps": 1, "files_read": [], "cost": 0.0141484, "prompt_tokens": 12158, "completion_tokens": 1150, "system": "blader", "id": "t10"}
+{"steps": 1, "files_read": [], "cost": 0.0439704, "prompt_tokens": 14404, "completion_tokens": 3683, "system": "blader", "id": "t11"}
+{"steps": 1, "files_read": [], "cost": 0.0035844, "prompt_tokens": 11716, "completion_tokens": 182, "system": "blader", "id": "t12"}
+{"steps": 1, "files_read": [], "cost": 0.0143924, "prompt_tokens": 12705, "completion_tokens": 1065, "system": "blader", "id": "t13"}
+{"steps": 1, "files_read": [], "cost": 0.0139944, "prompt_tokens": 12021, "completion_tokens": 1162, "system": "blader", "id": "t14"}
+{"steps": 1, "files_read": [], "cost": 0.0044964, "prompt_tokens": 11832, "completion_tokens": 250, "system": "blader", "id": "t15"}
+{"steps": 1, "files_read": [], "cost": 0.0050804, "prompt_tokens": 11924, "completion_tokens": 290, "system": "blader", "id": "t16"}
+{"steps": 1, "files_read": [], "cost": 0.0337684, "prompt_tokens": 12958, "completion_tokens": 2952, "system": "blader", "id": "t17"}
+{"steps": 1, "files_read": [], "cost": 0.0035524, "prompt_tokens": 11720, "completion_tokens": 178, "system": "blader", "id": "t18"}
+{"steps": 1, "files_read": [], "cost": 0.0167444, "prompt_tokens": 12046, "completion_tokens": 1432, "system": "blader", "id": "t19"}
+{"steps": 1, "files_read": [], "cost": 0.0204604, "prompt_tokens": 12729, "completion_tokens": 1667, "system": "blader", "id": "t20"}
+{"steps": 1, "files_read": [], "cost": 0.0176744, "prompt_tokens": 12146, "completion_tokens": 1505, "system": "blader", "id": "t21"}
+{"steps": 1, "files_read": [], "cost": 0.0413504, "prompt_tokens": 13369, "completion_tokens": 3628, "system": "blader", "id": "t22"}
+{"steps": 1, "files_read": [], "cost": 0.0047104, "prompt_tokens": 11659, "completion_tokens": 306, "system": "blader", "id": "t23"}
+{"steps": 1, "files_read": [], "cost": 0.0208284, "prompt_tokens": 12178, "completion_tokens": 1814, "system": "blader", "id": "t24"}
+{"steps": 1, "files_read": [], "cost": 0.0195204, "prompt_tokens": 12174, "completion_tokens": 1684, "system": "blader", "id": "r01"}
+{"steps": 1, "files_read": [], "cost": 0.0061844, "prompt_tokens": 11921, "completion_tokens": 401, "system": "blader", "id": "r02"}
+{"steps": 1, "files_read": [], "cost": 0.0069984, "prompt_tokens": 12043, "completion_tokens": 458, "system": "blader", "id": "r03"}
+{"steps": 1, "files_read": [], "cost": 0.0124964, "prompt_tokens": 12782, "completion_tokens": 860, "system": "blader", "id": "r04"}
+{"steps": 1, "files_read": [], "cost": 0.0175884, "prompt_tokens": 12133, "completion_tokens": 1499, "system": "blader", "id": "r05"}
+{"steps": 1, "files_read": [], "cost": 0.0219604, "prompt_tokens": 12479, "completion_tokens": 1867, "system": "blader", "id": "r06"}
+{"steps": 1, "files_read": [], "cost": 0.0056864, "prompt_tokens": 11592, "completion_tokens": 417, "system": "blader", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0142224, "prompt_tokens": 12265, "completion_tokens": 1136, "system": "blader", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0120844, "prompt_tokens": 12056, "completion_tokens": 964, "system": "blader", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0073024, "prompt_tokens": 11640, "completion_tokens": 569, "system": "blader", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0050804, "prompt_tokens": 11604, "completion_tokens": 354, "system": "blader", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0069604, "prompt_tokens": 11569, "completion_tokens": 549, "system": "blader", "id": "h06"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0540666, "prompt_tokens": 27985, "completion_tokens": 836, "system": "smixs", "id": "t01"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0456282, "prompt_tokens": 28903, "completion_tokens": 1568, "system": "smixs", "id": "t02"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0485902, "prompt_tokens": 28479, "completion_tokens": 1949, "system": "smixs", "id": "t03"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0391042, "prompt_tokens": 28161, "completion_tokens": 1064, "system": "smixs", "id": "t04"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0732202, "prompt_tokens": 29239, "completion_tokens": 4260, "system": "smixs", "id": "t05"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.055934199999999996, "prompt_tokens": 29381, "completion_tokens": 2503, "system": "smixs", "id": "t06"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0448462, "prompt_tokens": 28517, "completion_tokens": 1567, "system": "smixs", "id": "t07"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0401602, "prompt_tokens": 28349, "completion_tokens": 1132, "system": "smixs", "id": "t08"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.1085182, "prompt_tokens": 33083, "completion_tokens": 7021, "system": "smixs", "id": "t09"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0551202, "prompt_tokens": 28939, "completion_tokens": 2510, "system": "smixs", "id": "t10"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0958542, "prompt_tokens": 33431, "completion_tokens": 5685, "system": "smixs", "id": "t11"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0364322, "prompt_tokens": 28055, "completion_tokens": 818, "system": "smixs", "id": "t12"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0464282, "prompt_tokens": 30033, "completion_tokens": 1422, "system": "smixs", "id": "t13"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0485922, "prompt_tokens": 28665, "completion_tokens": 1912, "system": "smixs", "id": "t14"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0408262, "prompt_tokens": 28287, "completion_tokens": 1211, "system": "smixs", "id": "t15"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0394742, "prompt_tokens": 28471, "completion_tokens": 1039, "system": "smixs", "id": "t16"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0957102, "prompt_tokens": 30539, "completion_tokens": 6249, "system": "smixs", "id": "t17"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0380782, "prompt_tokens": 28063, "completion_tokens": 981, "system": "smixs", "id": "t18"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0503322, "prompt_tokens": 28715, "completion_tokens": 2076, "system": "smixs", "id": "t19"}
+{"steps": 1, "files_read": [], "cost": 0.0111231, "prompt_tokens": 8656, "completion_tokens": 774, "system": "smixs", "id": "t20"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0559622, "prompt_tokens": 28915, "completion_tokens": 2599, "system": "smixs", "id": "t21"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0728042, "prompt_tokens": 31361, "completion_tokens": 3794, "system": "smixs", "id": "t22"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.034904199999999996, "prompt_tokens": 27941, "completion_tokens": 688, "system": "smixs", "id": "t23"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0513202, "prompt_tokens": 28979, "completion_tokens": 2122, "system": "smixs", "id": "t24"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.055944200000000006, "prompt_tokens": 28971, "completion_tokens": 2586, "system": "smixs", "id": "r01"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0466222, "prompt_tokens": 28465, "completion_tokens": 1755, "system": "smixs", "id": "r02"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0465702, "prompt_tokens": 28709, "completion_tokens": 1701, "system": "smixs", "id": "r03"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0567762, "prompt_tokens": 30187, "completion_tokens": 2426, "system": "smixs", "id": "r04"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0491802, "prompt_tokens": 28889, "completion_tokens": 1926, "system": "smixs", "id": "r05"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0521142, "prompt_tokens": 29581, "completion_tokens": 2081, "system": "smixs", "id": "r06"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0348462, "prompt_tokens": 27807, "completion_tokens": 709, "system": "smixs", "id": "h01"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0472682, "prompt_tokens": 29153, "completion_tokens": 1682, "system": "smixs", "id": "h02"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.0401922, "prompt_tokens": 28735, "completion_tokens": 1058, "system": "smixs", "id": "h03"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.043848200000000004, "prompt_tokens": 27903, "completion_tokens": 1590, "system": "smixs", "id": "h04"}
+{"steps": 2, "files_read": ["references/patterns.md", "knowledge/corrections.md"], "cost": 0.035794200000000005, "prompt_tokens": 27831, "completion_tokens": 799, "system": "smixs", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0040531, "prompt_tokens": 7496, "completion_tokens": 299, "system": "smixs", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.006202, "prompt_tokens": 271, "completion_tokens": 566, "system": "prompt", "id": "t01"}
+{"steps": 1, "files_read": [], "cost": 0.00607, "prompt_tokens": 730, "completion_tokens": 461, "system": "prompt", "id": "t02"}
+{"steps": 1, "files_read": [], "cost": 0.004856, "prompt_tokens": 518, "completion_tokens": 382, "system": "prompt", "id": "t03"}
+{"steps": 1, "files_read": [], "cost": 0.003288, "prompt_tokens": 359, "completion_tokens": 257, "system": "prompt", "id": "t04"}
+{"steps": 1, "files_read": [], "cost": 0.012576, "prompt_tokens": 898, "completion_tokens": 1078, "system": "prompt", "id": "t05"}
+{"steps": 1, "files_read": [], "cost": 0.013728, "prompt_tokens": 969, "completion_tokens": 1179, "system": "prompt", "id": "t06"}
+{"steps": 1, "files_read": [], "cost": 0.008754, "prompt_tokens": 537, "completion_tokens": 768, "system": "prompt", "id": "t07"}
+{"steps": 1, "files_read": [], "cost": 0.004346, "prompt_tokens": 453, "completion_tokens": 344, "system": "prompt", "id": "t08"}
+{"steps": 1, "files_read": [], "cost": 0.04283, "prompt_tokens": 2820, "completion_tokens": 3719, "system": "prompt", "id": "t09"}
+{"steps": 1, "files_read": [], "cost": 0.013986, "prompt_tokens": 748, "completion_tokens": 1249, "system": "prompt", "id": "t10"}
+{"steps": 1, "files_read": [], "cost": 0.036628, "prompt_tokens": 2994, "completion_tokens": 3064, "system": "prompt", "id": "t11"}
+{"steps": 1, "files_read": [], "cost": 0.002372, "prompt_tokens": 306, "completion_tokens": 176, "system": "prompt", "id": "t12"}
+{"steps": 1, "files_read": [], "cost": 0.01883, "prompt_tokens": 1295, "completion_tokens": 1624, "system": "prompt", "id": "t13"}
+{"steps": 1, "files_read": [], "cost": 0.012322, "prompt_tokens": 611, "completion_tokens": 1110, "system": "prompt", "id": "t14"}
+{"steps": 1, "files_read": [], "cost": 0.003714, "prompt_tokens": 422, "completion_tokens": 287, "system": "prompt", "id": "t15"}
+{"steps": 1, "files_read": [], "cost": 0.005768, "prompt_tokens": 514, "completion_tokens": 474, "system": "prompt", "id": "t16"}
+{"steps": 1, "files_read": [], "cost": 0.025066, "prompt_tokens": 1548, "completion_tokens": 2197, "system": "prompt", "id": "t17"}
+{"steps": 1, "files_read": [], "cost": 0.00274, "prompt_tokens": 310, "completion_tokens": 212, "system": "prompt", "id": "t18"}
+{"steps": 1, "files_read": [], "cost": 0.009582, "prompt_tokens": 636, "completion_tokens": 831, "system": "prompt", "id": "t19"}
+{"steps": 1, "files_read": [], "cost": 0.018498, "prompt_tokens": 1319, "completion_tokens": 1586, "system": "prompt", "id": "t20"}
+{"steps": 1, "files_read": [], "cost": 0.013702, "prompt_tokens": 736, "completion_tokens": 1223, "system": "prompt", "id": "t21"}
+{"steps": 1, "files_read": [], "cost": 0.022468, "prompt_tokens": 1959, "completion_tokens": 1855, "system": "prompt", "id": "t22"}
+{"steps": 1, "files_read": [], "cost": 0.001948, "prompt_tokens": 249, "completion_tokens": 145, "system": "prompt", "id": "t23"}
+{"steps": 1, "files_read": [], "cost": 0.011806, "prompt_tokens": 768, "completion_tokens": 1027, "system": "prompt", "id": "t24"}
+{"steps": 1, "files_read": [], "cost": 0.012858, "prompt_tokens": 764, "completion_tokens": 1133, "system": "prompt", "id": "r01"}
+{"steps": 1, "files_read": [], "cost": 0.005572, "prompt_tokens": 511, "completion_tokens": 455, "system": "prompt", "id": "r02"}
+{"steps": 1, "files_read": [], "cost": 0.006556, "prompt_tokens": 633, "completion_tokens": 529, "system": "prompt", "id": "r03"}
+{"steps": 1, "files_read": [], "cost": 0.016884, "prompt_tokens": 1372, "completion_tokens": 1414, "system": "prompt", "id": "r04"}
+{"steps": 1, "files_read": [], "cost": 0.009186, "prompt_tokens": 723, "completion_tokens": 774, "system": "prompt", "id": "r05"}
+{"steps": 1, "files_read": [], "cost": 0.021818, "prompt_tokens": 1069, "completion_tokens": 1968, "system": "prompt", "id": "r06"}
+{"steps": 1, "files_read": [], "cost": 0.004304, "prompt_tokens": 182, "completion_tokens": 394, "system": "prompt", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0154, "prompt_tokens": 855, "completion_tokens": 1369, "system": "prompt", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.013302, "prompt_tokens": 646, "completion_tokens": 1201, "system": "prompt", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.00183, "prompt_tokens": 230, "completion_tokens": 137, "system": "prompt", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.003798, "prompt_tokens": 194, "completion_tokens": 341, "system": "prompt", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.001998, "prompt_tokens": 159, "completion_tokens": 168, "system": "prompt", "id": "h06"}
