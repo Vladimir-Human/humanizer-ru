@@ -1,53 +1,12 @@
-# Резервные копии локальной сборки
-*.bak.v1
-*.bak.*
-*.bak
-
-skills-lock.json
-
-# Служебный мусор Python и операционных систем (добавлено в v2.7)
 __pycache__/
 *.pyc
 .venv/
+venv/
+dist/
+build/
+*.bak
 .DS_Store
 Thumbs.db
 
-# release archive build output
-dist/
-build/
-src/*.egg-info/
-venv/
-# распаковка sdist гейтом --sdist-test в рабочем каталоге
-/humanizer_ru-*/
-
-# Слепые пакеты и ключи парных прогонов (производные от eval/runs/<прогон>/).
-# Пакет пересобирается командой --make-packet, а ключ раскрывает соответствие
-# вариантов ветвям: в репозитории ему места нет.
-eval/runs/*-packet/
-eval/runs/*.key.json
-
-# Служебное состояние ИИ-агентов: журнал прогонов, черновики, локальные
-# профили инструментов. К поставке скилла отношения не имеет.
-.agent/
-.qwen/
-
-# Выгрузки сессий агентов в корне: полные стенограммы работы, иногда с
-# рабочими путями и черновыми рассуждениями. В поставку попадать не должны.
-/????-??-??-??????-*.txt
-# Среда разработки и кэши (превентивно; активных утечек нет)
-.env
-.env.*
-*.log
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.vscode/
-.idea/
-node_modules/
-.claude/
-.codex/
-tmp_sweep_*.json
-
-docs/status.json
-demo/status.json
-
+# Comparison stand: downloaded skills of other projects and the API spend ledger.
+eval/.cache/

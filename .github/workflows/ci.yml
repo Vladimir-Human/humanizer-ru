@@ -1,0 +1,21 @@
+name: Проверки
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Проверка репозитория
+        run: python3 scripts/check_repo.py
+      - name: Тесты скриптов
+        run: python3 -m unittest discover -s tests -v
+      - name: Сборка архива для Claude.ai
+        run: python3 scripts/build_zip.py

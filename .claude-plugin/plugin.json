@@ -1,23 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "humanizer-ru",
-  "displayName": "Humanizer RU",
-  "description": "Гигиена вставки из чата для русского текста: детерминированно, офлайн, флаги с причиной и советом. | Verifiable chat-paste hygiene for Russian text: deterministic, backed by a facts registry, offline, every flag with a reason and a fix.",
-  "version": "3.36.4",
-  "author": "Vladimir-Human",
+  "displayName": "humanizer-ru",
+  "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived.",
+  "version": "4.0.0",
+  "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": "https://github.com/Vladimir-Human/humanizer-ru",
   "license": "MIT",
-  "keywords": [
-    "humanizer",
-    "russian",
-    "writing",
-    "ai-detection",
-    "text",
-    "русский",
-    "очеловечивание"
-  ],
-  "skills": [
-    "SKILL.md"
-  ]
+  "keywords": ["humanizer", "russian", "writing", "editing", "ai-writing", "канцелярит", "очеловечить"],
+  "skills": "./skills/"
 }

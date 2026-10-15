@@ -1,0 +1,12 @@
+{"steps": 1, "files_read": [], "cost": 0.022684, "prompt_tokens": 5911, "completion_tokens": 810, "system": "ours", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0159384, "prompt_tokens": 6262, "completion_tokens": 1391, "system": "ours", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0029184, "prompt_tokens": 5847, "completion_tokens": 172, "system": "ours", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0154684, "prompt_tokens": 6722, "completion_tokens": 1252, "system": "ours", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0366624, "prompt_tokens": 7179, "completion_tokens": 3280, "system": "ours", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0049824, "prompt_tokens": 5849, "completion_tokens": 378, "system": "ours", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0156244, "prompt_tokens": 6305, "completion_tokens": 1351, "system": "ours", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0284324, "prompt_tokens": 7209, "completion_tokens": 2451, "system": "ours", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0102364, "prompt_tokens": 6116, "completion_tokens": 850, "system": "ours", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0155324, "prompt_tokens": 6139, "completion_tokens": 1375, "system": "ours", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0380424, "prompt_tokens": 7154, "completion_tokens": 3423, "system": "ours", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0126084, "prompt_tokens": 6062, "completion_tokens": 1098, "system": "ours", "id": "d12"}

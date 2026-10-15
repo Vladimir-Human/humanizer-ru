@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>humanizer-ru</title>
+<meta name="description" content="Навык для ИИ-агентов: переписывает русский текст, написанный нейросетью, так, чтобы его можно было отправить. Факты сверяет.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&family=Golos+Text:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root {
+  --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
+  --pencil: #2346a8; --wash: #e6ecfa; --strike: #b3312c;
+  --display: "Literata", "PT Serif", Georgia, serif;
+  --body: "Golos Text", "PT Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0;
+          --rule: #2c3442; --pencil: #8fa9f2; --wash: #1f2a44; --strike: #f08a83; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body); padding: 0 16px; }
+main { max-width: 46rem; margin: 2.5rem auto 3rem; display: flex; flex-direction: column; gap: 2.2rem; }
+h1, h2 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 2.2rem; } h2 { font-size: 1.45rem; }
+p { margin: 0; max-width: 65ch; }
+section { display: flex; flex-direction: column; gap: 0.8rem; }
+.lead { font-size: 1.15rem; }
+.soft { color: var(--soft); font-size: 0.9rem; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.card .tag { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--soft); }
+.card.after { border-color: var(--pencil); }
+.card.after .tag { color: var(--pencil); }
+pre { margin: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.8rem 1rem; overflow-x: auto; font: 0.9rem/1.5 var(--mono); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); }
+th { color: var(--soft); font-weight: 600; }
+td.n { font-family: var(--mono); text-align: right; }
+tr.us td { background: var(--wash); }
+a { color: var(--pencil); }
+a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <h1>humanizer-ru</h1>
+    <p class="lead">Навык для ИИ-агентов: переписывает русский текст, написанный нейросетью, так, чтобы его можно было отправить. Числа, даты, имена, условия и отрицания остаются на месте и сверяются.</p>
+    <p class="soft">Claude Code, Codex, Cursor, Claude.ai и другие агенты с поддержкой Agent Skills. MIT. <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a></p>
+  </header>
+
+  <section>
+    <h2>Было и стало</h2>
+    <div class="pair">
+      <div class="card"><span class="tag">написала нейросеть</span>
+        <p>С 1 ноября «Зерно» на Лиговском просыпается раньше ☀️</p>
+        <p>Открываемся в <b>7:30 вместо 8:00</b> — можно успеть за кофе ещё до начала рабочего дня.</p>
+        <p>И немного о ценах:<br>☕️ Капучино — <b>240 ₽</b>, на 20 ₽ дороже.<br>🌾 Овсяное молоко — по-прежнему <b>+50 ₽</b>. Доплата сохраняется.</p>
+        <p>Ждём вас с утра 🤎</p>
+      </div>
+      <div class="card after"><span class="tag">после «очеловечь»</span>
+        <p>С 1 ноября «Зерно» на Лиговском открывается раньше: в 7:30 вместо 8:00. Можно успеть за кофе до начала рабочего дня.</p>
+        <p>Капучино теперь стоит 240 ₽, на 20 ₽ дороже. Овсяное молоко по-прежнему +50 ₽.</p>
+        <p>Ждём вас с утра 🤎</p>
+      </div>
+    </div>
+    <p class="soft">Настоящий результат из слепого сравнения (текст t01, исполнитель Claude Sonnet 5.5).</p>
+  </section>
+
+  <section>
+    <h2>Установка</h2>
+    <pre>npx skills add Vladimir-Human/humanizer-ru</pre>
+    <p>Claude Code плагином:</p>
+    <pre>/plugin marketplace add Vladimir-Human/humanizer-ru
+/plugin install humanizer-ru@humanizer-ru</pre>
+    <p>Claude.ai: архив <code>humanizer-ru-skill.zip</code> на странице <a href="https://github.com/Vladimir-Human/humanizer-ru/releases/latest">Releases</a>, загрузить в Settings → Capabilities → Skills.</p>
+  </section>
+
+  <section>
+    <h2>Сравнение вслепую</h2>
+    <p>30 русских ИИ-текстов, одна модель применяла все навыки, две модели других лабораторий оценивали перемешанные варианты по вопросу «что бы вы отправили с наименьшей доработкой».</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Навык</th><th>Среднее место из 6</th><th>Тексты с ошибкой смысла</th></tr></thead>
+        <tbody>
+          <tr class="us"><td>humanizer-ru 4.0</td><td class="n">2.02</td><td class="n">5</td></tr>
+          <tr><td>ilyautov/humanizer-ru</td><td class="n">2.83</td><td class="n">1</td></tr>
+          <tr><td>blader/humanizer</td><td class="n">3.51</td><td class="n">17</td></tr>
+          <tr><td>humanizer-ru 3.36.4</td><td class="n">3.64</td><td class="n">18</td></tr>
+          <tr><td>просьба одной строкой</td><td class="n">3.82</td><td class="n">17</td></tr>
+          <tr><td>smixs/humanizer-ru</td><td class="n">5.18</td><td class="n">22</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="soft">Пять ошибок смысла у 4.0 — оттенки уверенности («может понадобиться» стало «понадобится»), а не числа, имена или отрицания. Все тексты и оценки: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval">eval/</a>. Навык не обещает обхода детекторов ИИ.</p>
+  </section>
+</main>
+</body>
+</html>
