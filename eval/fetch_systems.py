@@ -11,7 +11,7 @@
 # START_MODULE_MAP
 # fetch_github: list the tree at sha, download .md files under path via the contents API.
 # fetch_tag: git archive of the listed paths at a tag.
-# main: refresh every non-local system; prints file lists.
+# main: refresh every non-local system, or only the names given as arguments; prints file lists.
 # END_MODULE_MAP
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ import io
 import json
 import shutil
 import subprocess
+import sys
 import tarfile
 from pathlib import Path
 
@@ -71,9 +72,10 @@ def fetch_tag(ref: str, paths: list, dest: Path) -> list:
     return got
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    only = set(sys.argv[1:] if argv is None else argv)
     for sysdef in lib.read_json(lib.EVAL_DIR / "systems.json"):
-        if sysdef["kind"] not in ("github", "tag"):
+        if sysdef["kind"] not in ("github", "tag") or (only and sysdef["name"] not in only):
             continue
         dest = OUT / sysdef["name"]
         if dest.exists():

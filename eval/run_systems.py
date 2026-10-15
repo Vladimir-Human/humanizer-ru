@@ -68,7 +68,7 @@ def run_one(model: str, system: str, files: dict, text: str):
     messages = [sys_msg, {"role": "user", "content": REQUEST + text}]
     meta = {"steps": 0, "files_read": [], "cost": 0.0, "prompt_tokens": 0, "completion_tokens": 0}
     for _ in range(8):
-        msg, usage = lib.chat(model, messages, tools=TOOLS if files else None, max_tokens=8000, tag="run")
+        msg, usage = lib.chat(model, messages, tools=TOOLS if files else None, max_tokens=16000, tag="run")
         meta["steps"] += 1
         meta["cost"] += float(usage.get("cost") or 0)
         meta["prompt_tokens"] += int(usage.get("prompt_tokens") or 0)
@@ -92,7 +92,7 @@ def run_one(model: str, system: str, files: dict, text: str):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    ap.add_argument("--set", default="test", choices=["dev", "test", "all"])
+    ap.add_argument("--set", default="test", choices=["dev", "test", "holdout", "all"])
     ap.add_argument("--systems", default="")
     ap.add_argument("--texts", default="")
     ap.add_argument("--executor", default="anthropic/claude-sonnet-5.5")
@@ -100,7 +100,9 @@ def main() -> int:
     args = ap.parse_args()
 
     index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
-    ids = [t["id"] for t in index if args.set == "all" or t["set"] == args.set]
+    # Traps (human and legal texts) belong to every public comparison, the holdout one included.
+    ids = [t["id"] for t in index if args.set == "all" or t["set"] == args.set
+           or (args.set == "holdout" and t["kind"] == "trap")]
     if args.texts:
         ids = [i for i in ids if i in args.texts.split(",")]
     systems = lib.read_json(lib.EVAL_DIR / "systems.json")

@@ -3,7 +3,8 @@
 # START_MODULE_CONTRACT
 # PURPOSE: Turn judgments and fact checks into the comparison table and the pass/fail verdict
 #          against the usefulness thresholds of the remake.
-# SCOPE: reads eval/results/<run>/{outputs,judgments.jsonl}; writes summary.md and summary.json.
+# SCOPE: reads eval/results/<run>/{outputs,judgments.jsonl}; writes summary.md and summary.json
+#        (--out renames them; --judges keeps only the passes of the named judges).
 # DEPENDS: evallib; skills/humanizer-ru/scripts/check_facts.py (imported by path).
 # LINKS: M-EVAL-REPORT; DF-EVAL; V-M-EVAL.
 # END_MODULE_CONTRACT
@@ -92,12 +93,21 @@ def main() -> int:
     ap.add_argument("--ours", default="ours")
     ap.add_argument("--baseline", default="prompt")
     ap.add_argument("--judgments", default="judgments.jsonl")
+    ap.add_argument("--judges", default="", help="only passes of these judges (comma list of model ids)")
+    ap.add_argument("--out", default="summary", help="file name without extension for .md and .json")
     args = ap.parse_args()
+    if args.judges and args.out == "summary":
+        # A one-judge view must never overwrite the run's main summary.
+        args.out = "summary-" + "-".join(j.split("/")[-1] for j in args.judges.split(","))
     run_dir = lib.EVAL_DIR / "results" / args.run
     index = {t["id"]: t for t in lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")}
     rows = [json.loads(l) for l in (run_dir / args.judgments).read_text(encoding="utf-8").splitlines() if l.strip()]
     errors = [r for r in rows if not r.get("ranking")]
     rows = [r for r in rows if r.get("ranking")]
+    if args.judges:
+        keep = set(args.judges.split(","))
+        errors = [r for r in errors if r["judge"] in keep]
+        rows = [r for r in rows if r["judge"] in keep]
     outputs, sources = {}, {}
     for d in (run_dir / "outputs").iterdir():
         for f in d.glob("*.txt"):
@@ -168,15 +178,18 @@ def main() -> int:
             tt = tr["table"][args.ours]
             ok_traps = sum(1 for tid in tr["ids"] if tid not in tt["texts_with_fact_errors"])
             checks.append(("Ловушки: без ошибок фактов хотя бы 5 из 6", ok_traps >= 5, "%d из %d" % (ok_traps, len(tr["ids"]))))
+        else:
+            # A run without traps must not look as if the trap threshold had passed.
+            checks.append(("Ловушки: без ошибок фактов хотя бы 5 из 6", None, "ловушек в прогоне нет"))
         md += ["## Пороги полезности", "", "| Условие | Итог | Значение |", "|---|---|---|"]
         for name, ok, val in checks:
-            verdict = "не проверено" if gaps else ("выполнено" if ok else "не выполнено")
+            verdict = "не проверено" if gaps or ok is None else ("выполнено" if ok else "не выполнено")
             md.append("| %s | %s | %s |" % (name, verdict, val))
         md.append("")
         result["thresholds"] = [{"name": n, "ok": (None if gaps else ok), "value": v} for n, ok, v in checks]
     md.append("Расходы на API за все прогоны: $%.2f." % lib.ledger().data["total"])
-    lib.write_text(run_dir / "summary.md", "\n".join(md) + "\n")
-    lib.write_json(run_dir / "summary.json", result)
+    lib.write_text(run_dir / (args.out + ".md"), "\n".join(md) + "\n")
+    lib.write_json(run_dir / (args.out + ".json"), result)
     print("\n".join(md))
     return 0
 

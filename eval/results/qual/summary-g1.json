@@ -1,0 +1,304 @@
+{
+  "run": "qual",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "d01",
+        "d02",
+        "d03",
+        "d04",
+        "d05",
+        "d06",
+        "d07",
+        "d08",
+        "d09",
+        "d10",
+        "d11",
+        "d12"
+      ],
+      "table": {
+        "avoidai": {
+          "mean_position": 4.0,
+          "first_places": 3,
+          "passes": 12,
+          "send_as_is": 5.67,
+          "texts_with_fact_errors": [],
+          "script_errors": {},
+          "similarity": 0.978
+        },
+        "ilyautov": {
+          "mean_position": 2.58,
+          "first_places": 0,
+          "passes": 12,
+          "send_as_is": 7.83,
+          "texts_with_fact_errors": [],
+          "script_errors": {},
+          "similarity": 0.81
+        },
+        "infostyle": {
+          "mean_position": 5.5,
+          "first_places": 0,
+          "passes": 12,
+          "send_as_is": 3.83,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Code"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Review"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Pull"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "UI-изменений"
+              },
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не считая» в правке стоит без отрицания"
+              }
+            ],
+            "d10": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "3 месяца"
+              }
+            ],
+            "d11": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "30"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "40 км"
+              }
+            ],
+            "d06": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "8 часов"
+              }
+            ],
+            "d07": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "12 месяцев"
+              },
+              {
+                "kind": "added",
+                "what": "дата",
+                "detail": "16 декабря"
+              }
+            ],
+            "d01": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "четыре"
+              }
+            ],
+            "d12": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1 года"
+              }
+            ]
+          },
+          "similarity": 0.311
+        },
+        "noaislop": {
+          "mean_position": 3.25,
+          "first_places": 3,
+          "passes": 12,
+          "send_as_is": 7.75,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Code"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Review"
+              }
+            ]
+          },
+          "similarity": 0.529
+        },
+        "ours": {
+          "mean_position": 1.58,
+          "first_places": 6,
+          "passes": 12,
+          "send_as_is": 9.08,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              },
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не получается» в правке стоит без отрицания"
+              }
+            ]
+          },
+          "similarity": 0.612
+        },
+        "thevseprod": {
+          "mean_position": 4.08,
+          "first_places": 0,
+          "passes": 12,
+          "send_as_is": 6.25,
+          "texts_with_fact_errors": [],
+          "script_errors": {},
+          "similarity": 0.625
+        }
+      },
+      "pairwise": {
+        "avoidai>ours": 0.25,
+        "ours>avoidai": 0.75,
+        "avoidai>ilyautov": 0.333,
+        "ilyautov>avoidai": 0.667,
+        "avoidai>thevseprod": 0.417,
+        "thevseprod>avoidai": 0.583,
+        "avoidai>noaislop": 0.417,
+        "noaislop>avoidai": 0.583,
+        "avoidai>infostyle": 0.583,
+        "infostyle>avoidai": 0.417,
+        "ours>ilyautov": 0.917,
+        "ilyautov>ours": 0.083,
+        "ours>thevseprod": 1.0,
+        "thevseprod>ours": 0.0,
+        "ours>noaislop": 0.75,
+        "noaislop>ours": 0.25,
+        "ours>infostyle": 1.0,
+        "infostyle>ours": 0.0,
+        "ilyautov>thevseprod": 1.0,
+        "thevseprod>ilyautov": 0.0,
+        "ilyautov>noaislop": 0.667,
+        "noaislop>ilyautov": 0.333,
+        "ilyautov>infostyle": 1.0,
+        "infostyle>ilyautov": 0.0,
+        "thevseprod>noaislop": 0.417,
+        "noaislop>thevseprod": 0.583,
+        "thevseprod>infostyle": 0.917,
+        "infostyle>thevseprod": 0.083,
+        "noaislop>infostyle": 1.0,
+        "infostyle>noaislop": 0.0
+      },
+      "fact_notes": {
+        "noaislop|d01": [
+          "Потеряно ограничение «только по пятницам»"
+        ],
+        "infostyle|d01": [
+          "Выдумана деталь «с лёгкой кислинкой»; Потеряно ограничение «только по пятницам»"
+        ],
+        "noaislop|d02": [
+          "удалена фраза об отсутствии претензий к качеству; сужена формулировка про защиту прав до суда"
+        ],
+        "infostyle|d02": [
+          "выдуман абзац с предложением позвонить и договориться; добавлена выдуманная эмоция про нежелание суда; сужена формулировка про защиту прав до суда"
+        ],
+        "thevseprod|d02": [
+          "сужена формулировка про защиту прав до суда"
+        ],
+        "infostyle|d03": [
+          "Добавлен совет про асфальт и плитку; Придумано про переноску в одной руке"
+        ],
+        "infostyle|d04": [
+          "В первом варианте потеряно важное слово «только» про балкон для курения; Во втором варианте к «с 23:00» добавлено «до утра»"
+        ],
+        "infostyle|d05": [
+          "выдумано «про iOS спорил редко»; добавлен срок «за пару секунд»; «той лёгкости не всегда хватает» изменено на «нет»"
+        ],
+        "noaislop|d05": [
+          "потерян предпоследний абзац и финальная мысль"
+        ],
+        "infostyle|d06": [
+          "Замена трубы вместо ремонта; Добавлен совет нагреть воду и примеры"
+        ],
+        "noaislop|d07": [
+          "Потеряно слово «только» перед датой в прехедере и тексте"
+        ],
+        "infostyle|d07": [
+          "В SMS потеряны условия про заморозку и бассейн; Добавлена точная дата повышения цены (16 декабря); Добавлена деталь «покажем залы»"
+        ],
+        "infostyle|d08": [
+          "Отсебятина про мониторы, пролистывание дифа и ветку мастер; Искажение: «один из двух» вместо «минимум два»; Потерян термин SLA"
+        ],
+        "infostyle|d09": [
+          "отсебятина «более чем втрое больше»"
+        ],
+        "infostyle|d10": [
+          "Потеряно утверждение, что места разлетаются быстро; Добавлены выдуманные детали (про работу и собеседника напротив)"
+        ],
+        "noaislop|d11": [
+          "Потеряно «справа / слева и впереди»; Упущено, что шли «опираясь на помощь товарищей»"
+        ],
+        "infostyle|d11": [
+          "Выдумана норма разноски обуви «30–40 км»; Потеряна «пенка-мусс» в конце; Футболка превратилась в «рубашку с длинным рукавом»"
+        ],
+        "thevseprod|d11": [
+          "Искажен смысл: «не пьёт даже не всякая живность»; Потеряно «справа / слева»"
+        ],
+        "thevseprod|d12": [
+          "Удалена мысль о важности для работающих родителей"
+        ],
+        "noaislop|d12": [
+          "Потеряна характеристика «надёжного и ответственного человека»"
+        ],
+        "infostyle|d12": [
+          "Полностью удалён короткий вариант отзыва"
+        ]
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Ошибок фактов не больше 1 на весь корпус (по большинству судей)",
+      "ok": true,
+      "value": "0"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% проходов",
+      "ok": false,
+      "value": "0%"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov): не меньше 50%",
+      "ok": true,
+      "value": "92%"
+    }
+  ]
+}

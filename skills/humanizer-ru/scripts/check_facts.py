@@ -3,7 +3,8 @@
 # START_MODULE_CONTRACT
 # PURPOSE: Compare an original Russian text with its edited version and report facts that
 #          were lost, invented or rebound: numbers, dates, times, names, URLs, quotes,
-#          negations, hedges and "who got which number" pairs.
+#          negations, hedges and "who got which number" pairs; flags certainty, scope,
+#          condition and attribution words that got rarer and intensifiers that got more frequent.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -111,13 +112,24 @@ MODALITY = [
     ("многие", r"многи[ехм]\w*"),
     ("каждый", r"кажд\w+"),
     ("почти", r"почти"),
+    ("риск", r"риск\w*|вероятност\w*"),
+    ("один из", r"(?:один|одна|одно|одного|одной|одним|одну|одном) из"),
+    ("только", r"только|лишь"),
+    ("если", r"если|в случае|при условии"),
+    ("по данным / по словам", r"по (?:данным|словам|оценк\w+|мнению)|согласно"),
 ]
+# Words that make a claim stronger: a check when the edit has more of them than the original
+# ("ключевой фактор" -> "главный фактор", "один из лучших" -> "лучший").
+INTENSIFIERS = r"сам(?:ый|ая|ое|ые|ого|ой|ым|ых|ую|ом)|главн\w*|наиболее|лучш\w*|важнейш\w*|гарантирован\w*"
 SENT_START_STOP = {"В", "На", "С", "И", "А", "Но", "Это", "Мы", "Вы", "Я", "Он", "Она",
                    "Они", "Если", "Когда", "Для", "По", "При", "От", "До", "За", "Из", "К",
                    "О", "У", "Как", "Что", "Так", "Все", "Всё", "Наш", "Наша", "Наши", "Ваш",
                    "Ваша", "Ваши", "Также", "Кроме", "Еще", "Ещё", "Уже", "Теперь", "Сейчас",
                    "Здравствуйте", "Привет", "Добрый", "Уважаемый", "Уважаемая", "Спасибо",
                    "С уважением"}
+# "Вы" and "Ваш" written with a capital out of politeness are not names.
+POLITE_PRONOUN = re.compile(r"Вы|Вас|Вам|Вами|Ваш(?:а|е|и|его|ему|ем|ей|у|ую|их|им|ими)?|"
+                            r"Ты|Тебе|Тебя|Тобой|Твой|Тво(?:я|е|ё|и|его|ему|ем|ём|ей|ю|их|им|ими)")
 # Frequent first names: a capitalised word at the start of a sentence is a name when it
 # matches one of these (case endings allowed), otherwise only when it is capitalised elsewhere.
 FIRST_NAMES = set("""Александр Александра Алексей Алина Алиса Алла Анастасия Анатолий Андрей Анна
@@ -237,7 +249,8 @@ def extract(text: str) -> Facts:
     # END_BLOCK_URLS
 
     # START_BLOCK_DATES_TIMES
-    date_rx = re.compile(r"\b(\d{1,2})(?:\s*(?:[–—-]|,|и)\s*(\d{1,2}))?\s+(%s)(?:\s+(\d{4}))?" % MONTHS, re.I)
+    # Day and month stand on one line: "Вариант 3\n\nНоябрь — ..." is not the 3rd of November.
+    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
     for m in date_rx.finditer(text):
         month = MONTH_STEM.get(m.group(3).lower()[:3], 0)
         for day in filter(None, (m.group(1), m.group(2))):
@@ -324,7 +337,7 @@ def extract(text: str) -> Facts:
         for m in re.finditer(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*)", sent):
             word = m.group(1)
             first = _is_initial(text, s_start + m.start())
-            if word in SENT_START_STOP:
+            if word in SENT_START_STOP or POLITE_PRONOUN.fullmatch(word):
                 continue
             pos = s_start + m.start()
             if first and not (_capitalized_elsewhere(word, text, pos) or
@@ -522,6 +535,11 @@ def compare(before: str, after: str) -> Dict:
         elif na > nb == 0:
             checks.append({"kind": "modality", "what": "уверенность и охват",
                            "detail": "появилось «%s», которого не было" % label})
+    pat = r"(?<![а-яё])(?:%s)(?![а-яё])" % INTENSIFIERS
+    nb, na = len(re.findall(pat, before_norm)), len(re.findall(pat, after_norm))
+    if na > nb:
+        checks.append({"kind": "modality", "what": "уверенность и охват",
+                       "detail": "слов вроде «самый», «главный», «лучший» стало больше (%d → %d): не усилено ли утверждение?" % (nb, na)})
     # END_BLOCK_MODALITY_DIFF
 
     # START_BLOCK_BINDINGS

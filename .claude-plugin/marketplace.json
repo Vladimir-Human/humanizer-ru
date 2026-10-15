@@ -8,7 +8,7 @@
       "name": "humanizer-ru",
       "source": "./",
       "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после.",
-      "version": "4.0.0",
+      "version": "4.1.0",
       "license": "MIT",
       "keywords": ["humanizer", "russian", "writing", "editing"]
     }

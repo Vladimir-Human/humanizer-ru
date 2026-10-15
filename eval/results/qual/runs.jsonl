@@ -1,0 +1,178 @@
+{"steps": 1, "files_read": [], "cost": 0.0233565, "prompt_tokens": 6228, "completion_tokens": 798, "attempts": 1, "system": "ours", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0180601, "prompt_tokens": 6579, "completion_tokens": 1600, "attempts": 1, "system": "ours", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0079101, "prompt_tokens": 6164, "completion_tokens": 668, "attempts": 1, "system": "ours", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0178701, "prompt_tokens": 7039, "completion_tokens": 1489, "attempts": 1, "system": "ours", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0366141, "prompt_tokens": 7496, "completion_tokens": 3272, "attempts": 1, "system": "ours", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0080241, "prompt_tokens": 6166, "completion_tokens": 679, "attempts": 1, "system": "ours", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0143961, "prompt_tokens": 6622, "completion_tokens": 1225, "attempts": 1, "system": "ours", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0280741, "prompt_tokens": 7526, "completion_tokens": 2412, "attempts": 1, "system": "ours", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0128581, "prompt_tokens": 6433, "completion_tokens": 1109, "attempts": 1, "system": "ours", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0178741, "prompt_tokens": 6456, "completion_tokens": 1606, "attempts": 1, "system": "ours", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0414941, "prompt_tokens": 7471, "completion_tokens": 3765, "attempts": 1, "system": "ours", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0127801, "prompt_tokens": 6379, "completion_tokens": 1112, "attempts": 1, "system": "ours", "id": "d12"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md", "references/examples.md"], "cost": 0.025552, "prompt_tokens": 7971, "completion_tokens": 1178, "attempts": 1, "system": "stopslop", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.015911, "prompt_tokens": 2288, "completion_tokens": 1428, "attempts": 1, "system": "stopslop", "id": "d02"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md", "references/examples.md"], "cost": 0.019486000000000003, "prompt_tokens": 7843, "completion_tokens": 969, "attempts": 1, "system": "stopslop", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.018751, "prompt_tokens": 2748, "completion_tokens": 1620, "attempts": 1, "system": "stopslop", "id": "d04"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md", "references/examples.md"], "cost": 0.046834, "prompt_tokens": 10507, "completion_tokens": 3171, "attempts": 1, "system": "stopslop", "id": "d05"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md", "references/examples.md"], "cost": 0.018004, "prompt_tokens": 7847, "completion_tokens": 820, "attempts": 1, "system": "stopslop", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.016527, "prompt_tokens": 2331, "completion_tokens": 1481, "attempts": 1, "system": "stopslop", "id": "d07"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md"], "cost": 0.05206, "prompt_tokens": 9860, "completion_tokens": 3823, "attempts": 1, "system": "stopslop", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.009139, "prompt_tokens": 2142, "completion_tokens": 780, "attempts": 1, "system": "stopslop", "id": "d09"}
+{"steps": 2, "files_read": ["references/phrases.md", "references/structures.md", "references/examples.md"], "cost": 0.030924, "prompt_tokens": 8427, "completion_tokens": 1996, "attempts": 1, "system": "stopslop", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.031035, "prompt_tokens": 3180, "completion_tokens": 2762, "attempts": 1, "system": "stopslop", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.009991, "prompt_tokens": 2088, "completion_tokens": 876, "attempts": 1, "system": "stopslop", "id": "d12"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.024617, "prompt_tokens": 10476, "completion_tokens": 965, "attempts": 1, "system": "noaislop", "id": "d01"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.018951, "prompt_tokens": 11178, "completion_tokens": 1284, "attempts": 1, "system": "noaislop", "id": "d02"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.011811, "prompt_tokens": 10348, "completion_tokens": 736, "attempts": 1, "system": "noaislop", "id": "d03"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.028170999999999998, "prompt_tokens": 12098, "completion_tokens": 2022, "attempts": 1, "system": "noaislop", "id": "d04"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.046099, "prompt_tokens": 13012, "completion_tokens": 3632, "attempts": 1, "system": "noaislop", "id": "d05"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.011679, "prompt_tokens": 10352, "completion_tokens": 722, "attempts": 1, "system": "noaislop", "id": "d06"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.020033, "prompt_tokens": 11264, "completion_tokens": 1375, "attempts": 1, "system": "noaislop", "id": "d07"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.036839, "prompt_tokens": 13072, "completion_tokens": 2694, "attempts": 1, "system": "noaislop", "id": "d08"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.014787, "prompt_tokens": 10886, "completion_tokens": 926, "attempts": 1, "system": "noaislop", "id": "d09"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.017129, "prompt_tokens": 10932, "completion_tokens": 1151, "attempts": 1, "system": "noaislop", "id": "d10"}
+{"steps": 2, "files_read": ["eval.md"], "cost": 0.039529, "prompt_tokens": 12962, "completion_tokens": 2985, "attempts": 1, "system": "noaislop", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0127035, "prompt_tokens": 4813, "completion_tokens": 1120, "attempts": 1, "system": "noaislop", "id": "d12"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.112148, "prompt_tokens": 60189, "completion_tokens": 752, "attempts": 1, "system": "avoidai", "id": "d01"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.08944200000000001, "prompt_tokens": 60891, "completion_tokens": 1041, "attempts": 1, "system": "avoidai", "id": "d02"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.086402, "prompt_tokens": 60061, "completion_tokens": 903, "attempts": 1, "system": "avoidai", "id": "d03"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.104502, "prompt_tokens": 61811, "completion_tokens": 2363, "attempts": 1, "system": "avoidai", "id": "d04"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.10937, "prompt_tokens": 62725, "completion_tokens": 2667, "attempts": 1, "system": "avoidai", "id": "d05"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.08723, "prompt_tokens": 60065, "completion_tokens": 985, "attempts": 1, "system": "avoidai", "id": "d06"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.094884, "prompt_tokens": 60977, "completion_tokens": 1568, "attempts": 1, "system": "avoidai", "id": "d07"}
+{"steps": 2, "files_read": ["references/patterns.md", "detector/CATEGORIES.md"], "cost": 0.122746, "prompt_tokens": 69048, "completion_tokens": 2740, "attempts": 1, "system": "avoidai", "id": "d08"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.09762799999999999, "prompt_tokens": 60599, "completion_tokens": 1918, "attempts": 1, "system": "avoidai", "id": "d09"}
+{"steps": 2, "files_read": ["references/patterns.md"], "cost": 0.10367, "prompt_tokens": 60645, "completion_tokens": 2513, "attempts": 1, "system": "avoidai", "id": "d10"}
+{"steps": 2, "files_read": ["references/patterns.md", "detector/CATEGORIES.md"], "cost": 0.124156, "prompt_tokens": 68938, "completion_tokens": 2903, "attempts": 1, "system": "avoidai", "id": "d11"}
+{"steps": 2, "files_read": ["references/patterns.md", "detector/CATEGORIES.md"], "cost": 0.10711799999999999, "prompt_tokens": 66754, "completion_tokens": 1636, "attempts": 1, "system": "avoidai", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.055884, "prompt_tokens": 19003, "completion_tokens": 857, "attempts": 1, "system": "slopotron", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0144276, "prompt_tokens": 19354, "completion_tokens": 1109, "attempts": 1, "system": "slopotron", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0100976, "prompt_tokens": 18939, "completion_tokens": 759, "attempts": 1, "system": "slopotron", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0154276, "prompt_tokens": 19814, "completion_tokens": 1117, "attempts": 1, "system": "slopotron", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0396316, "prompt_tokens": 20271, "completion_tokens": 3446, "attempts": 1, "system": "slopotron", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0087716, "prompt_tokens": 18941, "completion_tokens": 626, "attempts": 1, "system": "slopotron", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0242036, "prompt_tokens": 19397, "completion_tokens": 2078, "attempts": 1, "system": "slopotron", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0345116, "prompt_tokens": 20301, "completion_tokens": 2928, "attempts": 1, "system": "slopotron", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0148856, "prompt_tokens": 19208, "completion_tokens": 1184, "attempts": 1, "system": "slopotron", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0183016, "prompt_tokens": 19231, "completion_tokens": 1521, "attempts": 1, "system": "slopotron", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0299616, "prompt_tokens": 20246, "completion_tokens": 2484, "attempts": 1, "system": "slopotron", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0128076, "prompt_tokens": 19154, "completion_tokens": 987, "attempts": 1, "system": "slopotron", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.049224, "prompt_tokens": 16019, "completion_tokens": 937, "attempts": 1, "system": "thevseprod", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0166292, "prompt_tokens": 16370, "completion_tokens": 1359, "attempts": 1, "system": "thevseprod", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0111992, "prompt_tokens": 15955, "completion_tokens": 899, "attempts": 1, "system": "thevseprod", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0207592, "prompt_tokens": 16830, "completion_tokens": 1680, "attempts": 1, "system": "thevseprod", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0409932, "prompt_tokens": 17287, "completion_tokens": 3612, "attempts": 1, "system": "thevseprod", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0083432, "prompt_tokens": 15957, "completion_tokens": 613, "attempts": 1, "system": "thevseprod", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0221552, "prompt_tokens": 16413, "completion_tokens": 1903, "attempts": 1, "system": "thevseprod", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0411832, "prompt_tokens": 17317, "completion_tokens": 3625, "attempts": 1, "system": "thevseprod", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0158672, "prompt_tokens": 16224, "completion_tokens": 1312, "attempts": 1, "system": "thevseprod", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0149532, "prompt_tokens": 16247, "completion_tokens": 1216, "attempts": 1, "system": "thevseprod", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0325032, "prompt_tokens": 17262, "completion_tokens": 2768, "attempts": 1, "system": "thevseprod", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0138292, "prompt_tokens": 16170, "completion_tokens": 1119, "attempts": 1, "system": "thevseprod", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.051649, "prompt_tokens": 16737, "completion_tokens": 1000, "attempts": 1, "system": "avoidai_ru", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.017741, "prompt_tokens": 17088, "completion_tokens": 1463, "attempts": 1, "system": "avoidai_ru", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.009161, "prompt_tokens": 16673, "completion_tokens": 688, "attempts": 1, "system": "avoidai_ru", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.018301, "prompt_tokens": 17548, "completion_tokens": 1427, "attempts": 1, "system": "avoidai_ru", "id": "d04"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/sentences.md"], "cost": 0.060011999999999996, "prompt_tokens": 44456, "completion_tokens": 3323, "attempts": 1, "system": "avoidai_ru", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.008195, "prompt_tokens": 16675, "completion_tokens": 591, "attempts": 1, "system": "avoidai_ru", "id": "d06"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.042305999999999996, "prompt_tokens": 42698, "completion_tokens": 1904, "attempts": 1, "system": "avoidai_ru", "id": "d07"}
+{"steps": 2, "files_read": ["references/profiles.md"], "cost": 0.045232, "prompt_tokens": 40211, "completion_tokens": 2694, "attempts": 1, "system": "avoidai_ru", "id": "d08"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.03768, "prompt_tokens": 42320, "completion_tokens": 1517, "attempts": 1, "system": "avoidai_ru", "id": "d09"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/rhetoric.md"], "cost": 0.03833399999999999, "prompt_tokens": 42797, "completion_tokens": 1487, "attempts": 1, "system": "avoidai_ru", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.031105, "prompt_tokens": 17980, "completion_tokens": 2621, "attempts": 1, "system": "avoidai_ru", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.014381, "prompt_tokens": 16888, "completion_tokens": 1167, "attempts": 1, "system": "avoidai_ru", "id": "d12"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.0446234, "prompt_tokens": 22860, "completion_tokens": 887, "attempts": 1, "system": "pishi", "id": "d01"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0231158, "prompt_tokens": 17269, "completion_tokens": 1563, "attempts": 1, "system": "pishi", "id": "d02"}
+{"steps": 2, "files_read": ["references/marketing-smm.md"], "cost": 0.0223638, "prompt_tokens": 20083, "completion_tokens": 925, "attempts": 1, "system": "pishi", "id": "d03"}
+{"steps": 2, "files_read": ["references/registers.md", "references/voice-preservation.md"], "cost": 0.0354938, "prompt_tokens": 20838, "completion_tokens": 2087, "attempts": 1, "system": "pishi", "id": "d04"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md", "references/russian-patterns.md"], "cost": 0.07351579999999999, "prompt_tokens": 29934, "completion_tokens": 4070, "attempts": 1, "system": "pishi", "id": "d05"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0146638, "prompt_tokens": 16443, "completion_tokens": 883, "attempts": 1, "system": "pishi", "id": "d06"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/registers.md"], "cost": 0.0404978, "prompt_tokens": 22595, "completion_tokens": 2236, "attempts": 1, "system": "pishi", "id": "d07"}
+{"steps": 2, "files_read": ["references/registers.md", "references/voice-preservation.md"], "cost": 0.0531118, "prompt_tokens": 21812, "completion_tokens": 3654, "attempts": 1, "system": "pishi", "id": "d08"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.018491800000000003, "prompt_tokens": 16977, "completion_tokens": 1159, "attempts": 1, "system": "pishi", "id": "d09"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.0379298, "prompt_tokens": 23316, "completion_tokens": 1835, "attempts": 1, "system": "pishi", "id": "d10"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.0632998, "prompt_tokens": 25346, "completion_tokens": 3966, "attempts": 1, "system": "pishi", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0136179, "prompt_tokens": 7657, "completion_tokens": 1183, "attempts": 1, "system": "pishi", "id": "d12"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "references/patterns.md", "references/false-positives.md"], "cost": 0.0526344, "prompt_tokens": 23500, "completion_tokens": 1306, "attempts": 1, "system": "comol", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0200564, "prompt_tokens": 6042, "completion_tokens": 1805, "attempts": 1, "system": "comol", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0072964, "prompt_tokens": 5627, "completion_tokens": 612, "attempts": 1, "system": "comol", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0198164, "prompt_tokens": 6502, "completion_tokens": 1689, "attempts": 1, "system": "comol", "id": "d04"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "references/patterns.md", "references/false-positives.md"], "cost": 0.0594168, "prompt_tokens": 26036, "completion_tokens": 2750, "attempts": 1, "system": "comol", "id": "d05"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "references/false-positives.md"], "cost": 0.019004800000000002, "prompt_tokens": 15055, "completion_tokens": 905, "attempts": 1, "system": "comol", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0155624, "prompt_tokens": 6085, "completion_tokens": 1347, "attempts": 1, "system": "comol", "id": "d07"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "knowledge/voice-author.md", "references/patterns.md", "references/false-positives.md"], "cost": 0.0735848, "prompt_tokens": 29395, "completion_tokens": 3495, "attempts": 1, "system": "comol", "id": "d08"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "references/patterns.md", "references/false-positives.md"], "cost": 0.0472748, "prompt_tokens": 23910, "completion_tokens": 1961, "attempts": 1, "system": "comol", "id": "d09"}
+{"steps": 2, "files_read": ["knowledge/corrections.md", "references/patterns.md"], "cost": 0.038578799999999996, "prompt_tokens": 21082, "completion_tokens": 1657, "attempts": 1, "system": "comol", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0290304, "prompt_tokens": 6934, "completion_tokens": 2524, "attempts": 1, "system": "comol", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0133064, "prompt_tokens": 5842, "completion_tokens": 1170, "attempts": 1, "system": "comol", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.035574, "prompt_tokens": 11531, "completion_tokens": 694, "attempts": 1, "system": "rws", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0165004, "prompt_tokens": 11882, "completion_tokens": 1391, "attempts": 1, "system": "rws", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0070604, "prompt_tokens": 11467, "completion_tokens": 530, "attempts": 1, "system": "rws", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0117604, "prompt_tokens": 12342, "completion_tokens": 825, "attempts": 1, "system": "rws", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0285644, "prompt_tokens": 12799, "completion_tokens": 2414, "attempts": 1, "system": "rws", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0081844, "prompt_tokens": 11469, "completion_tokens": 642, "attempts": 1, "system": "rws", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0149064, "prompt_tokens": 11925, "completion_tokens": 1223, "attempts": 1, "system": "rws", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0290144, "prompt_tokens": 12829, "completion_tokens": 2453, "attempts": 1, "system": "rws", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0146584, "prompt_tokens": 11736, "completion_tokens": 1236, "attempts": 1, "system": "rws", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0140444, "prompt_tokens": 11759, "completion_tokens": 1170, "attempts": 1, "system": "rws", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0242444, "prompt_tokens": 12774, "completion_tokens": 1987, "attempts": 1, "system": "rws", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0113304, "prompt_tokens": 11682, "completion_tokens": 914, "attempts": 1, "system": "rws", "id": "d12"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.035583, "prompt_tokens": 15653, "completion_tokens": 1036, "attempts": 1, "system": "plainprose", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0137805, "prompt_tokens": 5083, "completion_tokens": 1187, "attempts": 1, "system": "plainprose", "id": "d02"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.022539, "prompt_tokens": 15525, "completion_tokens": 800, "attempts": 1, "system": "plainprose", "id": "d03"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md"], "cost": 0.023399, "prompt_tokens": 15605, "completion_tokens": 870, "attempts": 1, "system": "plainprose", "id": "d04"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.055347, "prompt_tokens": 18189, "completion_tokens": 3548, "attempts": 1, "system": "plainprose", "id": "d05"}
+{"steps": 2, "files_read": ["references/russian.md", "references/contexts.md", "references/rewriting.md"], "cost": 0.023816999999999998, "prompt_tokens": 15529, "completion_tokens": 927, "attempts": 1, "system": "plainprose", "id": "d06"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.032351, "prompt_tokens": 16441, "completion_tokens": 1598, "attempts": 1, "system": "plainprose", "id": "d07"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.040067, "prompt_tokens": 18249, "completion_tokens": 2008, "attempts": 1, "system": "plainprose", "id": "d08"}
+{"steps": 2, "files_read": ["references/russian.md", "references/contexts.md"], "cost": 0.023901, "prompt_tokens": 14141, "completion_tokens": 1213, "attempts": 1, "system": "plainprose", "id": "d09"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md", "references/contexts.md"], "cost": 0.027297, "prompt_tokens": 16109, "completion_tokens": 1159, "attempts": 1, "system": "plainprose", "id": "d10"}
+{"steps": 2, "files_read": ["references/russian.md", "references/rewriting.md"], "cost": 0.042307, "prompt_tokens": 16469, "completion_tokens": 2588, "attempts": 1, "system": "plainprose", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0137505, "prompt_tokens": 4883, "completion_tokens": 1224, "attempts": 1, "system": "plainprose", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.025869, "prompt_tokens": 5217, "completion_tokens": 1302, "attempts": 1, "system": "infostyle", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.016729, "prompt_tokens": 5568, "completion_tokens": 1477, "attempts": 1, "system": "infostyle", "id": "d02"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d03"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d04"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d05"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d06"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d07"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d08"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d09"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d10"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d11"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "infostyle", "id": "d12"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d01"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d02"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d03"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d04"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d05"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d06"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d07"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d08"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d09"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d10"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d11"}
+{"error": "RuntimeError('chat failed for anthropic/claude-sonnet-5.5: HTTP 403 {\"detail\":\"User is locked. Reason: TOP_UP.\"}')", "system": "chukovsky", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.011259, "prompt_tokens": 5153, "completion_tokens": 1013, "attempts": 1, "system": "infostyle", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.019389, "prompt_tokens": 6028, "completion_tokens": 1651, "attempts": 1, "system": "infostyle", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.036403, "prompt_tokens": 6485, "completion_tokens": 3261, "attempts": 1, "system": "infostyle", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.009333, "prompt_tokens": 5155, "completion_tokens": 820, "attempts": 1, "system": "infostyle", "id": "d06"}
+{"steps": 2, "files_read": ["references/manipulation-patterns.md", "references/text-types.md"], "cost": 0.031632, "prompt_tokens": 14903, "completion_tokens": 2018, "attempts": 1, "system": "infostyle", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.026783, "prompt_tokens": 6515, "completion_tokens": 2293, "attempts": 1, "system": "infostyle", "id": "d08"}
+{"steps": 2, "files_read": ["references/text-types.md"], "cost": 0.022128, "prompt_tokens": 13081, "completion_tokens": 1432, "attempts": 1, "system": "infostyle", "id": "d09"}
+{"steps": 2, "files_read": ["references/stop-words.md", "references/manipulation-patterns.md", "references/text-types.md"], "cost": 0.0391, "prompt_tokens": 17332, "completion_tokens": 2279, "attempts": 1, "system": "infostyle", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.025753, "prompt_tokens": 6460, "completion_tokens": 2201, "attempts": 1, "system": "infostyle", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.010739, "prompt_tokens": 5368, "completion_tokens": 918, "attempts": 1, "system": "infostyle", "id": "d12"}
+{"steps": 1, "files_read": [], "cost": 0.024914, "prompt_tokens": 6519, "completion_tokens": 881, "attempts": 1, "system": "chukovsky", "id": "d01"}
+{"steps": 1, "files_read": [], "cost": 0.0182892, "prompt_tokens": 6870, "completion_tokens": 1620, "attempts": 1, "system": "chukovsky", "id": "d02"}
+{"steps": 1, "files_read": [], "cost": 0.0080892, "prompt_tokens": 6455, "completion_tokens": 683, "attempts": 1, "system": "chukovsky", "id": "d03"}
+{"steps": 1, "files_read": [], "cost": 0.0199292, "prompt_tokens": 7330, "completion_tokens": 1692, "attempts": 1, "system": "chukovsky", "id": "d04"}
+{"steps": 1, "files_read": [], "cost": 0.0315932, "prompt_tokens": 7787, "completion_tokens": 2767, "attempts": 1, "system": "chukovsky", "id": "d05"}
+{"steps": 1, "files_read": [], "cost": 0.0087332, "prompt_tokens": 6457, "completion_tokens": 747, "attempts": 1, "system": "chukovsky", "id": "d06"}
+{"steps": 1, "files_read": [], "cost": 0.0164752, "prompt_tokens": 6913, "completion_tokens": 1430, "attempts": 1, "system": "chukovsky", "id": "d07"}
+{"steps": 1, "files_read": [], "cost": 0.0295432, "prompt_tokens": 7817, "completion_tokens": 2556, "attempts": 1, "system": "chukovsky", "id": "d08"}
+{"steps": 1, "files_read": [], "cost": 0.0103972, "prompt_tokens": 6724, "completion_tokens": 860, "attempts": 1, "system": "chukovsky", "id": "d09"}
+{"steps": 1, "files_read": [], "cost": 0.0149532, "prompt_tokens": 6747, "completion_tokens": 1311, "attempts": 1, "system": "chukovsky", "id": "d10"}
+{"steps": 1, "files_read": [], "cost": 0.0305732, "prompt_tokens": 7762, "completion_tokens": 2670, "attempts": 1, "system": "chukovsky", "id": "d11"}
+{"steps": 1, "files_read": [], "cost": 0.0109692, "prompt_tokens": 6670, "completion_tokens": 928, "attempts": 1, "system": "chukovsky", "id": "d12"}

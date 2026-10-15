@@ -30,4 +30,7 @@
   <rule id="R-USEFUL" source="eval/README.md">
     A behaviour change ships only if the blind comparison does not get worse: fact errors at most 1 on the corpus, ahead of the one-line prompt in at least 60% of judge passes, not behind the best competitor.
   </rule>
+  <rule id="R-HOLDOUT" source="review 2026-10-15">
+    Rules are tuned on the dev set only. Public claims come from texts the skill was never tuned on; once a set has been used to change the skill, a fresh set is generated for the next public comparison.
+  </rule>
 </requirements>

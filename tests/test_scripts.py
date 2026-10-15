@@ -115,6 +115,21 @@ class CheckFactsTest(unittest.TestCase):
         same = "Иногда кэш отдаёт старые данные."
         self.assertFalse([c for c in cf.compare(same, same)["checks"] if c["kind"] == "modality"])
 
+    def test_scope_attribution_and_intensifiers_are_checks(self):
+        def details(a, b):
+            return " ".join(c["detail"] for c in cf.compare(a, b)["checks"] if c["kind"] == "modality")
+        self.assertIn("риск", details("Есть риск переделок.", "Работу придётся переделывать."))
+        self.assertIn("один из", details("Это один из лучших курсов.", "Это лучший курс."))
+        self.assertIn("по данным", details("По словам врача, это безопасно.", "Это безопасно."))
+        self.assertIn("главный", details("Температура — ключевой фактор.", "Температура — главный фактор."))
+        self.assertEqual(details("Это самый тёплый месяц.", "Это самый тёплый месяц года."), "")
+
+    def test_polite_pronoun_and_line_break_are_not_facts(self):
+        self.assertEqual(cf.compare("Поздравляем Вас и желаем Вашего успеха.", "Поздравляем и желаем успеха.")["errors"], [])
+        self.assertEqual(cf.compare("Вариант 3\n\nНоябрь — время книг.", "Ноябрь — время книг.")["errors"], [])
+        self.assertIn("lost", kinds(cf.compare("Сдача 3 ноября.", "Сдача в ноябре.")))
+        self.assertIn("lost", kinds(cf.compare("Офис в Вашингтоне закрыт.", "Офис закрыт.")))
+
     def test_cli_exit_codes(self):
         tmp = ROOT / "tests" / "_tmp_cf"
         tmp.mkdir(exist_ok=True)
