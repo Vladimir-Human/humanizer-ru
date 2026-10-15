@@ -1,5 +1,6 @@
 [
   {"name": "ours", "title": "humanizer-ru 4 (этот репозиторий)", "kind": "local", "path": "skills/humanizer-ru"},
+  {"name": "ours410", "title": "humanizer-ru 4.1.0 (прошлая версия)", "kind": "tag", "ref": "v4.1.0:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "old_v3", "title": "humanizer-ru 3.36.4 (прошлая версия)", "kind": "tag", "ref": "v3.36.4", "paths": ["SKILL.md", "references", "knowledge"]},
   {"name": "ilyautov", "title": "ilyautov/humanizer-ru", "kind": "github", "repo": "ilyautov/humanizer-ru", "sha": "8c337c3567096758433c475f1d60f2543f6bc94f", "path": "skills/humanizer-ru"},
   {"name": "blader", "title": "blader/humanizer", "kind": "github", "repo": "blader/humanizer", "sha": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8", "path": ""},
