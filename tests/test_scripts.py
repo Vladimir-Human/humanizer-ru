@@ -124,6 +124,19 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn("главный", details("Температура — ключевой фактор.", "Температура — главный фактор."))
         self.assertEqual(details("Это самый тёплый месяц.", "Это самый тёплый месяц года."), "")
 
+    def test_lost_html_tags_are_errors(self):
+        before = "<ul>\n<li><strong>Диагностика</strong> бесплатно</li>\n<li>Запчасти клиента</li>\n</ul>"
+        after = "<p>Диагностика бесплатно, запчасти клиента принимаем.</p>"
+        res = cf.compare(before, after)
+        lost = [e["detail"] for e in res["errors"] if e["what"] == "разметка"]
+        self.assertIn("<li> 2 → 0", lost)
+        self.assertNotIn("<strong> 1 → 0", lost)  # emphasis may be removed on purpose: a check
+        self.assertIn("<strong> 1 → 0", [c["detail"] for c in res["checks"] if c["what"] == "разметка"])
+        same = cf.compare(before, before.replace("бесплатно", "бесплатна"))
+        self.assertFalse([e for e in same["errors"] if e["what"] == "разметка"])
+        # Angle brackets in prose and a single tag are not markup to protect.
+        self.assertFalse([e for e in cf.compare("Тег <b> жирный", "Тег жирный")["errors"] if e["what"] == "разметка"])
+
     def test_polite_pronoun_and_line_break_are_not_facts(self):
         self.assertEqual(cf.compare("Поздравляем Вас и желаем Вашего успеха.", "Поздравляем и желаем успеха.")["errors"], [])
         self.assertEqual(cf.compare("Вариант 3\n\nНоябрь — время книг.", "Ноябрь — время книг.")["errors"], [])

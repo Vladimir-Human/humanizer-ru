@@ -201,13 +201,15 @@ def main() -> int:
         # per 12 AI texts at most, and no more than the most careful other participant.
         limit = max(1, len(ai["ids"]) // 12)
         ok_err = n_err <= limit and (careful is None or n_err <= errs[careful])
-        checks = [
-            ("Тексты с ошибкой смысла (большинство судей): не больше %d на %d ИИ-текстов и не больше, "
-             "чем у самого аккуратного из остальных (%s: %d)" % (limit, len(ai["ids"]), careful, errs.get(careful, 0)),
-             ok_err, "%d" % n_err),
-            ("Выше простой просьбы хотя бы в 60% сравнений", ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0) >= 0.6,
-             "%.0f%%" % (100 * ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0))),
-        ]
+        cmp = ", и не больше, чем у самого аккуратного из остальных (%s: %d)" % (careful, errs[careful]) if careful else ""
+        checks = [("Тексты с ошибкой смысла (большинство судей): не больше %d на %d ИИ-текстов%s"
+                   % (limit, len(ai["ids"]), cmp), ok_err, "%d" % n_err)]
+        if args.baseline in ai["table"]:
+            share = ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0)
+            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", share >= 0.6, "%.0f%%" % (100 * share)))
+        else:
+            # A tuning run without the baseline must not look as if this threshold had failed or passed.
+            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", None, "просьбы в прогоне нет"))
         if best:
             share = ai["pairwise"].get("%s>%s" % (args.ours, best), 0)
             checks.append(("Не хуже лучшего конкурента (%s): не меньше 50%%" % best, share >= 0.5, "%.0f%%" % (100 * share)))
