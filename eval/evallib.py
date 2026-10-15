@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -62,22 +63,30 @@ class BudgetExceeded(RuntimeError):
 # SIDE_EFFECTS: writes eval/.cache/spend.json.
 # END_CONTRACT: Ledger
 class Ledger:
+    """One process, many threads: a lock serialises read-modify-write; the file is replaced
+    atomically so a reader never sees half a JSON. Scripts that spend run one at a time."""
+
     def __init__(self, cap: float = BUDGET_USD):
         self.cap = cap
+        self.lock = threading.Lock()
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         self.data = read_json(LEDGER) if LEDGER.exists() else {"total": 0.0, "by_tag": {}}
 
     def check(self) -> None:
-        if self.data["total"] >= self.cap:
-            raise BudgetExceeded("budget cap $%.2f reached (spent $%.4f)" % (self.cap, self.data["total"]))
+        with self.lock:
+            total = self.data["total"]
+        if total >= self.cap:
+            raise BudgetExceeded("budget cap $%.2f reached (spent $%.4f)" % (self.cap, total))
 
     def add(self, tag: str, cost: float) -> None:
-        # Re-read before writing so parallel processes do not lose each other's spend.
-        if LEDGER.exists():
-            self.data = read_json(LEDGER)
-        self.data["total"] = round(self.data["total"] + cost, 6)
-        self.data["by_tag"][tag] = round(self.data["by_tag"].get(tag, 0.0) + cost, 6)
-        write_json(LEDGER, self.data)
+        with self.lock:
+            if LEDGER.exists():
+                self.data = read_json(LEDGER)
+            self.data["total"] = round(self.data["total"] + cost, 6)
+            self.data["by_tag"][tag] = round(self.data["by_tag"].get(tag, 0.0) + cost, 6)
+            tmp = LEDGER.with_suffix(".tmp")
+            write_json(tmp, self.data)
+            os.replace(tmp, LEDGER)
 
 
 _LEDGER = None
@@ -119,9 +128,6 @@ def chat(model: str, messages: list, *, tools=None, max_tokens: int = 4000,
                 out = json.load(resp)
             if "choices" not in out:
                 raise RuntimeError("no choices: %s" % json.dumps(out)[:300])
-            usage = out.get("usage") or {}
-            ledger().add(tag, float(usage.get("cost") or 0.0))
-            return out["choices"][0]["message"], usage
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", "replace")[:300]
             last = "HTTP %s %s" % (e.code, detail)
@@ -129,5 +135,11 @@ def chat(model: str, messages: list, *, tools=None, max_tokens: int = 4000,
                 break
         except Exception as e:  # network, timeout, malformed reply
             last = repr(e)[:300]
+        else:
+            # Booking happens outside the retry block: a local ledger error must not
+            # repeat a request that was already paid for.
+            usage = out.get("usage") or {}
+            ledger().add(tag, float(usage.get("cost") or 0.0))
+            return out["choices"][0]["message"], usage
         time.sleep(3 * (attempt + 1))
     raise RuntimeError("chat failed for %s: %s" % (model, last))

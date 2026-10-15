@@ -30,6 +30,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -249,6 +250,9 @@ def extract(text: str) -> Facts:
         if free(m.start(), m.end()):
             facts.items.append(Fact("date", "%02d.%02d" % (int(m.group(1)), int(m.group(2))),
                                     m.group(), sent_of(m.start()), m.start()))
+            # The year is kept as a number, the same way as in "1 февраля 2026".
+            year = m.group(3) if len(m.group(3)) == 4 else "20" + m.group(3)
+            facts.items.append(Fact("number", year, m.group(3), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
     for m in re.finditer(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b(?![.,]\d)", text):
         if free(m.start(), m.end()):
@@ -285,11 +289,24 @@ def extract(text: str) -> Facts:
         taken.append((m.start(), end))
     word_rx = re.compile(r"(?<![а-яё])(%s)(?![а-яё])" % "|".join(
         sorted(WORD_NUM, key=len, reverse=True)), re.I)
-    for m in word_rx.finditer(_norm(text)):
+    norm_text = _norm(text)
+    for m in word_rx.finditer(norm_text):
         if not free(m.start(), m.end()):
             continue
         v = float(WORD_NUM[m.group(1).lower()])
         end = m.end()
+        # "двадцать пять", "сто двадцать" are one number: each next word is a smaller order.
+        while True:
+            nxt = re.match(r"[ \u00a0]+(%s)(?![а-яё])" % "|".join(sorted(WORD_NUM, key=len, reverse=True)),
+                           norm_text[end:end + 20], re.I)
+            if not nxt:
+                break
+            w = float(WORD_NUM[nxt.group(1).lower()])
+            last_order = 100 if v % 100 == 0 and v >= 100 else (10 if v % 10 == 0 and v >= 20 else 1)
+            if last_order == 1 or w >= last_order or w != int(w):
+                break
+            v += w
+            end += nxt.end()
         sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % "|".join(re.escape(k) for k in SCALE), text[end:end + 12], re.I)
         if sc:
             v *= SCALE[sc.group(1).lower()]
@@ -370,8 +387,24 @@ def _capitalized_elsewhere(word: str, text: str, pos: int) -> bool:
     return False
 
 
+def strip_utm(url: str) -> Tuple[str, int]:
+    """Drop utm_* query parameters, keep the others, the '?' and the fragment."""
+    parts = urlsplit(url)
+    if not parts.query:
+        return url, 0
+    params = parts.query.split("&")
+    kept = [x for x in params if not x.lower().startswith("utm_")]
+    if len(kept) == len(params):
+        return url, 0
+    return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)
+
+
 def _strip_tracking(text: str) -> str:
-    text = re.sub(r"[?&]utm_[a-z]+=[^\s&)\]»]*", "", text)
+    def fix(m: "re.Match") -> str:
+        url = m.group(0)
+        tail = re.search(r"[.,;:!?]*$", url).group()
+        return strip_utm(url[:len(url) - len(tail)])[0] + tail
+    text = re.sub(r"https?://[^\s<>«»\"')\]]+", fix, text)
     return re.sub(r":contentReference\[oaicite:\d+\]\{index=\d+\}|【\d+(?::\d+)?†[^】]*】", "", text)
 
 

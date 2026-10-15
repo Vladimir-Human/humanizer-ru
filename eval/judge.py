@@ -96,7 +96,8 @@ def main() -> int:
         for line in log.read_text(encoding="utf-8").splitlines():
             row = json.loads(line)
             if row.get("ranking"):
-                done.add((row["id"], row["judge"], row["round"]))
+                # The candidate set is part of the identity: a pass with other systems is not reused.
+                done.add((row["id"], row["judge"], row["round"], tuple(sorted(row["key"].values()))))
 
     jobs = []
     for tid in ids:
@@ -107,7 +108,7 @@ def main() -> int:
         source = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (tid + ".txt"))
         for judge in args.judges.split(","):
             for rnd in range(args.rounds):
-                if (tid, judge, rnd) not in done:
+                if (tid, judge, rnd, tuple(sorted(outputs))) not in done:
                     jobs.append((tid, judge, rnd, source, outputs))
 
     def work(job):

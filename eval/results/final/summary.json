@@ -42,75 +42,35 @@
           "passes": 120,
           "send_as_is": 7.53,
           "texts_with_fact_errors": [
-            "t22",
-            "t14",
-            "r01",
-            "t12",
-            "t03",
-            "t13",
-            "t09",
-            "t10",
-            "t05",
-            "t11",
             "r06",
-            "t17",
+            "t13",
+            "t11",
+            "t05",
+            "r01",
             "t20",
-            "r05",
+            "r04",
+            "t09",
+            "t14",
             "r02",
-            "t21",
-            "r04"
+            "t03",
+            "t12",
+            "t10",
+            "r05",
+            "t22",
+            "t17",
+            "t21"
           ],
           "script_errors": {
-            "t22": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "5"
-              }
-            ],
-            "t15": [
-              {
-                "kind": "added",
-                "what": "число",
-                "detail": "три"
-              }
-            ],
-            "t16": [
+            "t24": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "FAQ"
-              }
-            ],
-            "t06": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "три"
-              }
-            ],
-            "t08": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "1"
+                "detail": "Сбалансированный"
               },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "2"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "3"
-              }
-            ],
-            "t19": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "LinkedIn"
+                "detail": "Короткий"
               }
             ],
             "t13": [
@@ -125,47 +85,11 @@
                 "detail": "Доме"
               }
             ],
-            "t09": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Hero"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
-              }
-            ],
             "t05": [
               {
                 "kind": "lost",
                 "what": "число",
                 "detail": "300"
-              }
-            ],
-            "t24": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Сбалансированный"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Короткий"
-              }
-            ],
-            "t21": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "VK"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram"
               }
             ],
             "r04": [
@@ -189,24 +113,34 @@
                 "what": "имя или название",
                 "detail": "То"
               }
-            ]
-          },
-          "similarity": 0.404
-        },
-        "ilyautov": {
-          "mean_position": 2.83,
-          "first_places": 36,
-          "passes": 120,
-          "send_as_is": 7.77,
-          "texts_with_fact_errors": [
-            "t19"
-          ],
-          "script_errors": {
-            "t16": [
+            ],
+            "t09": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "FAQ"
+                "detail": "Hero"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
+              }
+            ],
+            "t08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
               }
             ],
             "t06": [
@@ -223,6 +157,70 @@
                 "detail": "LinkedIn"
               }
             ],
+            "t16": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "FAQ"
+              }
+            ],
+            "t22": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              }
+            ],
+            "t21": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "VK"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram"
+              }
+            ],
+            "t15": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "три"
+              }
+            ]
+          },
+          "similarity": 0.404
+        },
+        "ilyautov": {
+          "mean_position": 2.83,
+          "first_places": 36,
+          "passes": 120,
+          "send_as_is": 7.77,
+          "texts_with_fact_errors": [
+            "t19"
+          ],
+          "script_errors": {
+            "t24": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Сбалансированный"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Короткий"
+              }
+            ],
+            "t05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "300"
+              }
+            ],
             "t09": [
               {
                 "kind": "swap",
@@ -235,23 +233,25 @@
                 "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
               }
             ],
-            "t05": [
+            "t06": [
               {
                 "kind": "lost",
                 "what": "число",
-                "detail": "300"
+                "detail": "три"
               }
             ],
-            "t24": [
+            "t19": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "Сбалансированный"
-              },
+                "detail": "LinkedIn"
+              }
+            ],
+            "t16": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "Короткий"
+                "detail": "FAQ"
               }
             ],
             "t21": [
@@ -280,50 +280,99 @@
           "passes": 120,
           "send_as_is": 7.32,
           "texts_with_fact_errors": [
-            "t22",
+            "t24",
+            "t13",
+            "t11",
+            "t01",
+            "t18",
+            "t09",
             "t14",
+            "r02",
             "t06",
             "t07",
+            "t10",
             "r03",
             "t19",
-            "t13",
-            "t09",
-            "t10",
             "t04",
-            "t01",
-            "t11",
-            "t17",
-            "t18",
-            "t24",
             "r05",
-            "r02",
+            "t22",
+            "t17",
             "t21"
           ],
           "script_errors": {
-            "t22": [
+            "t24": [
               {
                 "kind": "lost",
-                "what": "число",
-                "detail": "5"
+                "what": "имя или название",
+                "detail": "Сбалансированный"
               },
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "UI"
-              }
-            ],
-            "t16": [
+                "detail": "Вас"
+              },
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "FAQ"
+                "detail": "Вам"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Короткий"
               }
             ],
-            "t06": [
+            "t13": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Доме"
+              }
+            ],
+            "t05": [
               {
                 "kind": "lost",
                 "what": "число",
-                "detail": "три"
+                "detail": "300"
+              }
+            ],
+            "r04": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "То"
+              }
+            ],
+            "t09": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Hero"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
               }
             ],
             "t08": [
@@ -341,6 +390,13 @@
                 "kind": "lost",
                 "what": "число",
                 "detail": "3"
+              }
+            ],
+            "t06": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "три"
               }
             ],
             "r03": [
@@ -387,57 +443,23 @@
                 "detail": "LinkedIn"
               }
             ],
-            "t13": [
+            "t16": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "Доме"
+                "detail": "FAQ"
               }
             ],
-            "t09": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Hero"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
-              }
-            ],
-            "t05": [
+            "t22": [
               {
                 "kind": "lost",
                 "what": "число",
-                "detail": "300"
-              }
-            ],
-            "t24": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Сбалансированный"
+                "detail": "5"
               },
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "Вас"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Вам"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Короткий"
+                "detail": "UI"
               }
             ],
             "t21": [
@@ -450,6 +472,55 @@
                 "kind": "lost",
                 "what": "имя или название",
                 "detail": "Telegram"
+              }
+            ]
+          },
+          "similarity": 0.411
+        },
+        "ours": {
+          "mean_position": 2.02,
+          "first_places": 44,
+          "passes": 120,
+          "send_as_is": 8.75,
+          "texts_with_fact_errors": [
+            "t11",
+            "t19",
+            "t22",
+            "t17",
+            "t21"
+          ],
+          "script_errors": {
+            "t24": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Сбалансированный"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Короткий"
+              }
+            ],
+            "t13": [
+              {
+                "kind": "added",
+                "what": "дата",
+                "detail": "3\n\nНоябрь"
+              }
+            ],
+            "t05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "300"
+              }
+            ],
+            "t20": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Вашего"
               }
             ],
             "r04": [
@@ -473,28 +544,22 @@
                 "what": "имя или название",
                 "detail": "То"
               }
-            ]
-          },
-          "similarity": 0.411
-        },
-        "ours": {
-          "mean_position": 2.02,
-          "first_places": 44,
-          "passes": 120,
-          "send_as_is": 8.75,
-          "texts_with_fact_errors": [
-            "t22",
-            "t19",
-            "t11",
-            "t17",
-            "t21"
-          ],
-          "script_errors": {
-            "t16": [
+            ],
+            "t09": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "FAQ"
+                "detail": "Hero"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
               }
             ],
             "t06": [
@@ -511,11 +576,79 @@
                 "detail": "LinkedIn"
               }
             ],
-            "t13": [
+            "t16": [
               {
-                "kind": "added",
-                "what": "дата",
-                "detail": "3\n\nНоябрь"
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "FAQ"
+              }
+            ],
+            "t17": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не закурил» в правке стоит без отрицания"
+              }
+            ],
+            "t21": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "VK"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram"
+              }
+            ]
+          },
+          "similarity": 0.594
+        },
+        "prompt": {
+          "mean_position": 3.82,
+          "first_places": 11,
+          "passes": 120,
+          "send_as_is": 7.03,
+          "texts_with_fact_errors": [
+            "t11",
+            "t05",
+            "r01",
+            "t20",
+            "t18",
+            "t09",
+            "r02",
+            "t06",
+            "t03",
+            "t12",
+            "t23",
+            "t19",
+            "t04",
+            "r05",
+            "t22",
+            "t21",
+            "t02"
+          ],
+          "script_errors": {
+            "t24": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "22 года в исходнике относится к «подол», в правке стоит рядом с «вас»"
+              }
+            ],
+            "t05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "300"
+              }
+            ],
+            "r04": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "То"
               }
             ],
             "t09": [
@@ -533,113 +666,6 @@
                 "kind": "swap",
                 "what": "привязка",
                 "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
-              }
-            ],
-            "t05": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "300"
-              }
-            ],
-            "t17": [
-              {
-                "kind": "inverted",
-                "what": "отрицание",
-                "detail": "«не закурил» в правке стоит без отрицания"
-              }
-            ],
-            "t20": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Вашего"
-              }
-            ],
-            "t24": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Сбалансированный"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Короткий"
-              }
-            ],
-            "t21": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "VK"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram"
-              }
-            ],
-            "r04": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "1"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "2"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "3"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "То"
-              }
-            ]
-          },
-          "similarity": 0.594
-        },
-        "prompt": {
-          "mean_position": 3.82,
-          "first_places": 11,
-          "passes": 120,
-          "send_as_is": 7.03,
-          "texts_with_fact_errors": [
-            "t22",
-            "t02",
-            "r01",
-            "t06",
-            "t12",
-            "t23",
-            "t19",
-            "t03",
-            "t09",
-            "t04",
-            "t05",
-            "t11",
-            "t20",
-            "t18",
-            "r05",
-            "r02",
-            "t21"
-          ],
-          "script_errors": {
-            "t16": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "FAQ"
-              },
-              {
-                "kind": "inverted",
-                "what": "отрицание",
-                "detail": "«не возим» в правке стоит без отрицания"
               }
             ],
             "t06": [
@@ -661,35 +687,16 @@
                 "detail": "LinkedIn"
               }
             ],
-            "t09": [
+            "t16": [
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "Hero"
+                "detail": "FAQ"
               },
               {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
-              }
-            ],
-            "t05": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "300"
-              }
-            ],
-            "t24": [
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "22 года в исходнике относится к «подол», в правке стоит рядом с «вас»"
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не возим» в правке стоит без отрицания"
               }
             ],
             "t21": [
@@ -703,13 +710,6 @@
                 "what": "имя или название",
                 "detail": "Telegram"
               }
-            ],
-            "r04": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "То"
-              }
             ]
           },
           "similarity": 0.461
@@ -720,108 +720,40 @@
           "passes": 120,
           "send_as_is": 5.45,
           "texts_with_fact_errors": [
-            "t22",
-            "t14",
-            "r01",
-            "t06",
-            "t12",
-            "t08",
-            "t23",
-            "r03",
-            "t19",
-            "t03",
+            "t24",
             "t13",
-            "t09",
-            "t05",
             "t11",
-            "t17",
+            "t05",
+            "r01",
             "t20",
             "t18",
-            "t24",
-            "r05",
+            "r04",
+            "t09",
+            "t14",
             "r02",
-            "t21",
-            "r04"
+            "t08",
+            "t06",
+            "t03",
+            "t12",
+            "r03",
+            "t23",
+            "t19",
+            "r05",
+            "t22",
+            "t17",
+            "t21"
           ],
           "script_errors": {
-            "t22": [
+            "t24": [
               {
                 "kind": "lost",
-                "what": "число",
-                "detail": "1"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "2"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "3"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "4"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "5"
-              },
-              {
-                "kind": "added",
-                "what": "число",
-                "detail": "сто"
-              },
-              {
-                "kind": "added",
-                "what": "число",
-                "detail": "восемь"
+                "what": "имя или название",
+                "detail": "Сбалансированный"
               },
               {
                 "kind": "lost",
                 "what": "имя или название",
-                "detail": "UI"
-              }
-            ],
-            "t16": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "FAQ"
-              }
-            ],
-            "t06": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "три"
-              }
-            ],
-            "t08": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "1"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "2"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "3"
-              }
-            ],
-            "t19": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "LinkedIn"
+                "detail": "Короткий"
               }
             ],
             "t13": [
@@ -834,30 +766,6 @@
                 "kind": "lost",
                 "what": "имя или название",
                 "detail": "Доме"
-              }
-            ],
-            "t09": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Hero"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
-              },
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
-              }
-            ],
-            "t05": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "300"
               }
             ],
             "t11": [
@@ -882,11 +790,11 @@
                 "detail": "4"
               }
             ],
-            "t17": [
+            "t05": [
               {
-                "kind": "inverted",
-                "what": "отрицание",
-                "detail": "«не закурил» в правке стоит без отрицания"
+                "kind": "lost",
+                "what": "число",
+                "detail": "300"
               }
             ],
             "t20": [
@@ -894,6 +802,16 @@
                 "kind": "lost",
                 "what": "число",
                 "detail": "2024"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2003"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2006"
               },
               {
                 "kind": "lost",
@@ -1011,37 +929,6 @@
                 "detail": "Ростехнадзор"
               }
             ],
-            "t24": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Сбалансированный"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Короткий"
-              }
-            ],
-            "r02": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Bank"
-              }
-            ],
-            "t21": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "VK"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram"
-              }
-            ],
             "r04": [
               {
                 "kind": "lost",
@@ -1062,6 +949,129 @@
                 "kind": "lost",
                 "what": "имя или название",
                 "detail": "То"
+              }
+            ],
+            "t09": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Hero"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "15 лет в исходнике относится к «excel/start», в правке стоит рядом с «прове»"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "3 месяца в исходнике относится к «оформ», в правке стоит рядом с «прове»"
+              }
+            ],
+            "r02": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Bank"
+              }
+            ],
+            "t08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              }
+            ],
+            "t06": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "три"
+              }
+            ],
+            "t19": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "LinkedIn"
+              }
+            ],
+            "t16": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "FAQ"
+              }
+            ],
+            "t22": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "4"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "сто"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "восемь"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "UI"
+              }
+            ],
+            "t17": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не закурил» в правке стоит без отрицания"
+              }
+            ],
+            "t21": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "VK"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram"
               }
             ]
           },
@@ -1607,9 +1617,9 @@
           "passes": 24,
           "send_as_is": 4.83,
           "texts_with_fact_errors": [
-            "h02",
             "h01",
-            "h04"
+            "h04",
+            "h02"
           ],
           "script_errors": {
             "h06": [
@@ -1617,6 +1627,13 @@
                 "kind": "added",
                 "what": "число",
                 "detail": "2"
+              }
+            ],
+            "h01": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Максим"
               }
             ],
             "h02": [
@@ -1685,13 +1702,6 @@
                 "what": "имя или название",
                 "detail": "Кавказа"
               }
-            ],
-            "h01": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Максим"
-              }
             ]
           },
           "similarity": 0.45
@@ -1729,9 +1739,9 @@
           "passes": 24,
           "send_as_is": 6.17,
           "texts_with_fact_errors": [
-            "h02",
             "h01",
-            "h04"
+            "h04",
+            "h02"
           ],
           "script_errors": {
             "h03": [
@@ -1832,6 +1842,7 @@
       }
     }
   },
+  "coverage_gaps": [],
   "thresholds": [
     {
       "name": "Ошибок фактов не больше 1 на весь корпус (по большинству судей)",

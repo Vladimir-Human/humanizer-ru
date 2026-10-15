@@ -20,7 +20,7 @@ import difflib
 import importlib.util
 import json
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import evallib as lib
 
@@ -109,8 +109,17 @@ def main() -> int:
         "ai": [t for t in all_ids if index[t]["kind"] in ("generated", "real")],
         "trap": [t for t in all_ids if index[t]["kind"] == "trap"],
     }
-    result = {"run": args.run, "judge_errors": len(errors), "groups": {}}
+    # Coverage: every text of the run must have the same number of valid judge passes,
+    # otherwise the thresholds are reported as unverified instead of passed.
+    cfg = lib.read_json(run_dir / "config.json") if (run_dir / "config.json").exists() else {}
+    expected = cfg.get("texts") or all_ids
+    passes = Counter(r["id"] for r in rows)
+    full = max(passes.values()) if passes else 0
+    gaps = sorted(t for t in expected if passes.get(t, 0) < full)
+    result = {"run": args.run, "judge_errors": len(errors), "groups": {}, "coverage_gaps": gaps}
     md = ["# Итоги сравнения: %s" % args.run, ""]
+    if gaps:
+        md += ["**Неполное покрытие:** у текстов %s меньше %d оценок; пороги ниже не проверены." % (", ".join(gaps), full), ""]
     cfg_path = run_dir / "config.json"
     if cfg_path.exists():
         cfg = lib.read_json(cfg_path)
@@ -161,9 +170,10 @@ def main() -> int:
             checks.append(("Ловушки: без ошибок фактов хотя бы 5 из 6", ok_traps >= 5, "%d из %d" % (ok_traps, len(tr["ids"]))))
         md += ["## Пороги полезности", "", "| Условие | Итог | Значение |", "|---|---|---|"]
         for name, ok, val in checks:
-            md.append("| %s | %s | %s |" % (name, "выполнено" if ok else "не выполнено", val))
+            verdict = "не проверено" if gaps else ("выполнено" if ok else "не выполнено")
+            md.append("| %s | %s | %s |" % (name, verdict, val))
         md.append("")
-        result["thresholds"] = [{"name": n, "ok": ok, "value": v} for n, ok, v in checks]
+        result["thresholds"] = [{"name": n, "ok": (None if gaps else ok), "value": v} for n, ok, v in checks]
     md.append("Расходы на API за все прогоны: $%.2f." % lib.ledger().data["total"])
     lib.write_text(run_dir / "summary.md", "\n".join(md) + "\n")
     lib.write_json(run_dir / "summary.json", result)

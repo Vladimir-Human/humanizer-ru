@@ -27,6 +27,7 @@ import re
 import shutil
 import sys
 from typing import Dict, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -39,7 +40,7 @@ CITATIONS = [
     ("source-token", re.compile(r"[ \t]?【\d+(?::\d+)?(?:†[^】\n]{0,80})?】")),
     ("cite", re.compile(r"[ \t]?\[cite(?:_start|_end)?(?::\s*[\d,\s]+)?\]")),
 ]
-UTM = re.compile(r"([?&])utm_[a-z_]+=[^\s&#)\]»\"']*&?")
+
 # Invisible characters that never carry meaning in Russian prose.
 INVISIBLE = {
     0x200B: "zero-width space", 0x2060: "word joiner", 0xFEFF: "BOM / zero-width no-break",
@@ -50,6 +51,18 @@ INVISIBLE = {
 ZWJ = 0x200D
 ZWNJ = 0x200C
 # END_BLOCK_PATTERNS
+
+
+def strip_utm(url: str) -> Tuple[str, int]:
+    """Drop utm_* query parameters, keep the others, the '?' and the fragment."""
+    parts = urlsplit(url)
+    if not parts.query:
+        return url, 0
+    params = parts.query.split("&")
+    kept = [x for x in params if not x.lower().startswith("utm_")]
+    if len(kept) == len(params):
+        return url, 0
+    return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)
 
 
 def _is_emoji(ch: str) -> bool:
@@ -78,11 +91,8 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
     def fix_url(m: re.Match) -> str:
         url = m.group(0)
         tail = re.search(r"[.,;:!?]*$", url).group()  # sentence punctuation after the link
-        url = url[:len(url) - len(tail)]
-        new, n = UTM.subn(lambda u: u.group(1) if u.group(0).endswith("&") else "", url)
-        if n:
-            bump("utm", n)
-            new = new.replace("?&", "?").rstrip("?&")
+        new, n = strip_utm(url[:len(url) - len(tail)])
+        bump("utm", n)
         return new + tail
 
     text = re.sub(r"https?://[^\s<>«»\"')\]]+", fix_url, text)

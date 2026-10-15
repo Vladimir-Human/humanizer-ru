@@ -92,6 +92,20 @@ class CheckFactsTest(unittest.TestCase):
         self.assertEqual(r["errors"], [])
         self.assertTrue(any(c["kind"] == "hedge" for c in r["checks"]))
 
+    def test_year_of_numeric_date(self):
+        self.assertIn("lost", kinds(cf.compare("Срок — 01.02.2026.", "Срок — 01.02.2027.")))
+        self.assertEqual(cf.compare("Срок — 01.02.2026.", "Срок: 1 февраля 2026.")["errors"], [])
+
+    def test_compound_number_words(self):
+        self.assertEqual(cf.compare("В группе двадцать пять человек.", "В группе 25 человек.")["errors"], [])
+        self.assertEqual(cf.compare("Привезли сто двадцать коробок.", "Привезли 120 коробок.")["errors"], [])
+        self.assertIn("lost", kinds(cf.compare("В группе двадцать пять человек.", "В группе 20 человек.")))
+
+    def test_utm_with_other_params_is_not_a_lost_link(self):
+        a = "Сайт: https://example.org/?utm_source=chatgpt.com&id=42"
+        b = "Сайт: https://example.org/?id=42"
+        self.assertEqual(cf.compare(a, b)["errors"], [])
+
     def test_modality_shift_is_a_check(self):
         r = cf.compare("Пользователь может увидеть старые данные. Субботник запланирован на апрель.",
                        "Пользователь увидит старые данные. Субботник пройдёт в апреле.")
@@ -133,6 +147,12 @@ class CleanPasteTest(unittest.TestCase):
         self.assertEqual(text, "См. https://a.ru/p и https://b.ru/q?id=1.")
         text, _ = cp.clean("https://a.ru/p?utm_source=x&id=1")
         self.assertEqual(text, "https://a.ru/p?id=1")
+
+    def test_several_utm_params_in_one_pass(self):
+        text, counts = cp.clean("https://example.org/?utm_source=a&utm_medium=b&id=42#top")
+        self.assertEqual(text, "https://example.org/?id=42#top")
+        self.assertEqual(counts["utm"], 2)
+        self.assertEqual(cp.clean(text), (text, {}))
 
     def test_invisible_characters(self):
         text, counts = cp.clean("при\u200bвет\u00ad мир\ufeff")
