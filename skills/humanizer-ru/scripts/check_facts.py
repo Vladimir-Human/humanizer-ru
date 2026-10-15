@@ -546,11 +546,12 @@ def compare(before: str, after: str) -> Dict:
     # START_BLOCK_MARKUP_DIFF
     # HTML in the original is part of the text: structural tags must survive the edit; lost
     # emphasis tags only need a look (decorative bold may be removed on purpose).
-    tag_rx = re.compile(r"<([a-z][a-z0-9]*)\b[^<>]*>")
+    # The name ends at a space, "/" or ">": autolinks <https://…> and <a@b.ru> are not tags.
+    tag_rx = re.compile(r"<([a-z][a-z0-9]*)(?:\s[^<>]*)?/?>", re.I)
     emphasis = {"b", "strong", "i", "em", "mark", "u"}
-    tags_b = tag_rx.findall(before)
+    tags_b = [t.lower() for t in tag_rx.findall(before)]
     if len(tags_b) >= 2:
-        tags_a = tag_rx.findall(after)
+        tags_a = [t.lower() for t in tag_rx.findall(after)]
         for tag in sorted(set(tags_b)):
             nb, na = tags_b.count(tag), tags_a.count(tag)
             if na < nb:

@@ -134,6 +134,11 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn("<strong> 1 → 0", [c["detail"] for c in res["checks"] if c["what"] == "разметка"])
         same = cf.compare(before, before.replace("бесплатно", "бесплатна"))
         self.assertFalse([e for e in same["errors"] if e["what"] == "разметка"])
+        # Autolinks are not tags; tag names are case-insensitive.
+        links = "Пишите <hr@lapka.ru> или <https://lapka.ru/a>, <https://lapka.ru/b>."
+        self.assertFalse([e for e in cf.compare(links, "Пишите hr@lapka.ru.")["errors"] if e["what"] == "разметка"])
+        upper = cf.compare("<UL><LI>Раз</LI><LI>Два</LI></UL>", "<p>Раз, два</p>")
+        self.assertIn("<li> 2 → 0", [e["detail"] for e in upper["errors"] if e["what"] == "разметка"])
         # Angle brackets in prose and a single tag are not markup to protect.
         self.assertFalse([e for e in cf.compare("Тег <b> жирный", "Тег жирный")["errors"] if e["what"] == "разметка"])
 

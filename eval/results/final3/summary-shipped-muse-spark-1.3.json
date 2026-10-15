@@ -42,81 +42,6 @@
             "m20"
           ],
           "script_errors": {
-            "m15": [
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
-              }
-            ],
-            "m23": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Авито"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram-канала"
-              }
-            ],
-            "m11": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "ВКонтакте"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Личный"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "ПолезноеЧебоксары"
-              }
-            ],
-            "m17": [
-              {
-                "kind": "added",
-                "what": "число",
-                "detail": "Шесть"
-              }
-            ],
-            "m16": [
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "290"
-              },
-              {
-                "kind": "lost",
-                "what": "число",
-                "detail": "350"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Галина"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Фёдоровна"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Смирнова"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Роскосмоса"
-              }
-            ],
             "m06": [
               {
                 "kind": "swap",
@@ -145,52 +70,29 @@
                 "what": "число",
                 "detail": "3"
               }
-            ]
-          },
-          "similarity": 0.663
-        },
-        "ilyautov": {
-          "mean_position": 2.67,
-          "first_places": 9,
-          "passes": 24,
-          "send_as_is": 7.5,
-          "texts_with_fact_errors": [],
-          "texts_flagged_by_any_judge": [
-            "m12",
-            "m16"
-          ],
-          "script_errors": {
-            "m15": [
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
-              }
-            ],
-            "m23": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Авито"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram-канала"
-              }
             ],
             "m11": [
               {
                 "kind": "lost",
                 "what": "имя или название",
                 "detail": "ВКонтакте"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Личный"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ПолезноеЧебоксары"
               }
             ],
-            "m17": [
+            "m15": [
               {
-                "kind": "added",
-                "what": "число",
-                "detail": "шесть"
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
               }
             ],
             "m16": [
@@ -225,6 +127,39 @@
                 "detail": "Роскосмоса"
               }
             ],
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "Шесть"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.663
+        },
+        "ilyautov": {
+          "mean_position": 2.67,
+          "first_places": 9,
+          "passes": 24,
+          "send_as_is": 7.5,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m12",
+            "m16"
+          ],
+          "script_errors": {
             "m01": [
               {
                 "kind": "lost",
@@ -260,52 +195,6 @@
                 "what": "число",
                 "detail": "3"
               }
-            ]
-          },
-          "similarity": 0.813
-        },
-        "ours": {
-          "mean_position": 3.0,
-          "first_places": 5,
-          "passes": 24,
-          "send_as_is": 7.38,
-          "texts_with_fact_errors": [],
-          "texts_flagged_by_any_judge": [
-            "m16"
-          ],
-          "script_errors": {
-            "m12": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Немедленно"
-              }
-            ],
-            "m15": [
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
-              }
-            ],
-            "m23": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Авито"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram-канала"
-              }
-            ],
-            "m13": [
-              {
-                "kind": "inverted",
-                "what": "отрицание",
-                "detail": "«без больших» в правке стоит без отрицания"
-              }
             ],
             "m11": [
               {
@@ -314,11 +203,11 @@
                 "detail": "ВКонтакте"
               }
             ],
-            "m17": [
+            "m15": [
               {
-                "kind": "added",
-                "what": "число",
-                "detail": "шесть"
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
               }
             ],
             "m16": [
@@ -353,6 +242,38 @@
                 "detail": "Роскосмоса"
               }
             ],
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.813
+        },
+        "ours": {
+          "mean_position": 3.0,
+          "first_places": 5,
+          "passes": 24,
+          "send_as_is": 7.38,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "m16"
+          ],
+          "script_errors": {
             "m06": [
               {
                 "kind": "swap",
@@ -381,36 +302,6 @@
                 "what": "число",
                 "detail": "3"
               }
-            ]
-          },
-          "similarity": 0.694
-        },
-        "ours410": {
-          "mean_position": 2.42,
-          "first_places": 5,
-          "passes": 24,
-          "send_as_is": 8.08,
-          "texts_with_fact_errors": [],
-          "texts_flagged_by_any_judge": [],
-          "script_errors": {
-            "m15": [
-              {
-                "kind": "swap",
-                "what": "привязка",
-                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
-              }
-            ],
-            "m23": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Авито"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram-канала"
-              }
             ],
             "m11": [
               {
@@ -419,11 +310,25 @@
                 "detail": "ВКонтакте"
               }
             ],
-            "m17": [
+            "m12": [
               {
-                "kind": "added",
-                "what": "число",
-                "detail": "шесть"
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Немедленно"
+              }
+            ],
+            "m13": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«без больших» в правке стоит без отрицания"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
               }
             ],
             "m16": [
@@ -458,6 +363,36 @@
                 "detail": "Роскосмоса"
               }
             ],
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.694
+        },
+        "ours410": {
+          "mean_position": 2.42,
+          "first_places": 5,
+          "passes": 24,
+          "send_as_is": 8.08,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
             "m07": [
               {
                 "kind": "lost",
@@ -479,6 +414,71 @@
                 "what": "число",
                 "detail": "3"
               }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шесть"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
             ]
           },
           "similarity": 0.733
@@ -496,6 +496,13 @@
             "m24"
           ],
           "script_errors": {
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              }
+            ],
             "m12": [
               {
                 "kind": "lost",
@@ -527,32 +534,6 @@
                 "detail": "150 мм в исходнике относится к «стены», в правке стоит рядом с «тепло»"
               }
             ],
-            "m23": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Авито"
-              },
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "Telegram-канала"
-              }
-            ],
-            "m11": [
-              {
-                "kind": "lost",
-                "what": "имя или название",
-                "detail": "ВКонтакте"
-              }
-            ],
-            "m17": [
-              {
-                "kind": "added",
-                "what": "число",
-                "detail": "Шесть"
-              }
-            ],
             "m16": [
               {
                 "kind": "lost",
@@ -583,6 +564,25 @@
                 "kind": "lost",
                 "what": "имя или название",
                 "detail": "Роскосмоса"
+              }
+            ],
+            "m17": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "Шесть"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
               }
             ]
           },

@@ -84,7 +84,7 @@ def aggregate(rows, ids, outputs, sources):
                 fact_notes[(s, r["id"])].append("%s: %s" % (judge.split("/")[-1], "; ".join(map(str, errs))))
     script = {}
     for s in systems:
-        for tid in ids:
+        for tid in sorted(ids):
             out = outputs.get((s, tid))
             if out is None:
                 continue

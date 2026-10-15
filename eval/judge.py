@@ -64,9 +64,9 @@ def parse(text: str):
     raw = m.group()
     # Kimi K3 sometimes closes a candidate before its score: {"A": {"language_errors": []}, "send_as_is": 8}.
     moved = re.sub(r"\]\s*\}\s*,\s*(\"send_as_is\")", r"], \1", raw)
-    if moved != raw:  # the moved braces leave "candidates" unclosed before "ranking"
-        moved = re.sub(r"\}\s*,\s*(\"ranking\")", r"}}, \1", moved, count=1)
-    for attempt in (raw, re.sub(r",\s*([}\]])", r"\1", raw), moved):
+    # Depending on how the answer ends, "candidates" is then either closed or still open.
+    closed = re.sub(r"\}\s*,\s*(\"ranking\")", r"}}, \1", moved, count=1) if moved != raw else raw
+    for attempt in (raw, re.sub(r",\s*([}\]])", r"\1", raw), moved, closed):
         try:
             return json.loads(attempt)
         except json.JSONDecodeError:
