@@ -1,6 +1,6 @@
 {
   "name": "humanizer-ru",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после.",
   "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",

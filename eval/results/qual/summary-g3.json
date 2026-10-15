@@ -1,0 +1,250 @@
+{
+  "run": "qual",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "d01",
+        "d02",
+        "d03",
+        "d04",
+        "d05",
+        "d06",
+        "d07",
+        "d08",
+        "d09",
+        "d10",
+        "d11",
+        "d12"
+      ],
+      "table": {
+        "chukovsky": {
+          "mean_position": 3.33,
+          "first_places": 2,
+          "passes": 12,
+          "send_as_is": 7.17,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d12": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1 года"
+              }
+            ]
+          },
+          "similarity": 0.547
+        },
+        "comol": {
+          "mean_position": 3.42,
+          "first_places": 1,
+          "passes": 12,
+          "send_as_is": 7.25,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              }
+            ]
+          },
+          "similarity": 0.753
+        },
+        "ilyautov": {
+          "mean_position": 3.5,
+          "first_places": 1,
+          "passes": 12,
+          "send_as_is": 7.25,
+          "texts_with_fact_errors": [],
+          "script_errors": {},
+          "similarity": 0.81
+        },
+        "ours": {
+          "mean_position": 2.5,
+          "first_places": 5,
+          "passes": 12,
+          "send_as_is": 8.75,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "5"
+              },
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не получается» в правке стоит без отрицания"
+              }
+            ]
+          },
+          "similarity": 0.612
+        },
+        "plainprose": {
+          "mean_position": 4.83,
+          "first_places": 0,
+          "passes": 12,
+          "send_as_is": 6.08,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Code"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Review"
+              }
+            ]
+          },
+          "similarity": 0.442
+        },
+        "slopotron": {
+          "mean_position": 3.42,
+          "first_places": 3,
+          "passes": 12,
+          "send_as_is": 7.08,
+          "texts_with_fact_errors": [],
+          "script_errors": {
+            "d08": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Code"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Review"
+              },
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не считая» в правке стоит без отрицания"
+              }
+            ]
+          },
+          "similarity": 0.45
+        }
+      },
+      "pairwise": {
+        "chukovsky>comol": 0.5,
+        "comol>chukovsky": 0.5,
+        "chukovsky>ilyautov": 0.5,
+        "ilyautov>chukovsky": 0.5,
+        "chukovsky>ours": 0.417,
+        "ours>chukovsky": 0.583,
+        "chukovsky>slopotron": 0.583,
+        "slopotron>chukovsky": 0.417,
+        "chukovsky>plainprose": 0.667,
+        "plainprose>chukovsky": 0.333,
+        "comol>ilyautov": 0.5,
+        "ilyautov>comol": 0.5,
+        "comol>ours": 0.25,
+        "ours>comol": 0.75,
+        "comol>slopotron": 0.5,
+        "slopotron>comol": 0.5,
+        "comol>plainprose": 0.833,
+        "plainprose>comol": 0.167,
+        "ilyautov>ours": 0.333,
+        "ours>ilyautov": 0.667,
+        "ilyautov>slopotron": 0.417,
+        "slopotron>ilyautov": 0.583,
+        "ilyautov>plainprose": 0.75,
+        "plainprose>ilyautov": 0.25,
+        "ours>slopotron": 0.667,
+        "slopotron>ours": 0.333,
+        "ours>plainprose": 0.833,
+        "plainprose>ours": 0.167,
+        "slopotron>plainprose": 0.75,
+        "plainprose>slopotron": 0.25
+      },
+      "fact_notes": {
+        "slopotron|d01": [
+          "потеряно ограничение «только» в составе"
+        ],
+        "plainprose|d01": [
+          "потеряно ограничение «только» по пятницам; потеряно «натуральная» закваска"
+        ],
+        "comol|d02": [
+          "Потеряна фраза об отсутствии претензий к качеству; Сужено условие: остался только суд без иных инстанций"
+        ],
+        "slopotron|d02": [
+          "Сужено условие: остался только суд без иных инстанций; Добавлено «нашу» и «есть только к срокам»"
+        ],
+        "plainprose|d02": [
+          "Потеряна фраза об отсутствии претензий к качеству; Сужено условие: остался только суд без иных инстанций"
+        ],
+        "plainprose|d03": [
+          "потеряно упоминание про удобство переноски"
+        ],
+        "slopotron|d03": [
+          "полностью удалён удобный список характеристик"
+        ],
+        "plainprose|d04": [
+          "удалён второй вариант текста (для таблички)"
+        ],
+        "chukovsky|d04": [
+          "«шёпотом» заменено на «вполголоса»; добавлен пример «видео»; обещание «присмотрим за вещами» вместо «оставить вещи»"
+        ],
+        "slopotron|d04": [
+          "удалён второй вариант текста (для таблички); потеряно ограничение «только» про балкон 2-го этажа; добавлены слова «музыку и видео»"
+        ],
+        "plainprose|d05": [
+          "Потерян абзац про смену привычек и страх в финале; Потеряно условие «не при идеальных условиях»"
+        ],
+        "slopotron|d07": [
+          "в теле письма потеряно «только до 15 декабря»"
+        ],
+        "ilyautov|d07": [
+          "в теле письма потеряно «только до 15 декабря»"
+        ],
+        "plainprose|d07": [
+          "везде потеряно ограничение «только» (до 15.12)"
+        ],
+        "plainprose|d10": [
+          "потеряна мысль про баланс прогресса и нагрузки"
+        ],
+        "comol|d11": [
+          "Потеряно «справа» и «слева» (заменено на «с одной стороны»)"
+        ],
+        "plainprose|d11": [
+          "Потеряно «справа» и «слева»; Потеряно уточнение про пенку-мусс"
+        ],
+        "chukovsky|d11": [
+          "Искажено: «не всякая живность» -> «не пьёт даже местная живность»; Выдумано про «гидроколлоидные пластыри» и «шутки»; Потеряно «справа», «слева и впереди»"
+        ],
+        "slopotron|d11": [
+          "Потеряно уточнение «первого дня» про первые 2–3 км"
+        ],
+        "plainprose|d12": [
+          "пропущена мысль о важности пунктуальности для работающих родителей"
+        ]
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Ошибок фактов не больше 1 на весь корпус (по большинству судей)",
+      "ok": true,
+      "value": "0"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% проходов",
+      "ok": false,
+      "value": "0%"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (chukovsky): не меньше 50%",
+      "ok": true,
+      "value": "58%"
+    }
+  ]
+}

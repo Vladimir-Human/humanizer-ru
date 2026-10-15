@@ -8,11 +8,11 @@
     <module id="M-CHECK-REPO" file="scripts/check_repo.py" purpose="Frontmatter, version agreement, referenced files, LF and invisible characters" depends="Python stdlib" exports="check; CLI used by CI" />
     <module id="M-BUILD-ZIP" file="scripts/build_zip.py" purpose="Zip for Claude.ai with humanizer-ru/ at the root" depends="Python stdlib" exports="build; CLI used by CI and release" />
     <module id="M-EVAL-LIB" file="eval/evallib.py" purpose="fal OpenRouter chat client, spend ledger with cap, IO helpers" depends="Python stdlib; FAL_KEY" exports="chat, ledger, read/write helpers" />
-    <module id="M-EVAL-CORPUS" file="eval/build_corpus.py" purpose="Generate AI texts from briefs, add saved chatbot answers and human/legal traps" depends="M-EVAL-LIB; v3.36.4 research/ archive" exports="eval/corpus/texts, index.json" />
-    <module id="M-EVAL-FETCH" file="eval/fetch_systems.py" purpose="Instruction files of compared skills at pinned commits" depends="M-EVAL-LIB; gh; git" exports="eval/.cache/systems" />
+    <module id="M-EVAL-CORPUS" file="eval/build_corpus.py" purpose="Generate AI texts from briefs (sets dev, test, holdout), add saved chatbot answers and human/legal traps" depends="M-EVAL-LIB; v3.36.4 research/ archive" exports="eval/corpus/texts, index.json" />
+    <module id="M-EVAL-FETCH" file="eval/fetch_systems.py" purpose="Instruction files of compared skills at pinned commits; all of them or only the names given" depends="M-EVAL-LIB; gh; git" exports="eval/.cache/systems" />
     <module id="M-EVAL-RUN" file="eval/run_systems.py" purpose="One executor model applies each skill to each text with a read_file tool" depends="M-EVAL-LIB, M-EVAL-FETCH, M-SKILL" exports="results/RUN/outputs, runs.jsonl" />
     <module id="M-EVAL-JUDGE" file="eval/judge.py" purpose="Blind shuffled ranking by judges from other labs, with fact/AI/language notes" depends="M-EVAL-LIB" exports="results/RUN/judgments.jsonl" />
-    <module id="M-EVAL-REPORT" file="eval/report.py" purpose="Positions, pairwise wins, fact flags, thresholds" depends="M-EVAL-LIB, M-CHECK-FACTS" exports="results/RUN/summary.md, summary.json" />
+    <module id="M-EVAL-REPORT" file="eval/report.py" purpose="Positions, pairwise wins, fact flags, thresholds; optional judge filter and output name" depends="M-EVAL-LIB, M-CHECK-FACTS" exports="results/RUN/summary.md, summary.json" />
   </modules>
   <flows>
     <flow id="DF-SKILL" path="user text -> M-SKILL (clean, anchors, rewrite) -> optional M-CLEAN-PASTE / M-CHECK-FACTS -> edited text + 1-3 notes" />

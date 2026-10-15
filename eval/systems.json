@@ -4,6 +4,17 @@
   {"name": "ilyautov", "title": "ilyautov/humanizer-ru", "kind": "github", "repo": "ilyautov/humanizer-ru", "sha": "8c337c3567096758433c475f1d60f2543f6bc94f", "path": "skills/humanizer-ru"},
   {"name": "blader", "title": "blader/humanizer", "kind": "github", "repo": "blader/humanizer", "sha": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8", "path": ""},
   {"name": "smixs", "title": "smixs/humanizer-ru", "kind": "github", "repo": "smixs/humanizer-ru", "sha": "ff990df404f78fb1a43fc574a725490bd1be8070", "path": ""},
-  {"name": "prompt", "title": "просьба одной строкой, без навыка", "kind": "prompt",
-   "system": "Отредактируй присланный текст живым и естественным русским языком: убери канцелярит и штампы нейросети, сохрани все факты, числа, имена и оговорки без изменений."}
+  {"name": "stopslop", "title": "hardikpandya/stop-slop", "kind": "github", "repo": "hardikpandya/stop-slop", "sha": "8da1f030185bdfe8471220585162991eaeb970e9", "path": ""},
+  {"name": "noaislop", "title": "petergyang/no-ai-slop", "kind": "github", "repo": "petergyang/no-ai-slop", "sha": "000650b156983f5159695b441477f4e63b25dc85", "path": "skills/no-ai-slop"},
+  {"name": "avoidai", "title": "conorbronsdon/avoid-ai-writing", "kind": "github", "repo": "conorbronsdon/avoid-ai-writing", "sha": "2eec2d4c443347dd596b5e5c00f5d89ae4075697", "path": "skills/avoid-ai-writing"},
+  {"name": "slopotron", "title": "beaverbeard/slopotron", "kind": "github", "repo": "beaverbeard/slopotron", "sha": "122d38545c7e415844e9cf39dc4350455ad8cf18", "path": ".claude/skills/slopotron"},
+  {"name": "thevseprod", "title": "thevseprod/humanizer-ru", "kind": "github", "repo": "thevseprod/humanizer-ru", "sha": "9eed1ab6108056b1e6c7e2d2a108014c22b0a258", "path": ""},
+  {"name": "avoidai_ru", "title": "ormeilu/avoid-ai-writing-russian", "kind": "github", "repo": "ormeilu/avoid-ai-writing-russian", "sha": "297ba5744712ff109d1a43a29cdd7ed5a267e14f", "path": "skills/avoid-ai-writing-russian"},
+  {"name": "pishi", "title": "fsbtactic-code/pishi-normalno", "kind": "github", "repo": "fsbtactic-code/pishi-normalno", "sha": "bfcf786b526303ce591758307677936b57b9893a", "path": "skills/pishi-normalno"},
+  {"name": "comol", "title": "comol/Humanizer_RU", "kind": "github", "repo": "comol/Humanizer_RU", "sha": "19186272a14488843d6d9a02115ced557957ed59", "path": "skills/humanizer-ru"},
+  {"name": "rws", "title": "unicodef1wn/russian-writing-skills (humanizer-ru)", "kind": "github", "repo": "unicodef1wn/russian-writing-skills", "sha": "aa0a3157bd09507179746e946d1d8ddeb198b900", "path": "humanizer-ru"},
+  {"name": "plainprose", "title": "dripips/plain-prose", "kind": "github", "repo": "dripips/plain-prose", "sha": "046e2bf65a5da3b299fe3cd51f306276af30e66d", "path": ""},
+  {"name": "infostyle", "title": "artgas1/infostyle-skill", "kind": "github", "repo": "artgas1/infostyle-skill", "sha": "623322d47ddf0bf10dc1208ed6de0d64856d4a38", "path": "skills/infostyle"},
+  {"name": "chukovsky", "title": "beaverbeard/chukovsky", "kind": "github", "repo": "beaverbeard/chukovsky", "sha": "26d55599a11798d57788d0f15974127d1bc34733", "path": ".claude/skills/chukovsky"},
+  {"name": "prompt", "title": "просьба одной строкой, без навыка", "kind": "prompt", "system": "Отредактируй присланный текст живым и естественным русским языком: убери канцелярит и штампы нейросети, сохрани все факты, числа, имена и оговорки без изменений."}
 ]

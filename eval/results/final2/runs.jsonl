@@ -1,0 +1,241 @@
+{"steps": 1, "files_read": [], "cost": 0.027873, "prompt_tokens": 7007, "completion_tokens": 1064, "attempts": 1, "system": "ours", "id": "n01"}
+{"steps": 1, "files_read": [], "cost": 0.0108518, "prompt_tokens": 6927, "completion_tokens": 923, "attempts": 1, "system": "ours", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.0126718, "prompt_tokens": 6922, "completion_tokens": 1106, "attempts": 1, "system": "ours", "id": "n03"}
+{"steps": 1, "files_read": [], "cost": 0.0130518, "prompt_tokens": 6972, "completion_tokens": 1134, "attempts": 1, "system": "ours", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.0922798, "prompt_tokens": 12256, "completion_tokens": 8000, "attempts": 1, "system": "ours", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.0138038, "prompt_tokens": 7153, "completion_tokens": 1173, "attempts": 1, "system": "ours", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.0451058, "prompt_tokens": 8499, "completion_tokens": 4034, "attempts": 1, "system": "ours", "id": "n07"}
+{"steps": 1, "files_read": [], "cost": 0.0102518, "prompt_tokens": 7142, "completion_tokens": 820, "attempts": 1, "system": "ours", "id": "n08"}
+{"steps": 1, "files_read": [], "cost": 0.0134138, "prompt_tokens": 7058, "completion_tokens": 1153, "attempts": 1, "system": "ours", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.0149638, "prompt_tokens": 7463, "completion_tokens": 1227, "attempts": 1, "system": "ours", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.0091538, "prompt_tokens": 6863, "completion_tokens": 766, "attempts": 1, "system": "ours", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.0568098, "prompt_tokens": 9061, "completion_tokens": 5092, "attempts": 1, "system": "ours", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.0083938, "prompt_tokens": 6768, "completion_tokens": 709, "attempts": 1, "system": "ours", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.0095958, "prompt_tokens": 6854, "completion_tokens": 812, "attempts": 1, "system": "ours", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.0066838, "prompt_tokens": 6748, "completion_tokens": 542, "attempts": 1, "system": "ours", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.0117498, "prompt_tokens": 6841, "completion_tokens": 1030, "attempts": 1, "system": "ours", "id": "n16"}
+{"steps": 1, "files_read": [], "cost": 0.0205878, "prompt_tokens": 7230, "completion_tokens": 1836, "attempts": 1, "system": "ours", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.0164638, "prompt_tokens": 7228, "completion_tokens": 1424, "attempts": 1, "system": "ours", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.0163438, "prompt_tokens": 7263, "completion_tokens": 1405, "attempts": 1, "system": "ours", "id": "n19"}
+{"steps": 1, "files_read": [], "cost": 0.0406578, "prompt_tokens": 8605, "completion_tokens": 3568, "attempts": 1, "system": "ours", "id": "n20"}
+{"steps": 1, "files_read": [], "cost": 0.0327158, "prompt_tokens": 8069, "completion_tokens": 2881, "attempts": 1, "system": "ours", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.0060718, "prompt_tokens": 6777, "completion_tokens": 475, "attempts": 1, "system": "ours", "id": "n22"}
+{"steps": 1, "files_read": [], "cost": 0.0325878, "prompt_tokens": 7975, "completion_tokens": 2887, "attempts": 1, "system": "ours", "id": "n23"}
+{"steps": 1, "files_read": [], "cost": 0.0139938, "prompt_tokens": 6978, "completion_tokens": 1227, "attempts": 1, "system": "ours", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.0039598, "prompt_tokens": 6626, "completion_tokens": 294, "attempts": 1, "system": "ours", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0112958, "prompt_tokens": 7299, "completion_tokens": 893, "attempts": 1, "system": "ours", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0127878, "prompt_tokens": 7090, "completion_tokens": 1084, "attempts": 1, "system": "ours", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0037558, "prompt_tokens": 6674, "completion_tokens": 264, "attempts": 1, "system": "ours", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0060638, "prompt_tokens": 6638, "completion_tokens": 502, "attempts": 1, "system": "ours", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0037038, "prompt_tokens": 6603, "completion_tokens": 273, "attempts": 1, "system": "ours", "id": "h06"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0356722, "prompt_tokens": 16549, "completion_tokens": 1286, "attempts": 1, "system": "ilyautov", "id": "n01"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0158994, "prompt_tokens": 16389, "completion_tokens": 1104, "attempts": 1, "system": "ilyautov", "id": "n02"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0171294, "prompt_tokens": 16379, "completion_tokens": 1229, "attempts": 1, "system": "ilyautov", "id": "n03"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0197494, "prompt_tokens": 16479, "completion_tokens": 1471, "attempts": 1, "system": "ilyautov", "id": "n04"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.1075854, "prompt_tokens": 27047, "completion_tokens": 8141, "attempts": 1, "system": "ilyautov", "id": "n05"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0194834, "prompt_tokens": 16841, "completion_tokens": 1372, "attempts": 1, "system": "ilyautov", "id": "n06"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.052687399999999995, "prompt_tokens": 19533, "completion_tokens": 4154, "attempts": 1, "system": "ilyautov", "id": "n07"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0192594, "prompt_tokens": 16819, "completion_tokens": 1354, "attempts": 1, "system": "ilyautov", "id": "n08"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0177234, "prompt_tokens": 16651, "completion_tokens": 1234, "attempts": 1, "system": "ilyautov", "id": "n09"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0208834, "prompt_tokens": 17461, "completion_tokens": 1388, "attempts": 1, "system": "ilyautov", "id": "n10"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0124834, "prompt_tokens": 16261, "completion_tokens": 788, "attempts": 1, "system": "ilyautov", "id": "n11"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0537054, "prompt_tokens": 20657, "completion_tokens": 4031, "attempts": 1, "system": "ilyautov", "id": "n12"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.013183400000000001, "prompt_tokens": 16071, "completion_tokens": 896, "attempts": 1, "system": "ilyautov", "id": "n13"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0120574, "prompt_tokens": 16243, "completion_tokens": 749, "attempts": 1, "system": "ilyautov", "id": "n14"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0100634, "prompt_tokens": 16031, "completion_tokens": 592, "attempts": 1, "system": "ilyautov", "id": "n15"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.013785400000000001, "prompt_tokens": 16217, "completion_tokens": 927, "attempts": 1, "system": "ilyautov", "id": "n16"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.021431400000000003, "prompt_tokens": 16995, "completion_tokens": 1536, "attempts": 1, "system": "ilyautov", "id": "n17"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0242734, "prompt_tokens": 16991, "completion_tokens": 1821, "attempts": 1, "system": "ilyautov", "id": "n18"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0205034, "prompt_tokens": 17061, "completion_tokens": 1430, "attempts": 1, "system": "ilyautov", "id": "n19"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0576714, "prompt_tokens": 19745, "completion_tokens": 4610, "attempts": 1, "system": "ilyautov", "id": "n20"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0444274, "prompt_tokens": 18673, "completion_tokens": 3500, "attempts": 1, "system": "ilyautov", "id": "n21"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.012039399999999999, "prompt_tokens": 16089, "completion_tokens": 778, "attempts": 1, "system": "ilyautov", "id": "n22"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.036681399999999996, "prompt_tokens": 18485, "completion_tokens": 2763, "attempts": 1, "system": "ilyautov", "id": "n23"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.013353400000000001, "prompt_tokens": 16491, "completion_tokens": 829, "attempts": 1, "system": "ilyautov", "id": "n24"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0102754, "prompt_tokens": 15787, "completion_tokens": 662, "attempts": 1, "system": "ilyautov", "id": "h01"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.023567400000000002, "prompt_tokens": 17133, "completion_tokens": 1722, "attempts": 1, "system": "ilyautov", "id": "h02"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0222814, "prompt_tokens": 16715, "completion_tokens": 1677, "attempts": 1, "system": "ilyautov", "id": "h03"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0080674, "prompt_tokens": 15883, "completion_tokens": 422, "attempts": 1, "system": "ilyautov", "id": "h04"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.008583400000000001, "prompt_tokens": 15811, "completion_tokens": 488, "attempts": 1, "system": "ilyautov", "id": "h05"}
+{"steps": 2, "files_read": ["edit-log.md"], "cost": 0.0090034, "prompt_tokens": 15741, "completion_tokens": 544, "attempts": 1, "system": "ilyautov", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.032348, "prompt_tokens": 11973, "completion_tokens": 270, "attempts": 1, "system": "blader", "id": "n01"}
+{"steps": 1, "files_read": [], "cost": 0.0122584, "prompt_tokens": 11893, "completion_tokens": 1014, "attempts": 1, "system": "blader", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.0053984, "prompt_tokens": 11888, "completion_tokens": 329, "attempts": 1, "system": "blader", "id": "n03"}
+{"steps": 1, "files_read": [], "cost": 0.0050584, "prompt_tokens": 11938, "completion_tokens": 285, "attempts": 1, "system": "blader", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.0659164, "prompt_tokens": 17222, "completion_tokens": 5314, "attempts": 1, "system": "blader", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.0122004, "prompt_tokens": 12119, "completion_tokens": 963, "attempts": 1, "system": "blader", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.0322224, "prompt_tokens": 13465, "completion_tokens": 2696, "attempts": 1, "system": "blader", "id": "n07"}
+{"steps": 1, "files_read": [], "cost": 0.0070684, "prompt_tokens": 12108, "completion_tokens": 452, "attempts": 1, "system": "blader", "id": "n08"}
+{"steps": 1, "files_read": [], "cost": 0.0149004, "prompt_tokens": 12024, "completion_tokens": 1252, "attempts": 1, "system": "blader", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.0150904, "prompt_tokens": 12429, "completion_tokens": 1190, "attempts": 1, "system": "blader", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.0046504, "prompt_tokens": 11829, "completion_tokens": 266, "attempts": 1, "system": "blader", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.0384864, "prompt_tokens": 14027, "completion_tokens": 3210, "attempts": 1, "system": "blader", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.0065604, "prompt_tokens": 11734, "completion_tokens": 476, "attempts": 1, "system": "blader", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.0121024, "prompt_tokens": 11820, "completion_tokens": 1013, "attempts": 1, "system": "blader", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.0076704, "prompt_tokens": 11714, "completion_tokens": 591, "attempts": 1, "system": "blader", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.0045864, "prompt_tokens": 11807, "completion_tokens": 264, "attempts": 1, "system": "blader", "id": "n16"}
+{"steps": 1, "files_read": [], "cost": 0.0209344, "prompt_tokens": 12196, "completion_tokens": 1821, "attempts": 1, "system": "blader", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.0142804, "prompt_tokens": 12194, "completion_tokens": 1156, "attempts": 1, "system": "blader", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.0144804, "prompt_tokens": 12229, "completion_tokens": 1169, "attempts": 1, "system": "blader", "id": "n19"}
+{"steps": 1, "files_read": [], "cost": 0.0454844, "prompt_tokens": 13571, "completion_tokens": 4001, "attempts": 1, "system": "blader", "id": "n20"}
+{"steps": 1, "files_read": [], "cost": 0.0301924, "prompt_tokens": 13035, "completion_tokens": 2579, "attempts": 1, "system": "blader", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.0066784, "prompt_tokens": 11743, "completion_tokens": 486, "attempts": 1, "system": "blader", "id": "n22"}
+{"steps": 1, "files_read": [], "cost": 0.0296544, "prompt_tokens": 12941, "completion_tokens": 2544, "attempts": 1, "system": "blader", "id": "n23"}
+{"steps": 1, "files_read": [], "cost": 0.0107904, "prompt_tokens": 11944, "completion_tokens": 857, "attempts": 1, "system": "blader", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.0046964, "prompt_tokens": 11592, "completion_tokens": 318, "attempts": 1, "system": "blader", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0196124, "prompt_tokens": 12265, "completion_tokens": 1675, "attempts": 1, "system": "blader", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0117044, "prompt_tokens": 12056, "completion_tokens": 926, "attempts": 1, "system": "blader", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0077424, "prompt_tokens": 11640, "completion_tokens": 613, "attempts": 1, "system": "blader", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0052104, "prompt_tokens": 11604, "completion_tokens": 367, "attempts": 1, "system": "blader", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0045504, "prompt_tokens": 11569, "completion_tokens": 308, "attempts": 1, "system": "blader", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.056418, "prompt_tokens": 19185, "completion_tokens": 874, "attempts": 1, "system": "slopotron", "id": "n01"}
+{"steps": 1, "files_read": [], "cost": 0.0157496, "prompt_tokens": 19105, "completion_tokens": 1291, "attempts": 1, "system": "slopotron", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.0164896, "prompt_tokens": 19100, "completion_tokens": 1366, "attempts": 1, "system": "slopotron", "id": "n03"}
+{"steps": 1, "files_read": [], "cost": 0.0125096, "prompt_tokens": 19150, "completion_tokens": 958, "attempts": 1, "system": "slopotron", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.0760876, "prompt_tokens": 24434, "completion_tokens": 6259, "attempts": 1, "system": "slopotron", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.0153016, "prompt_tokens": 19331, "completion_tokens": 1201, "attempts": 1, "system": "slopotron", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.0393036, "prompt_tokens": 20677, "completion_tokens": 3332, "attempts": 1, "system": "slopotron", "id": "n07"}
+{"steps": 1, "files_read": [], "cost": 0.0165796, "prompt_tokens": 19320, "completion_tokens": 1331, "attempts": 1, "system": "slopotron", "id": "n08"}
+{"steps": 1, "files_read": [], "cost": 0.0167016, "prompt_tokens": 19236, "completion_tokens": 1360, "attempts": 1, "system": "slopotron", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.0184316, "prompt_tokens": 19641, "completion_tokens": 1452, "attempts": 1, "system": "slopotron", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.0123416, "prompt_tokens": 19041, "completion_tokens": 963, "attempts": 1, "system": "slopotron", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.0563676, "prompt_tokens": 21239, "completion_tokens": 4926, "attempts": 1, "system": "slopotron", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.0099116, "prompt_tokens": 18946, "completion_tokens": 739, "attempts": 1, "system": "slopotron", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.0115936, "prompt_tokens": 19032, "completion_tokens": 890, "attempts": 1, "system": "slopotron", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.0116316, "prompt_tokens": 18926, "completion_tokens": 915, "attempts": 1, "system": "slopotron", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.0104776, "prompt_tokens": 19019, "completion_tokens": 781, "attempts": 1, "system": "slopotron", "id": "n16"}
+{"steps": 1, "files_read": [], "cost": 0.0271756, "prompt_tokens": 19408, "completion_tokens": 2373, "attempts": 1, "system": "slopotron", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.0212216, "prompt_tokens": 19406, "completion_tokens": 1778, "attempts": 1, "system": "slopotron", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.0151616, "prompt_tokens": 19441, "completion_tokens": 1165, "attempts": 1, "system": "slopotron", "id": "n19"}
+{"steps": 1, "files_read": [], "cost": 0.0512156, "prompt_tokens": 20783, "completion_tokens": 4502, "attempts": 1, "system": "slopotron", "id": "n20"}
+{"steps": 1, "files_read": [], "cost": 0.0291936, "prompt_tokens": 20247, "completion_tokens": 2407, "attempts": 1, "system": "slopotron", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.0081596, "prompt_tokens": 18955, "completion_tokens": 562, "attempts": 1, "system": "slopotron", "id": "n22"}
+{"steps": 1, "files_read": [], "cost": 0.0288056, "prompt_tokens": 20153, "completion_tokens": 2387, "attempts": 1, "system": "slopotron", "id": "n23"}
+{"steps": 1, "files_read": [], "cost": 0.0146816, "prompt_tokens": 19156, "completion_tokens": 1174, "attempts": 1, "system": "slopotron", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.0057676, "prompt_tokens": 18804, "completion_tokens": 353, "attempts": 1, "system": "slopotron", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0139636, "prompt_tokens": 19477, "completion_tokens": 1038, "attempts": 1, "system": "slopotron", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0131856, "prompt_tokens": 19268, "completion_tokens": 1002, "attempts": 1, "system": "slopotron", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0072536, "prompt_tokens": 18852, "completion_tokens": 492, "attempts": 1, "system": "slopotron", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0073416, "prompt_tokens": 18816, "completion_tokens": 508, "attempts": 1, "system": "slopotron", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0111916, "prompt_tokens": 18781, "completion_tokens": 900, "attempts": 1, "system": "slopotron", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.049263, "prompt_tokens": 16919, "completion_tokens": 725, "attempts": 1, "system": "avoidai_ru", "id": "n01"}
+{"steps": 2, "files_read": ["references/profiles.md"], "cost": 0.022598, "prompt_tokens": 37819, "completion_tokens": 909, "attempts": 1, "system": "avoidai_ru", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.015203, "prompt_tokens": 16834, "completion_tokens": 1260, "attempts": 1, "system": "avoidai_ru", "id": "n03"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/typography.md"], "cost": 0.033454, "prompt_tokens": 41597, "completion_tokens": 1239, "attempts": 1, "system": "avoidai_ru", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.082901, "prompt_tokens": 22168, "completion_tokens": 6963, "attempts": 1, "system": "avoidai_ru", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.014655, "prompt_tokens": 17065, "completion_tokens": 1159, "attempts": 1, "system": "avoidai_ru", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.038257, "prompt_tokens": 18411, "completion_tokens": 3250, "attempts": 1, "system": "avoidai_ru", "id": "n07"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/typography.md"], "cost": 0.032784, "prompt_tokens": 41937, "completion_tokens": 1104, "attempts": 1, "system": "avoidai_ru", "id": "n08"}
+{"steps": 2, "files_read": ["references/typography.md", "references/profiles.md"], "cost": 0.038368, "prompt_tokens": 41769, "completion_tokens": 1696, "attempts": 1, "system": "avoidai_ru", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.017005, "prompt_tokens": 17375, "completion_tokens": 1332, "attempts": 1, "system": "avoidai_ru", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.011435, "prompt_tokens": 16775, "completion_tokens": 895, "attempts": 1, "system": "avoidai_ru", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.043401, "prompt_tokens": 18973, "completion_tokens": 3652, "attempts": 1, "system": "avoidai_ru", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.009915, "prompt_tokens": 16680, "completion_tokens": 762, "attempts": 1, "system": "avoidai_ru", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.011327, "prompt_tokens": 16766, "completion_tokens": 886, "attempts": 1, "system": "avoidai_ru", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.010555, "prompt_tokens": 16660, "completion_tokens": 830, "attempts": 1, "system": "avoidai_ru", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.015871, "prompt_tokens": 16753, "completion_tokens": 1343, "attempts": 1, "system": "avoidai_ru", "id": "n16"}
+{"steps": 2, "files_read": ["references/profiles.md"], "cost": 0.03239, "prompt_tokens": 38425, "completion_tokens": 1767, "attempts": 1, "system": "avoidai_ru", "id": "n17"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.037772, "prompt_tokens": 42716, "completion_tokens": 1447, "attempts": 1, "system": "avoidai_ru", "id": "n18"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.038092, "prompt_tokens": 42786, "completion_tokens": 1465, "attempts": 1, "system": "avoidai_ru", "id": "n19"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.07537, "prompt_tokens": 45470, "completion_tokens": 4656, "attempts": 1, "system": "avoidai_ru", "id": "n20"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/chat.md"], "cost": 0.060516, "prompt_tokens": 44398, "completion_tokens": 3385, "attempts": 1, "system": "avoidai_ru", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.008403, "prompt_tokens": 16689, "completion_tokens": 609, "attempts": 1, "system": "avoidai_ru", "id": "n22"}
+{"steps": 2, "files_read": ["references/profiles.md", "references/rhetoric.md", "references/sentences.md"], "cost": 0.071132, "prompt_tokens": 48921, "completion_tokens": 3542, "attempts": 1, "system": "avoidai_ru", "id": "n23"}
+{"steps": 2, "files_read": ["references/chat.md", "references/rhetoric.md"], "cost": 0.0366, "prompt_tokens": 42760, "completion_tokens": 1321, "attempts": 1, "system": "avoidai_ru", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.005391, "prompt_tokens": 16538, "completion_tokens": 338, "attempts": 1, "system": "avoidai_ru", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.014067, "prompt_tokens": 17211, "completion_tokens": 1071, "attempts": 1, "system": "avoidai_ru", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.013079, "prompt_tokens": 17002, "completion_tokens": 1014, "attempts": 1, "system": "avoidai_ru", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.006057, "prompt_tokens": 16586, "completion_tokens": 395, "attempts": 1, "system": "avoidai_ru", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.007975, "prompt_tokens": 16550, "completion_tokens": 594, "attempts": 1, "system": "avoidai_ru", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.006985, "prompt_tokens": 16515, "completion_tokens": 502, "attempts": 1, "system": "avoidai_ru", "id": "h06"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/examples.md"], "cost": 0.050697400000000004, "prompt_tokens": 23032, "completion_tokens": 1460, "attempts": 1, "system": "pishi", "id": "n01"}
+{"steps": 2, "files_read": ["references/registers.md", "references/voice-preservation.md"], "cost": 0.0230678, "prompt_tokens": 19420, "completion_tokens": 1128, "attempts": 1, "system": "pishi", "id": "n02"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.0329358, "prompt_tokens": 23054, "completion_tokens": 1388, "attempts": 1, "system": "pishi", "id": "n03"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/registers.md"], "cost": 0.0318998, "prompt_tokens": 22101, "completion_tokens": 1475, "attempts": 1, "system": "pishi", "id": "n04"}
+{"steps": 2, "files_read": ["references/registers.md", "references/russian-patterns.md"], "cost": 0.1192718, "prompt_tokens": 31992, "completion_tokens": 8234, "attempts": 1, "system": "pishi", "id": "n05"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0207538, "prompt_tokens": 17223, "completion_tokens": 1336, "attempts": 1, "system": "pishi", "id": "n06"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/russian-patterns.md", "references/registers.md"], "cost": 0.0919438, "prompt_tokens": 29693, "completion_tokens": 5961, "attempts": 1, "system": "pishi", "id": "n07"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0197098, "prompt_tokens": 17201, "completion_tokens": 1236, "attempts": 1, "system": "pishi", "id": "n08"}
+{"steps": 2, "files_read": ["references/registers.md", "references/marketing-smm.md"], "cost": 0.039293800000000004, "prompt_tokens": 22273, "completion_tokens": 2180, "attempts": 1, "system": "pishi", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.0182619, "prompt_tokens": 8144, "completion_tokens": 1550, "attempts": 1, "system": "pishi", "id": "n10"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/registers.md"], "cost": 0.0267838, "prompt_tokens": 21883, "completion_tokens": 1007, "attempts": 1, "system": "pishi", "id": "n11"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/registers.md"], "cost": 0.0815058, "prompt_tokens": 26279, "completion_tokens": 5600, "attempts": 1, "system": "pishi", "id": "n12"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0165038, "prompt_tokens": 16453, "completion_tokens": 1065, "attempts": 1, "system": "pishi", "id": "n13"}
+{"steps": 2, "files_read": ["references/voice-preservation.md", "references/marketing-smm.md"], "cost": 0.029393799999999998, "prompt_tokens": 22918, "completion_tokens": 1061, "attempts": 1, "system": "pishi", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.0087519, "prompt_tokens": 7429, "completion_tokens": 742, "attempts": 1, "system": "pishi", "id": "n15"}
+{"steps": 2, "files_read": ["references/registers.md", "references/voice-preservation.md"], "cost": 0.0222138, "prompt_tokens": 19248, "completion_tokens": 1077, "attempts": 1, "system": "pishi", "id": "n16"}
+{"steps": 2, "files_read": ["references/registers.md", "references/voice-preservation.md"], "cost": 0.0335898, "prompt_tokens": 20026, "completion_tokens": 2059, "attempts": 1, "system": "pishi", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.0192819, "prompt_tokens": 7909, "completion_tokens": 1699, "attempts": 1, "system": "pishi", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.0170319, "prompt_tokens": 7944, "completion_tokens": 1467, "attempts": 1, "system": "pishi", "id": "n19"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.1074378, "prompt_tokens": 26420, "completion_tokens": 8165, "attempts": 1, "system": "pishi", "id": "n20"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/registers.md"], "cost": 0.0620778, "prompt_tokens": 24295, "completion_tokens": 4054, "attempts": 1, "system": "pishi", "id": "n21"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0115398, "prompt_tokens": 16471, "completion_tokens": 565, "attempts": 1, "system": "pishi", "id": "n22"}
+{"steps": 2, "files_read": ["references/voice-preservation.md", "references/russian-patterns.md"], "cost": 0.0572138, "prompt_tokens": 24483, "completion_tokens": 3530, "attempts": 1, "system": "pishi", "id": "n23"}
+{"steps": 2, "files_read": ["references/marketing-smm.md", "references/voice-preservation.md"], "cost": 0.032029800000000004, "prompt_tokens": 23166, "completion_tokens": 1275, "attempts": 1, "system": "pishi", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.0056379, "prompt_tokens": 7307, "completion_tokens": 455, "attempts": 1, "system": "pishi", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0178539, "prompt_tokens": 7980, "completion_tokens": 1542, "attempts": 1, "system": "pishi", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0177159, "prompt_tokens": 7771, "completion_tokens": 1570, "attempts": 1, "system": "pishi", "id": "h03"}
+{"steps": 2, "files_read": ["references/registers.md"], "cost": 0.0125078, "prompt_tokens": 16265, "completion_tokens": 703, "attempts": 1, "system": "pishi", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0086319, "prompt_tokens": 7319, "completion_tokens": 752, "attempts": 1, "system": "pishi", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0038019, "prompt_tokens": 7284, "completion_tokens": 276, "attempts": 1, "system": "pishi", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.024008, "prompt_tokens": 6701, "completion_tokens": 754, "attempts": 1, "system": "chukovsky", "id": "n01"}
+{"steps": 1, "files_read": [], "cost": 0.0082312, "prompt_tokens": 6621, "completion_tokens": 664, "attempts": 1, "system": "chukovsky", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.0096712, "prompt_tokens": 6616, "completion_tokens": 809, "attempts": 1, "system": "chukovsky", "id": "n03"}
+{"steps": 1, "files_read": [], "cost": 0.0135912, "prompt_tokens": 6666, "completion_tokens": 1191, "attempts": 1, "system": "chukovsky", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.0832692, "prompt_tokens": 11950, "completion_tokens": 7102, "attempts": 1, "system": "chukovsky", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.0147432, "prompt_tokens": 6847, "completion_tokens": 1270, "attempts": 1, "system": "chukovsky", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.0339352, "prompt_tokens": 8193, "completion_tokens": 2920, "attempts": 1, "system": "chukovsky", "id": "n07"}
+{"steps": 1, "files_read": [], "cost": 0.0113312, "prompt_tokens": 6836, "completion_tokens": 931, "attempts": 1, "system": "chukovsky", "id": "n08"}
+{"steps": 1, "files_read": [], "cost": 0.0151832, "prompt_tokens": 6752, "completion_tokens": 1333, "attempts": 1, "system": "chukovsky", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.0169032, "prompt_tokens": 7157, "completion_tokens": 1424, "attempts": 1, "system": "chukovsky", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.0121532, "prompt_tokens": 6557, "completion_tokens": 1069, "attempts": 1, "system": "chukovsky", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.0459192, "prompt_tokens": 8755, "completion_tokens": 4006, "attempts": 1, "system": "chukovsky", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.0091832, "prompt_tokens": 6462, "completion_tokens": 791, "attempts": 1, "system": "chukovsky", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.0115552, "prompt_tokens": 6548, "completion_tokens": 1011, "attempts": 1, "system": "chukovsky", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.0071632, "prompt_tokens": 6442, "completion_tokens": 593, "attempts": 1, "system": "chukovsky", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.0090292, "prompt_tokens": 6535, "completion_tokens": 761, "attempts": 1, "system": "chukovsky", "id": "n16"}
+{"steps": 1, "files_read": [], "cost": 0.0184872, "prompt_tokens": 6924, "completion_tokens": 1629, "attempts": 1, "system": "chukovsky", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.0166932, "prompt_tokens": 6922, "completion_tokens": 1450, "attempts": 1, "system": "chukovsky", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.0163032, "prompt_tokens": 6957, "completion_tokens": 1404, "attempts": 1, "system": "chukovsky", "id": "n19"}
+{"steps": 1, "files_read": [], "cost": 0.0445572, "prompt_tokens": 8299, "completion_tokens": 3961, "attempts": 1, "system": "chukovsky", "id": "n20"}
+{"steps": 1, "files_read": [], "cost": 0.0254052, "prompt_tokens": 7763, "completion_tokens": 2153, "attempts": 1, "system": "chukovsky", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.0089812, "prompt_tokens": 6471, "completion_tokens": 769, "attempts": 1, "system": "chukovsky", "id": "n22"}
+{"steps": 1, "files_read": [], "cost": 0.0288472, "prompt_tokens": 7669, "completion_tokens": 2516, "attempts": 1, "system": "chukovsky", "id": "n23"}
+{"steps": 1, "files_read": [], "cost": 0.0128132, "prompt_tokens": 6672, "completion_tokens": 1112, "attempts": 1, "system": "chukovsky", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.0066992, "prompt_tokens": 6320, "completion_tokens": 571, "attempts": 1, "system": "chukovsky", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.0153752, "prompt_tokens": 6993, "completion_tokens": 1304, "attempts": 1, "system": "chukovsky", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.0137872, "prompt_tokens": 6784, "completion_tokens": 1187, "attempts": 1, "system": "chukovsky", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.0092452, "prompt_tokens": 6368, "completion_tokens": 816, "attempts": 1, "system": "chukovsky", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.0059632, "prompt_tokens": 6332, "completion_tokens": 495, "attempts": 1, "system": "chukovsky", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.0087832, "prompt_tokens": 6297, "completion_tokens": 784, "attempts": 1, "system": "chukovsky", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.004506, "prompt_tokens": 563, "completion_tokens": 338, "attempts": 1, "system": "prompt", "id": "n01"}
+{"steps": 1, "files_read": [], "cost": 0.004616, "prompt_tokens": 483, "completion_tokens": 365, "attempts": 1, "system": "prompt", "id": "n02"}
+{"steps": 1, "files_read": [], "cost": 0.004566, "prompt_tokens": 478, "completion_tokens": 361, "attempts": 1, "system": "prompt", "id": "n03"}
+{"steps": 1, "files_read": [], "cost": 0.005236, "prompt_tokens": 528, "completion_tokens": 418, "attempts": 1, "system": "prompt", "id": "n04"}
+{"steps": 1, "files_read": [], "cost": 0.074274, "prompt_tokens": 5812, "completion_tokens": 6265, "attempts": 1, "system": "prompt", "id": "n05"}
+{"steps": 1, "files_read": [], "cost": 0.005848, "prompt_tokens": 709, "completion_tokens": 443, "attempts": 1, "system": "prompt", "id": "n06"}
+{"steps": 1, "files_read": [], "cost": 0.02678, "prompt_tokens": 2055, "completion_tokens": 2267, "attempts": 1, "system": "prompt", "id": "n07"}
+{"steps": 1, "files_read": [], "cost": 0.006746, "prompt_tokens": 698, "completion_tokens": 535, "attempts": 1, "system": "prompt", "id": "n08"}
+{"steps": 1, "files_read": [], "cost": 0.005728, "prompt_tokens": 614, "completion_tokens": 450, "attempts": 1, "system": "prompt", "id": "n09"}
+{"steps": 1, "files_read": [], "cost": 0.014428, "prompt_tokens": 1019, "completion_tokens": 1239, "attempts": 1, "system": "prompt", "id": "n10"}
+{"steps": 1, "files_read": [], "cost": 0.003868, "prompt_tokens": 419, "completion_tokens": 303, "attempts": 1, "system": "prompt", "id": "n11"}
+{"steps": 1, "files_read": [], "cost": 0.033084, "prompt_tokens": 2617, "completion_tokens": 2785, "attempts": 1, "system": "prompt", "id": "n12"}
+{"steps": 1, "files_read": [], "cost": 0.002588, "prompt_tokens": 324, "completion_tokens": 194, "attempts": 1, "system": "prompt", "id": "n13"}
+{"steps": 1, "files_read": [], "cost": 0.00377, "prompt_tokens": 410, "completion_tokens": 295, "attempts": 1, "system": "prompt", "id": "n14"}
+{"steps": 1, "files_read": [], "cost": 0.002598, "prompt_tokens": 304, "completion_tokens": 199, "attempts": 1, "system": "prompt", "id": "n15"}
+{"steps": 1, "files_read": [], "cost": 0.003454, "prompt_tokens": 397, "completion_tokens": 266, "attempts": 1, "system": "prompt", "id": "n16"}
+{"steps": 1, "files_read": [], "cost": 0.007812, "prompt_tokens": 786, "completion_tokens": 624, "attempts": 1, "system": "prompt", "id": "n17"}
+{"steps": 1, "files_read": [], "cost": 0.014598, "prompt_tokens": 784, "completion_tokens": 1303, "attempts": 1, "system": "prompt", "id": "n18"}
+{"steps": 1, "files_read": [], "cost": 0.016248, "prompt_tokens": 819, "completion_tokens": 1461, "attempts": 1, "system": "prompt", "id": "n19"}
+{"steps": 1, "files_read": [], "cost": 0.028262, "prompt_tokens": 2161, "completion_tokens": 2394, "attempts": 1, "system": "prompt", "id": "n20"}
+{"steps": 1, "files_read": [], "cost": 0.03002, "prompt_tokens": 1625, "completion_tokens": 2677, "attempts": 1, "system": "prompt", "id": "n21"}
+{"steps": 1, "files_read": [], "cost": 0.002736, "prompt_tokens": 333, "completion_tokens": 207, "attempts": 1, "system": "prompt", "id": "n22"}
+{"steps": 1, "files_read": [], "cost": 0.017722, "prompt_tokens": 1531, "completion_tokens": 1466, "attempts": 1, "system": "prompt", "id": "n23"}
+{"steps": 1, "files_read": [], "cost": 0.007338, "prompt_tokens": 534, "completion_tokens": 627, "attempts": 1, "system": "prompt", "id": "n24"}
+{"steps": 1, "files_read": [], "cost": 0.004174, "prompt_tokens": 182, "completion_tokens": 381, "attempts": 1, "system": "prompt", "id": "h01"}
+{"steps": 1, "files_read": [], "cost": 0.01264, "prompt_tokens": 855, "completion_tokens": 1093, "attempts": 1, "system": "prompt", "id": "h02"}
+{"steps": 1, "files_read": [], "cost": 0.011232, "prompt_tokens": 646, "completion_tokens": 994, "attempts": 1, "system": "prompt", "id": "h03"}
+{"steps": 1, "files_read": [], "cost": 0.00185, "prompt_tokens": 230, "completion_tokens": 139, "attempts": 1, "system": "prompt", "id": "h04"}
+{"steps": 1, "files_read": [], "cost": 0.002518, "prompt_tokens": 194, "completion_tokens": 213, "attempts": 1, "system": "prompt", "id": "h05"}
+{"steps": 1, "files_read": [], "cost": 0.002238, "prompt_tokens": 159, "completion_tokens": 192, "attempts": 1, "system": "prompt", "id": "h06"}
+{"steps": 1, "files_read": [], "cost": 0.107911, "prompt_tokens": 12256, "completion_tokens": 8018, "attempts": 1, "system": "ours", "id": "n05"}

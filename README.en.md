@@ -1,15 +1,11 @@
 # humanizer-ru
 
-An agent skill that rewrites AI-written **Russian** text so it can be sent as is: no
-bureaucratese, stock phrases, empty openers, "not just X but Y", template bold and emoji,
-or chat paste leftovers. Numbers, dates, names, conditions and negations stay in place and
-are checked.
+An agent skill for Claude Code, Codex, Cursor and Claude.ai that edits Russian text written by
+an AI model. It removes bureaucratese, stock phrases and ChatGPT-style formatting and checks
+that numbers, dates, names and hedges stay as they were. The skill speaks Russian and edits
+Russian text only.
 
-Works in Claude Code, Codex, Cursor, Claude.ai and other agents that support
-[Agent Skills](https://agentskills.io). The skill itself speaks Russian and edits Russian
-text only.
-
-[Русский](README.md)
+[Русский](README.md) · [Site with the comparison](https://vladimir-human.github.io/humanizer-ru/)
 
 ## Install
 
@@ -24,39 +20,51 @@ Claude Code plugin:
 /plugin install humanizer-ru@humanizer-ru
 ```
 
-Claude.ai: download `humanizer-ru-skill.zip` from
-[Releases](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) and upload it in
-Settings → Capabilities → Skills.
+Claude.ai: download `humanizer-ru-skill.zip` from the
+[latest release](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) and upload it
+in Settings → Capabilities → Skills.
 
 ## Use
 
-- «Очеловечь этот текст: …» — returns the rewritten text and 1–3 notes.
-- «Проверь, что выдаёт ИИ, но не правь» — up to 10 findings, no edits.
-- «Убери только канцелярит» — edits one layer only.
-- «Поправь README.md» — edits prose, keeps code, commands and links.
+Paste the text and ask «очеловечь». Other requests: «проверь, что выдаёт ИИ, но не правь»
+(findings only), «убери только канцелярит» (one layer), «поправь README.md» (prose only, code
+and links kept), or give a sample of your own writing to match your style. Good human text,
+contracts and laws are left almost untouched.
 
-Good human text, contracts and laws are left almost untouched.
+## Comparison
 
-## Does it help
+We compared the notable skills of this kind on Russian texts, blind. One executor (Claude
+Sonnet 5.5) applied every skill; Gemini 4 Argon and Kimi K3 ranked the shuffled results by
+"which would you send with the least editing". Twelve skills went through a qualifying round on
+12 texts; the final used 24 fresh AI texts that no version of this skill had seen.
 
-Blind comparison on 36 Russian texts (24 written by 11 models, 6 saved chatbot answers,
-6 human or legal texts). One executor (Claude Sonnet 5.5) applied every skill; two judges
-from other labs (Gemini 4 Argon, GPT-6.1 Sol) ranked shuffled variants four times per text
-by "which would you send with the least editing".
+| Skill | Stars | Mean place of 8 | Ours ranked higher | Texts with a meaning error |
+|---|---|---|---|---|
+| **humanizer-ru 4.1** | 125 | **3.08** | — | 4 |
+| ormeilu/avoid-ai-writing-russian | 18 | 3.43 | 54% | 8 |
+| ilyautov/humanizer-ru | 452 | 3.79 | 65% | 3 |
+| fsbtactic-code/pishi-normalno | 5 | 4.72 | 72% | 3 |
+| one-line prompt, no skill | — | 4.88 | 67% | 7 |
+| beaverbeard/chukovsky | 10 | 4.94 | 71% | 10 |
+| blader/humanizer | 57,210 | 5.43 | 83% | 14 |
+| beaverbeard/slopotron | 64 | 5.72 | 79% | 11 |
 
-On 30 AI texts humanizer-ru 4.0 had the best mean place (2.02 of 6) and ranked above
-ilyautov/humanizer-ru in 66% of judgments, blader/humanizer in 81%, a one-line prompt in
-82%. It also left human and legal texts almost intact (best place, 1.75). Weak spot: judges
-flagged meaning shifts in 5 of 30 texts (ilyautov: 1) — none in numbers, dates, names or
-negations; all in degree of certainty ("may need" became "will need"). Details and all
-outputs: [eval/](eval/).
+stop-slop, no-ai-slop, avoid-ai-writing and five more skills did not pass the qualifying round.
+Against avoid-ai-writing-russian the result is close: Gemini puts us first by a clear margin,
+Kimi puts them first and us second. Details, every text, answer and judgment: [eval/](eval/).
+The judges are models, not human editors.
 
-The skill does not promise to fool AI detectors.
+## AI detectors
+
+The skill edits text for readers. We did not test it against AI detectors and make no promises
+about them.
 
 ## Version 3
 
-The previous version (research, 156 checks, PyPI package, MCP server) lives in the
+The previous version (research, PyPI package, MCP server) lives in the
 [`legacy-v3`](https://github.com/Vladimir-Human/humanizer-ru/tree/legacy-v3) branch and the
 `v3.36.4` tag.
 
-MIT license.
+## License
+
+MIT
