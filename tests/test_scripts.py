@@ -41,6 +41,13 @@ class CheckFactsTest(unittest.TestCase):
         b = "Анна получила 50 000 рублей. Борис получил 30 000 рублей."
         self.assertIn("swap", kinds(cf.compare(a, b)))
 
+    def test_number_next_to_the_same_word_as_in_the_original_is_not_a_swap(self):
+        # final4 q03: the card was flagged even against itself.
+        card = "Термос объёмом 750 мл из стали 18/8.\n\n| Модель | Тропа 750 |\n| Материал | Сталь 18/8 |\n"
+        edit = "Термос на 750 мл, сталь 18/8.\n\n| Модель | Тропа 750 |\n| Материал | Сталь 18/8 |\n"
+        self.assertEqual(cf.compare(card, card)["errors"], [])
+        self.assertEqual(cf.compare(card, edit)["errors"], [])
+
     def test_lost_and_added_numbers(self):
         r = cf.compare("Ссылка действует 30 дней.", "Ссылка действует 45 дней.")
         self.assertIn("lost", kinds(r))

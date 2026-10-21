@@ -586,14 +586,23 @@ def compare(before: str, after: str) -> Dict:
         if len(owners) == 1:
             pairs.setdefault(n.value, set()).update(owners)
     all_owners = set().union(*pairs.values()) if pairs else set()
+
+    def near(facts, n) -> set:
+        words = re.findall(r"[\w-]+", facts.sentences[n.sent] if n.sent < len(facts.sentences) else "")
+        return {o for o in all_owners if any(stem_match(o, w) for w in words)}
+
     if len(all_owners) >= 2:
+        # A number that already stood next to a name somewhere in the original has not moved
+        # there: «750 мл из стали» in a product card, with «Сталь 18/8» in its table.
+        near_b: Dict[str, set] = {}
+        for n in fb.of("number"):
+            near_b.setdefault(n.value, set()).update(near(fb, n))
         for n in fa.of("number"):
             want = pairs.get(n.value)
             if not want:
                 continue
-            sent_words = re.findall(r"[\w-]+", fa.sentences[n.sent] if n.sent < len(fa.sentences) else "")
-            here = {o for o in all_owners if any(stem_match(o, w) for w in sent_words)}
-            if here and not (here & want):
+            here = near(fa, n)
+            if here - near_b.get(n.value, set()) and not (here & want):
                 errors.append({"kind": "swap", "what": "привязка",
                                "detail": "%s в исходнике относится к «%s», в правке стоит рядом с «%s»" % (
                                    n.raw, "/".join(sorted(want)), "/".join(sorted(here)))})
