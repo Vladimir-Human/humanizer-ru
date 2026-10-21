@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import argparse
 import re
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import evallib as lib
@@ -115,10 +115,24 @@ def main() -> int:
     TEXTS.mkdir(parents=True, exist_ok=True)
 
     todo = [b for b in briefs if args.force or not (TEXTS / (b["id"] + ".txt")).exists()]
+    failed = []
     with ThreadPoolExecutor(max_workers=6) as pool:
-        for bid, text, cost in pool.map(generate, todo):
+        # Each text is saved as soon as it is ready: one failed brief must not lose the others.
+        futures = {pool.submit(generate, b): b["id"] for b in todo}
+        for fut in as_completed(futures):
+            try:
+                bid, text, cost = fut.result()
+            except lib.BudgetExceeded:
+                raise
+            except Exception as exc:
+                failed.append(futures[fut])
+                print("failed", futures[fut], repr(exc)[:300])
+                continue
             lib.write_text(TEXTS / (bid + ".txt"), text)
             print("generated", bid, len(text), "chars, $%.4f" % float(cost or 0))
+    if failed:
+        # index.json is written only for a complete corpus; a rerun generates just the missing texts.
+        raise SystemExit("not generated: %s" % ", ".join(sorted(failed)))
 
     index = []
     for b in briefs:
