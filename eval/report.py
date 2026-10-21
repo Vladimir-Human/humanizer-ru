@@ -4,9 +4,10 @@
 # PURPOSE: Turn judgments and fact checks into the comparison table and the pass/fail verdict
 #          against the usefulness thresholds of the remake.
 # SCOPE: reads eval/results/<run>/{outputs,judgments.jsonl}; writes summary.md and summary.json
-#        (--out renames them; --judges keeps only the passes of the named judges).
+#        (--out renames them; --judges keeps only the passes of the named judges;
+#        --rank-judges takes places from some judges and fact votes from all).
 # DEPENDS: evallib; skills/humanizer-ru/scripts/check_facts.py (imported by path).
-# LINKS: M-EVAL-REPORT; DF-EVAL; V-M-EVAL.
+# LINKS: M-EVAL-REPORT; DF-EVAL; V-M-EVAL; R-EVAL-RANK-JUDGES.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # load: judgments with a valid ranking, corpus index, outputs.
@@ -55,7 +56,14 @@ def fact_flag(votes: dict):
     return len(voted) * 2 > len(votes), bool(voted)
 
 
-def aggregate(rows, ids, outputs, sources):
+# START_CONTRACT: aggregate
+# PURPOSE: Per-system table for one group of texts.
+# INPUTS: judgment rows with a ranking, text ids, outputs {(system, id): text}, sources, and
+#         rank_judges: judges whose rankings and scores count (None = all). Every judge's
+#         fact_errors still vote on meaning errors (R-EVAL-RANK-JUDGES).
+# OUTPUTS: (table per system, pairwise shares "a>b", fact notes).
+# END_CONTRACT: aggregate
+def aggregate(rows, ids, outputs, sources, rank_judges=None):
     systems = sorted({s for r in rows for s in r["ranking"]})
     pos = defaultdict(lambda: defaultdict(list))  # system -> judge -> positions
     first = defaultdict(int)
@@ -67,15 +75,17 @@ def aggregate(rows, ids, outputs, sources):
         if r["id"] not in ids:
             continue
         rank, judge = r["ranking"], r["judge"]
-        for i, s in enumerate(rank):
-            pos[s][judge].append(i + 1)
-        first[rank[0]] += 1
-        for i, a in enumerate(rank):
-            for b in rank[i + 1:]:
-                wins[(a, b)][judge].append(1)
-                wins[(b, a)][judge].append(0)
+        ranks = rank_judges is None or judge in rank_judges
+        if ranks:
+            for i, s in enumerate(rank):
+                pos[s][judge].append(i + 1)
+            first[rank[0]] += 1
+            for i, a in enumerate(rank):
+                for b in rank[i + 1:]:
+                    wins[(a, b)][judge].append(1)
+                    wins[(b, a)][judge].append(0)
         for s, c in (r.get("candidates") or {}).items():
-            if isinstance(c.get("send_as_is"), (int, float)):
+            if ranks and isinstance(c.get("send_as_is"), (int, float)):
                 send[s][judge].append(float(c["send_as_is"]))
             errs = [e for e in (c.get("fact_errors") or []) if str(e).strip() and str(e).strip().lower() not in ("нет", "-", "—")]
             fact_votes[(s, r["id"])][judge][1] += 1
@@ -118,8 +128,10 @@ def main() -> int:
     ap.add_argument("--prev", default="ours410", help="previous version of ours, if it is in the run")
     ap.add_argument("--judgments", default="judgments.jsonl")
     ap.add_argument("--judges", default="", help="only passes of these judges (comma list of model ids)")
+    ap.add_argument("--rank-judges", default="", help="places and shares from these judges only; all judges vote on facts")
     ap.add_argument("--out", default="summary", help="file name without extension for .md and .json")
     args = ap.parse_args()
+    rank_judges = set(args.rank_judges.split(",")) if args.rank_judges else None
     if args.judges and args.out == "summary":
         # A one-judge view must never overwrite the run's main summary.
         args.out = "summary-" + "-".join(j.split("/")[-1] for j in args.judges.split(","))
@@ -146,7 +158,8 @@ def main() -> int:
     # Coverage: every text of the run must have the same number of valid judge passes,
     # otherwise the thresholds are reported as unverified instead of passed.
     cfg = lib.read_json(run_dir / "config.json") if (run_dir / "config.json").exists() else {}
-    expected = cfg.get("texts") or all_ids
+    # Probes are hand-written checks of a candidate's new rules and are never judged (README, final4).
+    expected = [t for t in (cfg.get("texts") or all_ids) if index.get(t, {}).get("kind") != "probe"]
     passes = Counter(r["id"] for r in rows)
     full = max(passes.values()) if passes else 0
     gaps = sorted(t for t in expected if passes.get(t, 0) < full)
@@ -159,11 +172,14 @@ def main() -> int:
         cfg = lib.read_json(cfg_path)
         md.append("Исполнитель: `%s`. Судьи: %s. Проходов судей с ответом: %d, без ответа: %d." % (
             cfg.get("executor"), ", ".join(sorted({r["judge"] for r in rows})), len(rows), len(errors)))
+        if rank_judges:
+            md.append("Места, доли и «готов к отправке» — только по судьям %s; ошибки смысла — по всем судьям."
+                      % ", ".join(sorted(rank_judges)))
         md.append("")
     for gname, ids in groups.items():
         if not ids:
             continue
-        table, pair, notes = aggregate(rows, set(ids), outputs, sources)
+        table, pair, notes = aggregate(rows, set(ids), outputs, sources, rank_judges)
         result["groups"][gname] = {"ids": ids, "table": table, "pairwise": pair, "fact_notes": notes}
         title = "ИИ-тексты" if gname == "ai" else "Ловушки (человеческие тексты и закон)"
         md += ["## %s: %d текстов" % (title, len(ids)), "",

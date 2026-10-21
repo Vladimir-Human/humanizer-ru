@@ -7,16 +7,17 @@
     <module id="M-CLEAN-PASTE" file="skills/humanizer-ru/scripts/clean_paste.py" purpose="Remove chat paste artifacts" depends="Python stdlib" exports="clean; CLI used by M-SKILL" />
     <module id="M-CHECK-REPO" file="scripts/check_repo.py" purpose="Frontmatter, version agreement, referenced files, LF and invisible characters" depends="Python stdlib" exports="check; CLI used by CI" />
     <module id="M-BUILD-ZIP" file="scripts/build_zip.py" purpose="Zip for Claude.ai with humanizer-ru/ at the root" depends="Python stdlib" exports="build; CLI used by CI and release" />
-    <module id="M-EVAL-LIB" file="eval/evallib.py" purpose="fal OpenRouter chat client, spend ledger with cap, IO helpers" depends="Python stdlib; FAL_KEY" exports="chat, ledger, read/write helpers" />
-    <module id="M-EVAL-CORPUS" file="eval/build_corpus.py" purpose="Generate AI texts from briefs (sets dev, test, holdout, holdout2), add saved chatbot answers and human/legal traps" depends="M-EVAL-LIB; v3.36.4 research/ archive" exports="eval/corpus/texts, index.json" />
+    <module id="M-EVAL-LIB" file="eval/evallib.py" purpose="fal OpenRouter chat client; dsh: models through the owner-approved free DSH routes (no fallback, nothing booked); spend ledger with cap, IO helpers" depends="Python stdlib; FAL_KEY; node + dsh-bridge for dsh: models" exports="chat, ledger, read/write helpers" />
+    <module id="M-EVAL-CORPUS" file="eval/build_corpus.py" purpose="Generate AI texts from briefs (sets dev, test, holdout, holdout2, holdout3; dsh: models get a chat-assistant persona), add saved chatbot answers, human/legal traps and hand-written probes" depends="M-EVAL-LIB; v3.36.4 research/ archive" exports="eval/corpus/texts, index.json" />
     <module id="M-EVAL-FETCH" file="eval/fetch_systems.py" purpose="Instruction files of compared skills at pinned commits; all of them or only the names given" depends="M-EVAL-LIB; gh; git" exports="eval/.cache/systems" />
     <module id="M-EVAL-RUN" file="eval/run_systems.py" purpose="One executor model applies each skill to each text with a read_file tool" depends="M-EVAL-LIB, M-EVAL-FETCH, M-SKILL" exports="results/RUN/outputs, runs.jsonl" />
     <module id="M-EVAL-JUDGE" file="eval/judge.py" purpose="Blind shuffled ranking by judges from other labs (model=N passes per judge), with fact/AI/language notes" depends="M-EVAL-LIB" exports="results/RUN/judgments.jsonl" />
+    <module id="M-EVAL-BATCH" file="eval/batches.py" purpose="Executor and judge as Claude Code subagents on the owner's plan: batch folders with the API prompt (Read paths), blinded judge bundles; collect into outputs, runs.jsonl, judgments.jsonl" depends="M-EVAL-LIB, M-EVAL-RUN, M-EVAL-JUDGE" exports="eval/.cache/batch/RUN, results/RUN/outputs, judgments.jsonl" />
     <module id="M-EVAL-PATTERNS" file="eval/patterns.py" purpose="Free secondary check: fixed AI-text patterns in sources, survived and introduced per system" depends="M-EVAL-LIB" exports="results/RUN/patterns.md" />
-    <module id="M-EVAL-REPORT" file="eval/report.py" purpose="Positions and pairwise wins weighted per judge, fact flags by judge majority, thresholds (rule set 2); optional judge filter and output name" depends="M-EVAL-LIB, M-CHECK-FACTS" exports="results/RUN/summary.md, summary.json" />
+    <module id="M-EVAL-REPORT" file="eval/report.py" purpose="Positions and pairwise wins weighted per judge, fact flags by judge majority, thresholds (rule set 2); optional judge filter, rank judges (places from some judges, facts from all) and output name" depends="M-EVAL-LIB, M-CHECK-FACTS" exports="results/RUN/summary.md, summary.json" />
   </modules>
   <flows>
     <flow id="DF-SKILL" path="user text -> M-SKILL (clean, anchors, rewrite) -> optional M-CLEAN-PASTE / M-CHECK-FACTS -> edited text + 1-3 notes" />
-    <flow id="DF-EVAL" path="briefs -> M-EVAL-CORPUS -> texts; systems.json -> M-EVAL-FETCH -> M-EVAL-RUN -> outputs -> M-EVAL-JUDGE -> judgments -> M-EVAL-REPORT -> summary; outputs -> M-EVAL-PATTERNS -> patterns.md" />
+    <flow id="DF-EVAL" path="briefs -> M-EVAL-CORPUS -> texts; systems.json -> M-EVAL-FETCH -> M-EVAL-RUN (API) or M-EVAL-BATCH (subagents) -> outputs -> M-EVAL-JUDGE (API, dsh:) or M-EVAL-BATCH (subagent judge) -> judgments -> M-EVAL-REPORT -> summary; outputs -> M-EVAL-PATTERNS -> patterns.md" />
   </flows>
 </graph>

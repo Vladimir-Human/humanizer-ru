@@ -21,6 +21,15 @@
   <requirement id="R-PATTERN-COUNT" source="owner approval 2026-10-21 (research of 2026-10-21, ru.wikipedia «Признаки сгенерированности текста»)">
     A comparison run can report without API calls, for each pattern of a fixed list, in how many source texts it occurs, in how many of them each system left it and how many occurrences each system added. Hedges, dates and real ranges («в целом», «по состоянию на», «от X до Y») are not patterns. The list is fixed before the texts of a new set exist; the table is a hint where to look, not a score.
   </requirement>
+  <requirement id="R-EVAL-DSH" source="owner 2026-10-21: «Sol и MiniMax сейчас бесплатные», «платные модели не используем через DSH»">
+    Models named "dsh:route" run through the local DSH bridge only on the routes the owner approved as free (GPT-6.1 Sol on AgentRouter, MiniMax M3.1 Flash). Any other route is refused before anything runs, the bridge never falls back to a paid model, nothing is booked in the spend ledger (the bridge's list price is kept next to the answer), and the model answers in its reply without touching files.
+  </requirement>
+  <requirement id="R-EVAL-BATCH" source="owner 2026-10-21: Sonnet 5.5 и Opus 5.5 — с лимитов подписки, платные модели через DSH не используем">
+    The executor and a judge can run as Claude Code subagents. An executor subagent gets the same system prompt as the API run (SKILL.md and the list of readable .md files; Read by full path instead of read_file) and the same request; every system gets the same batches in the same order. A judge subagent gets judge.py's prompt with shuffled letters and never sees which system wrote what. Collected outputs and answers land in the run in the API format; a missing or empty output is reported, not skipped.
+  </requirement>
+  <requirement id="R-EVAL-RANK-JUDGES" source="owner 2026-10-21: «в текстах сильны только Sonnet 5.5, Opus 5.5 и Gemini 4 Argon»">
+    A report can take places, shares and send-as-is scores from some judges only while every judge still votes on meaning errors (one vote per judge, majority). Probe texts are never judged and do not count as a coverage gap.
+  </requirement>
   <rule id="R-NO-VERDICT" source="SKILL.md: Что вернуть, Границы">
     No authorship verdicts and no promise to fool AI detectors.
   </rule>

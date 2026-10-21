@@ -18,13 +18,20 @@
   <entry id="V-M-EVAL-PATTERNS" module="M-EVAL-PATTERNS" file="eval/patterns.py" requirements="R-PATTERN-COUNT">
     <test file="tests/test_eval.py" title="EvalPatternsTest" checks="removed, kept and introduced counted per system; hedge «в целом» and a real range are not patterns; assistant utm counted, author utm not" />
   </entry>
-  <entry id="V-M-EVAL" module="M-EVAL-REPORT" file="eval/report.py">
-    <test file="tests/test_eval.py" title="EvalReportTest" checks="one vote per judge: two passes of one judge do not outvote another judge; strict majority of 2 or 3 judges; one-judge runs keep the pass rule; equal-weight means; judge.parse repairs both Kimi K3 brace variants" />
+  <entry id="V-M-EVAL-LIB" module="M-EVAL-LIB" file="eval/evallib.py" requirements="R-EVAL-DSH">
+    <test file="tests/test_eval.py" title="EvalDshRouteTest" checks="other routes refused before any process starts; free route runs with --no-fallback and books nothing, list price kept; rules, system, user order in the task; failed, empty and truncated bridge answers" />
+    <test file="eval/results/final4" title="real run" checks="briefs, texts and Sol votes of final4 came through the free route (bridge log lines [M-EVAL-LIB][BLOCK_DSH] ... booked $0)" />
+  </entry>
+  <entry id="V-M-EVAL-BATCH" module="M-EVAL-BATCH" file="eval/batches.py" requirements="R-EVAL-BATCH">
+    <test file="tests/test_eval.py" title="EvalBatchTest" checks="subagent prompt equals the API prompt except the Read sentence, same .md files only; same requests and order for every system; missing and empty outputs reported, outputs normalized; judge bundles and tasks carry no system names, answers map back to systems, collect is idempotent" />
+  </entry>
+  <entry id="V-M-EVAL" module="M-EVAL-REPORT" file="eval/report.py" requirements="R-EVAL-RANK-JUDGES">
+    <test file="tests/test_eval.py" title="EvalReportTest" checks="one vote per judge: two passes of one judge do not outvote another judge; strict majority of 2 or 3 judges; one-judge runs keep the pass rule; equal-weight means; judge.parse repairs both Kimi K3 brace variants; rank judges give places while every judge votes on facts" />
     <test file="eval/results/*/summary.json" title="reports of dev and final runs" checks="aggregation checked by hand against judgments.jsonl on dev1" />
   </entry>
   <gaps>
-    <gap id="G-EVAL-UNIT">Only the vote rules of report.py have unit tests; the scripts that call paid APIs are checked by hand on dev runs.</gap>
+    <gap id="G-EVAL-UNIT">report.py, the free DSH route and the subagent batches have unit tests; the scripts that call paid APIs are checked by hand on dev runs, and the probe exclusion from coverage by the final4 summary.</gap>
     <gap id="G-CONDITIONS">check_facts.py does not see lost conditions in words ("при включённой двухфакторной аутентификации"); the skill tells the agent to reread conditions.</gap>
-    <gap id="G-AGENTS">The comparison emulates a skill run through the API with a read_file tool; installed runs in Claude Code and DSH are checked by hand on a few texts.</gap>
+    <gap id="G-AGENTS">The comparison emulates a skill run through the API with a read_file tool; installed runs in Claude Code and DSH are checked by hand on a few texts. final4 ran the executor as Claude Code subagents in batches (README), so its numbers compare participants with each other, not with earlier runs.</gap>
   </gaps>
 </verification>
