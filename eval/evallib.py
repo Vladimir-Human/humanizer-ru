@@ -131,7 +131,8 @@ def dsh_task_text(messages: list) -> str:
 def dsh_answer(report: dict):
     """Bridge --json report -> (message, usage). A failed run or an empty answer raises."""
     if not report.get("ok"):
-        raise RuntimeError("dsh run failed: %s %s" % (report.get("failKind"), "; ".join(map(str, report.get("errors") or []))[:200]))
+        why = report.get("errors") or report.get("stderrTail") or [report.get("endReason")]
+        raise RuntimeError("dsh run failed: %s %s" % (report.get("failKind"), "; ".join(map(str, why))[:300]))
     text = report.get("answer") or ""
     if report.get("answerTruncated") and report.get("answerPath"):
         text = read_text(report["answerPath"])
@@ -143,7 +144,7 @@ def dsh_answer(report: dict):
     return {"content": text}, usage
 
 
-def _dsh_chat(model: str, messages: list, effort, tag: str):
+def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
     ref = model[len(DSH_PREFIX):]
     if ref not in DSH_FREE:
         raise SystemExit("%s is not an approved free DSH route (%s)" % (ref, ", ".join(sorted(DSH_FREE))))
@@ -156,17 +157,27 @@ def _dsh_chat(model: str, messages: list, effort, tag: str):
            "--max-cost", "1", "--max-chars", "100000", "--json", "--task-file", fh.name]
     if effort:
         cmd += ["--effort", effort]
+    last = None
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2400)
+        for attempt in range(retries):
+            try:
+                proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2400)
+                try:
+                    report = json.loads(proc.stdout)
+                except json.JSONDecodeError:
+                    raise RuntimeError("dsh bridge rc=%s: %s" % (proc.returncode, (proc.stderr or proc.stdout)[-300:]))
+                msg, usage = dsh_answer(report)
+            except (RuntimeError, subprocess.TimeoutExpired) as exc:
+                # The free routes restart now and then ("Server is restarting; please retry shortly").
+                last = exc
+                print("[M-EVAL-LIB][BLOCK_DSH] %s %s attempt %d failed: %s" % (tag, ref, attempt + 1, str(exc)[:200]))
+                time.sleep(30 * (attempt + 1))
+                continue
+            print("[M-EVAL-LIB][BLOCK_DSH] %s %s %ss listed $%.4f booked $0" % (tag, ref, usage["seconds"], float(usage["listed_cost"] or 0)))
+            return msg, usage
     finally:
         os.unlink(fh.name)
-    try:
-        report = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        raise RuntimeError("dsh bridge rc=%s: %s" % (proc.returncode, (proc.stderr or proc.stdout)[-300:]))
-    msg, usage = dsh_answer(report)
-    print("[M-EVAL-LIB][BLOCK_DSH] %s %s %ss listed $%.4f booked $0" % (tag, ref, usage["seconds"], float(usage["listed_cost"] or 0)))
-    return msg, usage
+    raise RuntimeError("dsh route %s failed %d times: %s" % (ref, retries, last))
 # END_BLOCK_DSH
 
 

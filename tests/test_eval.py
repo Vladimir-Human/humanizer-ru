@@ -115,6 +115,17 @@ class EvalDshRouteTest(unittest.TestCase):
         self.assertEqual((msg["content"], usage["cost"], usage["listed_cost"]), ("текст", 0.0, 0.0123))
         ledger.assert_not_called()
 
+    def test_failed_run_is_retried_on_the_same_free_route(self):
+        failed = {"ok": False, "stderrTail": ["Server is restarting; please retry shortly"]}
+        good = {"ok": True, "answer": "текст", "cost": 0.01, "seconds": 2, "tokens": {}}
+        replies = [mock.Mock(stdout=json.dumps(r), stderr="", returncode=0) for r in (failed, good)]
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "CACHE_DIR", Path(d)), \
+                mock.patch.object(lib.time, "sleep"), mock.patch.object(lib.subprocess, "run", side_effect=replies) as run:
+            msg, _ = lib.chat("dsh:agentrouter-astra/gpt-6.1-sol", [{"role": "user", "content": "x"}])
+        self.assertEqual(msg["content"], "текст")
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[0][0][0], run.call_args_list[1][0][0])
+
     def test_failed_empty_or_truncated_answers(self):
         with self.assertRaises(RuntimeError):
             lib.dsh_answer({"ok": False, "failKind": "timeout", "errors": ["x"]})
