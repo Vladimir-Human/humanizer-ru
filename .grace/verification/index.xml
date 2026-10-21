@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <verification project="humanizer-ru" method="unittest offline; eval with paid API calls on demand">
   <entry id="V-M-CHECK-FACTS" module="M-CHECK-FACTS" file="skills/humanizer-ru/scripts/check_facts.py">
-    <test file="tests/test_scripts.py" title="CheckFactsTest" checks="identical text clean; swapped amounts between names; lost/added numbers; units and number words normalised; HH:00 equals hour; unit change; inverted negation; moved negation not flagged; lost name; name in another case kept; utm tail is not a lost link; lost link; dates incl. ranges; hedge loss is a check; modality/scope/condition/attribution words that got rarer and intensifiers that got more frequent are checks; polite Вы/Ваш is not a name; a date does not span a line break; lost structural HTML tags are errors, lost emphasis tags are checks, autolinks are not tags; CLI exit codes 0/1/2" />
+    <test file="tests/test_scripts.py" title="CheckFactsTest" checks="identical text clean; swapped amounts between names; lost/added numbers; units and number words normalised; HH:00 equals hour; unit change; inverted negation; moved negation not flagged; lost name; name in another case kept; assistant utm tail is not a lost link, a lost author utm tag is; lost link; dates incl. ranges; hedge loss is a check; modality/scope/condition/attribution words that got rarer and intensifiers that got more frequent are checks; polite Вы/Ваш is not a name; a date does not span a line break; lost structural HTML tags are errors, lost emphasis tags are checks, autolinks are not tags; CLI exit codes 0/1/2" />
   </entry>
   <entry id="V-M-CLEAN-PASTE" module="M-CLEAN-PASTE" file="skills/humanizer-ru/scripts/clean_paste.py">
-    <test file="tests/test_scripts.py" title="CleanPasteTest" checks="contentReference; source tokens and cite; utm tail removed with link and punctuation kept; invisible chars; emoji ZWJ and NBSP kept; clean text untouched" />
+    <test file="tests/test_scripts.py" title="CleanPasteTest" checks="contentReference; source tokens and cite; assistant utm tail removed with link and punctuation kept, author utm tags kept; invisible chars; emoji ZWJ and NBSP kept; clean text untouched" />
   </entry>
   <entry id="V-M-CHECK-REPO" module="M-CHECK-REPO" file="scripts/check_repo.py">
     <test file="tests/test_repo.py" title="RepoTest" checks="real tree clean; version mismatch, missing reference, CRLF and invisible chars caught" />
@@ -14,6 +14,9 @@
   </entry>
   <entry id="V-M-SKILL" module="M-SKILL" file="skills/humanizer-ru/SKILL.md">
     <test file="eval/results/final3/summary-shipped.md" title="blind comparison 4.1.1" checks="ranking against competitors, the one-line prompt and the previous version; fact errors by majority of three judges and check_facts; traps" />
+  </entry>
+  <entry id="V-M-EVAL-PATTERNS" module="M-EVAL-PATTERNS" file="eval/patterns.py" requirements="R-PATTERN-COUNT">
+    <test file="tests/test_eval.py" title="EvalPatternsTest" checks="removed, kept and introduced counted per system; hedge «в целом» and a real range are not patterns; assistant utm counted, author utm not" />
   </entry>
   <entry id="V-M-EVAL" module="M-EVAL-REPORT" file="eval/report.py">
     <test file="tests/test_eval.py" title="EvalReportTest" checks="one vote per judge: two passes of one judge do not outvote another judge; strict majority of 2 or 3 judges; one-judge runs keep the pass rule; equal-weight means; judge.parse repairs both Kimi K3 brace variants" />

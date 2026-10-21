@@ -224,6 +224,11 @@ python report.py --run final3 --judges google/gemini-4-argon   # оценки о
 python report.py --run final3 --ours ours410 --prev ours --out summary-shipped
 ```
 
+Бесплатная дополнительная проверка без API: `python patterns.py --run final3` считает, сколько
+шаблонов ИИ-текста из заранее записанного списка (`patterns.py`) было в исходниках, сколько
+осталось у каждого участника и сколько он добавил (`results/<run>/patterns.md`). Оставшийся
+шаблон бывает законным, поэтому это подсказка, где смотреть, а не оценка.
+
 ## Прогоны
 
 | Папка | Что это |

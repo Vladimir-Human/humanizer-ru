@@ -105,6 +105,14 @@ class CheckFactsTest(unittest.TestCase):
         a = "Сайт: https://example.org/?utm_source=chatgpt.com&id=42"
         b = "Сайт: https://example.org/?id=42"
         self.assertEqual(cf.compare(a, b)["errors"], [])
+        a = "Сайт: https://example.org/?id=42&utm_source=openai"
+        self.assertEqual(cf.compare(a, b)["errors"], [])
+
+    def test_lost_author_utm_tag_is_reported(self):
+        # R-FACTS + R-PASTE: the author's campaign tags are part of the link.
+        a = "Записаться: https://shop.example.ru/sale?utm_source=newsletter&utm_campaign=autumn"
+        b = "Записаться: https://shop.example.ru/sale"
+        self.assertIn("lost", kinds(cf.compare(a, b)))
 
     def test_modality_shift_is_a_check(self):
         r = cf.compare("Пользователь может увидеть старые данные. Субботник запланирован на апрель.",
@@ -176,15 +184,19 @@ class CleanPasteTest(unittest.TestCase):
         self.assertEqual(text, "Факт и ещё факт.")
 
     def test_utm_tail_keeps_link(self):
-        text, _ = cp.clean("См. https://a.ru/p?utm_source=chatgpt.com и https://b.ru/q?id=1&utm_source=x.")
+        # R-PASTE: the assistant's utm_source tail goes, the link and its other parameters stay.
+        text, _ = cp.clean("См. https://a.ru/p?utm_source=chatgpt.com и https://b.ru/q?id=1&utm_source=openai.")
         self.assertEqual(text, "См. https://a.ru/p и https://b.ru/q?id=1.")
-        text, _ = cp.clean("https://a.ru/p?utm_source=x&id=1")
+        text, _ = cp.clean("https://a.ru/p?utm_source=chatgpt.com&id=1")
         self.assertEqual(text, "https://a.ru/p?id=1")
 
-    def test_several_utm_params_in_one_pass(self):
-        text, counts = cp.clean("https://example.org/?utm_source=a&utm_medium=b&id=42#top")
-        self.assertEqual(text, "https://example.org/?id=42#top")
-        self.assertEqual(counts["utm"], 2)
+    def test_author_utm_tags_stay(self):
+        # R-PASTE (2026-10-21): utm tags the author put in a newsletter are not chat leftovers.
+        src = "Записаться: https://shop.example.ru/sale?utm_source=newsletter&utm_campaign=autumn"
+        self.assertEqual(cp.clean(src), (src, {}))
+        text, counts = cp.clean("https://example.org/?utm_campaign=a&id=42&utm_source=openai#top")
+        self.assertEqual(text, "https://example.org/?utm_campaign=a&id=42#top")
+        self.assertEqual(counts["utm"], 1)
         self.assertEqual(cp.clean(text), (text, {}))
 
     def test_invisible_characters(self):

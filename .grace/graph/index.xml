@@ -12,10 +12,11 @@
     <module id="M-EVAL-FETCH" file="eval/fetch_systems.py" purpose="Instruction files of compared skills at pinned commits; all of them or only the names given" depends="M-EVAL-LIB; gh; git" exports="eval/.cache/systems" />
     <module id="M-EVAL-RUN" file="eval/run_systems.py" purpose="One executor model applies each skill to each text with a read_file tool" depends="M-EVAL-LIB, M-EVAL-FETCH, M-SKILL" exports="results/RUN/outputs, runs.jsonl" />
     <module id="M-EVAL-JUDGE" file="eval/judge.py" purpose="Blind shuffled ranking by judges from other labs (model=N passes per judge), with fact/AI/language notes" depends="M-EVAL-LIB" exports="results/RUN/judgments.jsonl" />
+    <module id="M-EVAL-PATTERNS" file="eval/patterns.py" purpose="Free secondary check: fixed AI-text patterns in sources, survived and introduced per system" depends="M-EVAL-LIB" exports="results/RUN/patterns.md" />
     <module id="M-EVAL-REPORT" file="eval/report.py" purpose="Positions and pairwise wins weighted per judge, fact flags by judge majority, thresholds (rule set 2); optional judge filter and output name" depends="M-EVAL-LIB, M-CHECK-FACTS" exports="results/RUN/summary.md, summary.json" />
   </modules>
   <flows>
     <flow id="DF-SKILL" path="user text -> M-SKILL (clean, anchors, rewrite) -> optional M-CLEAN-PASTE / M-CHECK-FACTS -> edited text + 1-3 notes" />
-    <flow id="DF-EVAL" path="briefs -> M-EVAL-CORPUS -> texts; systems.json -> M-EVAL-FETCH -> M-EVAL-RUN -> outputs -> M-EVAL-JUDGE -> judgments -> M-EVAL-REPORT -> summary" />
+    <flow id="DF-EVAL" path="briefs -> M-EVAL-CORPUS -> texts; systems.json -> M-EVAL-FETCH -> M-EVAL-RUN -> outputs -> M-EVAL-JUDGE -> judgments -> M-EVAL-REPORT -> summary; outputs -> M-EVAL-PATTERNS -> patterns.md" />
   </flows>
 </graph>

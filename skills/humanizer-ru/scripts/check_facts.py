@@ -6,6 +6,8 @@
 #          negations, hedges and "who got which number" pairs; flags certainty, scope,
 #          condition and attribution words that got rarer and intensifiers that got more frequent;
 #          HTML tags of the original that were lost (emphasis tags only as checks).
+#          Links are compared without the chat assistant's utm_source tail only: a lost
+#          author utm tag is a lost link.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -32,7 +34,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -401,13 +403,25 @@ def _capitalized_elsewhere(word: str, text: str, pos: int) -> bool:
     return False
 
 
+# utm_source values chat assistants add to the links they cite (ru.wikipedia,
+# «Признаки сгенерированности текста», UTM-метки, revision of 2026-10-08). Any other utm
+# tag is the author's own (newsletter, campaign) and belongs to the link.
+ASSISTANT_UTM_SOURCES = frozenset({"chatgpt.com", "openai"})
+
+
+def _is_assistant_utm(param: str) -> bool:
+    key, _, value = param.partition("=")
+    return key.lower() == "utm_source" and unquote(value).strip().lower() in ASSISTANT_UTM_SOURCES
+
+
 def strip_utm(url: str) -> Tuple[str, int]:
-    """Drop utm_* query parameters, keep the others, the '?' and the fragment."""
+    """Drop the assistant's utm_source tail, keep the author's utm tags, other parameters,
+    the '?' (when something is left) and the fragment."""
     parts = urlsplit(url)
     if not parts.query:
         return url, 0
     params = parts.query.split("&")
-    kept = [x for x in params if not x.lower().startswith("utm_")]
+    kept = [x for x in params if not _is_assistant_utm(x)]
     if len(kept) == len(params):
         return url, 0
     return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)

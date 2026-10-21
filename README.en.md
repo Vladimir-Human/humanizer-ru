@@ -62,7 +62,18 @@ text, answer and judgment: [eval/](eval/). The judges are models, not human edit
 ## AI detectors
 
 The skill edits text for readers. We did not test it against AI detectors and make no promises
-about them.
+about them. What is known about them (checked 2026-10-21):
+
+- Results depend on the detector version. Since 2026-09-25 Antiplagiat prints the model version
+  in its report to explain why two checks of one text differ
+  ([news](https://antiplagiat.ru/news/kakya-model-ii-detectora-poteryala-tekst/)).
+- Detectors err on short texts and on bureaucratic prose: Text.ru's help names texts under
+  1,000 characters and texts full of officialese or clichés ([Text.ru](https://text.ru/neuro/detector)).
+- Detectors trained on Russian text are almost error-free on their own corpus: in LLMTrace,
+  fine-tuned models reach F1 0.97–0.99 on Russian, the zero-shot Binoculars 0.02
+  ([arXiv 2509.21269](https://arxiv.org/abs/2509.21269)).
+- Russian Wikipedia advises against trusting detectors and notes that AI-like features do not
+  prove authorship ([ВП:ПРГЕН](https://ru.wikipedia.org/wiki/Википедия:Признаки_сгенерированности_текста)).
 
 ## Version 3
 

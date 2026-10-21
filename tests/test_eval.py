@@ -18,6 +18,9 @@ _spec.loader.exec_module(report)
 _jspec = importlib.util.spec_from_file_location("eval_judge", EVAL / "judge.py")
 judge = importlib.util.module_from_spec(_jspec)
 _jspec.loader.exec_module(judge)
+_pspec = importlib.util.spec_from_file_location("eval_patterns", EVAL / "patterns.py")
+patterns = importlib.util.module_from_spec(_pspec)
+_pspec.loader.exec_module(patterns)
 
 
 class EvalReportTest(unittest.TestCase):
@@ -57,6 +60,34 @@ class EvalReportTest(unittest.TestCase):
         # Argon made four passes, Kimi one: both weigh the same.
         self.assertAlmostEqual(report._equal_weight({"argon": [1, 1, 1, 1], "kimi": [3]}), 2.0)
         self.assertIsNone(report._equal_weight({}))
+
+
+
+class EvalPatternsTest(unittest.TestCase):
+    """R-PATTERN-COUNT: per pattern and system, survived of source texts and introduced ones."""
+
+    def test_removed_kept_and_introduced(self):
+        sources = {"a": "Важно отметить, что цена 300 рублей.", "b": "Цена 300 рублей.", "c": "Важно отметить."}
+        outputs = {"good": {"a": "Цена 300 рублей.", "b": "Цена 300 рублей."},
+                   "bad": {"a": "Важно отметить: цена 300 рублей.", "b": "Стоит отметить, что цена 300 рублей.",
+                           "c": "Важно отметить."}}
+        row = patterns.survival(sources, outputs)["important_to_note"]
+        self.assertEqual(row["in_sources"], 2)
+        self.assertEqual(row["good"], {"survived": 0, "of": 1, "introduced": 0})
+        self.assertEqual(row["bad"], {"survived": 2, "of": 2, "introduced": 1})
+
+    def test_hedges_and_real_ranges_are_not_patterns(self):
+        text = "В целом впечатление хорошее. Отвечаете за качество от приёмки молока до выпуска сыра."
+        table = patterns.survival({"x": text}, {"s": {"x": text}})
+        self.assertTrue(all(row["in_sources"] == 0 for row in table.values()))
+
+    def test_ne_pro_contrast_with_or_without_eto(self):
+        src = {"x": "Ozon — не про «душу», а про цифры.", "y": "Это не про деньги."}
+        self.assertEqual(patterns.survival(src, {})["ne_pro"]["in_sources"], 2)
+
+    def test_assistant_utm_but_not_author_utm(self):
+        table = patterns.survival({"x": "https://a.ru/?utm_source=openai https://b.ru/?utm_source=newsletter"}, {})
+        self.assertEqual(table["assistant_utm"]["in_sources"], 1)
 
 
 if __name__ == "__main__":
