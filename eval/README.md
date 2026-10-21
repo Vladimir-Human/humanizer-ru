@@ -59,6 +59,29 @@ Sonnet 5.5 и Opus 5.5 — с лимитов подписки Claude; платн
   от двух лабораторий (OpenAI и Google), а не от одиннадцати.
 - **Деньги:** только Argon (4 текста и судейство), ожидается $0.2–0.3 в пределах потолка $38.
 
+**Итоги, 21.10.2026** (`results/final4/summary.md`). Места расставляли Gemini 4 Argon и Claude
+Opus 5.5; ошибки смысла искали они и GPT-6.1 Sol.
+
+| Участник | Среднее место из 3 | Кандидат выше | Тексты с ошибкой смысла из 12 | Ловушки без ошибок |
+|---|---|---|---|---|
+| `ours411` (4.1.1) | 1.58 | 42% | 0 | 6 из 6 |
+| `ours` (кандидат) | 1.92 | — | 0 | 6 из 6 |
+| `ilyautov332` (v3.32.0) | 2.50 | 67% | 0 | 6 из 6 |
+
+- Порог «не хуже прошлой версии» не выполнен: кандидат выше 4.1.1 в 42% сравнений (Argon 33%,
+  Opus 50%; у Sol, чьи места не считаются, 42%). Остальные пороги выполнены. По правилам кандидат
+  в релиз не идёт, в 4.1.2 инструкция от 4.1.1.
+- 4.1.1 выше ilyautov/humanizer-ru v3.32.0 в 83% сравнений у обоих судей (у Sol 50%).
+- Ошибок смысла не отметил ни один судья ни у одного участника. Скрипт сверки отметил у всех
+  трёх `q03` («750 мл» рядом со «сталь»), но строки с 750 мл в правках те же, что в исходнике:
+  ложная тревога скрипта.
+- Шаблонов из Википедии в свежих текстах Sol и Argon не нашлось, кроме подмешанного хвоста utm
+  (`patterns.md`). Пробы `p01` и `p02` по всем критериям прошли все трое, в том числе 4.1.1 без
+  новых правил.
+- Расходы: Argon $0.14 (4 текста $0.025, оценка $0.114), Sol бесплатно, Sonnet и Opus — с лимитов
+  подписки Claude Pro: три волны исполнителя заняли около 18%, 21% и 15% пятичасового окна (пачка
+  ilyautov вдвое дороже наших: его навык читает больше справочников), оценка Opus — около 8%.
+
 ## Последний замер: версия 4.1.1, 15.10.2026
 
 **Набор `holdout2`** (`m01`–`m24`): 24 просьбы для него написала Gemini 4 Argon, автор навыка
@@ -280,6 +303,23 @@ python report.py --run final3 --judges google/gemini-4-argon   # оценки о
 python report.py --run final3 --ours ours410 --prev ours --out summary-shipped
 ```
 
+Сокращённый замер `final4`: исполнитель и судья Opus — субагенты Claude Code, Sol — через DSH.
+
+```sh
+python build_corpus.py --legacy <папка с research/ из тега v3.36.4>   # holdout3: Sol через dsh:, Argon через fal
+python fetch_systems.py ours411 ilyautov332
+python batches.py prepare-run --run final4 --systems ours,ours411,ilyautov332 --batches "q01,...,q06;q07,...,q12;h01,...,h06,p01,p02"
+# по субагенту Sonnet на каждый .cache/batch/final4/<участник>/batchN.task.txt, затем:
+python batches.py collect-run --run final4
+python judge.py --run final4 --judges google/gemini-4-argon --texts <q01-q12,h01-h06>
+python judge.py --run final4 --judges dsh:agentrouter-astra/gpt-6.1-sol --texts <те же> --workers 3
+python batches.py prepare-judge --run final4 --judge claude-code/opus-5.5 --texts <те же> --batch-size 6
+# по субагенту Opus на каждый batchN.task.txt судьи, затем:
+python batches.py collect-judge --run final4 --judge claude-code/opus-5.5
+python report.py --run final4 --prev ours411 --rank-judges google/gemini-4-argon,claude-code/opus-5.5
+python patterns.py --run final4
+```
+
 Бесплатная дополнительная проверка без API: `python patterns.py --run final3` считает, сколько
 шаблонов ИИ-текста из заранее записанного списка (`patterns.py`) было в исходниках, сколько
 осталось у каждого участника и сколько он добавил (`results/<run>/patterns.md`). Оставшийся
@@ -296,6 +336,7 @@ python report.py --run final3 --ours ours410 --prev ours --out summary-shipped
 | `results/final2` | замер 4.1.0 на `holdout` и ловушках; `summary-rule2.md` — он же по правилам второй редакции |
 | `results/it2`–`it4` | настройка 4.1.1 на `holdout`: кандидат против ответов 4.1.0, разборы Gemini |
 | `results/final3` | замер 4.1.1 на `holdout2` и ловушках |
+| `results/final4` | сокращённый замер 21.10: кандидат с признаками Википедии, 4.1.1 и ilyautov v3.32.0 на `holdout3` |
 
 **Замер 4.0.0** (судьи Gemini 4 Argon и GPT-6.1 Sol, 30 ИИ-текстов, 6 участников): среднее
 место 2.02, выше ilyautov в 66% оценок, 5 текстов с ошибкой смысла. Набор `test` там
@@ -304,7 +345,7 @@ python report.py --run final3 --ours ours410 --prev ours --out summary-shipped
 Sol: у одной Gemini их ноль (`results/final/summary-gemini-4-argon.md`). Три из пяти
 оказались настоящими сдвигами уверенности и охвата, их разбор лёг в 4.1.0.
 
-Расходы на API за все прогоны: $37.06, из них на 4.1.1 $10.80 (`.cache/spend.json` в репозиторий не попадает).
+Расходы на API за все прогоны: $37.20, из них на 4.1.1 $10.80, на `final4` $0.14 (`.cache/spend.json` в репозиторий не попадает).
 
 ## Ограничения
 

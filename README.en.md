@@ -55,6 +55,11 @@ not ship it. Gemini and Kimi rank humanizer-ru above both rivals; Muse Spark ran
 avoid-ai-writing-russian and level with ilyautov. The skill left all six trap texts intact;
 the one-line prompt damaged three.
 
+A fresh reduced run on 21.10.2026 (`final4`): 12 new texts by GPT-6.1 Sol and Gemini 4 Argon,
+Sonnet 5.5 as the executor, places by Gemini 4 Argon and Claude Opus 5.5. humanizer-ru 4.1.1 came
+first of three, above ilyautov/humanizer-ru v3.32.0 in 83% of comparisons; no judge found a meaning
+error in anyone's edits. A variant with more Wikipedia markers lost to 4.1.1 (42%) and was not shipped.
+
 The 4.1.0 run had eight participants: blader/humanizer (57k stars) came seventh with the most
 errors; stop-slop, no-ai-slop and avoid-ai-writing did not pass the qualifying round. Every
 text, answer and judgment: [eval/](eval/). The judges are models, not human editors.

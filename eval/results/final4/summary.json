@@ -1,0 +1,202 @@
+{
+  "run": "final4",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "q01",
+        "q02",
+        "q03",
+        "q04",
+        "q05",
+        "q06",
+        "q07",
+        "q08",
+        "q09",
+        "q10",
+        "q11",
+        "q12"
+      ],
+      "table": {
+        "ilyautov332": {
+          "mean_position": 2.5,
+          "first_places": 2,
+          "passes": 24,
+          "send_as_is": 8.75,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "q03": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "750 мл в исходнике относится к «тропа», в правке стоит рядом с «сталь»"
+              }
+            ]
+          },
+          "similarity": 0.959
+        },
+        "ours": {
+          "mean_position": 1.92,
+          "first_places": 9,
+          "passes": 24,
+          "send_as_is": 9.17,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "q03": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "750 мл в исходнике относится к «тропа», в правке стоит рядом с «сталь»"
+              }
+            ]
+          },
+          "similarity": 0.913
+        },
+        "ours411": {
+          "mean_position": 1.58,
+          "first_places": 13,
+          "passes": 24,
+          "send_as_is": 9.21,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "q03": [
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "750 мл в исходнике относится к «тропа», в правке стоит рядом с «сталь»"
+              }
+            ]
+          },
+          "similarity": 0.946
+        }
+      },
+      "pairwise": {
+        "ours>ours411": 0.417,
+        "ours411>ours": 0.583,
+        "ours>ilyautov332": 0.667,
+        "ilyautov332>ours": 0.333,
+        "ours411>ilyautov332": 0.833,
+        "ilyautov332>ours411": 0.167
+      },
+      "fact_notes": {}
+    },
+    "trap": {
+      "ids": [
+        "h01",
+        "h02",
+        "h03",
+        "h04",
+        "h05",
+        "h06"
+      ],
+      "table": {
+        "ilyautov332": {
+          "mean_position": 2.33,
+          "first_places": 1,
+          "passes": 12,
+          "send_as_is": 8.33,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 1.0
+        },
+        "ours": {
+          "mean_position": 1.92,
+          "first_places": 4,
+          "passes": 12,
+          "send_as_is": 9.08,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.999
+        },
+        "ours411": {
+          "mean_position": 1.75,
+          "first_places": 7,
+          "passes": 12,
+          "send_as_is": 8.83,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.971
+        }
+      },
+      "pairwise": {
+        "ours>ilyautov332": 0.667,
+        "ilyautov332>ours": 0.333,
+        "ours>ours411": 0.417,
+        "ours411>ours": 0.583,
+        "ilyautov332>ours411": 0.333,
+        "ours411>ilyautov332": 0.667
+      },
+      "fact_notes": {}
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 1 на 12 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (ilyautov332: 0)",
+      "ok": true,
+      "value": "0"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": null,
+      "value": "просьбы в прогоне нет"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov332): не меньше 50%",
+      "ok": true,
+      "value": "67%"
+    },
+    {
+      "name": "Не хуже прошлой версии (ours411): не меньше 50% и ошибок смысла не больше (0)",
+      "ok": false,
+      "value": "42%, 0"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 5 из 6",
+      "ok": true,
+      "value": "6 из 6"
+    }
+  ]
+}
