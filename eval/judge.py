@@ -12,7 +12,8 @@
 # PROMPT: judge instructions (Russian), answer format JSON.
 # build: shuffled candidate block and the label->system key.
 # parse: tolerant JSON extraction from the judge answer.
-# main: CLI --run --judges (model=N for N passes) --rounds --texts.
+# to_row: answer -> judgments row (labels mapped back); also used for subagent judges.
+# main: CLI --run --judges (model=N for N passes; "dsh:" models via the free DSH routes) --rounds --texts.
 # END_MODULE_MAP
 from __future__ import annotations
 
@@ -74,6 +75,24 @@ def parse(text: str):
     return None
 
 
+def to_row(tid: str, judge: str, rnd: int, key: dict, content) -> dict:
+    """One judge answer -> a judgments.jsonl row with labels mapped back to systems.
+    Shared by the API path below and by subagent judges (batches.py)."""
+    row = {"id": tid, "judge": judge, "round": rnd, "key": key}
+    data = parse(content)
+    if not data or "ranking" not in data:
+        row["error"] = "unparsed: " + (content or "")[:300]
+        return row
+    ranking = [lab for lab in data["ranking"] if lab in key]
+    if sorted(ranking) != sorted(key):
+        row["error"] = "bad ranking %s" % data["ranking"]
+        return row
+    row["ranking"] = [key[lab] for lab in ranking]
+    row["candidates"] = {key[lab]: v for lab, v in (data.get("candidates") or {}).items() if lab in key}
+    row["comment"] = data.get("comment", "")
+    return row
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
@@ -125,18 +144,10 @@ def main() -> int:
         try:
             msg, usage = lib.chat(judge, [{"role": "user", "content": prompt}], max_tokens=12000,
                                   effort=args.effort, tag="judge")
-            data = parse(msg.get("content"))
+            row = to_row(tid, judge, rnd, key, msg.get("content"))
             row["cost"] = usage.get("cost")
-            if not data or "ranking" not in data:
-                row["error"] = "unparsed: " + (msg.get("content") or "")[:300]
-                return row
-            ranking = [lab for lab in data["ranking"] if lab in key]
-            if sorted(ranking) != sorted(key):
-                row["error"] = "bad ranking %s" % data["ranking"]
-                return row
-            row["ranking"] = [key[lab] for lab in ranking]
-            row["candidates"] = {key[lab]: v for lab, v in (data.get("candidates") or {}).items() if lab in key}
-            row["comment"] = data.get("comment", "")
+            if usage.get("listed_cost") is not None:
+                row["listed_cost"] = usage["listed_cost"]
         except lib.BudgetExceeded:
             raise
         except Exception as exc:

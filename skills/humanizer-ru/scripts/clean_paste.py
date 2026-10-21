@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: Remove chat-interface leftovers from pasted text: citation tokens
-#          (contentReference, 【N†source】, [cite: N]), utm tails in links, invisible
-#          characters. Text, links and emoji stay intact.
+#          (contentReference, 【N†source】, [cite: N]), the utm_source tail a chat assistant
+#          adds to links (chatgpt.com, openai), invisible characters. Text, links, the author's
+#          own utm tags and emoji stay intact.
 # SCOPE: deterministic, stdlib only; style and wording are not touched.
 # DEPENDS: Python 3.8+ standard library.
 # LINKS: M-CLEAN-PASTE; DF-SKILL-CLEAN; V-M-CLEAN-PASTE.
@@ -27,7 +28,7 @@ import re
 import shutil
 import sys
 from typing import Dict, Tuple
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -53,13 +54,25 @@ ZWNJ = 0x200C
 # END_BLOCK_PATTERNS
 
 
+# utm_source values chat assistants add to the links they cite (ru.wikipedia,
+# «Признаки сгенерированности текста», UTM-метки, revision of 2026-10-08). Any other utm
+# tag is the author's own (newsletter, campaign) and belongs to the link.
+ASSISTANT_UTM_SOURCES = frozenset({"chatgpt.com", "openai"})
+
+
+def _is_assistant_utm(param: str) -> bool:
+    key, _, value = param.partition("=")
+    return key.lower() == "utm_source" and unquote(value).strip().lower() in ASSISTANT_UTM_SOURCES
+
+
 def strip_utm(url: str) -> Tuple[str, int]:
-    """Drop utm_* query parameters, keep the others, the '?' and the fragment."""
+    """Drop the assistant's utm_source tail, keep the author's utm tags, other parameters,
+    the '?' (when something is left) and the fragment."""
     parts = urlsplit(url)
     if not parts.query:
         return url, 0
     params = parts.query.split("&")
-    kept = [x for x in params if not x.lower().startswith("utm_")]
+    kept = [x for x in params if not _is_assistant_utm(x)]
     if len(kept) == len(params):
         return url, 0
     return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)

@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
-# PURPOSE: Shared helpers for the blind comparison: chat API client (fal OpenRouter router),
+# PURPOSE: Shared helpers for the blind comparison: chat API client (fal OpenRouter router, or
+#          an owner-approved free route through the local DSH bridge for "dsh:" models),
 #          spend ledger with a hard budget cap, JSON/IO helpers.
 # SCOPE: eval/ scripts only; never imported by the skill.
-# DEPENDS: Python 3.9+ stdlib; env FAL_KEY (never printed or written).
-# LINKS: M-EVAL-LIB; DF-EVAL.
+# DEPENDS: Python 3.9+ stdlib; env FAL_KEY (never printed or written); for "dsh:" models node and
+#          ~/.claude/skills/dsh-bridge/dsh-task.mjs.
+# LINKS: M-EVAL-LIB; DF-EVAL; R-EVAL-DSH.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # chat: one chat completion with retries; returns (message, usage) and books the cost.
+# dsh_task_text / dsh_answer: messages -> one bridge task; bridge JSON -> (message, usage).
 # Ledger: reads/writes eval/.cache/spend.json, refuses calls past the cap.
 # read_json / write_json / read_text / write_text: UTF-8 file helpers.
 # END_MODULE_MAP
@@ -16,7 +19,9 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -99,14 +104,96 @@ def ledger() -> Ledger:
     return _LEDGER
 
 
+# START_BLOCK_DSH
+# Routes the owner approved as free on 2026-10-21 ("Sol and MiniMax are free now"). The bridge
+# still prices them at list rates: that number is kept in usage["listed_cost"], the ledger books 0.
+# Any other bridge route could be paid, so it is refused before anything runs.
+DSH_PREFIX = "dsh:"
+DSH_TASK = Path.home() / ".claude" / "skills" / "dsh-bridge" / "dsh-task.mjs"
+DSH_FREE = frozenset({"agentrouter-astra/gpt-6.1-sol", "minimax/MiniMax-M3.1-Flash"})
+# The DSH agent is a coding agent with file tools; the eval needs a plain reply.
+DSH_RULES = ("Answer in your reply only: do not create, read or change files and do not run commands. "
+             "Everything you need is below.")
+
+
+def dsh_task_text(messages: list) -> str:
+    """System instructions first, then the user's messages, under the bridge rules."""
+    def text(content):
+        return content if isinstance(content, str) else "".join(c.get("text", "") for c in content)
+    roles = {m["role"] for m in messages}
+    if roles - {"system", "user"}:
+        raise ValueError("the dsh route takes system and user messages only")
+    parts = [DSH_RULES] + [text(m["content"]) for m in messages if m["role"] == "system"]
+    parts += [text(m["content"]) for m in messages if m["role"] == "user"]
+    return "\n\n".join(parts)
+
+
+def dsh_answer(report: dict):
+    """Bridge --json report -> (message, usage). A failed run or an empty answer raises."""
+    if not report.get("ok"):
+        why = report.get("errors") or report.get("stderrTail") or [report.get("endReason")]
+        raise RuntimeError("dsh run failed: %s %s" % (report.get("failKind"), "; ".join(map(str, why))[:300]))
+    text = report.get("answer") or ""
+    if report.get("answerTruncated") and report.get("answerPath"):
+        text = read_text(report["answerPath"])
+    if not text.strip():
+        raise RuntimeError("dsh run gave an empty answer: %s" % report.get("dir"))
+    tokens = report.get("tokens") or {}
+    usage = {"cost": 0.0, "listed_cost": report.get("cost"), "prompt_tokens": tokens.get("in"),
+             "completion_tokens": tokens.get("out"), "seconds": report.get("seconds"), "dsh_run": report.get("dir")}
+    return {"content": text}, usage
+
+
+def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
+    ref = model[len(DSH_PREFIX):]
+    if ref not in DSH_FREE:
+        raise SystemExit("%s is not an approved free DSH route (%s)" % (ref, ", ".join(sorted(DSH_FREE))))
+    work = CACHE_DIR / "dsh"
+    (work / "cwd").mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", dir=work, delete=False) as fh:
+        fh.write(dsh_task_text(messages))
+    # --no-fallback: when the free route fails the bridge must not switch to a paid fal model.
+    cmd = ["node", str(DSH_TASK), "--model", ref, "--cwd", str(work / "cwd"), "--confirm", "--no-fallback",
+           "--max-cost", "1", "--max-chars", "100000", "--json", "--task-file", fh.name]
+    if effort:
+        cmd += ["--effort", effort]
+    last = None
+    try:
+        for attempt in range(retries):
+            try:
+                proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2400)
+                try:
+                    report = json.loads(proc.stdout)
+                except json.JSONDecodeError:
+                    raise RuntimeError("dsh bridge rc=%s: %s" % (proc.returncode, (proc.stderr or proc.stdout)[-300:]))
+                msg, usage = dsh_answer(report)
+            except (RuntimeError, subprocess.TimeoutExpired) as exc:
+                # The free routes restart now and then ("Server is restarting; please retry shortly").
+                last = exc
+                print("[M-EVAL-LIB][BLOCK_DSH] %s %s attempt %d failed: %s" % (tag, ref, attempt + 1, str(exc)[:200]))
+                time.sleep(30 * (attempt + 1))
+                continue
+            print("[M-EVAL-LIB][BLOCK_DSH] %s %s %ss listed $%.4f booked $0" % (tag, ref, usage["seconds"], float(usage["listed_cost"] or 0)))
+            return msg, usage
+    finally:
+        os.unlink(fh.name)
+    raise RuntimeError("dsh route %s failed %d times: %s" % (ref, retries, last))
+# END_BLOCK_DSH
+
+
 # START_CONTRACT: chat
-# PURPOSE: One OpenAI-compatible chat completion through fal's OpenRouter router.
+# PURPOSE: One OpenAI-compatible chat completion through fal's OpenRouter router, or through the
+#          DSH bridge for "dsh:<route>" models (approved free routes only, no tools).
 # INPUTS: model id, messages, optional tools, max_tokens, temperature, reasoning effort, tag.
 # OUTPUTS: (assistant message dict, usage dict with cost).
-# SIDE_EFFECTS: network call; books usage.cost in the ledger under tag.
+# SIDE_EFFECTS: network call; books usage.cost in the ledger under tag (0 for the free routes).
 # END_CONTRACT: chat
 def chat(model: str, messages: list, *, tools=None, max_tokens: int = 4000,
          temperature=None, effort=None, tag: str = "misc", retries: int = 4):
+    if model.startswith(DSH_PREFIX):
+        if tools:
+            raise ValueError("the dsh route has no tool calls")
+        return _dsh_chat(model, messages, effort, tag)
     key = os.environ.get("FAL_KEY")
     if not key:
         raise SystemExit("FAL_KEY is not set")

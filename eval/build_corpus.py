@@ -11,15 +11,17 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # REAL / TRAPS: fixed lists of saved texts with origin and licence notes.
+# PROBES: hand-written targeted texts kept in corpus/texts (never judged, see README final4).
 # strip_header: drop "Вопрос:/Ответ ...:" preamble from saved chatbot answers.
 # inject: add chat paste artifacts (utm tail, contentReference, zero-width spaces).
+# generate: one text from a brief; "dsh:" models get the chat-assistant persona.
 # main: generate missing texts, copy saved ones, write index.json.
 # END_MODULE_MAP
 from __future__ import annotations
 
 import argparse
 import re
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import evallib as lib
@@ -46,6 +48,15 @@ TRAPS = [
     ("h05", "research/validation/human/10-wikinews.txt", "Викиновости (CC BY 2.5)", "новость"),
     ("h06", "research/validation/human/08-constitution.txt", "Конституция РФ, ст. 2 (официальный документ)", "закон"),
 ]
+# Targeted texts for the new rules of a candidate, written by hand before its run and never
+# shown to judges: patterns.py and check_facts.py read the outputs (README, final4).
+PROBES = [
+    ("p01", "ответ чат-бота с хвостами вставки", "написан вручную 21.10.2026 для правил кандидата 98cf8cc"),
+    ("p02", "статья с шаблонами из Википедии", "написан вручную 21.10.2026 для правил кандидата 98cf8cc"),
+]
+# The DSH agent is a coding agent by default; a generated text must read as a chat answer.
+CHAT_PERSONA = ("You are a regular chat assistant like ChatGPT. Answer the user's request below "
+                "the way you would in a chat.")
 
 
 def strip_header(text: str) -> str:
@@ -79,9 +90,11 @@ def inject(text: str, kind: str) -> str:
 
 def generate(brief: dict) -> tuple:
     # Reasoning models (GLM 5.3) can spend a small budget on thinking and return nothing.
+    messages = [{"role": "user", "content": brief["prompt"]}]
+    if brief["model"].startswith(lib.DSH_PREFIX):
+        messages.insert(0, {"role": "system", "content": CHAT_PERSONA})
     for _ in range(2):
-        msg, usage = lib.chat(brief["model"], [{"role": "user", "content": brief["prompt"]}],
-                              max_tokens=16000, tag="corpus")
+        msg, usage = lib.chat(brief["model"], messages, max_tokens=16000, tag="corpus")
         text = (msg.get("content") or "").strip() + "\n"
         if len(text) > 50:
             break
@@ -102,10 +115,24 @@ def main() -> int:
     TEXTS.mkdir(parents=True, exist_ok=True)
 
     todo = [b for b in briefs if args.force or not (TEXTS / (b["id"] + ".txt")).exists()]
+    failed = []
     with ThreadPoolExecutor(max_workers=6) as pool:
-        for bid, text, cost in pool.map(generate, todo):
+        # Each text is saved as soon as it is ready: one failed brief must not lose the others.
+        futures = {pool.submit(generate, b): b["id"] for b in todo}
+        for fut in as_completed(futures):
+            try:
+                bid, text, cost = fut.result()
+            except lib.BudgetExceeded:
+                raise
+            except Exception as exc:
+                failed.append(futures[fut])
+                print("failed", futures[fut], repr(exc)[:300])
+                continue
             lib.write_text(TEXTS / (bid + ".txt"), text)
             print("generated", bid, len(text), "chars, $%.4f" % float(cost or 0))
+    if failed:
+        # index.json is written only for a complete corpus; a rerun generates just the missing texts.
+        raise SystemExit("not generated: %s" % ", ".join(sorted(failed)))
 
     index = []
     for b in briefs:
@@ -117,6 +144,9 @@ def main() -> int:
             text = strip_header(lib.read_text(src)) if kind == "real" else lib.read_text(src).strip() + "\n"
             lib.write_text(TEXTS / (tid + ".txt"), text)
             index.append({"id": tid, "set": "test", "kind": kind, "genre": genre, "origin": origin})
+    for tid, genre, origin in PROBES:
+        if (TEXTS / (tid + ".txt")).exists():
+            index.append({"id": tid, "set": "probe", "kind": "probe", "genre": genre, "origin": origin})
     lib.write_json(CORPUS / "index.json", index)
     print("index:", len(index), "texts; spend so far $%.4f" % lib.ledger().data["total"])
     return 0
