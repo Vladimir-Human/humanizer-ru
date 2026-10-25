@@ -222,7 +222,101 @@ class CheckFactsTest(unittest.TestCase):
             tmp.rmdir()
 
 
+    # 4.1.4: defects found by a property run over the eval texts and by two model bug hunts.
+    def errs(self, a, b):
+        return {(e["kind"], e["what"]) for e in cf.compare(a, b)["errors"]}
+
+    def test_versions_weekdays_and_inline_code_are_facts(self):
+        self.assertIn(("lost", "число"), self.errs("Версия 2.1.3 вышла.", "Версия 2.1.4 вышла."))
+        self.assertIn(("lost", "дата"), self.errs("Встреча в среду.", "Встреча в четверг."))
+        self.assertEqual(self.errs("Рабочая среда готова.", "Окружение готово."), set())
+        self.assertIn(("lost", "код"), self.errs("Код: `npm run build`", "Код: `npm run dev`"))
+        r = cf.compare("Запуск: `make`", "Запуск: make")
+        self.assertEqual(r["errors"], [])
+        self.assertIn(("unquoted", "код"), {(c["kind"], c["what"]) for c in r["checks"]})
+
+    def test_phones_and_links_compare_by_meaning(self):
+        self.assertEqual(self.errs("Звоните: +7 (999) 123-45-67.", "Телефон 8 999 123 45 67."), set())
+        self.assertIn(("lost", "телефон"), self.errs("Звоните: +7 999 123-45-67.", "Звоните: +7 999 123-45-68."))
+        self.assertEqual(self.errs("Сайт: https://zerno.ru/", "Сайт https://Zerno.ru"), set())
+        self.assertIn(("lost", "ссылка"), self.errs("https://example.ru/A", "https://example.ru/a"))
+        self.assertEqual(cf.compare("Хост https://[::1]/ доступен.", "Хост https://[::1]/ доступен.")["errors"], [])
+
+    def test_numbers_keep_precision_units_and_ranges(self):
+        self.assertIn(("lost", "число"), self.errs("Цена 100000,01 ₽.", "Цена 100000,02 ₽."))
+        self.assertIn(("unit", "единица"), self.errs("Пришло 30 тыс. человек.", "Пришло 30 тыс. рублей."))
+        self.assertIn(("unit", "единица"), self.errs("Цена пять рублей.", "Цена пять долларов."))
+        for a, b in (("Цена 1,50 ₽.", "Цена 1.50 ₽."), ("С 2020 г. работаем.", "С 2020 года работаем."),
+                     ("Встреча в 16:00.", "Встреча в 16 часов."), ("С 5 по 7 марта.", "5–7 марта."),
+                     ("В группе двадцать один человек.", "В группе 21 человек."),
+                     ("Подожди одну минуту.", "Подожди 1 минуту.")):
+            self.assertEqual(self.errs(a, b), set(), a)
+        r = cf.compare("Держит тепло 6 часов.", "Держит тепло 6.")
+        self.assertIn(("unit", "единица"), {(c["kind"], c["what"]) for c in r["checks"]})
+
+    def test_month_without_day_is_a_date(self):
+        self.assertIn(("lost", "дата"), self.errs("Встреча в марте 2026.", "Встреча в апреле 2026."))
+        self.assertEqual(self.errs("Сдача в марте.", "Сдать нужно в марте."), set())
+
+    def test_negations_with_prepositions_and_added_ones(self):
+        self.assertIn(("inverted", "отрицание"), self.errs("Оплата не на карту.", "Оплата на карту."))
+        self.assertIn(("inverted", "отрицание"), self.errs("Здесь нельзя курить.", "Здесь можно курить."))
+        r = cf.compare("Мы храним данные.", "Мы не храним данные.")
+        self.assertIn(("inverted", "отрицание"), {(c["kind"], c["what"]) for c in r["checks"]})
+        # "не X, а Y" is the pattern a rewrite removes: the contrast is a check, not an error.
+        r = cf.compare("Переезд в марте, а не в феврале.", "Переезд в марте, хотя планировали в феврале.")
+        self.assertEqual(r["errors"], [])
+        self.assertEqual(self.errs("Никаких дрожжей и сахара.", "Ни дрожжей, ни сахара."), set())
+
+    def test_full_names_still_bind_numbers(self):
+        a = "Анна Иванова получила 30 рублей. Борис Петров получил 50 рублей."
+        b = "Анна Иванова получила 50 рублей. Борис Петров получил 30 рублей."
+        self.assertIn(("swap", "привязка"), self.errs(a, b))
+
+    def test_short_names_and_cyrillic_acronyms(self):
+        self.assertEqual(self.errs("Письмо для Ани.", "Написал Ане."), set())
+        self.assertIn(("lost", "имя или название"), self.errs("Компания из США открыла офис.", "Компания открыла офис."))
+        self.assertEqual(self.errs("Павел пришёл, ждём Павла.", "Ждём Павла."), set())
+        self.assertEqual(self.errs("Отдайте заявление в УК дома.", "Отдайте заявление в управляющую компанию."), set())
+
+    def test_direct_speech_is_word_for_word(self):
+        self.assertIn(("lost", "цитата"), self.errs("Он сказал: «Мы запустили проект».", "Он сказал: «Мы запустим проект»."))
+
+    def test_report_agrees_in_gender(self):
+        text = cf.render(cf.compare("Звоните: +7 999 123-45-67.", "Звоните нам."))
+        self.assertIn("потерян телефон", text)
+
+
 class CleanPasteTest(unittest.TestCase):
+    def test_utm_tail_in_markup_html_and_before_invisible(self):
+        for src, want in (("Сайт https://a.ru/x?utm_source=chatgpt.com\u200b готов.", "Сайт https://a.ru/x готов."),
+                          ("**https://a.ru/p?utm_source=chatgpt.com**", "**https://a.ru/p**"),
+                          ("https://a.ru/p?utm_source=chatgpt.com&amp;id=1", "https://a.ru/p?id=1"),
+                          ("https://a.ru/p?id=1&amp;utm_source=chatgpt.com", "https://a.ru/p?id=1"),
+                          ("Сайт www.a.ru/x?utm_source=chatgpt.com", "Сайт www.a.ru/x"),
+                          ("Хост https://[::1]/ доступен.", "Хост https://[::1]/ доступен.")):
+            self.assertEqual(cp.clean(src)[0], want, src)
+
+    def test_cite_start_keeps_the_space_and_code_is_untouched(self):
+        self.assertEqual(cp.clean("Текст [cite_start]первый[cite: 1].")[0], "Текст первый.")
+        code = '`print("[cite: 1]")` и\n```bash\ncurl https://a.ru/p?utm_source=chatgpt.com\n```\n'
+        self.assertEqual(cp.clean(code), (code, {}))
+        prose = "```markdown\nПривет, это пост про кофе :contentReference[oaicite:1]{index=1}.\n```\n"
+        self.assertEqual(cp.clean(prose)[0], "```markdown\nПривет, это пост про кофе.\n```\n")
+
+    def test_in_place_keeps_windows_line_endings(self):
+        tmp = ROOT / "tests" / "_tmp_cp"
+        tmp.mkdir(exist_ok=True)
+        try:
+            f = tmp / "a.txt"
+            f.write_bytes("Текст\u200b\r\nВторая\r\n".encode("utf-8"))
+            subprocess.run([sys.executable, str(SCRIPTS / "clean_paste.py"), str(f), "--in-place"], capture_output=True)
+            self.assertEqual(f.read_bytes(), "Текст\r\nВторая\r\n".encode("utf-8"))
+        finally:
+            for p in tmp.glob("*"):
+                p.unlink()
+            tmp.rmdir()
+
     def test_content_reference(self):
         text, counts = cp.clean("Рост заявок :contentReference[oaicite:3]{index=3}. Дальше.")
         self.assertEqual(text, "Рост заявок. Дальше.")
