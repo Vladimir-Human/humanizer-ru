@@ -117,7 +117,8 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
     # Code is copied as is: citations and links inside `inline code` and code blocks stay. A ``` block
     # of Russian prose (a chat answer wraps a whole README or post in one) is text and is cleaned.
     spans = []
-    for m in re.finditer(r"^```[^\n]*\n.*?^```[ \t]*$", text, re.S | re.M):
+    # A file is read as is (CRLF kept), so the closing fence may end in \r.
+    for m in re.finditer(r"^```[^\n]*\n.*?^```[ \t]*\r?$", text, re.S | re.M):
         letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group())
         if sum(1 for x in letters if x > "z") < 0.3 * max(1, len(letters)):
             spans.append((m.start(), m.end()))

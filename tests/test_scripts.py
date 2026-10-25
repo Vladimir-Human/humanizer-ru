@@ -286,6 +286,41 @@ class CheckFactsTest(unittest.TestCase):
         text = cf.render(cf.compare("Звоните: +7 999 123-45-67.", "Звоните нам."))
         self.assertIn("потерян телефон", text)
 
+    # 4.1.5: findings of the cross-review of 4.1.4 (GPT-6.1 Sol, Gemini 4 Argon), each rerun first.
+    def test_ip_addresses_and_versions_are_whole_tokens(self):
+        self.assertIn(("lost", "число"), self.errs("Адрес 10.0.10.1.", "Адрес 10.0.10.2."))
+        r = cf.compare("Версия 2.1.10 вышла.", "Версия 2.1.11 вышла.")
+        self.assertIn("2.1.10", {e["detail"] for e in r["errors"]})
+        self.assertEqual(self.errs("Срок 01.02.26.", "Срок 1 февраля 2026."), set())
+
+    def test_link_path_keeps_its_trailing_slash(self):
+        self.assertIn(("lost", "ссылка"), self.errs("См. https://a.ru/api/item/", "См. https://a.ru/api/item"))
+
+    def test_month_needs_a_month_ending(self):
+        self.assertNotIn(("lost", "дата"), self.errs("Позвали Марту.", "Позвали Анну."))
+        self.assertEqual(self.errs("Восстание декабристов.", "Восстание дворян."), set())
+        self.assertIn(("lost", "дата"), self.errs("Между маем и июнем.", "В июне."))
+
+    def test_ban_said_another_way_is_only_a_check(self):
+        # 25 fresh rewrites (DeepSeek texts, Haiku edits): the ban stayed as «не готовим».
+        r = cf.compare("Суп нельзя приготовить без сливок, альтернатива — кокосовое молоко.",
+                       "Без сливок суп не готовим. Вместо них можно взять кокосовое молоко.")
+        self.assertEqual(r["errors"], [])
+        self.assertIn(("inverted", "отрицание"), {(c["kind"], c["what"]) for c in r["checks"]})
+
+    def test_long_interview_answer_is_direct_speech(self):
+        # The same fresh set: an interview answer of 110 characters was rewritten and went unseen.
+        a = ("Интервью.\n\n— «Мы ожидали окупаемость 18 месяцев, а получили 14. Экономия появилась не сразу,"
+             " а через квартал после запуска».\n")
+        b = ("Интервью.\n\n— «Ждали окупаемость за 18 месяцев, вышло за 14. Экономия появилась не сразу,"
+             " а через квартал после запуска».\n")
+        self.assertIn(("lost", "цитата"), self.errs(a, b))
+
+    def test_surname_alone_still_binds_the_number(self):
+        a = "Анна Иванова получила 30 рублей. Борис Петров получил 50 рублей."
+        b = "Анна и Борис пришли. Иванова получила 50 рублей. Петров получил 30 рублей."
+        self.assertIn(("swap", "привязка"), self.errs(a, b))
+
 
 class CleanPasteTest(unittest.TestCase):
     def test_utm_tail_in_markup_html_and_before_invisible(self):
@@ -303,6 +338,10 @@ class CleanPasteTest(unittest.TestCase):
         self.assertEqual(cp.clean(code), (code, {}))
         prose = "```markdown\nПривет, это пост про кофе :contentReference[oaicite:1]{index=1}.\n```\n"
         self.assertEqual(cp.clean(prose)[0], "```markdown\nПривет, это пост про кофе.\n```\n")
+
+    def test_code_block_with_windows_line_endings_is_untouched(self):
+        code = "```bash\r\ncurl https://a.ru/p?utm_source=chatgpt.com\r\n```\r\n"
+        self.assertEqual(cp.clean(code), (code, {}))
 
     def test_in_place_keeps_windows_line_endings(self):
         tmp = ROOT / "tests" / "_tmp_cp"

@@ -2,17 +2,21 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: Compare an original Russian text with its edited version and report facts that
-#          were lost, invented or rebound: numbers (with units, versions like 2.1.3), dates
-#          (days, months without a day, weekdays), times, names (incl. США-type acronyms),
-#          URLs (host case and a trailing slash ignored), phones (by digits), e-mails, quotes,
+#          were lost, invented or rebound: numbers (with units; versions and IP addresses like
+#          2.1.3, 10.0.10.1 as one token), dates (days, months without a day by their noun
+#          endings, weekdays), times, names (incl. США-type acronyms), URLs (host case and the
+#          slash after a bare host ignored), phones (by digits), e-mails, quotes,
 #          `inline code`, negations (incl. "не на карту", "нельзя" → "можно"), hedges and
-#          "who got which number" pairs; flags certainty, scope,
+#          "who got which number" pairs (a person may be named by first name or surname);
+#          flags certainty, scope,
 #          condition and attribution words that got rarer and intensifiers that got more frequent;
 #          HTML tags of the original that were lost (emphasis tags only as checks).
-#          Quoted words must survive in order (case endings and quote marks may change): lost
-#          direct speech or a quote after a colon is an error; other lost quoted words, words
+#          Quoted words (up to a paragraph) must survive in order (case endings and quote marks
+#          may change): lost direct speech, a quote after a colon or a line opening with a dash
+#          and a quote (dialogue, interview answer) is an error; other lost quoted words, words
 #          kept without their quote marks and new quotes are checks. Checks also: a lost
-#          contrast negation ("а не в феврале"), an added negation, a number that lost its
+#          contrast negation ("а не в феврале"), an added negation, "нельзя" → "можно" when the
+#          ban stayed as another negation, a number that lost its
 #          unit, a code-like ``` block that changed.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
 #          author utm tag is a lost link.
@@ -107,9 +111,10 @@ SCALE = {"тыс": 1000, "тыс.": 1000, "тысяча": 1000, "тысячи": 
          "миллиардов": 10 ** 9}
 # Longest first: "тыс." before "тыс", or the dot stops the unit after it ("30 тыс. человек").
 SCALE_ALT = "|".join(re.escape(k) for k in sorted(SCALE, key=len, reverse=True))
-# Months in any case, for dates without a day ("в марте 2026", "к апрелю").
-MONTH_ANY_RX = re.compile(r"(?<![а-яё])(январ|феврал|март|апрел|ма(?=[йяюе](?![а-яё]))|июн|июл|август|сентябр|"
-                          r"октябр|ноябр|декабр)[а-яё]*", re.I)
+# Months in any case, for dates without a day ("в марте 2026", "к апрелю", "между маем и июнем").
+# Only the noun endings: "декабристов", "мартини", "январский" are not months.
+MONTH_ANY_RX = re.compile(r"(?<![а-яё])(?:(январ|феврал|апрел|июн|июл|сентябр|октябр|ноябр|декабр)"
+                          r"(?:ь|я|ю|ем|ём|е)|(март|август)(?:а|у|ом|е)?|(ма)(?:й|я|ю|ем|е))(?![а-яё])", re.I)
 MONTH_ANY_NUM = {"январ": 1, "феврал": 2, "март": 3, "апрел": 4, "ма": 5, "июн": 6, "июл": 7, "август": 8,
                  "сентябр": 9, "октябр": 10, "ноябр": 11, "декабр": 12}
 MONTHS = ("января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|"
@@ -125,11 +130,10 @@ URL_TAIL = ".,;:!?…*_"
 
 
 def _url_key(url: str) -> str:
-    """Scheme and host are case-insensitive, the path is not; a trailing slash is the same page."""
-    if not re.search(r"[?#]", url):
-        url = url.rstrip("/")
+    """Scheme and host are case-insensitive, the path is not. A slash after the bare host is the
+    same page (https://a.ru/ = https://a.ru); deeper, /api/item/ and /api/item may differ."""
     m = re.match(r"((?:https?://)?[^/?#]*)(.*)", url, re.S | re.I)
-    return m.group(1).lower() + m.group(2)
+    return m.group(1).lower() + ("" if m.group(2) == "/" else m.group(2))
 
 # Days of the week. "Среда" alone is also "environment" ("рабочая среда", "окружающей среды"),
 # so only "в среду", "по средам" and a schedule line "Среда: …" / "Среда, 5 ноября" count.
@@ -328,6 +332,21 @@ def extract(text: str) -> Facts:
     # END_BLOCK_URLS
 
     # START_BLOCK_DATES_TIMES
+    # Versions, IP addresses, clause numbers (2.1.3, v3.11.12, 192.168.0.1, п. 3.2.1) are one token
+    # compared as written: read as numbers, 2.1.3 and 2.1.4 both gave 2.1. They go before dates and
+    # times, which took 10.0.10 out of 10.0.10.1 and 1.10 out of 192.168.1.10. Three parts are a
+    # date when they look like one (01.02.26, 1.02.2026) and no "версия" stands before them.
+    for m in re.finditer(r"(?<![\w.])(?:v(?=\d))?(\d+(?:\.\d+){2,})(?![\w]|\.\d)", text, re.I):
+        parts = m.group(1).split(".")
+        cue = m.group()[0] in "vV" or re.search(r"(?i)(?:верси\w*|релиз\w*|сборк\w*|version|release|build)\s*$",
+                                                 text[max(0, m.start() - 20):m.start()])
+        if (len(parts) == 3 and not cue and len(parts[0]) <= 2 and 1 <= int(parts[0]) <= 31
+                and 1 <= int(parts[1]) <= 12
+                and (len(parts[2]) == 4 or len(parts[1]) == len(parts[2]) == 2)):
+            continue
+        if free(m.start(), m.end()):
+            facts.items.append(Fact("number", m.group(1), m.group(), sent_of(m.start()), m.start()))
+            taken.append((m.start(), m.end()))
     # Day and month stand on one line: "Вариант 3\n\nНоябрь — ..." is not the 3rd of November.
     date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
     for m in date_rx.finditer(text):
@@ -361,8 +380,12 @@ def extract(text: str) -> Facts:
         facts.items.append(Fact("date", "день недели %d" % day, m.group(), sent_of(m.start()), m.start()))
     # A month without a day ("в марте 2026") is a date fact of its own; see MONTHS_DIFF.
     for m in MONTH_ANY_RX.finditer(text):
+        # A month is written in lower case; in the middle of a sentence "Марту", "Августа" are names.
+        before = text[:m.start()].rstrip(" \t\xa0")
+        if m.group()[0].isupper() and before and before[-1] not in ".!?…\n:—–-«\"(*#>|":
+            continue
         if free(m.start(), m.end()):
-            month = MONTH_ANY_NUM[m.group(1).lower()]
+            month = MONTH_ANY_NUM[next(g for g in m.groups() if g).lower()]
             facts.items.append(Fact("month", str(month), m.group(), sent_of(m.start()), m.start()))
     # END_BLOCK_DATES_TIMES
 
@@ -370,12 +393,6 @@ def extract(text: str) -> Facts:
     # Counters in headings ("Вариант 1", "Шаг 2") are structure, not facts.
     for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава)\s+(\d+)", text):
         taken.append((m.start(1), m.end(1)))
-    # Versions, IP addresses, clause numbers (2.1.3, 192.168.0.1, п. 3.2.1) are one token
-    # compared as written: read as numbers, 2.1.3 and 2.1.4 both gave 2.1.
-    for m in re.finditer(r"(?<![\w.])\d+(?:\.\d+){2,}(?![\w]|\.\d)", text):
-        if free(m.start(), m.end()):
-            facts.items.append(Fact("number", m.group(), m.group(), sent_of(m.start()), m.start()))
-            taken.append((m.start(), m.end()))
     num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?(?![\w])" % SEP)
     for m in num_rx.finditer(text):
         if not free(m.start(), m.end()):
@@ -433,16 +450,20 @@ def extract(text: str) -> Facts:
     # END_BLOCK_NUMBERS
 
     # START_BLOCK_NAMES_QUOTES
-    # «…», „…“, “…” and straight "…"; a straight mark after a digit or letter is inches (27").
-    quote_rx = r"«([^»\n]{1,80})»|„([^“”\n]{1,80})[“”]|“([^”\n]{1,80})”|(?<!\w)\"(?!\s)([^\"\n]{1,80})(?<!\s)\""
+    # «…», „…“, “…” up to a paragraph (an interview answer is long) and straight "…" up to 80
+    # characters; a straight mark after a digit or letter is inches (27").
+    quote_rx = r"«([^»\n]{1,500})»|„([^“”\n]{1,500})[“”]|“([^”\n]{1,500})”|(?<!\w)\"(?!\s)([^\"\n]{1,80})(?<!\s)\""
     for m in re.finditer(quote_rx, text):
         q = next(g for g in m.groups() if g).strip()
         # Somebody's words: ответил: «…»; «…», — сказал; «…?» — спросил (before the author's
-        # dash the speech ends with a comma or with ?!… inside the marks; «…» — чем is not speech).
+        # dash the speech ends with a comma or with ?!… inside the marks; «…» — чем is not speech);
+        # a line that opens with a dash and the quote is a dialogue or interview answer.
         # Quoted words inside a phrase are often terms, irony or examples a rewrite may rephrase.
         dash = re.match(r"[*_]*(,?)[ \t]+[—–-][ \t]", text[m.end():m.end() + 8])
+        line_start = text[text.rfind("\n", 0, m.start()) + 1:m.start()]
         speech = bool(text[max(0, m.start() - 8):m.start()].rstrip(" \t*_").endswith(":") or
-                      dash and (dash.group(1) or q.endswith(("?", "!", "…"))))
+                      dash and (dash.group(1) or q.endswith(("?", "!", "…"))) or
+                      re.fullmatch(r"[ \t>*_]*[—–-][ \t]*", line_start))
         facts.items.append(Fact("quote", q.lower(), q, sent_of(m.start()), m.start(), speech=speech))
     for s_start, sent in sents:
         # Latin acronyms of any length; Cyrillic ones up to 4 letters (США, РФ, МЧС), longer
@@ -489,7 +510,7 @@ def extract(text: str) -> Facts:
     def _code(s: str) -> str:
         return " ".join(s.split())
     masked = text
-    for m in re.finditer(r"^```[^\n]*\n(.*?)^```[ \t]*$", text, re.S | re.M):
+    for m in re.finditer(r"^```[^\n]*\n(.*?)^```[ \t]*\r?$", text, re.S | re.M):
         letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group(1))
         cyr = sum(1 for x in letters if x > "z")
         if _code(m.group(1)) and cyr < 0.3 * max(1, len(letters)):
@@ -758,8 +779,10 @@ def compare(before: str, after: str) -> Dict:
             can = r"(?<![а-яё])можно(?![а-яё])"
             if gone and f.hedge == "нельзя" and \
                     len(re.findall(can, after_norm)) > len(re.findall(can, before_norm)):
-                errors.append({"kind": "inverted", "what": "отрицание",
-                               "detail": "«нельзя» пропало, а «можно» появилось"})
+                # «нельзя без сливок» → «без сливок не готовим, можно взять молоко»: the ban stayed
+                # as another negation, so it is only a check.
+                item = {"kind": "inverted", "what": "отрицание", "detail": "«нельзя» пропало, а «можно» появилось"}
+                (errors if len(fa.of("negation")) < len(fb.of("negation")) else checks).append(item)
             elif gone and len(fa.of("negation")) < len(fb.of("negation")):
                 checks.append({"kind": "negation", "what": "отрицание", "detail": "«%s» не найдено" % f.raw})
             continue
@@ -838,13 +861,27 @@ def compare(before: str, after: str) -> Dict:
     # in the edit the number must not move to a sentence with another of those names only.
     pairs: Dict[str, set] = {}
     # Only real names anchor a number: sentence subjects ("Капучино", "Итог") were too noisy.
-    # A surname right after a first name is the same person: «Анна Иванова» is one owner.
-    names_b = [f for f in fb.of("name")
-               if not any(y.sent == f.sent and y.pos + len(y.raw) + 1 == f.pos for y in fb.of("name"))]
+    # A surname right after a first name is the same person: «Анна Иванова» is one owner, and the
+    # edit may name her by either word («Иванова получила 50»).
+    people: List[list] = []  # [sentence, keys, end of the last word]
+    for f in sorted(fb.of("name"), key=lambda x: x.pos):
+        key = _norm(f.value.lower())[:5]
+        if people and people[-1][0] == f.sent and people[-1][2] + 1 == f.pos:
+            people[-1][1].add(key)
+        else:
+            people.append([f.sent, {key}, 0])
+        people[-1][2] = f.pos + len(f.raw)
     for n in fb.of("number"):
-        owners = {_norm(x.value.lower())[:5] for x in names_b if x.sent == n.sent}
+        owners: List[set] = []  # «Анна Иванова … Анна» is still one person
+        for p in people:
+            if p[0] == n.sent:
+                same = next((o for o in owners if o & p[1]), None)
+                if same is None:
+                    owners.append(set(p[1]))
+                else:
+                    same |= p[1]
         if len(owners) == 1:
-            pairs.setdefault(n.value, set()).update(owners)
+            pairs.setdefault(n.value, set()).update(owners[0])
     all_owners = set().union(*pairs.values()) if pairs else set()
 
     def near(facts, n) -> set:
