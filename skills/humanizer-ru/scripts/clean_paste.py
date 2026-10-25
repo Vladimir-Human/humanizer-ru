@@ -3,8 +3,9 @@
 # START_MODULE_CONTRACT
 # PURPOSE: Remove chat-interface leftovers from pasted text: citation tokens
 #          (contentReference, 【N†source】, [cite: N]), the utm_source tail a chat assistant
-#          adds to links (chatgpt.com, openai), invisible characters. Text, links, the author's
-#          own utm tags and emoji stay intact.
+#          adds to links (chatgpt.com, openai; also behind &amp;, ** or a zero-width
+#          character), invisible characters. Text, links, the author's own utm tags, emoji,
+#          `inline code`, code-like ``` blocks and line endings (CRLF) stay intact.
 # SCOPE: deterministic, stdlib only; style and wording are not touched.
 # DEPENDS: Python 3.8+ standard library.
 # LINKS: M-CLEAN-PASTE; DF-SKILL-CLEAN; V-M-CLEAN-PASTE.
@@ -39,7 +40,9 @@ CITATIONS = [
     ("contentReference", re.compile(r"[ \t]?:?contentReference\[oaicite:\d+\]\{index=\d+\}")),
     ("oaicite", re.compile(r"[ \t]?\[oaicite:\d+\]")),
     ("source-token", re.compile(r"[ \t]?【\d+(?::\d+)?(?:†[^】\n]{0,80})?】")),
-    ("cite", re.compile(r"[ \t]?\[cite(?:_start|_end)?(?::\s*[\d,\s]+)?\]")),
+    # Gemini opens a cited span with [cite_start] glued to its first word: the space before stays.
+    ("cite", re.compile(r"\[cite_start\]")),
+    ("cite", re.compile(r"[ \t]?\[cite(?:_end)?(?::\s*[\d,\s]+)?\]")),
 ]
 
 # Invisible characters that never carry meaning in Russian prose.
@@ -51,6 +54,7 @@ INVISIBLE = {
 }
 ZWJ = 0x200D
 ZWNJ = 0x200C
+URL_RX = r"(?:https?://|www\.)[^\s<>«»\"')\]`%s]+" % "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
 # END_BLOCK_PATTERNS
 
 
@@ -68,14 +72,19 @@ def _is_assistant_utm(param: str) -> bool:
 def strip_utm(url: str) -> Tuple[str, int]:
     """Drop the assistant's utm_source tail, keep the author's utm tags, other parameters,
     the '?' (when something is left) and the fragment."""
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+    except ValueError:  # a bracketed IPv6 host the link pattern cut short: leave it as is
+        return url, 0
     if not parts.query:
         return url, 0
-    params = parts.query.split("&")
+    # A link copied from HTML keeps "&amp;" between its parameters.
+    sep = "&amp;" if "&amp;" in parts.query else "&"
+    params = re.split(r"&(?:amp;)?", parts.query)
     kept = [x for x in params if not _is_assistant_utm(x)]
     if len(kept) == len(params):
         return url, 0
-    return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)
+    return urlunsplit(parts._replace(query=sep.join(kept))), len(params) - len(kept)
 
 
 def _is_emoji(ch: str) -> bool:
@@ -97,18 +106,36 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
         if n:
             counts[kind] = counts.get(kind, 0) + n
 
-    for kind, rx in CITATIONS:
-        text, n = rx.subn("", text)
-        bump(kind, n)
-
     def fix_url(m: re.Match) -> str:
         url = m.group(0)
-        tail = re.search(r"[.,;:!?]*$", url).group()  # sentence punctuation after the link
+        # Sentence punctuation and Markdown emphasis after the link: **https://a.ru**
+        tail = url[len(url.rstrip(".,;:!?…*_")):]
         new, n = strip_utm(url[:len(url) - len(tail)])
         bump("utm", n)
         return new + tail
 
-    text = re.sub(r"https?://[^\s<>«»\"')\]]+", fix_url, text)
+    # Code is copied as is: citations and links inside `inline code` and code blocks stay. A ``` block
+    # of Russian prose (a chat answer wraps a whole README or post in one) is text and is cleaned.
+    spans = []
+    for m in re.finditer(r"^```[^\n]*\n.*?^```[ \t]*$", text, re.S | re.M):
+        letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group())
+        if sum(1 for x in letters if x > "z") < 0.3 * max(1, len(letters)):
+            spans.append((m.start(), m.end()))
+    for m in re.finditer(r"`[^`\n]+`", text):
+        if not any(s <= m.start() < e for s, e in spans):
+            spans.append((m.start(), m.end()))
+    parts, pos = [], 0
+    for s, e in sorted(spans):
+        parts += [text[pos:s], text[s:e]]
+        pos = e
+    parts.append(text[pos:])
+    for i in range(0, len(parts), 2):
+        for kind, rx in CITATIONS:
+            parts[i], n = rx.subn("", parts[i])
+            bump(kind, n)
+        # A zero-width character glued after a link ends it, so the utm tail before it is still seen.
+        parts[i] = re.sub(URL_RX, fix_url, parts[i])
+    text = "".join(parts)
 
     out = []
     for i, ch in enumerate(text):
@@ -136,11 +163,16 @@ def main(argv=None) -> int:
         print(__doc__)
         return 2
     path = args[0]
+    # Line endings are kept as they are: removing one invisible character must not turn a
+    # Windows file (CRLF) into LF or write CR CR LF to the console.
+    for stream in (sys.stdin, sys.stdout):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(newline="")
     try:
         if path == "-":
             src = sys.stdin.read()
         else:
-            with open(path, encoding="utf-8") as fh:
+            with open(path, encoding="utf-8", newline="") as fh:
                 src = fh.read()
     except (OSError, UnicodeDecodeError) as exc:
         print("Не могу прочитать файл: %s" % exc, file=sys.stderr)

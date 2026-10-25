@@ -2,13 +2,18 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: Compare an original Russian text with its edited version and report facts that
-#          were lost, invented or rebound: numbers, dates, times, names, URLs, quotes,
-#          negations, hedges and "who got which number" pairs; flags certainty, scope,
+#          were lost, invented or rebound: numbers (with units, versions like 2.1.3), dates
+#          (days, months without a day, weekdays), times, names (incl. США-type acronyms),
+#          URLs (host case and a trailing slash ignored), phones (by digits), e-mails, quotes,
+#          `inline code`, negations (incl. "не на карту", "нельзя" → "можно"), hedges and
+#          "who got which number" pairs; flags certainty, scope,
 #          condition and attribution words that got rarer and intensifiers that got more frequent;
 #          HTML tags of the original that were lost (emphasis tags only as checks).
 #          Quoted words must survive in order (case endings and quote marks may change): lost
 #          direct speech or a quote after a colon is an error; other lost quoted words, words
-#          kept without their quote marks and new quotes are checks.
+#          kept without their quote marks and new quotes are checks. Checks also: a lost
+#          contrast negation ("а не в феврале"), an added negation, a number that lost its
+#          unit, a code-like ``` block that changed.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
 #          author utm tag is a lost link.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
@@ -86,23 +91,58 @@ WORD_NUM = {
     "двадцать": 20, "двадцати": 20, "тридцать": 30, "тридцати": 30, "сорок": 40,
     "пятьдесят": 50, "шестьдесят": 60, "сто": 100, "двести": 200, "триста": 300,
     "полтора": 1.5, "полторы": 1.5, "половина": 0.5, "половину": 0.5,
+    "одиннадцати": 11, "двенадцати": 12, "тринадцать": 13, "тринадцати": 13, "четырнадцать": 14,
+    "четырнадцати": 14, "пятнадцати": 15, "шестнадцать": 16, "шестнадцати": 16, "семнадцать": 17,
+    "семнадцати": 17, "восемнадцать": 18, "восемнадцати": 18, "девятнадцать": 19,
+    "девятнадцати": 19, "сорока": 40, "пятидесяти": 50, "шестидесяти": 60, "семьдесят": 70,
+    "семидесяти": 70, "восемьдесят": 80, "восьмидесяти": 80, "девяносто": 90, "девяноста": 90,
+    "четыреста": 400, "пятьсот": 500, "шестьсот": 600, "семьсот": 700, "восемьсот": 800,
+    "девятьсот": 900,
 }
+# "один" counts only inside a compound number: "двадцать один", "сто одну".
+ONE_FORMS = ("один", "одна", "одно", "одну", "одного", "одной", "одному", "одним", "одном")
 SCALE = {"тыс": 1000, "тыс.": 1000, "тысяча": 1000, "тысячи": 1000, "тысяч": 1000,
          "млн": 10 ** 6, "млн.": 10 ** 6, "миллион": 10 ** 6, "миллиона": 10 ** 6,
          "миллионов": 10 ** 6, "млрд": 10 ** 9, "миллиард": 10 ** 9, "миллиарда": 10 ** 9,
          "миллиардов": 10 ** 9}
+# Longest first: "тыс." before "тыс", or the dot stops the unit after it ("30 тыс. человек").
+SCALE_ALT = "|".join(re.escape(k) for k in sorted(SCALE, key=len, reverse=True))
+# Months in any case, for dates without a day ("в марте 2026", "к апрелю").
+MONTH_ANY_RX = re.compile(r"(?<![а-яё])(январ|феврал|март|апрел|ма(?=[йяюе](?![а-яё]))|июн|июл|август|сентябр|"
+                          r"октябр|ноябр|декабр)[а-яё]*", re.I)
+MONTH_ANY_NUM = {"январ": 1, "феврал": 2, "март": 3, "апрел": 4, "ма": 5, "июн": 6, "июл": 7, "август": 8,
+                 "сентябр": 9, "октябр": 10, "ноябр": 11, "декабр": 12}
 MONTHS = ("января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря|"
           "январе|феврале|марте|апреле|мае|июне|июле|августе|сентябре|октябре|ноябре|декабре|"
           "январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь")
 MONTH_STEM = {m[:3]: i for i, m in enumerate(
     "янв фев мар апр мая июн июл авг сен окт ноя дек".split(), 1)}
 MONTH_STEM["май"] = 5
-WEEKDAYS = ("понедельник|вторник|сред|четверг|пятниц|суббот|воскресень")
+# Links with a scheme or www.; zero-width characters end a link (a paste can glue them on).
+URL_RX = r"(?:https?://|www\.)[^\s<>«»\"')\]`%s]+" % "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
+# Sentence punctuation and Markdown emphasis after a link are not part of it: **https://a.ru**
+URL_TAIL = ".,;:!?…*_"
+
+
+def _url_key(url: str) -> str:
+    """Scheme and host are case-insensitive, the path is not; a trailing slash is the same page."""
+    if not re.search(r"[?#]", url):
+        url = url.rstrip("/")
+    m = re.match(r"((?:https?://)?[^/?#]*)(.*)", url, re.S | re.I)
+    return m.group(1).lower() + m.group(2)
+
+# Days of the week. "Среда" alone is also "environment" ("рабочая среда", "окружающей среды"),
+# so only "в среду", "по средам" and a schedule line "Среда: …" / "Среда, 5 ноября" count.
+WEEKDAY_RX = re.compile(r"(?<![а-яё])(понедельник|вторник|четверг|пятниц|суббот|воскресень|"
+                        r"сред(?=у|ам)|сред(?=а[ \t]*[,:]))[а-яё]*", re.I)
+WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, "четверг": 4, "пятниц": 5, "суббот": 6,
+               "воскресень": 7}
 HEDGES = ("около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
           "не менее", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
           "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
           "только", "лишь", "кроме", "без")
-NEG_WORDS = ("не", "ни", "нет", "нельзя", "без")
+NEG_WORDS = ("не", "ни", "нет", "нельзя", "без", "никаких", "никакой", "никакого", "никакие", "никакая",
+             "никогда", "ничего", "ничто", "ничем", "никто", "никого", "никому", "нигде", "никак", "нисколько")
 # Words of certainty and scope: losing one turns "may" into "will", "some" into "sometimes".
 MODALITY = [
     ("может", r"мо(?:жет|гут|жем|жете|гу|г|гла|гли|жно)"),
@@ -152,6 +192,26 @@ FIRST_NAMES = set("""Александр Александра Алексей Ал
 
 def _norm(s: str) -> str:
     return s.replace("ё", "е").replace("Ё", "Е")
+
+
+CASE_ENDINGS = frozenset(("", "а", "я", "о", "е", "и", "ы", "у", "ю", "ой", "ей", "ою", "ею", "ом", "ем",
+                          "ам", "ям", "ами", "ями", "ах", "ях", "ов", "ев", "ий", "ия", "ие", "ья", "ье",
+                          "ью", "ая", "ое", "ые", "ый", "ого", "его", "ому", "ему", "ым", "им", "ую", "ых",
+                          "их", "ыми", "ими"))
+
+
+def name_match(a: str, b: str) -> bool:
+    """A name in another case. stem_match needs a 3-letter stem, so short names (Ани/Ане, Оля/Оле)
+    also match when both tails are case endings. Мария/Марина still match: told apart by meaning only."""
+    if stem_match(a, b):
+        return True
+    a, b = _norm(a.lower()), _norm(b.lower())
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return n >= 2 and a[n:] in CASE_ENDINGS and b[n:] in CASE_ENDINGS
 
 
 def stem_match(a: str, b: str, strict: bool = False) -> bool:
@@ -211,7 +271,8 @@ def _canon_num(raw: str) -> Optional[float]:
 
 
 def _fmt(v: float) -> str:
-    return str(int(v)) if v == int(v) else ("%g" % v)
+    # 12 significant digits: "%g" kept 6 and made 100000,01 equal to 100000,02.
+    return str(int(v)) if v == int(v) else ("%.12g" % v)
 
 
 # START_CONTRACT: extract
@@ -246,19 +307,29 @@ def extract(text: str) -> Facts:
         return ""
 
     # START_BLOCK_URLS
-    for m in re.finditer(r"(?:https?://|www\.)[^\s<>«»\"')\]]+", text):
-        url = m.group().rstrip(".,;:!?")
-        facts.items.append(Fact("url", url.lower(), url, sent_of(m.start()), m.start()))
+    for m in re.finditer(URL_RX, text):
+        url = m.group().rstrip(URL_TAIL)
+        facts.items.append(Fact("url", _url_key(url), url, sent_of(m.start()), m.start()))
         taken.append((m.start(), m.start() + len(url)))
     for m in re.finditer(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text):
         if free(m.start(), m.end()):
             facts.items.append(Fact("email", m.group().lower(), m.group(), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
+    # Phones are compared by digits: +7 (999) 123-45-67 = 8 999 123 45 67.
+    phone_rx = (r"(?<![\w+])(?:\+\d{1,3}[ \xa0-]?|8[ \xa0-]?)\(?\d{3,5}\)?[ \xa0-]?"
+                r"\d{1,3}[ \xa0-]?\d{2}[ \xa0-]?\d{2}(?![\w-])")
+    for m in re.finditer(phone_rx, text):
+        digits = re.sub(r"\D", "", m.group())
+        if free(m.start(), m.end()) and 10 <= len(digits) <= 15:
+            if len(digits) == 11 and digits[0] == "8":
+                digits = "7" + digits[1:]
+            facts.items.append(Fact("phone", digits, m.group(), sent_of(m.start()), m.start()))
+            taken.append((m.start(), m.end()))
     # END_BLOCK_URLS
 
     # START_BLOCK_DATES_TIMES
     # Day and month stand on one line: "Вариант 3\n\nНоябрь — ..." is not the 3rd of November.
-    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
+    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
     for m in date_rx.finditer(text):
         month = MONTH_STEM.get(m.group(3).lower()[:3], 0)
         for day in filter(None, (m.group(1), m.group(2))):
@@ -276,18 +347,35 @@ def extract(text: str) -> Facts:
             facts.items.append(Fact("number", year, m.group(3), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
     for m in re.finditer(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b(?![.,]\d)", text):
+        # "1.50 ₽" is a price, not ten to two: a dot time is never followed by a unit.
+        if text[m.end(1)] == "." and UNIT_RX.match(text, m.end()):
+            continue
         if free(m.start(), m.end()):
             hh, mm = int(m.group(1)), m.group(2)
             value = str(hh) if mm == "00" else "%d:%s" % (hh, mm)
             facts.items.append(Fact("number", value, m.group(), sent_of(m.start()), m.start(),
                                     hedge_before(m.start()), "время"))
             taken.append((m.start(), m.end()))
+    for m in WEEKDAY_RX.finditer(text):
+        day = WEEKDAY_NUM[_norm(m.group(1).lower())]
+        facts.items.append(Fact("date", "день недели %d" % day, m.group(), sent_of(m.start()), m.start()))
+    # A month without a day ("в марте 2026") is a date fact of its own; see MONTHS_DIFF.
+    for m in MONTH_ANY_RX.finditer(text):
+        if free(m.start(), m.end()):
+            month = MONTH_ANY_NUM[m.group(1).lower()]
+            facts.items.append(Fact("month", str(month), m.group(), sent_of(m.start()), m.start()))
     # END_BLOCK_DATES_TIMES
 
     # START_BLOCK_NUMBERS
     # Counters in headings ("Вариант 1", "Шаг 2") are structure, not facts.
     for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава)\s+(\d+)", text):
         taken.append((m.start(1), m.end(1)))
+    # Versions, IP addresses, clause numbers (2.1.3, 192.168.0.1, п. 3.2.1) are one token
+    # compared as written: read as numbers, 2.1.3 and 2.1.4 both gave 2.1.
+    for m in re.finditer(r"(?<![\w.])\d+(?:\.\d+){2,}(?![\w]|\.\d)", text):
+        if free(m.start(), m.end()):
+            facts.items.append(Fact("number", m.group(), m.group(), sent_of(m.start()), m.start()))
+            taken.append((m.start(), m.end()))
     num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?(?![\w])" % SEP)
     for m in num_rx.finditer(text):
         if not free(m.start(), m.end()):
@@ -296,7 +384,7 @@ def extract(text: str) -> Facts:
         if v is None:
             continue
         end = m.end()
-        sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % "|".join(re.escape(k) for k in SCALE), text[end:end + 12], re.I)
+        sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % SCALE_ALT, text[end:end + 12], re.I)
         if sc:
             v *= SCALE[sc.group(1).lower()]
             end += sc.end()
@@ -305,6 +393,8 @@ def extract(text: str) -> Facts:
         if um:
             unit = UNIT_CANON.get(um.group(1).lower(), "")
             end = um.end()
+        if unit == "г" and not sc and v == int(v) and 1800 <= v <= 2100:
+            unit = "год"  # "2020 г." is a year, not grams
         facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
                                 m.start(), hedge_before(m.start()), unit))
         taken.append((m.start(), end))
@@ -318,22 +408,27 @@ def extract(text: str) -> Facts:
         end = m.end()
         # "двадцать пять", "сто двадцать" are one number: each next word is a smaller order.
         while True:
-            nxt = re.match(r"[ \u00a0]+(%s)(?![а-яё])" % "|".join(sorted(WORD_NUM, key=len, reverse=True)),
-                           norm_text[end:end + 20], re.I)
+            nxt = re.match(r"[ \u00a0]+(%s)(?![а-яё])" % "|".join(
+                sorted(list(WORD_NUM) + list(ONE_FORMS), key=len, reverse=True)), norm_text[end:end + 20], re.I)
             if not nxt:
                 break
-            w = float(WORD_NUM[nxt.group(1).lower()])
+            w = float(WORD_NUM.get(nxt.group(1).lower(), 1))
             last_order = 100 if v % 100 == 0 and v >= 100 else (10 if v % 10 == 0 and v >= 20 else 1)
             if last_order == 1 or w >= last_order or w != int(w):
                 break
             v += w
             end += nxt.end()
-        sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % "|".join(re.escape(k) for k in SCALE), text[end:end + 12], re.I)
+        sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % SCALE_ALT, text[end:end + 12], re.I)
         if sc:
             v *= SCALE[sc.group(1).lower()]
             end += sc.end()
+        unit = ""
+        um = UNIT_RX.match(text, end)  # "пять рублей" → "пять долларов" is a unit change too
+        if um:
+            unit = UNIT_CANON.get(um.group(1).lower(), "")
+            end = um.end()
         facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
-                                m.start(), hedge_before(m.start())))
+                                m.start(), hedge_before(m.start()), unit))
         taken.append((m.start(), end))
     # END_BLOCK_NUMBERS
 
@@ -350,7 +445,9 @@ def extract(text: str) -> Facts:
                       dash and (dash.group(1) or q.endswith(("?", "!", "…"))))
         facts.items.append(Fact("quote", q.lower(), q, sent_of(m.start()), m.start(), speech=speech))
     for s_start, sent in sents:
-        for m in re.finditer(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*)", sent):
+        # Latin acronyms of any length; Cyrillic ones up to 4 letters (США, РФ, МЧС), longer
+        # all-caps words are usually shouting ("ВНИМАНИЕ").
+        for m in re.finditer(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))", sent):
             word = m.group(1)
             first = _is_initial(text, s_start + m.start())
             if word in SENT_START_STOP or POLITE_PRONOUN.fullmatch(word):
@@ -366,14 +463,43 @@ def extract(text: str) -> Facts:
     # END_BLOCK_NAMES_QUOTES
 
     # START_BLOCK_NEGATIONS
-    for m in re.finditer(r"(?<![а-яё])(не|ни|без)\s+([а-яё]{3,})|(?<![а-яё])(нет|нельзя)(?![а-яё])", _norm(text.lower())):
+    # A short preposition between: "не на карту", "не в офисе" negate the next word.
+    neg_rx = (r"(?<![а-яё])(не|ни|без)\s+(?:(?:на|в|во|к|ко|с|со|по|за|до|от|из|у|о|об)\s+)?([а-яё]{3,})"
+              r"|(?<![а-яё])(нет|нельзя)(?![а-яё])")
+    low = _norm(text.lower())
+    for m in re.finditer(neg_rx, low):
         if m.group(1):
+            # A contrast ("а не в феврале", "не с кофе, а с сигареты") is the "не X, а Y" pattern a
+            # rewrite removes on purpose: "хотя раньше планировали в феврале" keeps the meaning.
+            s_end = min([i for i in (low.find(c, m.end()) for c in ".!?\n") if i != -1] or [len(low)])
+            contrast = bool(re.search(r"(?:^|[^а-яё])а\s+$", low[max(0, m.start() - 4):m.start()]) or
+                            re.search(r",\s*а\s", low[m.end():s_end]))
             facts.items.append(Fact("negation", m.group(2), m.group(), sent_of(m.start()), m.start(),
-                                    hedge=m.group(1)))
+                                    hedge=m.group(1), unit="contrast" if contrast else ""))
         else:
             facts.items.append(Fact("negation", m.group(3), m.group(), sent_of(m.start()), m.start(),
                                     hedge=m.group(3)))
     # END_BLOCK_NEGATIONS
+
+    # START_BLOCK_CODE
+    # Code is carried as is: `inline code` and fenced blocks, compared with spaces collapsed.
+    # Chat answers often wrap the whole text or a diagram in ``` (a README, HTML, "Запрос → ответ"),
+    # and the rewrite edits it: only a block that looks like code (under 30% Cyrillic letters)
+    # becomes a "code_block" fact, and its loss is a check.
+    def _code(s: str) -> str:
+        return " ".join(s.split())
+    masked = text
+    for m in re.finditer(r"^```[^\n]*\n(.*?)^```[ \t]*$", text, re.S | re.M):
+        letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group(1))
+        cyr = sum(1 for x in letters if x > "z")
+        if _code(m.group(1)) and cyr < 0.3 * max(1, len(letters)):
+            facts.items.append(Fact("code_block", _code(m.group(1)), m.group(1).strip(),
+                                    sent_of(m.start()), m.start()))
+        masked = masked[:m.start()] + " " * (m.end() - m.start()) + masked[m.end():]
+    for m in re.finditer(r"`([^`\n]+)`", masked):
+        if _code(m.group(1)):
+            facts.items.append(Fact("code", _code(m.group(1)), m.group(1), sent_of(m.start()), m.start()))
+    # END_BLOCK_CODE
     return facts
 
 
@@ -430,22 +556,27 @@ def _is_assistant_utm(param: str) -> bool:
 def strip_utm(url: str) -> Tuple[str, int]:
     """Drop the assistant's utm_source tail, keep the author's utm tags, other parameters,
     the '?' (when something is left) and the fragment."""
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+    except ValueError:  # a bracketed IPv6 host the link pattern cut short: leave it as is
+        return url, 0
     if not parts.query:
         return url, 0
-    params = parts.query.split("&")
+    # A link copied from HTML keeps "&amp;" between its parameters.
+    sep = "&amp;" if "&amp;" in parts.query else "&"
+    params = re.split(r"&(?:amp;)?", parts.query)
     kept = [x for x in params if not _is_assistant_utm(x)]
     if len(kept) == len(params):
         return url, 0
-    return urlunsplit(parts._replace(query="&".join(kept))), len(params) - len(kept)
+    return urlunsplit(parts._replace(query=sep.join(kept))), len(params) - len(kept)
 
 
 def _strip_tracking(text: str) -> str:
     def fix(m: "re.Match") -> str:
         url = m.group(0)
-        tail = re.search(r"[.,;:!?]*$", url).group()
+        tail = url[len(url.rstrip(URL_TAIL)):]
         return strip_utm(url[:len(url) - len(tail)])[0] + tail
-    text = re.sub(r"https?://[^\s<>«»\"')\]]+", fix, text)
+    text = re.sub(URL_RX, fix, text)
     return re.sub(r":contentReference\[oaicite:\d+\]\{index=\d+\}|【\d+(?::\d+)?†[^】]*】", "", text)
 
 
@@ -468,34 +599,58 @@ def compare(before: str, after: str) -> Dict:
             d.setdefault(f.value, []).append(f)
         return d
 
+    # "одну минуту" ↔ "1 минуту": the word "один" alone is not extracted (see ONE_FORMS).
+    one_rx = r"(?<![а-яё])(?:%s)(?![а-яё])" % "|".join(ONE_FORMS)
+    one_in = {"before": bool(re.search(one_rx, _norm(before.lower()))),
+              "after": bool(re.search(one_rx, _norm(after.lower())))}
     for kind, label in (("number", "число"), ("date", "дата")):
         bb, ba = bag(fb, kind), bag(fa, kind)
         for value, items in bb.items():
             missing = len(items) - len(ba.get(value, []))
             if missing > 0 and value not in ba:
+                if value == "1" and one_in["after"]:
+                    continue
                 errors.append({"kind": "lost", "what": label, "detail": items[0].raw})
             elif missing > 0:
                 checks.append({"kind": "fewer", "what": label,
                                "detail": "%s встречается реже (%d → %d)" % (items[0].raw, len(items), len(ba[value]))})
         for value, items in ba.items():
-            if value not in bb:
+            if value not in bb and not (value == "1" and one_in["before"]):
                 errors.append({"kind": "added", "what": label, "detail": items[0].raw})
         # units and hedges for numbers present in both
         if kind == "number":
             for value, items in bb.items():
                 if value not in ba:
                     continue
-                units_b = {f.unit for f in items if f.unit}
-                units_a = {f.unit for f in ba[value] if f.unit}
+                # "16:00" and "16 часов" are the same hour.
+                units_b = {"ч" if f.unit == "время" else f.unit for f in items if f.unit}
+                units_a = {"ч" if f.unit == "время" else f.unit for f in ba[value] if f.unit}
                 if units_b and units_a and not (units_b & units_a):
                     errors.append({"kind": "unit", "what": "единица",
                                    "detail": "%s → %s" % (items[0].raw, ba[value][0].raw)})
+                elif units_b and not units_a:
+                    checks.append({"kind": "unit", "what": "единица",
+                                   "detail": "%s → %s без единицы" % (items[0].raw, ba[value][0].raw)})
                 hedges_b = {f.hedge for f in items if f.hedge}
                 hedges_a = {f.hedge for f in ba[value] if f.hedge}
                 for h in hedges_b - hedges_a:
                     checks.append({"kind": "hedge", "what": "оговорка",
                                    "detail": "«%s» перед %s не найдено" % (h, items[0].raw)})
     # END_BLOCK_NUMBERS_DIFF
+
+    # START_BLOCK_MONTHS_DIFF
+    # A month without a day must survive as a month, alone or inside a full date.
+    def months(facts: Facts) -> set:
+        return {f.value for f in facts.of("month")} | {
+            str(int(f.value[3:])) for f in facts.of("date") if re.fullmatch(r"\d\d\.\d\d", f.value)}
+    mb, ma = months(fb), months(fa)
+    for f in fb.of("month"):
+        if f.value not in ma:
+            errors.append({"kind": "lost", "what": "дата", "detail": f.raw})
+    for f in fa.of("month"):
+        if f.value not in mb:
+            errors.append({"kind": "added", "what": "дата", "detail": f.raw})
+    # END_BLOCK_MONTHS_DIFF
 
     # START_BLOCK_NAMES_DIFF
     after_words = re.findall(r"[\w-]+", after)
@@ -505,8 +660,14 @@ def compare(before: str, after: str) -> Dict:
         if key in seen:
             continue
         seen.add(key)
-        if not any(stem_match(f.value, w) for w in after_words):
-            errors.append({"kind": "lost", "what": "имя или название", "detail": f.raw})
+        if any(name_match(f.value, w) for w in after_words):
+            continue
+        # An acronym spelled out is kept: «УК» → «управляющую компанию».
+        if f.value.isupper() and 2 <= len(f.value) <= 4 and any(
+                "".join(w[0] for w in after_words[i:i + len(f.value)]).lower() == f.value.lower()
+                for i in range(len(after_words) - len(f.value) + 1)):
+            continue
+        errors.append({"kind": "lost", "what": "имя или название", "detail": f.raw})
     before_words = re.findall(r"[\w-]+", before)
     seen = set()
     for f in fa.of("name"):
@@ -514,9 +675,9 @@ def compare(before: str, after: str) -> Dict:
         if key in seen:
             continue
         seen.add(key)
-        if not any(stem_match(f.value, w) for w in before_words):
+        if not any(name_match(f.value, w) for w in before_words):
             checks.append({"kind": "added", "what": "имя или название", "detail": f.raw})
-    for kind, label in (("url", "ссылка"), ("email", "почта")):
+    for kind, label in (("url", "ссылка"), ("email", "почта"), ("phone", "телефон")):
         vb = {f.value for f in fb.of(kind)}
         va = {f.value for f in fa.of(kind)}
         for v in sorted(vb - va):
@@ -534,9 +695,11 @@ def compare(before: str, after: str) -> Dict:
     def words(s: str) -> List[str]:
         return re.findall(r"[\w-]+", s)
 
-    def contains(hay: List[str], needle: List[str]) -> bool:
+    def contains(hay: List[str], needle: List[str], exact: bool = False) -> bool:
+        # Direct speech is compared word for word: «запустили» → «запустим» changes the words.
+        same = (lambda x, y: _norm(x.lower()) == _norm(y.lower())) if exact else stem_match
         n = len(needle)
-        return any(all(stem_match(x, y) for x, y in zip(hay[i:i + n], needle))
+        return any(all(same(x, y) for x, y in zip(hay[i:i + n], needle))
                    for i in range(len(hay) - n + 1))
 
     quotes_a = [words(f.raw) for f in fa.of("quote")]
@@ -547,9 +710,9 @@ def compare(before: str, after: str) -> Dict:
         if not w or key in seen:
             continue
         seen.add(key)
-        if any(contains(q, w) for q in quotes_a):
+        if any(contains(q, w, f.speech) for q in quotes_a):
             continue
-        if contains(after_words, w):
+        if contains(after_words, w, f.speech):
             checks.append({"kind": "unquoted", "what": "цитата", "detail": "«%s» без кавычек" % f.raw})
         else:
             (errors if f.speech else checks).append({"kind": "lost", "what": "цитата", "detail": "«%s»" % f.raw})
@@ -564,13 +727,40 @@ def compare(before: str, after: str) -> Dict:
             checks.append({"kind": "added", "what": "цитата", "detail": "«%s»" % f.raw})
     # END_BLOCK_QUOTES_DIFF
 
+    # START_BLOCK_CODE_DIFF
+    # Code of the original must stay as is; code only found without its backticks is a check.
+    code_a = {f.value for f in fa.of("code")}
+    flat_a = " ".join(after.split())
+    for f in fb.of("code"):
+        if f.value in code_a:
+            continue
+        if f.value in flat_a:
+            checks.append({"kind": "unquoted", "what": "код", "detail": "%s без оформления кода" % f.raw[:80]})
+        else:
+            errors.append({"kind": "lost", "what": "код", "detail": f.raw[:80]})
+    code_b = {f.value for f in fb.of("code")}
+    flat_b = " ".join(before.split())
+    for f in fa.of("code"):
+        if f.value not in code_b and f.value not in flat_b:
+            checks.append({"kind": "added", "what": "код", "detail": f.raw[:80]})
+    blocks_a = {f.value for f in fa.of("code_block")}
+    for f in fb.of("code_block"):
+        if f.value not in blocks_a and f.value not in flat_a:
+            checks.append({"kind": "lost", "what": "блок кода", "detail": f.raw[:80]})
+    # END_BLOCK_CODE_DIFF
+
     # START_BLOCK_NEGATIONS_DIFF
     after_norm = _norm(after.lower())
     before_norm = _norm(before.lower())
     for f in fb.of("negation"):
         if f.hedge in ("нет", "нельзя"):
-            if not re.search(r"(?<![а-яё])%s(?![а-яё])" % f.hedge, after_norm) and \
-                    len(fa.of("negation")) < len(fb.of("negation")):
+            gone = not re.search(r"(?<![а-яё])%s(?![а-яё])" % f.hedge, after_norm)
+            can = r"(?<![а-яё])можно(?![а-яё])"
+            if gone and f.hedge == "нельзя" and \
+                    len(re.findall(can, after_norm)) > len(re.findall(can, before_norm)):
+                errors.append({"kind": "inverted", "what": "отрицание",
+                               "detail": "«нельзя» пропало, а «можно» появилось"})
+            elif gone and len(fa.of("negation")) < len(fb.of("negation")):
                 checks.append({"kind": "negation", "what": "отрицание", "detail": "«%s» не найдено" % f.raw})
             continue
         word = f.value
@@ -585,11 +775,27 @@ def compare(before: str, after: str) -> Dict:
         only_negated_in_source = all(_negated_near(before_norm, a, b) for a, b in src_hits)
         if hits:
             if only_negated_in_source and all(not _negated_near(after_norm, a, b) for a, b in hits):
-                errors.append({"kind": "inverted", "what": "отрицание",
-                               "detail": "«%s» в правке стоит без отрицания" % f.raw})
+                (checks if f.unit == "contrast" else errors).append(
+                    {"kind": "inverted", "what": "отрицание",
+                     "detail": "«%s» в правке стоит без отрицания" % f.raw})
         else:
             checks.append({"kind": "negation", "what": "отрицание",
                            "detail": "«%s» не найдено, проверь, что смысл сохранён" % f.raw})
+    # The other way round: "Мы храним данные" → "Мы не храним данные".
+    seen = set()
+    for f in fa.of("negation"):
+        word = f.value
+        if f.hedge not in ("не", "ни") or word in seen or word in (
+                "только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
+            continue
+        seen.add(word)
+        src_hits = _occurrences(before_norm, word)
+        if src_hits and all(not _negated_near(before_norm, a, b) for a, b in src_hits) and \
+                all(_negated_near(after_norm, a, b) for a, b in _occurrences(after_norm, word)):
+            # A check: over the old eval outputs the word was mostly used in another sense
+            # ("может" in the original, "не можете" in the edit).
+            checks.append({"kind": "inverted", "what": "отрицание",
+                           "detail": "«%s» в правке стоит с отрицанием" % f.raw})
     # END_BLOCK_NEGATIONS_DIFF
 
     # START_BLOCK_MODALITY_DIFF
@@ -632,7 +838,9 @@ def compare(before: str, after: str) -> Dict:
     # in the edit the number must not move to a sentence with another of those names only.
     pairs: Dict[str, set] = {}
     # Only real names anchor a number: sentence subjects ("Капучино", "Итог") were too noisy.
-    names_b = [f for f in fb.of("name")]
+    # A surname right after a first name is the same person: «Анна Иванова» is one owner.
+    names_b = [f for f in fb.of("name")
+               if not any(y.sent == f.sent and y.pos + len(y.raw) + 1 == f.pos for y in fb.of("name"))]
     for n in fb.of("number"):
         owners = {_norm(x.value.lower())[:5] for x in names_b if x.sent == n.sent}
         if len(owners) == 1:
@@ -660,7 +868,7 @@ def compare(before: str, after: str) -> Dict:
                                    n.raw, "/".join(sorted(want)), "/".join(sorted(here)))})
     # END_BLOCK_BINDINGS
 
-    counts = {k: len(fb.of(k)) for k in ("number", "date", "name", "url", "quote", "negation")}
+    counts = {k: len(fb.of(k)) for k in ("number", "date", "name", "url", "phone", "quote", "negation")}
     return {"errors": _dedupe(errors), "checks": _dedupe(checks), "counts": counts}
 
 
@@ -677,20 +885,26 @@ def _dedupe(items: List[Dict]) -> List[Dict]:
 KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перестановка",
            "inverted": "перевёрнуто",
            "fewer": "реже", "hedge": "потеряна", "negation": "проверь"}
+# The verb agrees with the noun: «потеряна цитата», «потерян телефон», «потеряно число».
 KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута"}
+KIND_MASC = {"потеряно": "потерян", "появилось": "появился", "перевёрнуто": "перевёрнут"}
+MASC_WHAT = {"телефон", "код"}
 
 
 def render(result: Dict) -> str:
     lines = ["Сверка фактов: исходник → правка"]
     c = result["counts"]
-    lines.append("В исходнике: чисел %d, дат %d, имён и названий %d, ссылок %d, цитат %d, отрицаний %d." % (
-        c["number"], c["date"], c["name"], c["url"], c["quote"], c["negation"]))
+    lines.append("В исходнике: чисел %d, дат %d, имён и названий %d, ссылок %d, телефонов %d, цитат %d, "
+                 "отрицаний %d." % (c["number"], c["date"], c["name"], c["url"], c["phone"], c["quote"],
+                                    c["negation"]))
     if result["errors"]:
         lines.append("Ошибки (%d):" % len(result["errors"]))
         for e in result["errors"]:
             verb = KIND_RU.get(e["kind"], e["kind"])
-            if e["what"].endswith("а"):  # цитата, ссылка, дата: «потеряна цитата»
+            if e["what"].endswith("а"):
                 verb = KIND_FEM.get(verb, verb)
+            elif e["what"] in MASC_WHAT:
+                verb = KIND_MASC.get(verb, verb)
             lines.append("  - %s %s: %s" % (verb, e["what"], e["detail"]))
     if result["checks"]:
         lines.append("Проверь глазами (%d):" % len(result["checks"]))
