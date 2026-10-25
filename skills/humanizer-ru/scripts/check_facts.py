@@ -6,6 +6,9 @@
 #          negations, hedges and "who got which number" pairs; flags certainty, scope,
 #          condition and attribution words that got rarer and intensifiers that got more frequent;
 #          HTML tags of the original that were lost (emphasis tags only as checks).
+#          Quoted words must survive in order (case endings and quote marks may change): lost
+#          direct speech or a quote after a colon is an error; other lost quoted words, words
+#          kept without their quote marks and new quotes are checks.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
 #          author utm tag is a lost link.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
@@ -15,7 +18,8 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # extract: text -> Facts (numbers with units, dates, urls, names, quotes, negations, hedges, sentences).
-# compare: (before, after) -> {"errors": [...], "checks": [...]}; markup block counts HTML tags.
+# compare: (before, after) -> {"errors": [...], "checks": [...]}; markup block counts HTML tags;
+#          quotes block matches quoted words in order.
 # render: human-readable Russian report.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
 # END_MODULE_MAP
@@ -176,6 +180,7 @@ class Fact:
     pos: int
     hedge: str = ""
     unit: str = ""
+    speech: bool = False  # quote: direct speech or a quote after a colon
 
 
 @dataclass
@@ -333,9 +338,17 @@ def extract(text: str) -> Facts:
     # END_BLOCK_NUMBERS
 
     # START_BLOCK_NAMES_QUOTES
-    for m in re.finditer(r"«([^»\n]{1,80})»|\"([^\"\n]{1,80})\"", text):
-        q = (m.group(1) or m.group(2)).strip()
-        facts.items.append(Fact("quote", q.lower(), q, sent_of(m.start()), m.start()))
+    # «…», „…“, “…” and straight "…"; a straight mark after a digit or letter is inches (27").
+    quote_rx = r"«([^»\n]{1,80})»|„([^“”\n]{1,80})[“”]|“([^”\n]{1,80})”|(?<!\w)\"(?!\s)([^\"\n]{1,80})(?<!\s)\""
+    for m in re.finditer(quote_rx, text):
+        q = next(g for g in m.groups() if g).strip()
+        # Somebody's words: ответил: «…»; «…», — сказал; «…?» — спросил (before the author's
+        # dash the speech ends with a comma or with ?!… inside the marks; «…» — чем is not speech).
+        # Quoted words inside a phrase are often terms, irony or examples a rewrite may rephrase.
+        dash = re.match(r"[*_]*(,?)[ \t]+[—–-][ \t]", text[m.end():m.end() + 8])
+        speech = bool(text[max(0, m.start() - 8):m.start()].rstrip(" \t*_").endswith(":") or
+                      dash and (dash.group(1) or q.endswith(("?", "!", "…"))))
+        facts.items.append(Fact("quote", q.lower(), q, sent_of(m.start()), m.start(), speech=speech))
     for s_start, sent in sents:
         for m in re.finditer(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*)", sent):
             word = m.group(1)
@@ -512,6 +525,45 @@ def compare(before: str, after: str) -> Dict:
             errors.append({"kind": "added", "what": label, "detail": v})
     # END_BLOCK_NAMES_DIFF
 
+    # START_BLOCK_QUOTES_DIFF
+    # Quoted words must survive in order; only case endings («Зерно» → «Зерна») and the marks
+    # themselves ("…" → «…» is the skill's own typography) may change. A lost direct speech is an
+    # error; other lost quoted words are a check: over 1446 old eval outputs they were mostly
+    # terms, irony and examples that the rewrite rephrased or cut with chat advice. Words still
+    # there without the marks are a check: scare quotes may go. A new quote with new words is a check.
+    def words(s: str) -> List[str]:
+        return re.findall(r"[\w-]+", s)
+
+    def contains(hay: List[str], needle: List[str]) -> bool:
+        n = len(needle)
+        return any(all(stem_match(x, y) for x, y in zip(hay[i:i + n], needle))
+                   for i in range(len(hay) - n + 1))
+
+    quotes_a = [words(f.raw) for f in fa.of("quote")]
+    seen = set()
+    for f in fb.of("quote"):
+        w = words(f.raw)
+        key = tuple(_norm(x.lower()) for x in w)
+        if not w or key in seen:
+            continue
+        seen.add(key)
+        if any(contains(q, w) for q in quotes_a):
+            continue
+        if contains(after_words, w):
+            checks.append({"kind": "unquoted", "what": "цитата", "detail": "«%s» без кавычек" % f.raw})
+        else:
+            (errors if f.speech else checks).append({"kind": "lost", "what": "цитата", "detail": "«%s»" % f.raw})
+    seen = set()
+    for f in fa.of("quote"):
+        w = words(f.raw)
+        key = tuple(_norm(x.lower()) for x in w)
+        if not w or key in seen:
+            continue
+        seen.add(key)
+        if not contains(before_words, w):
+            checks.append({"kind": "added", "what": "цитата", "detail": "«%s»" % f.raw})
+    # END_BLOCK_QUOTES_DIFF
+
     # START_BLOCK_NEGATIONS_DIFF
     after_norm = _norm(after.lower())
     before_norm = _norm(before.lower())
@@ -625,17 +677,21 @@ def _dedupe(items: List[Dict]) -> List[Dict]:
 KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перестановка",
            "inverted": "перевёрнуто",
            "fewer": "реже", "hedge": "потеряна", "negation": "проверь"}
+KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута"}
 
 
 def render(result: Dict) -> str:
     lines = ["Сверка фактов: исходник → правка"]
     c = result["counts"]
-    lines.append("В исходнике: чисел %d, дат %d, имён и названий %d, ссылок %d, отрицаний %d." % (
-        c["number"], c["date"], c["name"], c["url"], c["negation"]))
+    lines.append("В исходнике: чисел %d, дат %d, имён и названий %d, ссылок %d, цитат %d, отрицаний %d." % (
+        c["number"], c["date"], c["name"], c["url"], c["quote"], c["negation"]))
     if result["errors"]:
         lines.append("Ошибки (%d):" % len(result["errors"]))
         for e in result["errors"]:
-            lines.append("  - %s %s: %s" % (KIND_RU.get(e["kind"], e["kind"]), e["what"], e["detail"]))
+            verb = KIND_RU.get(e["kind"], e["kind"])
+            if e["what"].endswith("а"):  # цитата, ссылка, дата: «потеряна цитата»
+                verb = KIND_FEM.get(verb, verb)
+            lines.append("  - %s %s: %s" % (verb, e["what"], e["detail"]))
     if result["checks"]:
         lines.append("Проверь глазами (%d):" % len(result["checks"]))
         for e in result["checks"]:

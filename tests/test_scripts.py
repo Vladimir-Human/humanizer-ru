@@ -163,6 +163,45 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn("lost", kinds(cf.compare("Сдача 3 ноября.", "Сдача в ноябре.")))
         self.assertIn("lost", kinds(cf.compare("Офис в Вашингтоне закрыт.", "Офис закрыт.")))
 
+    def test_changed_quote_is_lost(self):
+        # Issue #264: the quoted words changed, the report was empty.
+        r = cf.compare("Сообщение: «готов к запуску».", "Сообщение: «уже запущен».")
+        self.assertIn({"kind": "lost", "what": "цитата", "detail": "«готов к запуску»"}, r["errors"])
+        r = cf.compare("Он ответил: \"Пока не готов\".", "Он ответил: «Готов».")
+        self.assertIn("lost", kinds(r))
+        r = cf.compare("«Мы готовы», — сказал Иван.", "«Мы почти готовы», — сказал Иван.")
+        self.assertIn("lost", kinds(r))
+        r = cf.compare("«Готовы ли вы?» — спросил Иван.", "«Вы готовы?» — спросил Иван.")
+        self.assertIn("lost", kinds(r))
+
+    def test_rephrased_words_in_quotes_inside_a_phrase_are_a_check(self):
+        # Terms, irony and examples inside a phrase: rephrasing them is a check, not an error.
+        for a, b in (("Всегда откладывали «начать с понедельника»?", "Всё откладывали на понедельник?"),
+                     ("Я заменил её на «хочу быть ближе к продукту» — так честнее.", "Я написал, что хочу к продукту.")):
+            r = cf.compare(a, b)
+            self.assertEqual(r["errors"], [], a)
+            self.assertIn(("lost", "цитата"), {(c["kind"], c["what"]) for c in r["checks"]}, a)
+
+    def test_quote_marks_and_case_endings_may_change(self):
+        # "…" → «…» is the skill's own typography; a quoted name may take another case.
+        self.assertEqual(cf.compare("Он сказал: \"Запуск в среду\".", "Он сказал: «Запуск в среду».")["errors"], [])
+        r = cf.compare("Кофейня «Зерно» открылась.", "Открыли кофейню «Зерна» на углу.")
+        self.assertEqual([e for e in r["errors"] if e["what"] == "цитата"], [])
+        r = cf.compare("Договор с ООО \"Ромашка\" продлён.", "Договор с ООО «Ромашка» продлили.")
+        self.assertEqual(r["errors"], [])
+
+    def test_unquoted_and_added_quotes_are_checks(self):
+        r = cf.compare("Это так называемый «умный дом».", "Это умный дом.")
+        self.assertEqual(r["errors"], [])
+        self.assertIn("unquoted", {c["kind"] for c in r["checks"]})
+        r = cf.compare("Директор одобрил план.", "Директор сказал: «План хороший».")
+        self.assertIn(("added", "цитата"), {(c["kind"], c["what"]) for c in r["checks"]})
+
+    def test_inch_marks_are_not_quotes(self):
+        r = cf.compare("Монитор 27\" и ноутбук 15\" в наличии.", "В наличии монитор 27\" и ноутбук 15\".")
+        self.assertEqual(r["counts"]["quote"], 0)
+        self.assertEqual(r["errors"], [])
+
     def test_cli_exit_codes(self):
         tmp = ROOT / "tests" / "_tmp_cf"
         tmp.mkdir(exist_ok=True)
@@ -174,6 +213,9 @@ class CheckFactsTest(unittest.TestCase):
             self.assertEqual(run(tmp / "a.txt", tmp / "a.txt"), 0)
             self.assertEqual(run(tmp / "a.txt", tmp / "b.txt"), 1)
             self.assertEqual(run(tmp / "a.txt", tmp / "nope.txt"), 2)
+            (tmp / "q1.txt").write_text("Сообщение: «готов к запуску».", encoding="utf-8")
+            (tmp / "q2.txt").write_text("Сообщение: «уже запущен».", encoding="utf-8")
+            self.assertEqual(run(tmp / "q1.txt", tmp / "q2.txt"), 1)
         finally:
             for p in tmp.glob("*"):
                 p.unlink()
