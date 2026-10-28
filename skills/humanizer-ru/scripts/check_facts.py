@@ -6,8 +6,15 @@
 #          2.1.3, 10.0.10.1 as one token), dates (days, months without a day by their noun
 #          endings, weekdays), times, names (incl. США-type acronyms), URLs (host case and the
 #          slash after a bare host ignored), phones (by digits), e-mails, quotes,
-#          `inline code`, negations (incl. "не на карту", "нельзя" → "можно"), hedges and
-#          "who got which number" pairs (a person may be named by first name or surname);
+#          `inline code`, negations (incl. "не на карту", "нельзя" → "можно"), hedges (said
+#          another way, «около» → «примерно», they are kept; hedges that say the same are counted
+#          by mention, any other hedge has to stay somewhere in the edit; in the edit, bold and
+#          italic marks between a hedge and its number do not hide it) and "who got which number" pairs
+#          (a person may be named by first name or surname, and two people who share one of them
+#          are told apart by the other; in a list inside one sentence the
+#          number belongs to the name of its own clause between commas, so swapped amounts
+#          in «Анна получила 30 000, Борис 50 000» are an error; a name after «от» or «через»,
+#          in full, gives the money, it does not get it);
 #          flags certainty, scope,
 #          condition and attribution words that got rarer and intensifiers that got more frequent;
 #          HTML tags of the original that were lost (emphasis tags only as checks).
@@ -27,8 +34,12 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # extract: text -> Facts (numbers with units, dates, urls, names, quotes, negations, hedges, sentences).
+# clause_spans / clause_span / is_list: the comma-separated clauses of a sentence, the clause around
+#          an offset, and whether the sentence lists parallel items (two clauses, each one person
+#          and a number).
 # compare: (before, after) -> {"errors": [...], "checks": [...]}; markup block counts HTML tags;
-#          quotes block matches quoted words in order.
+#          quotes block matches quoted words in order; bindings block pairs numbers with names
+#          (clause by clause when a sentence names several people).
 # render: human-readable Russian report.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
 # END_MODULE_MAP
@@ -45,6 +56,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit, urlunsplit
@@ -144,7 +156,22 @@ WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, 
 HEDGES = ("около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
           "не менее", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
           "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
-          "только", "лишь", "кроме", "без")
+          "только", "лишь", "кроме", "без", "не старше")
+# Hedges that say the same: «около 40» → «примерно 40» and «не менее 5» → «минимум 5» keep the hedge.
+HEDGE_SAME = {"около": "≈", "примерно": "≈", "приблизительно": "≈", "порядка": "≈",
+              "не менее": "≥", "не меньше": "≥", "минимум": "≥",
+              "не более": "≤", "не больше": "≤", "максимум": "≤", "не старше": "≤",
+              "более": ">", "свыше": ">", "больше": ">", "менее": "<", "меньше": "<",
+              "не позже": "≤д", "не позднее": "≤д"}
+
+
+def hedge_class(hedge: str) -> str:
+    """Hedges that say the same share a class; any other hedge is its own class."""
+    return HEDGE_SAME.get(hedge, hedge)
+
+
+# A name after these prepositions gives the money or passes it on, it does not get it.
+SOURCE_PREPOSITIONS = ("от", "через")
 NEG_WORDS = ("не", "ни", "нет", "нельзя", "без", "никаких", "никакой", "никакого", "никакие", "никакая",
              "никогда", "ничего", "ничто", "ничем", "никто", "никого", "никому", "нигде", "никак", "нисколько")
 # Words of certainty and scope: losing one turns "may" into "will", "some" into "sometimes".
@@ -251,9 +278,37 @@ class Fact:
 class Facts:
     items: List[Fact] = field(default_factory=list)
     sentences: List[str] = field(default_factory=list)
+    starts: List[int] = field(default_factory=list)  # offset of each sentence in the text
 
     def of(self, kind: str) -> List[Fact]:
         return [f for f in self.items if f.kind == kind]
+
+
+def clause_spans(sentence: str) -> List[Tuple[int, int]]:
+    """Clauses of a sentence: a comma or a semicolon followed by a space ends one item of an
+    enumeration («Анна получила 30 000, Борис 50 000»); a decimal comma does not."""
+    spans, start = [], 0
+    for m in re.finditer(r"[;,]\s", sentence):
+        spans.append((start, m.start()))
+        start = m.end()
+    spans.append((start, len(sentence)))
+    return spans
+
+
+def clause_span(sentence: str, offset: int) -> Tuple[int, int]:
+    """Bounds of the clause that holds `offset`; the whole sentence if none does."""
+    for a, b in clause_spans(sentence):
+        if a <= offset < b:
+            return a, b
+    return 0, len(sentence)
+
+
+def is_list(sentence: str, numbers: List[int], who) -> bool:
+    """The sentence lists parallel items: at least two clauses each hold one person (`who(a, b)`
+    names the people of a clause) and a number. «Анна получила 30 000, Борис 50 000» is a list;
+    «Анна, Борис, Вера — все получили по 100» is one number for a row of names."""
+    return sum(1 for a, b in clause_spans(sentence)
+               if len(who(a, b)) == 1 and any(a <= p < b for p in numbers)) >= 2
 
 
 def split_sentences(text: str) -> List[Tuple[int, str]]:
@@ -281,16 +336,18 @@ def _fmt(v: float) -> str:
 
 # START_CONTRACT: extract
 # PURPOSE: Pull checkable facts out of one text.
-# INPUTS: text (str).
+# INPUTS: text (str); edited (bool): the text is the edit, so bold and italic marks between a
+#         hedge and its number do not hide the hedge.
 # OUTPUTS: Facts with numbers (value, unit, hedge), dates, times, urls, emails, names,
 #          quotes, negations; plus the sentence list used for bindings.
 # SIDE_EFFECTS: none.
 # END_CONTRACT: extract
-def extract(text: str) -> Facts:
+def extract(text: str, edited: bool = False) -> Facts:
     text = _strip_tracking(text)
     facts = Facts()
     sents = split_sentences(text)
     facts.sentences = [t for _, t in sents]
+    facts.starts = [s for s, _ in sents]
     taken: List[Tuple[int, int]] = []
 
     def sent_of(pos: int) -> int:
@@ -303,10 +360,17 @@ def extract(text: str) -> Facts:
     def free(a: int, b: int) -> bool:
         return all(b <= s or a >= e for s, e in taken)
 
+    # In the edited text the marks of bold and italic may stand between a hedge and its number
+    # («минимум **2 человека**», «**минимум** 2 человека»): moving them is not losing the hedge.
+    # The source is read strictly: a hedge under marks there is not tracked (letting it in made
+    # 18 more checks on the 1446 old edits, mostly rewrites with a word of the same meaning).
+    gap = r"[ \u00a0\u202f*_]" if edited else r"[ \u00a0\u202f]"
+
     def hedge_before(pos: int) -> str:
         left = _norm(text[max(0, pos - 24):pos].lower())
         for h in sorted(HEDGES, key=len, reverse=True):
-            if re.search(r"(?:^|[^а-яa-z])%s[ \u00a0\u202f]*$" % re.escape(_norm(h)), left):
+            # «не менее чем 6»: «чем» may stand between the hedge and the number
+            if re.search(r"(?:^|[^а-яa-z])%s(?:%s+чем)?%s*$" % (re.escape(_norm(h)), gap, gap), left):
                 return h
         return ""
 
@@ -609,7 +673,7 @@ def _strip_tracking(text: str) -> str:
 # SIDE_EFFECTS: none.
 # END_CONTRACT: compare
 def compare(before: str, after: str) -> Dict:
-    fb, fa = extract(before), extract(after)
+    fb, fa = extract(before), extract(after, edited=True)
     errors: List[Dict] = []
     checks: List[Dict] = []
 
@@ -652,9 +716,21 @@ def compare(before: str, after: str) -> Dict:
                 elif units_b and not units_a:
                     checks.append({"kind": "unit", "what": "единица",
                                    "detail": "%s → %s без единицы" % (items[0].raw, ba[value][0].raw)})
-                hedges_b = {f.hedge for f in items if f.hedge}
-                hedges_a = {f.hedge for f in ba[value] if f.hedge}
-                for h in hedges_b - hedges_a:
+                # A hedge without a synonym has to stay somewhere in the edit. Hedges that say the same
+                # («около» → «примерно») are counted mention by mention, so three hedged mentions of 40
+                # need three hedges of that meaning in the edit: «около 40 … примерно 40 … около 40» →
+                # «40 … примерно 40 … примерно 40» has lost one. A mention of the number that is gone
+                # took its hedge along, and the «fewer» check says so.
+                was = Counter(f.hedge for f in items if f.hedge)
+                now = Counter(f.hedge for f in ba[value] if f.hedge)
+                gone = max(0, len(items) - len(ba[value]))
+                lost = {h for h in was if h not in HEDGE_SAME and h not in now}
+                for cls in {hedge_class(h) for h in was if h in HEDGE_SAME}:
+                    need = sum(n for h, n in was.items() if hedge_class(h) == cls)
+                    have = sum(n for h, n in now.items() if hedge_class(h) == cls)
+                    if have < need and not (have and need - have <= gone):
+                        lost |= {h for h in was if hedge_class(h) == cls and was[h] > now[h]}
+                for h in sorted(lost):
                     checks.append({"kind": "hedge", "what": "оговорка",
                                    "detail": "«%s» перед %s не найдено" % (h, items[0].raw)})
     # END_BLOCK_NUMBERS_DIFF
@@ -863,30 +939,147 @@ def compare(before: str, after: str) -> Dict:
     # Only real names anchor a number: sentence subjects ("Капучино", "Итог") were too noisy.
     # A surname right after a first name is the same person: «Анна Иванова» is one owner, and the
     # edit may name her by either word («Иванова получила 50»).
-    people: List[list] = []  # [sentence, keys, end of the last word]
+    def after_source(f: Fact) -> bool:
+        # «получила от Бориса 70 рублей»: Борис sends the money, he is not the one who gets it.
+        if f.sent >= len(fb.starts):
+            return False
+        sent, end = fb.sentences[f.sent], f.pos - fb.starts[f.sent]
+        gap = end  # the spaces before the name, then the word before them
+        while gap > 0 and sent[gap - 1].isspace():
+            gap -= 1
+        start = gap
+        while start > 0 and (sent[start - 1].isalnum() or sent[start - 1] == "-"):
+            start -= 1
+        return gap < end and sent[start:gap].lower() in SOURCE_PREPOSITIONS
+
+    # [sentence, keys, end of the last word, start of the first word, stands after «от»]
+    people: List[list] = []
+    spelt: Dict[str, List[str]] = {}  # the keys seen so far, by their first three letters
+
+    def stem_key(word: str) -> str:
+        # One key for the case forms of a name: «анна» and «анны» are both Анна. Stems that match
+        # share their first three letters, so only the keys that start alike are compared.
+        key = _norm(word.lower())[:5]
+        same = spelt.setdefault(key[:3], [])
+        known = next((k for k in same if stem_match(k, key)), None)
+        if known is None:
+            same.append(key)
+        return known or key
+
     for f in sorted(fb.of("name"), key=lambda x: x.pos):
-        key = _norm(f.value.lower())[:5]
+        key = stem_key(f.value)
         if people and people[-1][0] == f.sent and people[-1][2] + 1 == f.pos:
             people[-1][1].add(key)
         else:
-            people.append([f.sent, {key}, 0])
+            people.append([f.sent, {key}, 0, f.pos, after_source(f)])
         people[-1][2] = f.pos + len(f.raw)
-    for n in fb.of("number"):
+    # One person is the words of a full name («Анна Иванова» is {анна, ивано}). Full names that are
+    # the same or one inside the other are one person («Анна Сергеевна Иванова» holds «Анна Иванова»);
+    # «Анна Иванова» and «Анна Петрова» share a first name and are two. A mention by one word is the
+    # person who has that word, if there is only one, so «Иванова получила 50» is Анна Иванова.
+    persons: List[set] = []
+    for p in people:
+        if len(p[1]) > 1:
+            same = [g for g in persons if g <= p[1] or p[1] <= g]
+            persons = [g for g in persons if g not in same] + [set(p[1]).union(*same)]
+    # A first name or surname that two persons have tells them apart no better than nothing does:
+    # both are left out, and a mention by that word alone is nobody in particular.
+    unclear = {k for k, n in Counter(k for g in persons for k in g).items() if n > 1}
+    for p in people:
+        have = [g for g in persons if (p[1] <= g if len(p[1]) > 1 else p[1] & g)]
+        p[1] = have[0] - unclear if len(have) == 1 else (set() if have else set(p[1]))
+    people = [p for p in people if p[1]]
+    groups: List[set] = []  # the keys of each person, as the names of the original give them
+    for p in people:
+        if p[1] not in groups:
+            groups.append(p[1])
+
+    people_by_sent: Dict[int, List[list]] = {}
+    for p in people:
+        people_by_sent.setdefault(p[0], []).append(p)
+
+    def owners_in(sent: int, lo: int, hi: int, receivers_only: bool = False) -> List[set]:
         owners: List[set] = []  # «Анна Иванова … Анна» is still one person
-        for p in people:
-            if p[0] == n.sent:
-                same = next((o for o in owners if o & p[1]), None)
-                if same is None:
-                    owners.append(set(p[1]))
-                else:
-                    same |= p[1]
+        for p in people_by_sent.get(sent, ()):
+            if lo <= p[3] < hi and not (receivers_only and p[4]) and p[1] not in owners:
+                owners.append(p[1])
+        return owners
+
+    number_at: Dict[int, Dict[int, List[int]]] = {}
+
+    def numbers_at(facts: Facts, sent: int) -> List[int]:
+        # Offsets of the numbers of one sentence, collected once per text.
+        by_sent = number_at.get(id(facts))
+        if by_sent is None:
+            by_sent = number_at[id(facts)] = {}
+            for m in facts.of("number"):
+                by_sent.setdefault(m.sent, []).append(m.pos - facts.starts[m.sent])
+        return by_sent.get(sent, [])
+
+    listed_b: Dict[int, bool] = {}
+    for n in fb.of("number"):
+        owners = owners_in(n.sent, 0, 1 << 62)
+        if len(owners) > 1 and fb.starts:
+            # A list in one sentence («Анна получила 30 000, Борис 50 000»): the number belongs to
+            # the person of its own clause. A clause with no name or with two names binds nothing,
+            # and neither does a row of names with one number («Анна, Борис, Вера — все по 100»).
+            s0 = fb.starts[n.sent]
+            if n.sent not in listed_b:
+                listed_b[n.sent] = is_list(fb.sentences[n.sent], numbers_at(fb, n.sent),
+                                           lambda a, b: owners_in(n.sent, s0 + a, s0 + b, True))
+            if listed_b[n.sent]:
+                a, b = clause_span(fb.sentences[n.sent], n.pos - s0)
+                owners = owners_in(n.sent, s0 + a, s0 + b, True)
         if len(owners) == 1:
             pairs.setdefault(n.value, set()).update(owners[0])
     all_owners = set().union(*pairs.values()) if pairs else set()
 
+    someone = "?"  # stands for a word that two persons have, when nothing beside it tells which one
+
+    def named(part: str, receivers_only: bool = False) -> set:
+        found = list(re.finditer(r"[\w-]+", part))
+        words = []
+        sender = False
+        for i, m in enumerate(found):
+            # «от Бориса Петрова» names the sender: the word after the preposition, and the capitalised
+            # words that follow it with nothing but spaces (or the dot of an initial) in between.
+            sender = receivers_only and (
+                (i > 0 and found[i - 1].group().lower() in SOURCE_PREPOSITIONS)
+                or (sender and m.group()[:1].isupper() and re.fullmatch(r"[\s.]*", part[found[i - 1].end():m.start()]) is not None))
+            if not sender:
+                words.append(m)
+        hit = [{o for o in all_owners if stem_match(o, m.group())} for m in words]
+        owners = set().union(*hit)
+        for i, m in enumerate(words):
+            # «Петров» alone, when two persons have that surname, is one of them: the number may be his.
+            if not hit[i] and any(stem_match(k, m.group()) for k in unclear) and not any(
+                    hit[j] and re.fullmatch(r"[\s.]*", part[words[min(i, j)].end():words[max(i, j)].start()])
+                    for j in (i - 1, i + 1) if 0 <= j < len(words)):
+                owners.add(someone)
+        return owners
+
+    seen_near: Dict[Tuple[int, int], tuple] = {}
+
     def near(facts, n) -> set:
-        words = re.findall(r"[\w-]+", facts.sentences[n.sent] if n.sent < len(facts.sentences) else "")
-        return {o for o in all_owners if any(stem_match(o, w) for w in words)}
+        # The owners named in the number's sentence; in a list, in its own clause.
+        key = (id(facts), n.sent)
+        if key not in seen_near:
+            sent = facts.sentences[n.sent] if n.sent < len(facts.sentences) else ""
+            parts = {span: named(sent[span[0]:span[1]], True) for span in clause_spans(sent)}
+            here = named(sent)
+            clauses = None
+            if facts.starts and sum(1 for g in groups if g & here) > 1 and is_list(
+                    sent, numbers_at(facts, n.sent),
+                    lambda a, b: [g for g in groups if g & parts[(a, b)]]):
+                clauses = [(a, b, owners) for (a, b), owners in parts.items()]
+            seen_near[key] = (here, clauses)
+        here, clauses = seen_near[key]
+        if clauses:
+            offset = n.pos - facts.starts[n.sent]
+            for a, b, inside in clauses:
+                if a <= offset < b:
+                    return inside or here
+        return here
 
     if len(all_owners) >= 2:
         # A number that already stood next to a name somewhere in the original has not moved
@@ -899,6 +1092,8 @@ def compare(before: str, after: str) -> Dict:
             if not want:
                 continue
             here = near(fa, n)
+            if someone in here:  # a name that fits two persons: whose number it is cannot be told
+                continue
             if here - near_b.get(n.value, set()) and not (here & want):
                 errors.append({"kind": "swap", "what": "привязка",
                                "detail": "%s в исходнике относится к «%s», в правке стоит рядом с «%s»" % (

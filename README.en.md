@@ -42,11 +42,11 @@ thresholds were written down before the texts existed.
 Latest run, 4.1.1: 24 fresh AI texts from eleven models that the skill had never seen, plus
 six human "trap" texts.
 
-| Participant | Stars | Mean place of 5 | Ours ranked higher | Texts with a meaning error, of 24 |
+| Participant | Stars on 2026-10-28 | Mean place of 5 | Ours ranked higher | Texts with a meaning error, of 24 |
 |---|---|---|---|---|
-| **humanizer-ru 4.1.1** | 125 | **2.38** | — | 2 |
-| ilyautov/humanizer-ru | 452 | 3.10 | 65% | 2 |
-| ormeilu/avoid-ai-writing-russian | 18 | 3.18 | 69% | 9 |
+| **humanizer-ru 4.1.1** | 134 | **2.38** | — | 2 |
+| ilyautov/humanizer-ru | 493 | 3.10 | 65% | 2 |
+| ormeilu/avoid-ai-writing-russian | 23 | 3.18 | 69% | 9 |
 | one-line prompt, no skill | — | 3.74 | 77% | 8 |
 
 The fifth participant was a new variant of our instructions from three tuning cycles. It did
@@ -63,6 +63,23 @@ error in anyone's edits. A variant with more Wikipedia markers lost to 4.1.1 (42
 The 4.1.0 run had eight participants: blader/humanizer (57k stars) came seventh with the most
 errors; stop-slop, no-ai-slop and avoid-ai-writing did not pass the qualifying round. Every
 text, answer and judgment: [eval/](eval/). The judges are models, not human editors.
+
+## Scripts
+
+The skill folder has two helper scripts, standard library only. An agent with a terminal runs
+them itself; you can run them by hand:
+
+```bash
+python skills/humanizer-ru/scripts/check_facts.py before.txt after.txt
+python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place
+```
+
+`check_facts.py` compares the original with the edit and reports lost or new numbers, dates,
+names and links, flipped negations, swapped amounts, weakened or strengthened claims and lost
+HTML tags. `clean_paste.py` removes chat-paste leftovers: contentReference, 【N†source】,
+`utm_source=chatgpt.com` tails, invisible characters. The scripts work only on the files they
+are given (`clean_paste.py` rewrites a file only with `--in-place`), do not use the network and
+do not start other programs.
 
 ## AI detectors
 

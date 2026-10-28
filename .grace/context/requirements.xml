@@ -30,6 +30,9 @@
   <requirement id="R-EVAL-RANK-JUDGES" source="owner 2026-10-21: «в текстах сильны только Sonnet 5.5, Opus 5.5 и Gemini 4 Argon»">
     A report can take places, shares and send-as-is scores from some judges only while every judge still votes on meaning errors (one vote per judge, majority). Probe texts are never judged and do not count as a coverage gap.
   </requirement>
+  <requirement id="R-DIRECTORY" source="Anthropic docs: claude.com/docs/plugins/pre-submission-checklist and code.claude.com/docs/en/plugins/publish, read 2026-10-28">
+    The plugin folder is prepared for Anthropic's plugin directory: plugin.json has a square PNG icon inside the plugin (512-2048 px, under 2 MB) and https links to the documentation and to support, and `claude plugin validate --profile directory --strict` passes; the portal's own Validate step, which is stricter (name, .gitattributes, file count and sizes), has not been run. The README says what the scripts run and send (nothing leaves the machine). Submitting the plugin is the owner's action in the developer portal.
+  </requirement>
   <rule id="R-NO-VERDICT" source="SKILL.md: Что вернуть, Границы">
     No authorship verdicts and no promise to fool AI detectors.
   </rule>
