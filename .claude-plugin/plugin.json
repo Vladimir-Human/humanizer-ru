@@ -3,11 +3,14 @@
   "name": "humanizer-ru",
   "displayName": "humanizer-ru",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived.",
-  "version": "4.1.5",
+  "version": "4.1.6",
   "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": "https://github.com/Vladimir-Human/humanizer-ru",
   "license": "MIT",
   "keywords": ["humanizer", "russian", "writing", "editing", "ai-writing", "канцелярит", "очеловечить"],
+  "icon": "./.claude-plugin/icon.png",
+  "documentationUrl": "https://github.com/Vladimir-Human/humanizer-ru#readme",
+  "supportUrl": "https://github.com/Vladimir-Human/humanizer-ru/issues",
   "skills": "./skills/"
 }

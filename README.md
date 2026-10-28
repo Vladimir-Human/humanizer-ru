@@ -97,11 +97,11 @@ npx skills add Vladimir-Human/humanizer-ru
 Последний замер, 4.1.1: 24 свежих ИИ-текста одиннадцати моделей, которых навык не видел, и
 шесть человеческих текстов-ловушек.
 
-| Участник | Звёзды | Среднее место из 5 | humanizer-ru выше | Тексты с ошибкой смысла из 24 |
+| Участник | Звёзды на 28.10.2026 | Среднее место из 5 | humanizer-ru выше | Тексты с ошибкой смысла из 24 |
 |---|---|---|---|---|
-| **humanizer-ru 4.1.1** | 125 | **2.38** | — | 2 |
-| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 452 | 3.10 | 65% | 2 |
-| [avoid-ai-writing-russian](https://github.com/ormeilu/avoid-ai-writing-russian) | 18 | 3.18 | 69% | 9 |
+| **humanizer-ru 4.1.1** | 134 | **2.38** | — | 2 |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 493 | 3.10 | 65% | 2 |
+| [avoid-ai-writing-russian](https://github.com/ormeilu/avoid-ai-writing-russian) | 23 | 3.18 | 69% | 9 |
 | просьба одной строкой | — | 3.74 | 77% | 8 |
 
 Пятым участником был новый вариант нашей инструкции из трёх циклов настройки. Прошлую
@@ -136,6 +136,9 @@ python skills/humanizer-ru/scripts/clean_paste.py текст.txt --in-place
 утверждения и потерянные HTML-теги. `clean_paste.py` снимает следы вставки из чата: contentReference, 【N†source】,
 хвосты `utm_source=chatgpt.com` и `utm_source=openai`, невидимые символы. Метки самого автора
 (`utm_campaign` в рассылке и т. п.) остаются, а их пропажу `check_facts.py` считает потерей ссылки.
+
+Скрипты работают только с файлами, которые им передали (`clean_paste.py` меняет файл лишь с
+ключом `--in-place`), не ходят в сеть и не запускают другие программы.
 
 ## Детекторы ИИ
 

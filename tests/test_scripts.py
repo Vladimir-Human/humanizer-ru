@@ -6,6 +6,8 @@
 # LINKS: V-M-CHECK-FACTS; V-M-CLEAN-PASTE.
 # END_MODULE_CONTRACT
 import importlib.util
+import itertools
+import random
 import subprocess
 import sys
 import unittest
@@ -98,6 +100,228 @@ class CheckFactsTest(unittest.TestCase):
         r = cf.compare("Процедура длится около 60 минут.", "Процедура длится 60 минут.")
         self.assertEqual(r["errors"], [])
         self.assertTrue(any(c["kind"] == "hedge" for c in r["checks"]))
+
+    def test_hedge_said_another_way_is_not_lost(self):
+        # 4.1.6: «около» → «примерно», «не менее» → «минимум», «свыше» → «более» keep the hedge.
+        for a, b in (("Пришло около 40 человек.", "Пришло примерно 40 человек."),
+                     ("Срок не менее 5 дней.", "Срок минимум 5 дней."),
+                     ("Вес не более 3 кг.", "Вес максимум 3 кг."),
+                     ("Заказов свыше 200.", "Заказов более 200.")):
+            r = cf.compare(a, b)
+            self.assertEqual([c for c in r["checks"] if c["kind"] == "hedge"], [], (a, b))
+        # another meaning of the hedge is still a check: «не менее 5» → «не более 5»
+        r = cf.compare("Срок не менее 5 дней.", "Срок не более 5 дней.")
+        self.assertTrue(any(c["kind"] == "hedge" for c in r["checks"]))
+
+    def test_swapped_amounts_in_one_sentence(self):
+        # 4.1.6: the example of SKILL.md. A list in one sentence binds each number to the name
+        # of its own clause; before it the sentence had two names and bound nothing.
+        a = "Анна получила 30 000, Борис 50 000."
+        for b in ("Анна получила 50 000, Борис 30 000.",
+                  "Борис получил 30 000, Анна — 50 000.",
+                  "Анне выделили 50 000, Борису — 30 000."):
+            self.assertIn("swap", kinds(cf.compare(a, b)), b)
+        a = "Анна Иванова получила 30 000 рублей, Борис Петров — 50 000 рублей."
+        self.assertIn("swap", kinds(cf.compare(a, "Иванова получила 50 000 рублей, Петров — 30 000 рублей.")))
+        a = "В Москве 12 офисов, в Казани 3 офиса."
+        self.assertIn("swap", kinds(cf.compare(a, "В Москве 3 офиса, в Казани 12 офисов.")))
+
+    def test_same_bindings_in_another_order_are_not_a_swap(self):
+        a = "Анна получила 30 000, Борис 50 000."
+        for b in ("Борис получил 50 000 рублей, Анна — 30 000.",
+                  "Анна получила 30 000 рублей. Борис — 50 000.",
+                  "Получили: Борис — 50 000, Анна — 30 000."):
+            self.assertEqual(cf.compare(a, b)["errors"], [], b)
+        # the same sum for both is bound to both
+        same = "Анна получила 30 000, Борис тоже 30 000."
+        self.assertEqual(cf.compare(same, "Борис получил 30 000, Анна тоже 30 000.")["errors"], [])
+        # a clause with no name or with two names binds nothing
+        a = "Анна, которая работает в Казани, получила 30 000, а Борис 50 000."
+        self.assertEqual(cf.compare(a, "Борис получил 50 000, а Анна, которая работает в Казани, — 30 000.")["errors"], [])
+        self.assertEqual(cf.compare("Анна и Борис получили по 30 000, Вера 50 000.",
+                                    "Вера получила 50 000, а Анна и Борис по 30 000.")["errors"], [])
+        # a row of names with one number is not a list of bindings: «по 100» is not Вера's alone
+        a = "Анна получила 30 000. Вера получила 7. Анна, Борис, Вера — все получили по 100."
+        b = "Анна получила 30 000. Вера получила 7. Все получили по 100: Анна, Борис, Вера."
+        self.assertEqual(cf.compare(a, b)["errors"], [])
+
+    def test_generated_enumerations(self):
+        # «Name amount» lists in one sentence, written in nine shapes: the same bindings in another
+        # order or shape are no error, two amounts exchanged are one. Lists that join the last two
+        # items with «и» are not generated: their items share a clause and the script does not
+        # tell them apart yet (CHANGELOG 4.1.6). A lead-in names everyone in mid-sentence, because
+        # the script reads a capitalised word at the start of a sentence as a name only if it
+        # knows it from elsewhere.
+        people = [("Анна", "Анне", True), ("Борис", "Борису", False), ("Вера", "Вере", True),
+                  ("Глеб", "Глебу", False), ("Дарья", "Дарье", True), ("Егор", "Егору", False),
+                  ("Жанна", "Жанне", True), ("Захар", "Захару", False)]
+        amounts = ["30 000", "50 000", "7 000", "12 500", "450", "1 200", "95", "2 400", "18 000", "640"]
+
+        def verb(p):
+            return "получила" if p[2] else "получил"
+
+        def got(p):
+            return "%s %s" % (p[0], verb(p))
+
+        def first_verb_only(ps):
+            return ", ".join(("%s %s рублей" % (got(p), x)) if i == 0 else ("%s %s рублей" % (p[0], x))
+                             for i, (p, x) in enumerate(ps)) + "."
+
+        shapes = {
+            "elided verb": first_verb_only,
+            "verb each": lambda ps: ", ".join("%s %s рублей" % (got(p), x) for p, x in ps) + ".",
+            "dash": lambda ps: ", ".join("%s — %s рублей" % (p[0], x) for p, x in ps) + ".",
+            "semicolon": lambda ps: "; ".join("%s — %s рублей" % (p[0], x) for p, x in ps) + ".",
+            "dative": lambda ps: ", ".join(("%s выплатили %s рублей" % (p[1], x)) if i == 0 else
+                                           ("%s %s рублей" % (p[1], x)) for i, (p, x) in enumerate(ps)) + ".",
+            "number first": lambda ps: ", ".join("%s рублей %s %s" % (x, verb(p), p[0]) for p, x in ps) + ".",
+            "sentences": lambda ps: " ".join("%s %s рублей." % (got(p), x) for p, x in ps),
+            "bullets": lambda ps: "Итоги:\n" + "\n".join("- %s: %s рублей" % (p[0], x) for p, x in ps),
+            "parentheses": lambda ps: ", ".join("%s (%s рублей)" % (p[0], x) for p, x in ps) + ".",
+        }
+        rng = random.Random(4106)
+        for _ in range(300):
+            k = rng.choice((2, 3, 4))
+            pairs = list(zip(rng.sample(people, k), rng.sample(amounts, k)))
+            lead = "Выплаты за октябрь по сотрудникам %s.\n" % ", ".join(p[0] for p, _ in pairs)
+            from_shape, to_shape = rng.choice(sorted(shapes)), rng.choice(sorted(shapes))
+            before = lead + shapes[from_shape](pairs)
+            moved = pairs[:]
+            rng.shuffle(moved)
+            after = lead + shapes[to_shape](moved)
+            self.assertEqual(cf.compare(before, after)["errors"], [], "%s -> %s\n%s\n%s" % (from_shape, to_shape, before, after))
+            i, j = rng.sample(range(k), 2)
+            wrong = pairs[:]
+            wrong[i], wrong[j] = (pairs[i][0], pairs[j][1]), (pairs[j][0], pairs[i][1])
+            rng.shuffle(wrong)
+            after = lead + shapes[to_shape](wrong)
+            self.assertIn("swap", kinds(cf.compare(before, after)), "%s -> %s\n%s\n%s" % (from_shape, to_shape, before, after))
+
+    def test_one_hedge_left_does_not_cover_two_lost(self):
+        # «около 40 … примерно 40» → «40 … примерно 40»: the first hedge is gone, and the synonym
+        # that is left belongs to the second number.
+        a = "Первый этап длится около 40 минут, второй — примерно 40 минут."
+        hedge = lambda r: [c for c in r["checks"] if c["kind"] == "hedge"]
+        self.assertEqual(len(hedge(cf.compare(a, "Первый этап длится 40 минут, второй — примерно 40 минут."))), 1)
+        # each said another way: nothing is lost
+        self.assertEqual(hedge(cf.compare(a, "Первый этап длится примерно 40 минут, второй — приблизительно 40 минут.")), [])
+        # two mentions that became one are the «fewer» check, not also a lost hedge
+        merged = cf.compare("Первый этап длится около 40 минут, второй тоже около 40 минут.",
+                            "Каждый этап длится около 40 минут.")
+        self.assertEqual(hedge(merged), [])
+
+    def test_hedges_are_counted_mention_by_mention(self):
+        # Three hedged mentions of 40 need three hedges of that meaning in the edit, also when one
+        # of the words is repeated: «около 40 … примерно 40 … около 40» → «40 … примерно 40 … примерно 40».
+        hedge = lambda r: [c for c in r["checks"] if c["kind"] == "hedge"]
+        a = "Первый этап длится около 40 минут, второй примерно 40 минут, третий около 40 минут."
+        lost = hedge(cf.compare(a, "Первый этап длится 40 минут, второй примерно 40 минут, третий примерно 40 минут."))
+        self.assertEqual(len(lost), 1)
+        self.assertIn("«около»", lost[0]["detail"])
+        self.assertEqual(hedge(cf.compare(
+            a, "Первый этап длится примерно 40 минут, второй приблизительно 40 минут, третий порядка 40 минут.")), [])
+        # the same word lost at one of its two mentions
+        b = "Первый этап длится около 40 минут, второй тоже около 40 минут."
+        self.assertEqual(len(hedge(cf.compare(b, "Первый этап длится 40 минут, второй тоже около 40 минут."))), 1)
+        # «не менее чем 6» is a hedge that says «минимум»; «не старше 14 дней» says «не более 14 дней»
+        self.assertEqual(hedge(cf.compare("Нужно минимум 6 часов.", "Нужно не менее чем 6 часов.")), [])
+        self.assertEqual(len(hedge(cf.compare("Нужно не менее чем 6 часов.", "Нужно 6 часов."))), 1)
+        self.assertEqual(hedge(cf.compare("Результат действителен не более 14 дней.", "Результат не старше 14 дней.")), [])
+
+    def test_marks_moved_between_a_hedge_and_its_number_do_not_lose_it(self):
+        # In the edit, bold and italic marks between the hedge and the number do not hide the hedge
+        # (d08 of the corpus: «**минимум 2 человека**» → «минимум **2 человека**»). A hedge that is
+        # really gone, changed, or cut off from the number by a comma is still a check.
+        hedge = lambda r: [c for c in r["checks"] if c["kind"] == "hedge"]
+        a = "Запрошены ревьюеры: **минимум 2 человека**, один из другой команды.\n"
+        for edit in ("Запрошены ревьюеры: минимум **2 человека**, один из другой команды.\n",
+                     "Запрошены ревьюеры: **минимум** 2 человека, один из другой команды.\n",
+                     "Запрошены ревьюеры: минимум *2 человека*, один из другой команды.\n"):
+            self.assertEqual(hedge(cf.compare(a, edit)), [], edit)
+        for edit in ("Запрошены ревьюеры: **2 человека**, один из другой команды.\n",
+                     "Запрошены ревьюеры: максимум **2 человека**, один из другой команды.\n",
+                     "Запрошены ревьюеры: минимум, **2 человека**, один из другой команды.\n"):
+            self.assertEqual(len(hedge(cf.compare(a, edit))), 1, edit)
+
+    def test_two_people_who_share_a_word_are_two_owners(self):
+        # «Анна Иванова» and «Анна Петрова» have a first name and nothing else in common: a mention
+        # by the surname is one of them, and the amounts of the two can be exchanged.
+        a = "В отделе Анна Иванова и Анна Петрова. Иванова получила 30 рублей. Петрова получила 50 рублей."
+        intro = "В отделе Анна Иванова и Анна Петрова. "
+        self.assertIn("swap", kinds(cf.compare(a, intro + "Иванова получила 50 рублей. Петрова получила 30 рублей.")))
+        self.assertEqual(cf.compare(a, intro + "Петрова получила 50 рублей. Иванова получила 30 рублей.")["errors"], [])
+        # in one sentence, and with the surname shared instead of the first name
+        b = "Анна Иванова получила 30 рублей, Анна Петрова — 50 рублей."
+        self.assertIn("swap", kinds(cf.compare(b, "Анна Иванова получила 50 рублей, Анна Петрова — 30 рублей.")))
+        c = "Анна Иванова получила 30 рублей, Борис Иванов — 50 рублей."
+        self.assertIn("swap", kinds(cf.compare(c, "Анна Иванова получила 50 рублей, Борис Иванов — 30 рублей.")))
+        # a word that fits both of them names nobody: no owner, no swap (the lost surnames are another error)
+        self.assertNotIn("swap", kinds(cf.compare(b, "Анна получила 30 рублей, Анна — 50 рублей.")))
+        # Анна Петрова shares a word with each of the others, so only «Борис» and «Иванова» tell people apart
+        d = "В отделе Анна Иванова, Анна Петрова и Борис Петров. Анна Иванова получила 30000 рублей, Борис Петров — 50000 рублей."
+        self.assertEqual(cf.compare(d, d.replace("Борис Петров — 50000", "Петров — 50000"))["errors"], [])
+
+    def test_a_sender_named_in_full_is_not_a_receiver(self):
+        # «от Бориса Петрова»: both words name the sender, not only the first
+        a = "Анна получила 30 000 от Бориса Петрова, Борис Петров — 50 000."
+        self.assertIn("swap", kinds(cf.compare(a, "Анна получила 50 000 от Бориса Петрова, Борис Петров — 30 000.")))
+        b = "Анна получила 30 рублей, Борис — 50 рублей; Анна получила 70 рублей, которые перечислил Борис Петров, как и договаривались."
+        c = "Анна получила 30 рублей, Борис — 50 рублей; Анна получила, как и договаривались, от Бориса Петрова 70 рублей."
+        self.assertEqual(cf.compare(b, c)["errors"], [])
+        # with a patronymic, and the case forms of one person («Анна Иванова», «от Анны Ивановой») are one person
+        d = "Анна получила 30 000 от Бориса Андреевича Петрова, Борис Петров — 50 000."
+        self.assertIn("swap", kinds(cf.compare(d, "Анна получила 50 000 от Бориса Андреевича Петрова, Борис Петров — 30 000.")))
+        e = "Выплаты: Анна Иванова, Борис Петров. Анна Иванова получила 30000 рублей, Борис Петров получил 50000 рублей от Анны Ивановой."
+        self.assertIn("swap", kinds(cf.compare(e, e.replace("Анна Иванова получила 30000", "Иванова получила 50000")
+                                               .replace("получил 50000", "получил 30000"))))
+
+    def test_generated_senders_and_shared_names(self):
+        # Items with a sender after «от» or in a clause of their own, receivers named in full or by
+        # the surname, people who share a first name or a surname: the same facts told another way
+        # are no error, two amounts exchanged are one.
+        people = {"anna": ("Анна Иванова", "Анны Ивановой", "а"), "boris": ("Борис Петров", "Бориса Петрова", ""),
+                  "vera": ("Вера Орлова", "Веры Орловой", "а"), "gleb": ("Глеб Волков", "Глеба Волкова", ""),
+                  "boris3": ("Борис Андреевич Петров", "Бориса Андреевича Петрова", "")}
+
+        def item(shape, receiver, surname_only, amount, sender):
+            name = people[receiver][0].split()[-1] if surname_only else people[receiver][0]
+            got = "получил" + people[receiver][2]
+            return {1: "%s %s %s рублей от %s" % (name, got, amount, people[sender][1]),
+                    2: "%s %s от %s %s рублей" % (name, got, people[sender][1], amount),
+                    3: "%s — %s рублей от %s" % (name, amount, people[sender][1]),
+                    4: "%s %s %s рублей, которые перечислил %s" % (name, got, amount, people[sender][0])}[shape]
+
+        rng = random.Random(4107)
+        quads = [q for q in itertools.product(people, repeat=4)
+                 if q[0] != q[1] and q[2] != q[3] and q[0] != q[2] and q[1] != q[3]
+                 and not {"boris", "boris3"} <= set(q)]
+        for r1, r2, s1, s2 in rng.sample(quads, 40):
+            lead = "Выплаты: %s. " % ", ".join(people[p][0] for p in dict.fromkeys((r1, r2, s1, s2)))
+            before = lead + "%s, %s." % (item(1, r1, False, "30000", s1), item(1, r2, False, "50000", s2))
+            for (sh1, sh2), surname_only in itertools.product(((2, 2), (3, 4), (4, 1), (1, 3)), (False, True)):
+                for amounts, expect_swap in (("30000 50000", False), ("50000 30000", True)):
+                    x, y = amounts.split()
+                    after = lead + "%s, %s." % (item(sh1, r1, surname_only, x, s1), item(sh2, r2, surname_only, y, s2))
+                    got = kinds(cf.compare(before, after))
+                    self.assertEqual("swap" in got, expect_swap, "\n%s\n%s" % (before, after))
+
+    def test_a_sender_is_not_the_one_who_gets_the_amount(self):
+        a = "Анна получила 30 рублей, Борис — 50 рублей; Анна получила, как и договаривались, от Бориса 70 рублей."
+        b = "Анна получила 30 рублей, Борис — 50 рублей; Анна получила 70 рублей, которые перечислил Борис, как и договаривались."
+        self.assertEqual(cf.compare(a, b)["errors"], [])
+        # the amounts of the items still count
+        self.assertIn("swap", kinds(cf.compare(a, a.replace("30 рублей", "50 рублей", 1).replace("— 50 рублей", "— 30 рублей", 1))))
+        # a list where each item says who sent the money: the receiver is the first name of an item
+        c = "Анна получила 30 000 от Глеба, Вера — 7 000 от Дарьи."
+        self.assertEqual(cf.compare(c, "Вера получила 7 000 от Дарьи, Анна — 30 000 от Глеба.")["errors"], [])
+        self.assertIn("swap", kinds(cf.compare(c, "Анна получила 7 000 от Дарьи, Вера — 30 000 от Глеба.")))
+
+    def test_a_person_named_by_first_name_surname_or_both_is_one_owner(self):
+        a = "В отделе Анна Иванова и Борис Петров. Анна получила 30 000, Борис — 50 000."
+        # the same bindings, one person named by the surname: no error
+        self.assertEqual(cf.compare(a, "В отделе Анна Иванова и Борис Петров. Иванова получила 30 000, Борис — 50 000.")["errors"], [])
+        # amounts exchanged, both people named by the surname: an error
+        self.assertIn("swap", kinds(cf.compare(a, "В отделе Анна Иванова и Борис Петров. Иванова получила 50 000, Петров — 30 000.")))
 
     def test_year_of_numeric_date(self):
         self.assertIn("lost", kinds(cf.compare("Срок — 01.02.2026.", "Срок — 01.02.2027.")))
