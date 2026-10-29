@@ -68,6 +68,9 @@ npx skills add Vladimir-Human/humanizer-ru
 /plugin install humanizer-ru@humanizer-ru
 ```
 
+Для каталога плагинов Claude плагин собран под именем `humanizer-russian`; навык везде
+называется `humanizer-ru`.
+
 В Claude.ai скачайте `humanizer-ru-skill.zip` из
 [последнего релиза](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) и
 загрузите в Settings → Capabilities → Skills.

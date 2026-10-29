@@ -168,8 +168,10 @@ class DirectoryTest(unittest.TestCase):
         """A small repository root: the plugin, plus files the directory must not get."""
         root = self.tmp / name
         files = {
-            ".claude-plugin/plugin.json": json.dumps({"name": "x", "repository": "https://github.com/o/r.git",
-                                                      "icon": "./.claude-plugin/icon.png", "skills": "./skills/"}),
+            ".claude-plugin/plugin.json": json.dumps({"name": "x", "displayName": "x", "author": {"name": "x"},
+                                                      "repository": "https://github.com/o/r.git",
+                                                      "icon": "./.claude-plugin/icon.png", "skills": "./skills/"},
+                                                     indent=2),
             ".claude-plugin/icon.png": b"\x89PNG\r\n\x1a\n\0",
             "README.md": "# r\n",
             "README.en.md": "# r\n",
@@ -193,9 +195,19 @@ class DirectoryTest(unittest.TestCase):
                          {".claude-plugin", "skills", "README.md", "README.en.md", "LICENSE"})
         self.assertEqual(sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()), names)
         self.assertIn("skills/humanizer-ru/SKILL.md", names)
-        for rel in names:  # the skill, the manifest and the icon are the repository's own files
-            if rel not in build_directory.DOCS:
+        manifest = build_directory.MANIFEST
+        for rel in names:  # the skill and the icon are the repository's own files
+            if rel not in build_directory.DOCS and rel != manifest:
                 self.assertEqual((out / rel).read_bytes(), (ROOT / rel).read_bytes(), rel)
+        # the manifest differs in the two name lines and nowhere else
+        was = (ROOT / manifest).read_text(encoding="utf-8").split("\n")
+        now = (out / manifest).read_text(encoding="utf-8").split("\n")
+        self.assertEqual(len(was), len(now))
+        self.assertEqual([b.strip() for a, b in zip(was, now) if a != b],
+                         ['"name": "%s",' % build_directory.DIRECTORY_NAME,
+                          '"displayName": "%s",' % build_directory.DIRECTORY_NAME])
+        self.assertEqual(json.loads("\n".join(now)).get("name"), "humanizer-russian")
+        self.assertEqual(json.loads("\n".join(was)).get("name"), "humanizer-ru")  # main keeps its name
 
     def test_readme_link_to_eval_becomes_absolute(self):
         out = self.tmp / "tree"
@@ -222,6 +234,20 @@ class DirectoryTest(unittest.TestCase):
         with self.assertRaises(SystemExit):  # and so is one that climbs out of the repository
             fix("[a](../repo/README.md)")
 
+    def test_directory_name_replaces_only_the_two_name_fields(self):
+        sample = ('{\n  "name": "humanizer-ru",\n  "displayName": "humanizer-ru",\n'
+                  '  "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},\n'
+                  '  "homepage": "https://github.com/Vladimir-Human/humanizer-ru"\n}\n')
+        got = build_directory.rename_plugin(sample)
+        self.assertEqual(got, sample.replace('"name": "humanizer-ru"', '"name": "humanizer-russian"')
+                         .replace('"displayName": "humanizer-ru"', '"displayName": "humanizer-russian"'))
+        self.assertIn('"author": {"name": "Vladimir-Human"', got)  # the publisher is not renamed
+        self.assertIn("Vladimir-Human/humanizer-ru\"", got)  # the links keep the repository name
+        with self.assertRaises(SystemExit):  # a manifest without displayName is not guessed at
+            build_directory.rename_plugin(sample.replace('  "displayName": "humanizer-ru",\n', ""))
+        with self.assertRaises(SystemExit):  # nor one with the key twice
+            build_directory.rename_plugin(sample.replace('  "homepage"', '  "name": "again",\n  "homepage"'))
+
     def test_caches_and_a_folder_with_files_are_refused(self):
         root = self._repo("repo", {"skills/humanizer-ru/scripts/__pycache__/a.cpython-312.pyc": b"x",
                                    "skills/humanizer-ru/scripts/b.pyc": b"x"})
@@ -245,6 +271,14 @@ class DirectoryTest(unittest.TestCase):
             ("a link to nowhere", None, write("README.md", b"[a](nowhere.md)\n"), "ссылка"),
             ("a changed icon", None, write(".claude-plugin/icon.png", b"\x89PNG\r\n\x1a\n\0\1"), "иконка отличается"),
             ("a manifest that points at a missing folder", None, lambda out: shutil.rmtree(out / "skills"), "ведёт на"),
+            ("a manifest with the repository's own name", None,
+             lambda out: (out / build_directory.MANIFEST).write_text(
+                 (out / build_directory.MANIFEST).read_text(encoding="utf-8").replace(
+                     build_directory.DIRECTORY_NAME, "x"), encoding="utf-8"), "не совпадает с plugin.json"),
+            ("a manifest that differs by more than the name", None,
+             lambda out: (out / build_directory.MANIFEST).write_text(
+                 (out / build_directory.MANIFEST).read_text(encoding="utf-8").replace(
+                     "https://github.com/o/r.git", "https://example.com/r"), encoding="utf-8"), "не совпадает с plugin.json"),
             ("a file over 256 KiB", {"skills/humanizer-ru/big.md": "x" * (256 * 1024 + 1)}, None, "больше 256"),
             ("a binary that is not the icon", {"skills/humanizer-ru/blob.bin": b"\0\1"}, None, "двоичный"),
             ("more files than the portal screens", many, None, "только первые"),
