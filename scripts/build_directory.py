@@ -8,6 +8,10 @@
 #          than 1800 files) are not what a reviewer holds the listing for.
 # SCOPE: building and checking the tree. Making the branch is the git recipe in AGENTS.md. A README
 #        link to a path that is not in the tree becomes an absolute link to that path on main.
+#        The tree's plugin.json gets the directory's own name (DIRECTORY_NAME): the portal holds
+#        the name humanizer-ru as a look-alike of other plugins named humanizer, and passes
+#        humanizer-russian (portal Validate, 2026-10-29). main and the GitHub marketplace keep
+#        humanizer-ru.
 # DEPENDS: Python 3.8+ stdlib.
 # LINKS: M-BUILD-DIRECTORY; V-M-BUILD-DIRECTORY; R-DIRECTORY.
 # END_MODULE_CONTRACT
@@ -15,9 +19,11 @@
 # listing: the files of the plugin tree (relative paths with /) for a repository root.
 # map_links: apply a function to the target of every inline markdown link outside code fences.
 # rewrite_links: a relative link that leaves the tree becomes an absolute link to main on GitHub.
+# rename_plugin: plugin.json text with name and displayName set to DIRECTORY_NAME, every other byte kept.
 # build: write the tree into an empty folder, return the file list.
 # verify: list of problems for a built tree (files that should not be there or are missing, CRLF,
-#         binaries, links that lead nowhere, the icon named in another file, the directory's limits).
+#         binaries, links that lead nowhere, a plugin.json that differs from the repository's by more
+#         than the name, the icon named in another file, the directory's limits).
 # main: CLI; exit 0 when the tree is built and clean, 1 with problems printed.
 # END_MODULE_MAP
 from __future__ import annotations
@@ -33,6 +39,7 @@ MANIFEST = ".claude-plugin/plugin.json"
 FILES = (MANIFEST, ".claude-plugin/icon.png", "README.md", "README.en.md", "LICENSE")
 SKILL = "skills/humanizer-ru"
 DOCS = ("README.md", "README.en.md")  # the files whose links are made to resolve inside the tree
+DIRECTORY_NAME = "humanizer-russian"  # plugin name and displayName in the tree, see SCOPE
 LINK_REF = "main"
 MAX_FILES = 512  # the portal screens the first 512 files by path
 MAX_BYTES = 256 * 1024  # and reads a file that is not an image only up to this size
@@ -78,6 +85,16 @@ def rewrite_links(text: str, rel: str, root: Path, base: str, names) -> str:
 
 
 # START_BLOCK_BUILD
+def rename_plugin(text: str) -> str:
+    """plugin.json for the directory: name and displayName replaced, every other byte kept."""
+    for key in ("name", "displayName"):
+        # two spaces and the key at the start of the line: the author's "name" sits inside a line
+        text, n = re.subn(r'^(  "%s": ")[^"]*(")' % key, r"\g<1>%s\g<2>" % DIRECTORY_NAME, text, flags=re.M)
+        if n != 1:
+            raise SystemExit("%s: поле %s должно быть одно, а найдено %d" % (MANIFEST, key, n))
+    return text
+
+
 def listing(root: Path) -> list:
     names: list = list(FILES)
     for p in sorted((root / SKILL).rglob("*")):
@@ -98,6 +115,8 @@ def build(out: Path, root: Path = ROOT) -> list:
         data = (root / rel).read_bytes()
         if rel in DOCS:
             data = rewrite_links(data.decode("utf-8"), rel, root, base, keep).encode("utf-8")
+        elif rel == MANIFEST:
+            data = rename_plugin(data.decode("utf-8")).encode("utf-8")
         dst = out / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_bytes(data)
@@ -122,6 +141,13 @@ def verify(out: Path, root: Path = ROOT) -> list:
     except (OSError, ValueError):
         plugin = {}
         problems.append("%s не читается" % MANIFEST)
+    try:
+        source = json.loads((root / MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        source = {}
+    if plugin != dict(source, name=DIRECTORY_NAME, displayName=DIRECTORY_NAME):
+        problems.append("%s: не совпадает с plugin.json репозитория, допустимо отличие только в name и displayName (%s)"
+                        % (MANIFEST, DIRECTORY_NAME))
     icon = posixpath.normpath(plugin["icon"]) if isinstance(plugin.get("icon"), str) and plugin["icon"] else ""
     for key in ("icon", "skills"):  # the manifest points at files the tree must have
         value = plugin.get(key)
