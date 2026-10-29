@@ -78,8 +78,27 @@ python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place
 names and links, flipped negations, swapped amounts, weakened or strengthened claims and lost
 HTML tags. `clean_paste.py` removes chat-paste leftovers: contentReference, 【N†source】,
 `utm_source=chatgpt.com` tails, invisible characters. The scripts work only on the files they
-are given (`clean_paste.py` rewrites a file only with `--in-place`), do not use the network and
-do not start other programs.
+are given, do not use the network and do not start other programs. `clean_paste.py` rewrites a
+file only with `--in-place`, and only when it found paste leftovers; first it saves a copy of the
+original next to it with `.bak` added to the name. Python 3.8 or newer is needed.
+
+## Data and privacy
+
+The plugin collects and sends nothing and keeps no data of its own: it has no MCP servers, hooks
+or network calls. The text you paste is processed by Claude like any chat message. An agent with
+a terminal saves the original and the edit as temporary files outside your project, runs
+`check_facts.py` and deletes them. The scripts write nothing else: only the cleaned file and its
+`.bak` copy.
+
+## Troubleshooting
+
+- The skill stays silent: say «очеловечь» and paste the text, or name the skill `humanizer-ru`.
+- `python` is not found: on Windows try `py`. Without Python the skill still works; the agent
+  checks the facts by hand.
+- The fact check reports an error that is not real: that is a script defect, please send the
+  example to [Issues](https://github.com/Vladimir-Human/humanizer-ru/issues).
+- Claude.ai does not accept the file: upload `humanizer-ru-skill.zip` from the release as it is,
+  without unpacking it.
 
 ## AI detectors
 
