@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "humanizer-ru",
-  "displayName": "humanizer-ru",
+  "name": "humanizer-russian",
+  "displayName": "humanizer-russian",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived.",
   "version": "4.1.6",
   "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},

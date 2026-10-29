@@ -20,6 +20,9 @@ Claude Code plugin:
 /plugin install humanizer-ru@humanizer-ru
 ```
 
+For Claude's plugin directory the plugin is built under the name `humanizer-russian`; the skill is
+called `humanizer-ru` everywhere.
+
 Claude.ai: download `humanizer-ru-skill.zip` from the
 [latest release](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) and upload it
 in Settings → Capabilities → Skills.
