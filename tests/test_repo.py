@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: The repository checks pass on the real tree and fail on broken copies; the zip has
-#          the layout Claude.ai expects.
-# LINKS: V-M-CHECK-REPO; V-M-BUILD-ZIP; V-M-CHECK-SCRIPTS.
+#          the layout Claude.ai expects; the tree for the plugin directory is the plugin and
+#          nothing else, and its check can fail.
+# LINKS: V-M-CHECK-REPO; V-M-BUILD-ZIP; V-M-BUILD-DIRECTORY; V-M-CHECK-SCRIPTS.
 # END_MODULE_CONTRACT
 import importlib.util
 import json
@@ -59,6 +60,7 @@ def _load(name):
 
 check_repo = _load("check_repo")
 build_zip = _load("build_zip")
+build_directory = _load("build_directory")
 check_scripts = _load("check_scripts")
 
 
@@ -151,6 +153,109 @@ class RepoTest(unittest.TestCase):
         self.assertIn("humanizer-ru/SKILL.md", names)
         self.assertTrue(all(n.startswith("humanizer-ru/") and n.isascii() for n in names))
         self.assertFalse(any("__pycache__" in n for n in names))
+
+
+class DirectoryTest(unittest.TestCase):
+    """The tree for Anthropic's plugin directory: the plugin and nothing else, links that resolve."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def _repo(self, name, extra=None):
+        """A small repository root: the plugin, plus files the directory must not get."""
+        root = self.tmp / name
+        files = {
+            ".claude-plugin/plugin.json": json.dumps({"name": "x", "repository": "https://github.com/o/r.git",
+                                                      "icon": "./.claude-plugin/icon.png", "skills": "./skills/"}),
+            ".claude-plugin/icon.png": b"\x89PNG\r\n\x1a\n\0",
+            "README.md": "# r\n",
+            "README.en.md": "# r\n",
+            "LICENSE": "MIT\n",
+            "skills/humanizer-ru/SKILL.md": "skill\n",
+            "AGENTS.md": "names .claude-plugin/icon.png\n",
+            "eval/evallib.py": "FAL_KEY\n",
+        }
+        files.update(extra or {})
+        for rel, data in files.items():
+            p = root / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_bytes(data if isinstance(data, bytes) else data.encode("utf-8"))
+        return root
+
+    def test_real_tree_is_the_plugin_and_nothing_else(self):
+        out = self.tmp / "tree"
+        names = build_directory.build(out)
+        self.assertEqual(build_directory.verify(out), [])
+        self.assertEqual({n.split("/")[0] for n in names},
+                         {".claude-plugin", "skills", "README.md", "README.en.md", "LICENSE"})
+        self.assertEqual(sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()), names)
+        self.assertIn("skills/humanizer-ru/SKILL.md", names)
+        for rel in names:  # the skill, the manifest and the icon are the repository's own files
+            if rel not in build_directory.DOCS:
+                self.assertEqual((out / rel).read_bytes(), (ROOT / rel).read_bytes(), rel)
+
+    def test_readme_link_to_eval_becomes_absolute(self):
+        out = self.tmp / "tree"
+        build_directory.build(out)
+        for rel in build_directory.DOCS:
+            text = (out / rel).read_text(encoding="utf-8")
+            self.assertNotIn("](eval/", text)
+            self.assertIn("](https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval/)", text)
+
+    def test_links_that_leave_the_tree_become_absolute(self):
+        root = self._repo("repo", {"docs/guide.md": "x\n"})
+        names = set(build_directory.listing(root))
+
+        def fix(text):
+            return build_directory.rewrite_links(text, "README.md", root, "https://github.com/o/r", names)
+        self.assertEqual(fix("[a](eval/)"), "[a](https://github.com/o/r/tree/main/eval/)")
+        self.assertEqual(fix('[a](docs/guide.md#top "t")'),
+                         '[a](https://github.com/o/r/blob/main/docs/guide.md#top "t")')
+        for same in ("[a](README.en.md)", "[a](skills/humanizer-ru/)", "[a](https://x.org/p)", "[a](mailto:a@b.c)",
+                     "[a](#top)", "```\n[a](eval/)\n```"):
+            self.assertEqual(fix(same), same)
+        with self.assertRaises(SystemExit):  # a link to nothing is a bug, not something to hide
+            fix("[a](no/such/path)")
+        with self.assertRaises(SystemExit):  # and so is one that climbs out of the repository
+            fix("[a](../repo/README.md)")
+
+    def test_caches_and_a_folder_with_files_are_refused(self):
+        root = self._repo("repo", {"skills/humanizer-ru/scripts/__pycache__/a.cpython-312.pyc": b"x",
+                                   "skills/humanizer-ru/scripts/b.pyc": b"x"})
+        out = self.tmp / "tree"
+        names = build_directory.build(out, root)
+        self.assertFalse(any("pyc" in n or "__pycache__" in n for n in names))
+        self.assertEqual(build_directory.verify(out, root), [])  # the small tree itself is clean
+        with self.assertRaises(SystemExit):
+            build_directory.build(out, root)  # the folder is no longer empty
+
+    def test_broken_trees_are_caught(self):
+        # The check must be able to fail: each defect is put into a clean tree and must be named.
+        def write(rel, data):
+            return lambda out: (out / rel).write_bytes(data)
+        many = {"skills/humanizer-ru/f%d.md" % i: "x\n" for i in range(520)}
+        cases = [
+            ("a file that is not part of the plugin", None, write("AGENTS.md", b"x\n"), "лишний файл"),
+            ("a missing file", None, lambda out: (out / "LICENSE").unlink(), "файла нет"),
+            ("CRLF line endings", None, write("README.md", b"# r\r\n"), "CRLF"),
+            ("a text file that names the icon", None, write("skills/humanizer-ru/SKILL.md", b"see icon.png\n"), "иконки"),
+            ("a link to nowhere", None, write("README.md", b"[a](nowhere.md)\n"), "ссылка"),
+            ("a changed icon", None, write(".claude-plugin/icon.png", b"\x89PNG\r\n\x1a\n\0\1"), "иконка отличается"),
+            ("a manifest that points at a missing folder", None, lambda out: shutil.rmtree(out / "skills"), "ведёт на"),
+            ("a file over 256 KiB", {"skills/humanizer-ru/big.md": "x" * (256 * 1024 + 1)}, None, "больше 256"),
+            ("a binary that is not the icon", {"skills/humanizer-ru/blob.bin": b"\0\1"}, None, "двоичный"),
+            ("more files than the portal screens", many, None, "только первые"),
+        ]
+        for i, (what, extra, mutate, expected) in enumerate(cases):
+            root = self._repo("repo%d" % i, extra)
+            out = self.tmp / ("tree%d" % i)
+            build_directory.build(out, root)
+            if mutate:
+                mutate(out)
+            self.assertIn(expected, "\n".join(build_directory.verify(out, root)), what)
 
 
 class CheckScriptsTest(unittest.TestCase):
