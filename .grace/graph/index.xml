@@ -21,6 +21,6 @@
   <flows>
     <flow id="DF-SKILL" path="user text -> M-SKILL (clean, anchors, rewrite) -> optional M-CLEAN-PASTE / M-CHECK-FACTS -> edited text + 1-3 notes" />
     <flow id="DF-EVAL" path="briefs -> M-EVAL-CORPUS -> texts; systems.json -> M-EVAL-FETCH -> M-EVAL-RUN (API) or M-EVAL-BATCH (subagents) -> outputs -> M-EVAL-JUDGE (API, dsh:) or M-EVAL-BATCH (subagent judge) -> judgments -> M-EVAL-REPORT -> summary; outputs -> M-EVAL-PATTERNS -> patterns.md" />
-    <flow id="DF-DIRECTORY" path="released main -> M-BUILD-DIRECTORY (links made absolute, verify) -> commit to the git branch directory -> the owner's Validate and Submit in the developer portal, which reads that branch" />
+    <flow id="DF-DIRECTORY" path="released main -> M-BUILD-DIRECTORY (links made absolute, verify) -> commit to the git branch directory -> the owner's Validate and Submit in the developer portal, which reads that branch -> security scan of each new commit -> an Anthropic reviewer, who publishes each version" />
   </flows>
 </graph>
