@@ -32,6 +32,9 @@ humanizer-ru — навык (Agent Skill), который переписывае
 8. После каждого выпуска пересобери ветку `directory` (ниже). Каталог Anthropic читает её, а не
    main: в main лежат `eval/` (читает `FAL_KEY`), заметки с путём к иконке и 1800 файлов, за что
    портал придерживает плагин. Ни один файл дерева, кроме `plugin.json`, не называет иконку.
+   Каталог следит за этой веткой и сканирует каждый её новый коммит (по расписанию или по
+   webhook): коммит в `directory` и есть выпуск в каталог, поэтому кладёшь туда только собранное
+   скриптом и только после выпуска на GitHub.
 
 Перед коммитом:
 
@@ -53,7 +56,7 @@ python scripts/build_directory.py "$TREE"
 claude plugin validate "$TREE" --profile directory --strict
 git fetch origin directory && git worktree add -B directory "$WT" origin/directory
 git -C "$WT" rm -r -q --ignore-unmatch . && cp -r "$TREE"/. "$WT"/
-git -C "$WT" add -A && git -C "$WT" commit -m "directory: humanizer-ru X.Y.Z, собрано из main $(git rev-parse --short HEAD)"
+git -C "$WT" add -A && git -C "$WT" commit -m "humanizer-ru X.Y.Z: plugin-only tree built from main $(git rev-parse --short HEAD)"
 git -C "$WT" push origin directory && git worktree remove --force "$WT"
 ```
 
