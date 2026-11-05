@@ -574,6 +574,24 @@ class CheckFactsTest(unittest.TestCase):
             self.assertEqual(cf.compare(a, b)["errors"], [], a)
         self.assertIn(("lost", "число"), self.errs("Рост в 1.15 раза.", "Рост в 1,16 раза."))
         self.assertIn(("lost", "число"), self.errs("Встреча в 9.30.", "Встреча в 9:40."))
+        # Review of 4.1.7 (Gemini): the pairing works on the facts, so a swap between people stays
+        # visible; it pairs mention by mention; and every pairing is a check, never silent.
+        self.assertIn(("swap", "привязка"), self.errs("Анна получила 1.15, а Борис 2.10.",
+                                                       "Анна получила 2,10, а Борис 1,15."))
+        r = cf.compare("Встреча в 1.15. Коэффициент 1.15.", "Встреча в 1:15. Коэффициент 1,15.")
+        self.assertEqual(r["errors"], [])
+        self.assertEqual(len(r["checks"]), 1)
+        r = cf.compare("Встреча в 1.15.", "Прибыло 1,15 груза.")
+        self.assertIn("не время", " ".join(c["detail"] for c in r["checks"]))
+
+    def test_citation_inside_code_is_code(self):
+        # Review of 4.1.7 (Gemini): clean_paste.py keeps citations inside code, so the check must too.
+        self.assertTrue(cf.compare("В документации написано `[cite: 1]`.", "В документации написано.")["errors"])
+        code = "Пример:\n\n```\nprint('[cite: 2]')\n```\n"
+        self.assertTrue(cf.compare(code, code.replace("[cite: 2]", ""))["errors"] or
+                        cf.compare(code, code.replace("[cite: 2]", ""))["checks"])
+        prose = "```markdown\nПривет, это пост про кофе за 300 рублей [cite: 1].\n```\n"
+        self.assertEqual(cf.compare(prose, cp.clean(prose)[0])["errors"], [])
 
     def test_link_with_parentheses_is_whole(self):
         a = "Подробнее: https://ru.wikipedia.org/wiki/Колос_(значения)."

@@ -674,7 +674,18 @@ def _strip_tracking(text: str) -> str:
         return strip_utm(url[:len(url) - len(tail)])[0] + tail
     # Links first: a zero-width character glued after a link ends it (as in clean_paste.py).
     text = re.sub(URL_RX, fix, text)
-    text = CITATION_RX.sub("", text)
+    # Citation tokens go everywhere except `inline code` and code-like ``` blocks, which are copied
+    # as is (a ``` block of Russian prose is text), as in clean_paste.py: «`[cite: 1]`» lost from an
+    # edit is lost code.
+    def drop_citations(m: "re.Match") -> str:
+        block = m.group(0)
+        if block.startswith("```"):
+            letters = re.findall(r"[A-Za-zА-Яа-яЁё]", block)
+            if sum(1 for x in letters if x > "z") >= 0.3 * max(1, len(letters)):
+                return CITATION_RX.sub("", block)
+            return block
+        return block if block.startswith("`") else ""
+    text = re.sub(r"(?ms)^```[^\n]*\n.*?^```[ \t]*\r?$|`[^`\n]+`|" + CITATION_RX.pattern, drop_citations, text)
     text = INVISIBLE_RX.sub("", text)
     # A zero-width joiner stays only next to an emoji (family, profession emoji), as in clean_paste.py.
     return re.sub("(?<![\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F])\u200d(?![\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F])",
@@ -682,19 +693,36 @@ def _strip_tracking(text: str) -> str:
 
 
 
-def _pair_dot_decimals(mine: Dict[str, List[Fact]], other: Dict[str, List[Fact]]) -> None:
-    """"1.15" reads as a time (1:15), "1,15" as a decimal. When one side has only the dot reading
-    and the other only the decimal of the same digits, they are one number written two ways
-    («коэффициент 1.15» → «коэффициент 1,15», «в 2.10 раза» → «в 2,10 раза»): the dot facts take
-    the decimal value and lose the time unit. A real time keeps its reading: «14.30» → «14:30»."""
-    for value in [v for v in mine if v not in other]:
-        items = mine[value]
-        if not all(f.unit == "время" and "." in f.raw for f in items):
+def _pair_dot_decimals(mine: Facts, other: Facts) -> List[Dict]:
+    """"1.15" reads as a time (1:15), "1,15" as a decimal. Mentions of a dot "time" that the other
+    side lacks are paired, one by one, with decimals of the same digits that this side lacks
+    («коэффициент 1.15» → «коэффициент 1,15», «в 2.10 раза» → «в 2,10 раза»): those facts take the
+    decimal value and lose the time unit, in place, so the bindings block sees the same values on
+    both sides. Each pairing is a check (it may also be a time that became a number). A real time
+    keeps its reading: «14.30» → «14:30»; a time and a coefficient of the same digits pair by count."""
+    def count(facts: Facts, value: str) -> int:
+        return sum(1 for f in facts.items if f.kind == "number" and f.value == value)
+
+    dots: Dict[str, List[int]] = {}
+    for i, f in enumerate(mine.items):
+        if f.kind == "number" and f.unit == "время" and "." in f.raw:
+            dots.setdefault(f.value, []).append(i)
+    checks = []
+    for value, idxs in dots.items():
+        num = _canon_num(mine.items[idxs[0]].raw)
+        if num is None:
             continue
-        num = _canon_num(items[0].raw)
-        alt = _fmt(num) if num is not None else None
-        if alt and alt in other and alt not in mine:
-            mine[alt] = [replace(f, value=alt, unit="") for f in mine.pop(value)]
+        alt = _fmt(num)
+        n = min(count(mine, value) - count(other, value), count(other, alt) - count(mine, alt), len(idxs))
+        if n <= 0:
+            continue
+        twin = next(f.raw for f in other.items if f.kind == "number" and f.value == alt)
+        for i in idxs[len(idxs) - n:]:
+            f = mine.items[i]
+            mine.items[i] = replace(f, value=alt, unit="")
+            checks.append({"kind": "unit", "what": "число",
+                           "detail": "%s и %s сверены как одно число: проверь, что это не время" % (f.raw, twin)})
+    return checks
 
 
 # START_CONTRACT: compare
@@ -706,7 +734,7 @@ def _pair_dot_decimals(mine: Dict[str, List[Fact]], other: Dict[str, List[Fact]]
 def compare(before: str, after: str) -> Dict:
     fb, fa = extract(before), extract(after, edited=True)
     errors: List[Dict] = []
-    checks: List[Dict] = []
+    checks: List[Dict] = _pair_dot_decimals(fb, fa) + _pair_dot_decimals(fa, fb)
 
     # START_BLOCK_NUMBERS_DIFF
     def bag(facts: Facts, kind: str) -> Dict[str, List[Fact]]:
@@ -721,9 +749,6 @@ def compare(before: str, after: str) -> Dict:
               "after": bool(re.search(one_rx, _norm(after.lower())))}
     for kind, label in (("number", "число"), ("date", "дата")):
         bb, ba = bag(fb, kind), bag(fa, kind)
-        if kind == "number":
-            _pair_dot_decimals(bb, ba)
-            _pair_dot_decimals(ba, bb)
         for value, items in bb.items():
             missing = len(items) - len(ba.get(value, []))
             if missing > 0 and value not in ba:
