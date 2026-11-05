@@ -45,11 +45,11 @@ thresholds were written down before the texts existed.
 Latest run, 4.1.1: 24 fresh AI texts from eleven models that the skill had never seen, plus
 six human "trap" texts.
 
-| Participant | Stars on 2026-10-28 | Mean place of 5 | Ours ranked higher | Texts with a meaning error, of 24 |
+| Participant | Stars on 2026-11-05 | Mean place of 5 | Ours ranked higher | Texts with a meaning error, of 24 |
 |---|---|---|---|---|
-| **humanizer-ru 4.1.1** | 134 | **2.38** | — | 2 |
-| ilyautov/humanizer-ru | 493 | 3.10 | 65% | 2 |
-| ormeilu/avoid-ai-writing-russian | 23 | 3.18 | 69% | 9 |
+| **humanizer-ru 4.1.1** | 140 | **2.38** | — | 2 |
+| ilyautov/humanizer-ru | 521 | 3.10 | 65% | 2 |
+| ormeilu/avoid-ai-writing-russian | 27 | 3.18 | 69% | 9 |
 | one-line prompt, no skill | — | 3.74 | 77% | 8 |
 
 The fifth participant was a new variant of our instructions from three tuning cycles. It did
@@ -57,6 +57,12 @@ not beat the previous instructions (49% of comparisons, same number of errors), 
 not ship it. Gemini and Kimi rank humanizer-ru above both rivals; Muse Spark ranks it above
 avoid-ai-writing-russian and level with ilyautov. The skill left all six trap texts intact;
 the one-line prompt damaged three.
+
+How much of this is chance: a bootstrap over texts (`report.py`, since 4.1.7) gives 95% intervals
+of 52–78% above ilyautov, 58–81% above avoid-ai-writing-russian and 67–85% above the one-line
+prompt, all clear of 50%. The variants of our own instructions that did not ship (49%, 42%, 46%)
+cannot be told apart from 4.1.1 by these runs: their intervals hold 50%. The instructions have not
+changed since 4.1.1; 4.1.2–4.1.7 changed the fact-check and paste-cleanup scripts.
 
 A fresh reduced run on 21.10.2026 (`final4`): 12 new texts by GPT-6.1 Sol and Gemini 4 Argon,
 Sonnet 5.5 as the executor, places by Gemini 4 Argon and Claude Opus 5.5. humanizer-ru 4.1.1 came

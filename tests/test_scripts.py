@@ -545,6 +545,44 @@ class CheckFactsTest(unittest.TestCase):
         b = "Анна и Борис пришли. Иванова получила 50 рублей. Петров получил 30 рублей."
         self.assertIn(("swap", "привязка"), self.errs(a, b))
 
+    def test_removed_paste_leftovers_are_not_lost_facts(self):
+        # 4.1.7: SKILL.md step 1 removes [cite: N] and invisible characters; the check read the
+        # citation number as a lost number and the soft hyphen as a changed quote.
+        for a, b in (("Тестирование системы [cite: 1] прошло успешно.", "Тестирование системы прошло успешно."),
+                     ("[cite_start]Продажи выросли на 12% [cite: 3].", "Продажи выросли на 12%."),
+                     ("Рост [oaicite:7] на 5%【3†source】.", "Рост на 5%."),
+                     ("Он ответил: «Побе\u00adда!».", "Он ответил: «Победа!»."),
+                     ("В 20\u200b26 году.", "В 2026 году.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        # a real change behind the same leftovers is still seen
+        self.assertIn(("lost", "число"), self.errs("Рост на 12% [cite: 3].", "Рост на 15%."))
+
+    def test_clean_paste_output_passes_the_check(self):
+        # The two scripts agree: what clean_paste.py removes is never a lost fact for check_facts.py.
+        for src in ("Итог :contentReference[oaicite:2]{index=2} — 30 000 ₽ до 15 декабря.",
+                    "См. [Колос](https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com) [cite: 4].",
+                    "Ве\u00adбинар в 19:00\u200b, запись https://a.ru/w?utm_source=openai\u2060.",
+                    "[cite_start]Срок — 2 недели, «не позже 1 марта»[cite: 1, 2]."):
+            self.assertEqual(cf.compare(src, cp.clean(src)[0])["errors"], [], src)
+
+    def test_dot_decimal_rewritten_with_comma_is_the_same_number(self):
+        # 4.1.7: «1.15» was read as the time 1:15, so «1,15» looked like a new number.
+        for a, b in (("Коэффициент 1.15 для всех.", "Коэффициент 1,15 для всех."),
+                     ("Рост в 2.10 раза.", "Рост в 2,10 раза."),
+                     ("Рост в 2,10 раза.", "Рост в 2.10 раза."),
+                     ("Встреча в 14.30.", "Встреча в 14:30.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        self.assertIn(("lost", "число"), self.errs("Рост в 1.15 раза.", "Рост в 1,16 раза."))
+        self.assertIn(("lost", "число"), self.errs("Встреча в 9.30.", "Встреча в 9:40."))
+
+    def test_link_with_parentheses_is_whole(self):
+        a = "Подробнее: https://ru.wikipedia.org/wiki/Колос_(значения)."
+        self.assertEqual(cf.compare(a, a)["errors"], [])
+        r = cf.compare(a, "Подробнее: https://ru.wikipedia.org/wiki/Колос_(растение).")
+        self.assertIn("https://ru.wikipedia.org/wiki/Колос_(значения)", {e["detail"] for e in r["errors"]})
+        # a parenthesis around the link is not part of it
+        self.assertEqual(cf.compare("(см. https://a.ru/x)", "См. https://a.ru/x.")["errors"], [])
+
 
 class CleanPasteTest(unittest.TestCase):
     def test_utm_tail_in_markup_html_and_before_invisible(self):
@@ -620,6 +658,15 @@ class CleanPasteTest(unittest.TestCase):
     def test_clean_text_untouched(self):
         src = "Обычный текст — с тире, «ёлочками» и ссылкой https://a.ru/x?id=2."
         self.assertEqual(cp.clean(src), (src, {}))
+
+    def test_utm_tail_after_parentheses_in_link(self):
+        # 4.1.7: the link pattern stopped at ")", so the tail after "(значения)" stayed.
+        for src, want in (("https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com",
+                           "https://ru.wikipedia.org/wiki/Колос_(значения)"),
+                          ("[Колос](https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com).",
+                           "[Колос](https://ru.wikipedia.org/wiki/Колос_(значения))."),
+                          ("(см. https://a.ru/x?utm_source=chatgpt.com)", "(см. https://a.ru/x)")):
+            self.assertEqual(cp.clean(src)[0], want, src)
 
 
 if __name__ == "__main__":

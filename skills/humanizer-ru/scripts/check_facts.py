@@ -26,7 +26,9 @@
 #          ban stayed as another negation, a number that lost its
 #          unit, a code-like ``` block that changed.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
-#          author utm tag is a lost link.
+#          author utm tag is a lost link. The source and the edit are both read without chat
+#          citation tokens and invisible characters (the set clean_paste.py removes), and a dot
+#          "time" that the other side writes as a decimal of the same digits is that number.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -57,7 +59,7 @@ import json
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit, urlunsplit
 
@@ -136,7 +138,16 @@ MONTH_STEM = {m[:3]: i for i, m in enumerate(
     "янв фев мар апр мая июн июл авг сен окт ноя дек".split(), 1)}
 MONTH_STEM["май"] = 5
 # Links with a scheme or www.; zero-width characters end a link (a paste can glue them on).
-URL_RX = r"(?:https?://|www\.)[^\s<>«»\"')\]`%s]+" % "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
+# A closing parenthesis ends a link unless it closes one opened inside it:
+# https://ru.wikipedia.org/wiki/Колос_(значения) is whole, "(см. https://a.ru)" stops at a.ru.
+_ZW = "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
+URL_RX = (r"(?:https?://|www\.)(?:\([^\s<>«»\"'()\]`%s]*\)|[^\s<>«»\"')\]`%s])+" % (_ZW, _ZW))
+# Chat citation tokens and invisible characters, the same set clean_paste.py removes: the source is
+# read without them, so a removed "[cite: 1]" is not a lost number and a soft hyphen inside a quoted
+# word or a zero-width space inside "20\u200b26" do not count as a change.
+CITATION_RX = re.compile(r":?contentReference\[oaicite:\d+\]\{index=\d+\}|\[oaicite:\d+\]"
+                         r"|【\d+(?::\d+)?(?:†[^】\n]{0,80})?】|\[cite_start\]|\[cite(?:_end)?(?::\s*[\d,\s]+)?\]")
+INVISIBLE_RX = re.compile("[\u200b\u2060\ufeff\u00ad\u200e\u200f\u202a-\u202e\u2066-\u2069\u180e\u200c]")
 # Sentence punctuation and Markdown emphasis after a link are not part of it: **https://a.ru**
 URL_TAIL = ".,;:!?…*_"
 
@@ -661,9 +672,29 @@ def _strip_tracking(text: str) -> str:
         url = m.group(0)
         tail = url[len(url.rstrip(URL_TAIL)):]
         return strip_utm(url[:len(url) - len(tail)])[0] + tail
+    # Links first: a zero-width character glued after a link ends it (as in clean_paste.py).
     text = re.sub(URL_RX, fix, text)
-    return re.sub(r":contentReference\[oaicite:\d+\]\{index=\d+\}|【\d+(?::\d+)?†[^】]*】", "", text)
+    text = CITATION_RX.sub("", text)
+    text = INVISIBLE_RX.sub("", text)
+    # A zero-width joiner stays only next to an emoji (family, profession emoji), as in clean_paste.py.
+    return re.sub("(?<![\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F])\u200d(?![\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F])",
+                  "", text)
 
+
+
+def _pair_dot_decimals(mine: Dict[str, List[Fact]], other: Dict[str, List[Fact]]) -> None:
+    """"1.15" reads as a time (1:15), "1,15" as a decimal. When one side has only the dot reading
+    and the other only the decimal of the same digits, they are one number written two ways
+    («коэффициент 1.15» → «коэффициент 1,15», «в 2.10 раза» → «в 2,10 раза»): the dot facts take
+    the decimal value and lose the time unit. A real time keeps its reading: «14.30» → «14:30»."""
+    for value in [v for v in mine if v not in other]:
+        items = mine[value]
+        if not all(f.unit == "время" and "." in f.raw for f in items):
+            continue
+        num = _canon_num(items[0].raw)
+        alt = _fmt(num) if num is not None else None
+        if alt and alt in other and alt not in mine:
+            mine[alt] = [replace(f, value=alt, unit="") for f in mine.pop(value)]
 
 
 # START_CONTRACT: compare
@@ -690,6 +721,9 @@ def compare(before: str, after: str) -> Dict:
               "after": bool(re.search(one_rx, _norm(after.lower())))}
     for kind, label in (("number", "число"), ("date", "дата")):
         bb, ba = bag(fb, kind), bag(fa, kind)
+        if kind == "number":
+            _pair_dot_decimals(bb, ba)
+            _pair_dot_decimals(ba, bb)
         for value, items in bb.items():
             missing = len(items) - len(ba.get(value, []))
             if missing > 0 and value not in ba:

@@ -4,6 +4,7 @@
 # PURPOSE: Run every compared system on every corpus text with one executor model, the way an
 #          agent uses a triggered skill: SKILL.md in the system prompt, other skill files
 #          readable through a read_file tool, scripts unavailable. Same user request for all.
+#          An executor without tool calls ("dsh:" free routes) gets the other files in the prompt.
 # SCOPE: writes eval/results/<run>/outputs/<system>/<id>.txt and runs.jsonl; resumable.
 # DEPENDS: evallib (chat, ledger), eval/systems.json, eval/corpus/index.json + texts,
 #          eval/.cache/systems/<name>/ (fetch_systems.py) and skills/humanizer-ru for "ours".
@@ -12,6 +13,7 @@
 # START_MODULE_MAP
 # REQUEST: the user message shared by all systems.
 # load_system: system prompt + readable files for one system.
+# inline_system: the same prompt with the other files in it, for executors without tool calls.
 # run_one: tool loop (read_file) until a final answer; returns text and metadata.
 # main: CLI --run --set --systems --texts --executor --workers.
 # END_MODULE_MAP
@@ -54,6 +56,25 @@ def load_system(sysdef: dict):
     others = [f for f in files if f != "SKILL.md"]
     system = PREAMBLE.format(files=", ".join(["SKILL.md"] + others), skill=skill.strip())
     return system, files
+
+
+READ_TOOL = "можно прочитать инструментом read_file (путь относительно папки skill/)"
+READ_INLINE = "приведены ниже целиком, каждый в теге <файл>"
+
+
+# START_CONTRACT: inline_system
+# PURPOSE: A system prompt for an executor without tool calls (the free DSH routes): the skill's
+#          other files go into the prompt in full, so every system still sees all its .md files.
+# INPUTS: system prompt from load_system, its readable files.
+# OUTPUTS: system prompt with the files appended; unchanged when there are no other files.
+# END_CONTRACT: inline_system
+def inline_system(system: str, files: dict) -> str:
+    others = [f for f in sorted(files) if f != "SKILL.md"]
+    if not others:
+        return system
+    assert READ_TOOL in system, "PREAMBLE changed: update READ_TOOL"
+    system = system.replace(READ_TOOL, READ_INLINE)
+    return system + "".join('\n\n<файл path="%s">\n%s\n</файл>' % (f, files[f].strip()) for f in others)
 
 
 # START_CONTRACT: run_one
@@ -117,6 +138,9 @@ def main() -> int:
 
     for sysdef in systems:
         system, files = load_system(sysdef)
+        if args.executor.startswith(lib.DSH_PREFIX):
+            # The free DSH routes take no tool calls: all skill files go into the prompt instead.
+            system, files = inline_system(system, files), {}
         todo = [i for i in ids if not (run_dir / "outputs" / sysdef["name"] / (i + ".txt")).exists()]
 
         def work(tid, sysdef=sysdef, system=system, files=files):

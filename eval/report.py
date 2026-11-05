@@ -7,11 +7,12 @@
 #        (--out renames them; --judges keeps only the passes of the named judges;
 #        --rank-judges takes places from some judges and fact votes from all).
 # DEPENDS: evallib; skills/humanizer-ru/scripts/check_facts.py (imported by path).
-# LINKS: M-EVAL-REPORT; DF-EVAL; V-M-EVAL; R-EVAL-RANK-JUDGES.
+# LINKS: M-EVAL-REPORT; DF-EVAL; V-M-EVAL; R-EVAL-RANK-JUDGES; R-EVAL-NOISE.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # load: judgments with a valid ranking, corpus index, outputs.
 # aggregate: per-system positions, first places, pairwise wins, send_as_is, fact flags.
+# share_interval: 95% paired bootstrap interval over texts for a share "a above b" (R-EVAL-NOISE).
 # fact_flag: one vote per judge, the error counts on a majority of judges.
 # thresholds: usefulness criteria for "ours" (rule set 2, see README).
 # render: Markdown summary.
@@ -22,6 +23,7 @@ import argparse
 import difflib
 import importlib.util
 import json
+import random
 import sys
 from collections import Counter, defaultdict
 
@@ -120,6 +122,51 @@ def aggregate(rows, ids, outputs, sources, rank_judges=None):
     return table, pair, notes
 
 
+# START_CONTRACT: share_interval
+# PURPOSE: How far the share "a above b" can move by chance: a paired bootstrap over texts.
+# INPUTS: judgment rows with a ranking, text ids, systems a and b, rank_judges (None = all),
+#         rounds, seed (fixed, so the same judgments always give the same interval).
+# OUTPUTS: (low, high) of the 95% percentile interval, or None with fewer than 2 texts.
+# RULE: the text is the unit of chance (passes and judges of one text are not independent), so
+#       texts are drawn with replacement and the share is computed exactly as in aggregate: the
+#       mean over judges of each judge's mean over its passes. An interval that holds 0.5 means
+#       the run cannot tell a and b apart; the pass/fail thresholds themselves stay as fixed.
+# END_CONTRACT: share_interval
+def share_interval(rows, ids, a, b, rank_judges=None, rounds=2000, seed=0):
+    by = defaultdict(lambda: defaultdict(list))  # judge -> text -> [1 if a above b else 0]
+    for r in rows:
+        rank = r.get("ranking") or []
+        if r["id"] not in ids or a not in rank or b not in rank:
+            continue
+        if rank_judges is not None and r["judge"] not in rank_judges:
+            continue
+        by[r["judge"]][r["id"]].append(1 if rank.index(a) < rank.index(b) else 0)
+    texts = sorted({t for d in by.values() for t in d})
+    if len(texts) < 2:
+        return None
+
+    def share(sample):
+        means = []
+        for d in by.values():
+            v = [x for t in sample for x in d.get(t, ())]
+            if v:
+                means.append(sum(v) / len(v))
+        return sum(means) / len(means) if means else None
+
+    rng = random.Random(seed)
+    vals = sorted(s for s in (share([rng.choice(texts) for _ in texts]) for _ in range(rounds)) if s is not None)
+    return vals[int(0.025 * (len(vals) - 1))], vals[int(round(0.975 * (len(vals) - 1)))]
+
+
+def _with_interval(share, ci):
+    """"46%" → "46% (95%: 33–58%, не отличить от 50%)"."""
+    if ci is None:
+        return "%.0f%%" % (100 * share)
+    lo, hi = ci
+    verdict = "не отличить от 50%" if lo <= 0.5 <= hi else ("выше 50%" if lo > 0.5 else "ниже 50%")
+    return "%.0f%% (95%%: %.0f–%.0f%%, %s)" % (100 * share, 100 * lo, 100 * hi, verdict)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
@@ -198,10 +245,24 @@ def main() -> int:
         if args.ours in table:
             md.append("Доля сравнений, где `%s` выше соперника:" % args.ours)
             md.append("")
+            cis = {}
             for s in sorted(table):
                 if s != args.ours and ("%s>%s" % (args.ours, s)) in pair:
-                    md.append("- %s: %.0f%%" % (s, 100 * pair["%s>%s" % (args.ours, s)]))
+                    cis[s] = share_interval(rows, set(ids), args.ours, s, rank_judges)
+                    md.append("- %s: %s" % (s, _with_interval(pair["%s>%s" % (args.ours, s)], cis[s])))
+            result["groups"][gname]["pairwise_ci"] = {"%s>%s" % (args.ours, s): (list(ci) if ci else None)
+                                                      for s, ci in cis.items()}
             md.append("")
+            md.append("В скобках 95%% интервал: тексты выбраны заново с повторами %d раз (бутстрэп по текстам). "
+                      "Если интервал включает 50%%, этот прогон не различает двух участников." % 2000)
+            md.append("")
+        missing = {s: sorted(t for t in ids if (s, t) not in outputs) for s in table}
+        missing = {s: v for s, v in missing.items() if v}
+        if missing:
+            md.append("**Нет правки:** %s. Такие тексты не входят в места и доли этой системы." % "; ".join(
+                "%s — %s" % (s, ", ".join(v)) for s, v in sorted(missing.items())))
+            md.append("")
+            result["groups"][gname]["missing_outputs"] = missing
     # Thresholds for ours (AI texts + traps).
     ai = result["groups"].get("ai", {})
     tr = result["groups"].get("trap", {})
@@ -220,20 +281,25 @@ def main() -> int:
         cmp = ", и не больше, чем у самого аккуратного из остальных (%s: %d)" % (careful, errs[careful]) if careful else ""
         checks = [("Тексты с ошибкой смысла (большинство судей): не больше %d на %d ИИ-текстов%s"
                    % (limit, len(ai["ids"]), cmp), ok_err, "%d" % n_err)]
+        def shown(other):
+            # The verdict below is the fixed threshold; the interval only says how sure the run is.
+            share = ai["pairwise"].get("%s>%s" % (args.ours, other), 0)
+            return share, _with_interval(share, share_interval(rows, set(ai["ids"]), args.ours, other, rank_judges))
+
         if args.baseline in ai["table"]:
-            share = ai["pairwise"].get("%s>%s" % (args.ours, args.baseline), 0)
-            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", share >= 0.6, "%.0f%%" % (100 * share)))
+            share, text = shown(args.baseline)
+            checks.append(("Выше простой просьбы хотя бы в 60% сравнений", share >= 0.6, text))
         else:
             # A tuning run without the baseline must not look as if this threshold had failed or passed.
             checks.append(("Выше простой просьбы хотя бы в 60% сравнений", None, "просьбы в прогоне нет"))
         if best:
-            share = ai["pairwise"].get("%s>%s" % (args.ours, best), 0)
-            checks.append(("Не хуже лучшего конкурента (%s): не меньше 50%%" % best, share >= 0.5, "%.0f%%" % (100 * share)))
+            share, text = shown(best)
+            checks.append(("Не хуже лучшего конкурента (%s): не меньше 50%%" % best, share >= 0.5, text))
         if args.prev in ai["table"]:
-            share = ai["pairwise"].get("%s>%s" % (args.ours, args.prev), 0)
+            share, text = shown(args.prev)
             checks.append(("Не хуже прошлой версии (%s): не меньше 50%% и ошибок смысла не больше (%d)"
                            % (args.prev, errs[args.prev]), share >= 0.5 and n_err <= errs[args.prev],
-                           "%.0f%%, %d" % (100 * share, n_err)))
+                           "%s, %d" % (text, n_err)))
         if tr and args.ours in tr["table"]:
             tt = tr["table"][args.ours]
             ok_traps = sum(1 for tid in tr["ids"] if tid not in tt["texts_with_fact_errors"])

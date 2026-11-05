@@ -157,6 +157,13 @@ def check(root: Path) -> list:
             problems.append("CHANGELOG.md: верхняя запись %s, а в SKILL.md %s" % (m.group(1) if m else None, version))
     else:
         problems.append("нет CHANGELOG.md")
+    # The GRACE requirements name the version they describe (it stayed at 4.1.1 through 4.1.6).
+    # Trees without .grace/ (the directory branch, test copies) have nothing to compare.
+    req = root / ".grace" / "context" / "requirements.xml"
+    if req.exists():
+        m = re.search(r'<requirements\b[^>]*\bversion="([^"]*)"', req.read_text(encoding="utf-8"))
+        if not m or m.group(1) != version:
+            problems.append(".grace/context/requirements.xml: версия %s, а в SKILL.md %s" % (m.group(1) if m else None, version))
     # END_BLOCK_VERSIONS
 
     # START_BLOCK_LISTING
