@@ -56,7 +56,7 @@ ZWJ = 0x200D
 ZWNJ = 0x200C
 # A closing parenthesis ends a link unless it closes one opened inside it, so the utm tail of
 # https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com is seen.
-_ZW = "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
+_ZW = "".join(map(chr, (*INVISIBLE, ZWJ, ZWNJ)))
 URL_RX = (r"(?:https?://|www\.)(?:\([^\s<>«»\"'()\]`%s]*\)|[^\s<>«»\"')\]`%s])+" % (_ZW, _ZW))
 # END_BLOCK_PATTERNS
 

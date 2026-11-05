@@ -552,7 +552,10 @@ class CheckFactsTest(unittest.TestCase):
                      ("[cite_start]Продажи выросли на 12% [cite: 3].", "Продажи выросли на 12%."),
                      ("Рост [oaicite:7] на 5%【3†source】.", "Рост на 5%."),
                      ("Он ответил: «Побе\u00adда!».", "Он ответил: «Победа!»."),
-                     ("В 20\u200b26 году.", "В 2026 году.")):
+                     ("В 20\u200b26 году.", "В 2026 году."),
+                     ("Он приехал в Ка\u00adзань.", "Он приехал в Ка\u00adзань."),
+                     ("Он не работает в выходные, но ра\u00adботает в будни.", "В выходные выходной, но он работает в будни."),
+                     ("Подожди од\u00adну минуту.", "Подожди 1 минуту.")):
             self.assertEqual(cf.compare(a, b)["errors"], [], a)
         # a real change behind the same leftovers is still seen
         self.assertIn(("lost", "число"), self.errs("Рост на 12% [cite: 3].", "Рост на 15%."))
@@ -562,7 +565,11 @@ class CheckFactsTest(unittest.TestCase):
         for src in ("Итог :contentReference[oaicite:2]{index=2} — 30 000 ₽ до 15 декабря.",
                     "См. [Колос](https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com) [cite: 4].",
                     "Ве\u00adбинар в 19:00\u200b, запись https://a.ru/w?utm_source=openai\u2060.",
-                    "[cite_start]Срок — 2 недели, «не позже 1 марта»[cite: 1, 2]."):
+                    "[cite_start]Срок — 2 недели, «не позже 1 марта»[cite: 1, 2].",
+                    "См. https://a.ru/x?utm_source=chatgpt.com[cite: 1].",
+                    "См. https://a.ru/x?utm_source=chatgpt.com【1†source】.",
+                    "См. https://a.ru/x?utm_source=chatgpt.com:contentReference[oaicite:1]{index=1}.",
+                    "См. https://a.ru/x?utm_source=chatgpt.com\u200e."):
             self.assertEqual(cf.compare(src, cp.clean(src)[0])["errors"], [], src)
 
     def test_dot_decimal_rewritten_with_comma_is_the_same_number(self):
@@ -570,10 +577,12 @@ class CheckFactsTest(unittest.TestCase):
         for a, b in (("Коэффициент 1.15 для всех.", "Коэффициент 1,15 для всех."),
                      ("Рост в 2.10 раза.", "Рост в 2,10 раза."),
                      ("Рост в 2,10 раза.", "Рост в 2.10 раза."),
-                     ("Встреча в 14.30.", "Встреча в 14:30.")):
+                     ("Встреча в 14.30.", "Встреча в 14:30."),
+                     ("Выручка 1.50 млн рублей.", "Выручка 1,50 млн рублей.")):
             self.assertEqual(cf.compare(a, b)["errors"], [], a)
         self.assertIn(("lost", "число"), self.errs("Рост в 1.15 раза.", "Рост в 1,16 раза."))
         self.assertIn(("lost", "число"), self.errs("Встреча в 9.30.", "Встреча в 9:40."))
+        self.assertIn(("lost", "число"), self.errs("Выручка 1.50 млн рублей.", "Выручка 1.50 тыс. долларов."))
         # Review of 4.1.7 (Gemini): the pairing works on the facts, so a swap between people stays
         # visible; it pairs mention by mention; and every pairing is a check, never silent.
         self.assertIn(("swap", "привязка"), self.errs("Анна получила 1.15, а Борис 2.10.",
@@ -581,6 +590,12 @@ class CheckFactsTest(unittest.TestCase):
         r = cf.compare("Встреча в 1.15. Коэффициент 1.15.", "Встреча в 1:15. Коэффициент 1,15.")
         self.assertEqual(r["errors"], [])
         self.assertEqual(len(r["checks"]), 1)
+        self.assertEqual(cf.compare("Анна получила коэффициент 1.15. Борис пришёл в 1.15.",
+                                    "Анна получила коэффициент 1,15. Борис пришёл в 1:15.")["errors"], [])
+        self.assertIn(("swap", "привязка"), self.errs("Анна получила коэффициент 1.15. Борис пришёл в 1.15.",
+                                                       "Анна пришла в 1:15. Борис получил коэффициент 1,15."))
+        hc = cf.compare("Коэффициент около 1.15. Встреча в 1.15.", "Коэффициент около 1,15. Встреча в 1:15.")
+        self.assertEqual([c for c in hc["checks"] if c["kind"] == "hedge"], [])
         r = cf.compare("Встреча в 1.15.", "Прибыло 1,15 груза.")
         self.assertIn("не время", " ".join(c["detail"] for c in r["checks"]))
 
@@ -592,6 +607,8 @@ class CheckFactsTest(unittest.TestCase):
                         cf.compare(code, code.replace("[cite: 2]", ""))["checks"])
         prose = "```markdown\nПривет, это пост про кофе за 300 рублей [cite: 1].\n```\n"
         self.assertEqual(cf.compare(prose, cp.clean(prose)[0])["errors"], [])
+        prose_code = "```markdown\nВ документации написано `[cite: 1]` и обычный текст [cite: 2].\n```\n"
+        self.assertEqual(cf.compare(prose_code, "В документации написано `[cite: 1]` и обычный текст.")["errors"], [])
 
     def test_link_with_parentheses_is_whole(self):
         a = "Подробнее: https://ru.wikipedia.org/wiki/Колос_(значения)."
@@ -601,23 +618,35 @@ class CheckFactsTest(unittest.TestCase):
         # a parenthesis around the link is not part of it
         self.assertEqual(cf.compare("(см. https://a.ru/x)", "См. https://a.ru/x.")["errors"], [])
 
-    def test_compound_number_adjectives_table_cells_and_merged_negation(self):
-        # 4.1.7 (found on fresh MiniMax/Sol and final3 outputs): «шестилетний» ↔ «шесть лет» ↔ «6-летний»,
-        # a Markdown table cell («| Не успеваете | Немедленно сообщить |») starts a phrase, and
-        # «без больших порций» → «порции небольшими» keeps the negation as the prefix «не-».
+    def test_compound_number_adjectives_and_merged_negation(self):
+        # 4.1.7 (found on fresh MiniMax/Sol and final3 outputs + Round 3 review):
+        # «шестилетний» ↔ «шесть лет» ↔ «6-летний», «столетний» ↔ «100 лет», «полуторачасовой» ↔ «полутора часов»,
+        # «трёхсуточный» ↔ «3 суток», and «без больших порций» → «порции небольшими» keeps the negation as «не-».
         for a, b in (("Имею шестилетний опыт работы.", "Шесть лет работаю по специальности."),
                      ("Имею шестилетний опыт работы.", "Опыт работы — 6 лет."),
                      ("Трёхдневный курс, 6-летний стаж.", "Курс на 3 дня, стаж шесть лет."),
-                     ("| Ситуация | Действие |\n| Опоздание | Немедленно сообщить старшему смены |",
-                      "Если опаздываете, сразу сообщите старшему смены."),
+                     ("Трёх-дневный курс.", "Курс на 3 дня."),
+                     ("Столетний дуб, стопроцентный результат, девяностолетний юбилей.",
+                      "Дубу 100 лет, результат 100%, юбилей 90 лет."),
+                     ("Полуторачасовой разговор.", "Разговор длился больше полутора часов."),
+                     ("Трёхсуточный марафон.", "Марафон на 3 суток."),
                      ("Хлеб в небольшом количестве. Еда без больших порций. Анализ старше 14 дней.",
                       "Хлеб в небольшом количестве. Порции небольшими. Анализу больше 14 дней.")):
             self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        self.assertEqual(cf.compare("Еда без больших порций.", "Еда небольшими порциями.")["checks"], [])
         self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею пятилетний опыт работы."))
         self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею большой опыт работы."))
-        self.assertIn(("inverted", "отрицание"), self.errs(
-            "Хлеб в небольшом количестве. Еда без больших порций.",
-            "Хлеб в небольшом количестве. Еда с большими порциями."))
+        self.assertIn(("unit", "единица"), self.errs("Марафон на 3 суток.", "Трёхчасовой марафон."))
+        for a, b in (("Хлеб в небольшом количестве. Еда без больших порций.",
+                      "Хлеб в небольшом количестве. Еда с большими порциями."),
+                     ("Еда без больших порций.", "В небольшом зале еда большими порциями."),
+                     ("Прибыль мы не делим.", "Прибыль мы делим в конце недели."),
+                     ("Подошва не скользит на льду.", "Купили несколько пар: подошва скользит на льду."),
+                     ("Переговоры решили не вести.", "Переговоры решили вести у невесты.")):
+            self.assertIn(("inverted", "отрицание"), self.errs(a, b), a)
+        tbl = "| Роль | Фамилия | Выплата |\n| Кассир | Смирнов | 30 000 ₽ |\n| Курьер | Кузнецов | 50 000 ₽ |"
+        self.assertIn(("lost", "имя или название"), self.errs(tbl, "Кассир получил 30 000 ₽, курьер — 50 000 ₽."))
+        self.assertIn(("swap", "привязка"), self.errs(tbl, "Кассир Смирнов получил 50 000 ₽, а курьер Кузнецов — 30 000 ₽."))
 
 
 class CleanPasteTest(unittest.TestCase):
