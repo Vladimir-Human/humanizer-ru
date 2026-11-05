@@ -28,7 +28,10 @@
 #          Links are compared without the chat assistant's utm_source tail only: a lost
 #          author utm tag is a lost link. The source and the edit are both read without chat
 #          citation tokens and invisible characters (the set clean_paste.py removes), and a dot
-#          "time" that the other side writes as a decimal of the same digits is that number.
+#          "time" that the other side writes as a decimal of the same digits is that number;
+#          compound number-unit adjectives («шестилетний», «6-летний») are numbers with their
+#          unit, a Markdown table cell («|») opens a phrase, and a negation merged into the
+#          prefix «не-» («без больших» → «небольшими») is kept.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -119,6 +122,23 @@ WORD_NUM = {
 }
 # "один" counts only inside a compound number: "двадцать один", "сто одну".
 ONE_FORMS = ("один", "одна", "одно", "одну", "одного", "одной", "одному", "одним", "одном")
+# Compound number-unit adjectives ("шестилетний" ↔ "шесть лет" ↔ "6-летний", "трёхдневный" ↔ "3 дня").
+# "одно-" is left out for the same reason as "один": "однодневный поход" → "поход на день" has no "1".
+COMPOUND_NUM = {k: v for k, v in WORD_NUM.items() if k.endswith(("х", "и", "а"))}
+COMPOUND_NUM.update({"ста": 100, "полутора": 1.5})
+COMPOUND_UNIT = {
+    "летн": "год", "годовал": "год", "дневн": "дн", "суточн": "дн", "недельн": "нед", "месячн": "мес",
+    "часов": "ч", "минутн": "мин", "секундн": "с", "процентн": "%", "метров": "м", "километров": "км",
+    "литров": "л", "килограммов": "кг",
+}
+HYPHEN_UNIT_RX = re.compile(r"-(%s)[а-яё]+" % "|".join(sorted(COMPOUND_UNIT, key=len, reverse=True)), re.I)
+COMPOUND_NUM_RX = re.compile(
+    r"(?<![а-яё])(%s)-?(%s)[а-яё]+" % (
+        "|".join(sorted(COMPOUND_NUM, key=len, reverse=True)),
+        "|".join(sorted(COMPOUND_UNIT, key=len, reverse=True)),
+    ),
+    re.I,
+)
 SCALE = {"тыс": 1000, "тыс.": 1000, "тысяча": 1000, "тысячи": 1000, "тысяч": 1000,
          "млн": 10 ** 6, "млн.": 10 ** 6, "миллион": 10 ** 6, "миллиона": 10 ** 6,
          "миллионов": 10 ** 6, "млрд": 10 ** 9, "миллиард": 10 ** 9, "миллиарда": 10 ** 9,
@@ -485,6 +505,11 @@ def extract(text: str, edited: bool = False) -> Facts:
         if um:
             unit = UNIT_CANON.get(um.group(1).lower(), "")
             end = um.end()
+        else:
+            hm = HYPHEN_UNIT_RX.match(_norm(text), end)
+            if hm:
+                unit = COMPOUND_UNIT[hm.group(1).lower()]
+                end = hm.end()
         if unit == "г" and not sc and v == int(v) and 1800 <= v <= 2100:
             unit = "год"  # "2020 г." is a year, not grams
         facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
@@ -522,6 +547,13 @@ def extract(text: str, edited: bool = False) -> Facts:
         facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
                                 m.start(), hedge_before(m.start()), unit))
         taken.append((m.start(), end))
+    for m in COMPOUND_NUM_RX.finditer(norm_text):
+        if free(m.start(), m.end()):
+            v = float(COMPOUND_NUM[m.group(1).lower()])
+            unit = COMPOUND_UNIT[m.group(2).lower()]
+            facts.items.append(Fact("number", _fmt(v), text[m.start():m.end()], sent_of(m.start()),
+                                    m.start(), hedge_before(m.start()), unit))
+            taken.append((m.start(), m.end()))
     # END_BLOCK_NUMBERS
 
     # START_BLOCK_NAMES_QUOTES
@@ -615,11 +647,11 @@ def _negated_near(text: str, start: int, end: int) -> bool:
 
 def _is_initial(text: str, pos: int) -> bool:
     """True when only markup, list markers, emoji or spaces stand between the word and the
-    start of a line or the end of the previous sentence."""
+    start of a line, a Markdown table cell ("|") or the end of the previous sentence."""
     i = pos - 1
     while i >= 0:
         ch = text[i]
-        if ch == "\n" or ch in ".!?…:":
+        if ch == "\n" or ch in ".!?…:|":
             return True
         if ch.isalnum() and not (ch.isdigit() and re.match(r"\d+[.)]", text[i:pos].lstrip())):
             return False
@@ -924,7 +956,11 @@ def compare(before: str, after: str) -> Dict:
         word = f.value
         negated = [m for m in re.finditer(r"(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})", after_norm)
                    if stem_match(m.group(2), word, strict=True)]
-        if negated:
+        # «без больших порций» → «порции небольшими»: the negation joined the word as the prefix «не-».
+        pref_rx = r"(?<![а-яё])не([а-яё]{3,})"
+        pref_b = sum(1 for m in re.finditer(pref_rx, before_norm) if stem_match(m.group(1), word, strict=True))
+        pref_a = sum(1 for m in re.finditer(pref_rx, after_norm) if stem_match(m.group(1), word, strict=True))
+        if negated or pref_a > pref_b:
             continue
         if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
             continue

@@ -601,6 +601,24 @@ class CheckFactsTest(unittest.TestCase):
         # a parenthesis around the link is not part of it
         self.assertEqual(cf.compare("(см. https://a.ru/x)", "См. https://a.ru/x.")["errors"], [])
 
+    def test_compound_number_adjectives_table_cells_and_merged_negation(self):
+        # 4.1.7 (found on fresh MiniMax/Sol and final3 outputs): «шестилетний» ↔ «шесть лет» ↔ «6-летний»,
+        # a Markdown table cell («| Не успеваете | Немедленно сообщить |») starts a phrase, and
+        # «без больших порций» → «порции небольшими» keeps the negation as the prefix «не-».
+        for a, b in (("Имею шестилетний опыт работы.", "Шесть лет работаю по специальности."),
+                     ("Имею шестилетний опыт работы.", "Опыт работы — 6 лет."),
+                     ("Трёхдневный курс, 6-летний стаж.", "Курс на 3 дня, стаж шесть лет."),
+                     ("| Ситуация | Действие |\n| Опоздание | Немедленно сообщить старшему смены |",
+                      "Если опаздываете, сразу сообщите старшему смены."),
+                     ("Хлеб в небольшом количестве. Еда без больших порций. Анализ старше 14 дней.",
+                      "Хлеб в небольшом количестве. Порции небольшими. Анализу больше 14 дней.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею пятилетний опыт работы."))
+        self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею большой опыт работы."))
+        self.assertIn(("inverted", "отрицание"), self.errs(
+            "Хлеб в небольшом количестве. Еда без больших порций.",
+            "Хлеб в небольшом количестве. Еда с большими порциями."))
+
 
 class CleanPasteTest(unittest.TestCase):
     def test_utm_tail_in_markup_html_and_before_invisible(self):
