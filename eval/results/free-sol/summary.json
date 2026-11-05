@@ -1,0 +1,299 @@
+{
+  "run": "free-sol",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "m01",
+        "m02",
+        "m03",
+        "m04",
+        "m05",
+        "m06",
+        "m07",
+        "m08",
+        "m09",
+        "m10",
+        "m11",
+        "m12",
+        "m13",
+        "m14",
+        "m15",
+        "m16",
+        "m17",
+        "m18",
+        "m19",
+        "m20",
+        "m21",
+        "m22",
+        "m23",
+        "m24"
+      ],
+      "table": {
+        "ours": {
+          "mean_position": 1.46,
+          "first_places": 26,
+          "passes": 48,
+          "send_as_is": 8.48,
+          "texts_with_fact_errors": [
+            "m21"
+          ],
+          "texts_flagged_by_any_judge": [
+            "m21",
+            "m23"
+          ],
+          "script_errors": {
+            "m06": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "НДС"
+              }
+            ],
+            "m07": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:00"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "02:15"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "3"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "июня"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "апреле"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "июне"
+              }
+            ],
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "РФ"
+              }
+            ],
+            "m16": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "290"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "350"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Галина"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Фёдоровна"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Смирнова"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Роскосмоса"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.688
+        },
+        "prompt": {
+          "mean_position": 1.54,
+          "first_places": 22,
+          "passes": 48,
+          "send_as_is": 8.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "m11": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКонтакте"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "РФ"
+              }
+            ],
+            "m14": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Деньги"
+              }
+            ],
+            "m15": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не уходя» в правке стоит без отрицания"
+              }
+            ],
+            "m23": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Авито"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Telegram-канала"
+              }
+            ]
+          },
+          "similarity": 0.685
+        }
+      },
+      "pairwise": {
+        "prompt>ours": 0.458,
+        "ours>prompt": 0.542
+      },
+      "fact_notes": {
+        "ours|m21": [
+          "gemini-4-argon: потеряно ограничение «строго» для Python 3.11; потеряна оговорка «ориентировочная производительность»",
+          "gemini-4-argon: опущено усиление «Строго» перед версией Python"
+        ],
+        "ours|m23": [
+          "gemini-4-argon: опущено определение «поступающее» у молока-сырья"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>prompt": [
+          0.375,
+          0.7083333333333334
+        ]
+      }
+    },
+    "trap": {
+      "ids": [
+        "h01",
+        "h02",
+        "h03",
+        "h04",
+        "h05",
+        "h06"
+      ],
+      "table": {
+        "ours": {
+          "mean_position": 1.25,
+          "first_places": 9,
+          "passes": 12,
+          "send_as_is": 10.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "23"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "27"
+              },
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "24"
+              }
+            ]
+          },
+          "similarity": 0.946
+        },
+        "prompt": {
+          "mean_position": 1.75,
+          "first_places": 3,
+          "passes": 12,
+          "send_as_is": 8.33,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.877
+        }
+      },
+      "pairwise": {
+        "ours>prompt": 0.75,
+        "prompt>ours": 0.25
+      },
+      "fact_notes": {},
+      "pairwise_ci": {
+        "ours>prompt": [
+          0.4166666666666667,
+          1.0
+        ]
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 2 на 24 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (prompt: 0)",
+      "ok": false,
+      "value": "1"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": false,
+      "value": "54% (95%: 38–71%, не отличить от 50%)"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 5 из 6",
+      "ok": true,
+      "value": "6 из 6"
+    }
+  ]
+}

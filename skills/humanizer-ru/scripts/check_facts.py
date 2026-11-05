@@ -954,15 +954,17 @@ def compare(before: str, after: str) -> Dict:
                 checks.append({"kind": "negation", "what": "отрицание", "detail": "«%s» не найдено" % f.raw})
             continue
         word = f.value
+        if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
+            continue
         negated = [m for m in re.finditer(r"(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})", after_norm)
                    if stem_match(m.group(2), word, strict=True)]
+        if negated:
+            continue
         # «без больших порций» → «порции небольшими»: the negation joined the word as the prefix «не-».
         pref_rx = r"(?<![а-яё])не([а-яё]{3,})"
         pref_b = sum(1 for m in re.finditer(pref_rx, before_norm) if stem_match(m.group(1), word, strict=True))
         pref_a = sum(1 for m in re.finditer(pref_rx, after_norm) if stem_match(m.group(1), word, strict=True))
-        if negated or pref_a > pref_b:
-            continue
-        if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
+        if pref_a > pref_b:
             continue
         hits = _occurrences(after_norm, word)
         src_hits = _occurrences(before_norm, word)

@@ -239,11 +239,16 @@ class EvalBatchTest(unittest.TestCase):
             lib.write_text(jdir / "answers" / "q01.json", "```json\n%s\n```" % json.dumps(answer, ensure_ascii=False))
             first = batches.collect_judge(d / "run", d / "batch", judge_name)
             again = batches.collect_judge(d / "run", d / "batch", judge_name)
+            batches.prepare_judge(d / "run", d / "texts", d / "batch", judge_name, ["q01"], 6, rnd=1)
+            lib.write_text(d / "batch" / "judge-claude-code-opus-5.5-r1" / "answers" / "q01.json",
+                           json.dumps(answer, ensure_ascii=False))
+            second = batches.collect_judge(d / "run", d / "batch", judge_name, rnd=1)
             rows = [json.loads(x) for x in (d / "run" / "judgments.jsonl").read_text(encoding="utf-8").splitlines()]
         for name in ("ours", "ilyautov"):
             self.assertNotIn(name, seen)
         self.assertIn("Вариант один.", seen)
-        self.assertEqual((first["added"], again["added"], len(rows)), (1, 0, 1))
+        self.assertEqual((first["added"], again["added"], second["added"], len(rows)), (1, 0, 1, 2))
+        self.assertEqual([r["round"] for r in rows], [0, 1])
         self.assertEqual(rows[0]["ranking"], [key["B"], key["C"], key["A"]])
         self.assertEqual(rows[0]["candidates"][key["A"]]["fact_errors"], ["потеряна дата"])
         self.assertEqual(rows[0]["judge"], judge_name)
