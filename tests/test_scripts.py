@@ -545,6 +545,109 @@ class CheckFactsTest(unittest.TestCase):
         b = "Анна и Борис пришли. Иванова получила 50 рублей. Петров получил 30 рублей."
         self.assertIn(("swap", "привязка"), self.errs(a, b))
 
+    def test_removed_paste_leftovers_are_not_lost_facts(self):
+        # 4.1.7: SKILL.md step 1 removes [cite: N] and invisible characters; the check read the
+        # citation number as a lost number and the soft hyphen as a changed quote.
+        for a, b in (("Тестирование системы [cite: 1] прошло успешно.", "Тестирование системы прошло успешно."),
+                     ("[cite_start]Продажи выросли на 12% [cite: 3].", "Продажи выросли на 12%."),
+                     ("Рост [oaicite:7] на 5%【3†source】.", "Рост на 5%."),
+                     ("Он ответил: «Побе\u00adда!».", "Он ответил: «Победа!»."),
+                     ("В 20\u200b26 году.", "В 2026 году."),
+                     ("Он приехал в Ка\u00adзань.", "Он приехал в Ка\u00adзань."),
+                     ("Он не работает в выходные, но ра\u00adботает в будни.", "В выходные выходной, но он работает в будни."),
+                     ("Подожди од\u00adну минуту.", "Подожди 1 минуту.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        # a real change behind the same leftovers is still seen
+        self.assertIn(("lost", "число"), self.errs("Рост на 12% [cite: 3].", "Рост на 15%."))
+
+    def test_clean_paste_output_passes_the_check(self):
+        # The two scripts agree: what clean_paste.py removes is never a lost fact for check_facts.py.
+        for src in ("Итог :contentReference[oaicite:2]{index=2} — 30 000 ₽ до 15 декабря.",
+                    "См. [Колос](https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com) [cite: 4].",
+                    "Ве\u00adбинар в 19:00\u200b, запись https://a.ru/w?utm_source=openai\u2060.",
+                    "[cite_start]Срок — 2 недели, «не позже 1 марта»[cite: 1, 2].",
+                    "См. https://a.ru/x?utm_source=chatgpt.com[cite: 1].",
+                    "См. https://a.ru/x?utm_source=chatgpt.com【1†source】.",
+                    "См. https://a.ru/x?utm_source=chatgpt.com:contentReference[oaicite:1]{index=1}.",
+                    "См. https://a.ru/x?utm_source=chatgpt.com\u200e."):
+            self.assertEqual(cf.compare(src, cp.clean(src)[0])["errors"], [], src)
+
+    def test_dot_decimal_rewritten_with_comma_is_the_same_number(self):
+        # 4.1.7: «1.15» was read as the time 1:15, so «1,15» looked like a new number.
+        for a, b in (("Коэффициент 1.15 для всех.", "Коэффициент 1,15 для всех."),
+                     ("Рост в 2.10 раза.", "Рост в 2,10 раза."),
+                     ("Рост в 2,10 раза.", "Рост в 2.10 раза."),
+                     ("Встреча в 14.30.", "Встреча в 14:30."),
+                     ("Выручка 1.50 млн рублей.", "Выручка 1,50 млн рублей.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        self.assertIn(("lost", "число"), self.errs("Рост в 1.15 раза.", "Рост в 1,16 раза."))
+        self.assertIn(("lost", "число"), self.errs("Встреча в 9.30.", "Встреча в 9:40."))
+        self.assertIn(("lost", "число"), self.errs("Выручка 1.50 млн рублей.", "Выручка 1.50 тыс. долларов."))
+        # Review of 4.1.7 (Gemini): the pairing works on the facts, so a swap between people stays
+        # visible; it pairs mention by mention; and every pairing is a check, never silent.
+        self.assertIn(("swap", "привязка"), self.errs("Анна получила 1.15, а Борис 2.10.",
+                                                       "Анна получила 2,10, а Борис 1,15."))
+        r = cf.compare("Встреча в 1.15. Коэффициент 1.15.", "Встреча в 1:15. Коэффициент 1,15.")
+        self.assertEqual(r["errors"], [])
+        self.assertEqual(len(r["checks"]), 1)
+        self.assertEqual(cf.compare("Анна получила коэффициент 1.15. Борис пришёл в 1.15.",
+                                    "Анна получила коэффициент 1,15. Борис пришёл в 1:15.")["errors"], [])
+        self.assertIn(("swap", "привязка"), self.errs("Анна получила коэффициент 1.15. Борис пришёл в 1.15.",
+                                                       "Анна пришла в 1:15. Борис получил коэффициент 1,15."))
+        hc = cf.compare("Коэффициент около 1.15. Встреча в 1.15.", "Коэффициент около 1,15. Встреча в 1:15.")
+        self.assertEqual([c for c in hc["checks"] if c["kind"] == "hedge"], [])
+        r = cf.compare("Встреча в 1.15.", "Прибыло 1,15 груза.")
+        self.assertIn("не время", " ".join(c["detail"] for c in r["checks"]))
+
+    def test_citation_inside_code_is_code(self):
+        # Review of 4.1.7 (Gemini): clean_paste.py keeps citations inside code, so the check must too.
+        self.assertTrue(cf.compare("В документации написано `[cite: 1]`.", "В документации написано.")["errors"])
+        code = "Пример:\n\n```\nprint('[cite: 2]')\n```\n"
+        self.assertTrue(cf.compare(code, code.replace("[cite: 2]", ""))["errors"] or
+                        cf.compare(code, code.replace("[cite: 2]", ""))["checks"])
+        prose = "```markdown\nПривет, это пост про кофе за 300 рублей [cite: 1].\n```\n"
+        self.assertEqual(cf.compare(prose, cp.clean(prose)[0])["errors"], [])
+        prose_code = "```markdown\nВ документации написано `[cite: 1]` и обычный текст [cite: 2].\n```\n"
+        self.assertEqual(cf.compare(prose_code, "В документации написано `[cite: 1]` и обычный текст.")["errors"], [])
+
+    def test_link_with_parentheses_is_whole(self):
+        a = "Подробнее: https://ru.wikipedia.org/wiki/Колос_(значения)."
+        self.assertEqual(cf.compare(a, a)["errors"], [])
+        r = cf.compare(a, "Подробнее: https://ru.wikipedia.org/wiki/Колос_(растение).")
+        self.assertIn("https://ru.wikipedia.org/wiki/Колос_(значения)", {e["detail"] for e in r["errors"]})
+        # a parenthesis around the link is not part of it
+        self.assertEqual(cf.compare("(см. https://a.ru/x)", "См. https://a.ru/x.")["errors"], [])
+
+    def test_compound_number_adjectives_and_merged_negation(self):
+        # 4.1.7 (found on fresh MiniMax/Sol and final3 outputs + Round 3 review):
+        # «шестилетний» ↔ «шесть лет» ↔ «6-летний», «столетний» ↔ «100 лет», «полуторачасовой» ↔ «полутора часов»,
+        # «трёхсуточный» ↔ «3 суток», and «без больших порций» → «порции небольшими» keeps the negation as «не-».
+        for a, b in (("Имею шестилетний опыт работы.", "Шесть лет работаю по специальности."),
+                     ("Имею шестилетний опыт работы.", "Опыт работы — 6 лет."),
+                     ("Трёхдневный курс, 6-летний стаж.", "Курс на 3 дня, стаж шесть лет."),
+                     ("Трёх-дневный курс.", "Курс на 3 дня."),
+                     ("Столетний дуб, стопроцентный результат, девяностолетний юбилей.",
+                      "Дубу 100 лет, результат 100%, юбилей 90 лет."),
+                     ("Полуторачасовой разговор.", "Разговор длился больше полутора часов."),
+                     ("Трёхсуточный марафон.", "Марафон на 3 суток."),
+                     ("Хлеб в небольшом количестве. Еда без больших порций. Анализ старше 14 дней.",
+                      "Хлеб в небольшом количестве. Порции небольшими. Анализу больше 14 дней.")):
+            self.assertEqual(cf.compare(a, b)["errors"], [], a)
+        self.assertEqual(cf.compare("Еда без больших порций.", "Еда небольшими порциями.")["checks"], [])
+        self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею пятилетний опыт работы."))
+        self.assertIn(("lost", "число"), self.errs("Имею шестилетний опыт работы.", "Имею большой опыт работы."))
+        self.assertIn(("unit", "единица"), self.errs("Марафон на 3 суток.", "Трёхчасовой марафон."))
+        for a, b in (("Хлеб в небольшом количестве. Еда без больших порций.",
+                      "Хлеб в небольшом количестве. Еда с большими порциями."),
+                     ("Еда без больших порций.", "В небольшом зале еда большими порциями."),
+                     ("Прибыль мы не делим.", "Прибыль мы делим в конце недели."),
+                     ("Подошва не скользит на льду.", "Купили несколько пар: подошва скользит на льду."),
+                     ("Переговоры решили не вести.", "Переговоры решили вести у невесты.")):
+            self.assertIn(("inverted", "отрицание"), self.errs(a, b), a)
+        tbl = "| Роль | Фамилия | Выплата |\n| Кассир | Смирнов | 30 000 ₽ |\n| Курьер | Кузнецов | 50 000 ₽ |"
+        self.assertIn(("lost", "имя или название"), self.errs(tbl, "Кассир получил 30 000 ₽, курьер — 50 000 ₽."))
+        self.assertIn(("swap", "привязка"), self.errs(tbl, "Кассир Смирнов получил 50 000 ₽, а курьер Кузнецов — 30 000 ₽."))
+
 
 class CleanPasteTest(unittest.TestCase):
     def test_utm_tail_in_markup_html_and_before_invisible(self):
@@ -620,6 +723,15 @@ class CleanPasteTest(unittest.TestCase):
     def test_clean_text_untouched(self):
         src = "Обычный текст — с тире, «ёлочками» и ссылкой https://a.ru/x?id=2."
         self.assertEqual(cp.clean(src), (src, {}))
+
+    def test_utm_tail_after_parentheses_in_link(self):
+        # 4.1.7: the link pattern stopped at ")", so the tail after "(значения)" stayed.
+        for src, want in (("https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com",
+                           "https://ru.wikipedia.org/wiki/Колос_(значения)"),
+                          ("[Колос](https://ru.wikipedia.org/wiki/Колос_(значения)?utm_source=chatgpt.com).",
+                           "[Колос](https://ru.wikipedia.org/wiki/Колос_(значения))."),
+                          ("(см. https://a.ru/x?utm_source=chatgpt.com)", "(см. https://a.ru/x)")):
+            self.assertEqual(cp.clean(src)[0], want, src)
 
 
 if __name__ == "__main__":

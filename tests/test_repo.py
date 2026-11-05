@@ -84,6 +84,16 @@ class RepoTest(unittest.TestCase):
         p.write_text(json.dumps(data), encoding="utf-8")
         self.assertTrue(any("plugin.json" in x for x in check_repo.check(self.tmp)))
 
+    def test_grace_requirements_version_is_checked(self):
+        # 4.1.7: requirements.xml said 4.1.1 while the release was 4.1.6.
+        self.assertEqual(check_repo.check(self.tmp), [])  # no .grace/ in the copy: nothing to compare
+        req = self.tmp / ".grace" / "context" / "requirements.xml"
+        req.parent.mkdir(parents=True)
+        req.write_text((ROOT / ".grace" / "context" / "requirements.xml").read_text(encoding="utf-8"), encoding="utf-8")
+        self.assertEqual(check_repo.check(self.tmp), [])
+        req.write_text('<requirements project="humanizer-ru" version="4.1.1"></requirements>', encoding="utf-8")
+        self.assertTrue(any("requirements.xml" in x for x in check_repo.check(self.tmp)))
+
     def test_missing_reference_is_caught(self):
         (self.tmp / "skills" / "humanizer-ru" / "references" / "patterns.md").unlink()
         self.assertTrue(any("patterns.md" in x for x in check_repo.check(self.tmp)))

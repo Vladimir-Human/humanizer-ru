@@ -85,9 +85,41 @@ class EvalReportTest(unittest.TestCase):
         table_all, _, _ = report.aggregate(rows, {"q01"}, outputs, sources)
         self.assertEqual(table_all["x"]["mean_position"], 1.5)
 
+    def test_share_interval_tells_noise_from_a_real_gap(self):
+        # 4.1.7: a 46% share on 24 texts is reported with its 95% interval, which holds 50%.
+        def rows_for(wins_of_x, n=24, judges=("argon", "kimi", "muse")):
+            return [{"id": "t%02d" % i, "judge": j, "ranking": ["x", "y"] if i < wins_of_x else ["y", "x"]}
+                    for i in range(n) for j in judges]
+        ids = {"t%02d" % i for i in range(24)}
+        lo, hi = report.share_interval(rows_for(11), ids, "x", "y")
+        self.assertLess(lo, 0.5)
+        self.assertGreater(hi, 0.5)
+        lo, hi = report.share_interval(rows_for(22), ids, "x", "y")
+        self.assertGreater(lo, 0.5)
+        # same judgments, same interval; the share inside it is the one aggregate reports
+        self.assertEqual(report.share_interval(rows_for(11), ids, "x", "y"),
+                         report.share_interval(rows_for(11), ids, "x", "y"))
+        self.assertTrue(lo <= 22 / 24 <= hi)
+        # rank judges are respected and one text cannot give an interval
+        self.assertIsNone(report.share_interval(rows_for(1, n=1), {"t00"}, "x", "y"))
+        self.assertIsNone(report.share_interval(rows_for(11), ids, "x", "y", rank_judges={"nobody"}))
+        self.assertIn("не отличить от 50%", report._with_interval(0.46, (0.3, 0.6)))
+        self.assertIn("выше 50%", report._with_interval(0.9, (0.8, 0.97)))
+
 
 class EvalDshRouteTest(unittest.TestCase):
     """R-EVAL-DSH: only the owner's free routes, no paid fallback, nothing booked, plain reply."""
+
+    def test_executor_without_tools_gets_every_skill_file_in_the_prompt(self):
+        # 4.1.7: the DSH route refuses tool calls, so run_systems puts the references in the prompt.
+        files = {"SKILL.md": "Правила.", "references/patterns.md": "Признаки.", "references/examples.md": "Примеры."}
+        system = rs.PREAMBLE.format(files="SKILL.md, references/examples.md, references/patterns.md", skill="Правила.")
+        inline = rs.inline_system(system, files)
+        self.assertNotIn("read_file", inline)
+        self.assertIn('<файл path="references/patterns.md">\nПризнаки.\n</файл>', inline)
+        self.assertLess(inline.index("examples.md\">"), inline.index("patterns.md\">"))
+        self.assertEqual(rs.inline_system("Просто просьба.", {}), "Просто просьба.")
+        self.assertEqual(rs.inline_system(system, {"SKILL.md": "Правила."}), system)
 
     def test_task_text_rules_then_system_then_user(self):
         text = lib.dsh_task_text([{"role": "user", "content": "USER-REQ"}, {"role": "system", "content": "SYS-INSTR"}])
@@ -207,11 +239,16 @@ class EvalBatchTest(unittest.TestCase):
             lib.write_text(jdir / "answers" / "q01.json", "```json\n%s\n```" % json.dumps(answer, ensure_ascii=False))
             first = batches.collect_judge(d / "run", d / "batch", judge_name)
             again = batches.collect_judge(d / "run", d / "batch", judge_name)
+            batches.prepare_judge(d / "run", d / "texts", d / "batch", judge_name, ["q01"], 6, rnd=1)
+            lib.write_text(d / "batch" / "judge-claude-code-opus-5.5-r1" / "answers" / "q01.json",
+                           json.dumps(answer, ensure_ascii=False))
+            second = batches.collect_judge(d / "run", d / "batch", judge_name, rnd=1)
             rows = [json.loads(x) for x in (d / "run" / "judgments.jsonl").read_text(encoding="utf-8").splitlines()]
         for name in ("ours", "ilyautov"):
             self.assertNotIn(name, seen)
         self.assertIn("Вариант один.", seen)
-        self.assertEqual((first["added"], again["added"], len(rows)), (1, 0, 1))
+        self.assertEqual((first["added"], again["added"], second["added"], len(rows)), (1, 0, 1, 2))
+        self.assertEqual([r["round"] for r in rows], [0, 1])
         self.assertEqual(rows[0]["ranking"], [key["B"], key["C"], key["A"]])
         self.assertEqual(rows[0]["candidates"][key["A"]]["fact_errors"], ["потеряна дата"])
         self.assertEqual(rows[0]["judge"], judge_name)

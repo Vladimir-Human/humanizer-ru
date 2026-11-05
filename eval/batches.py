@@ -120,23 +120,24 @@ def collect_run(run_dir: Path) -> list:
 
 
 # START_BLOCK_JUDGE
-def prepare_judge(run_dir: Path, texts_dir: Path, batch_root: Path, judge: str, ids: list, batch_size: int) -> list:
-    """Blinded bundles in judge.py's format (same PROMPT, same shuffle by judge name and round 0)."""
+def prepare_judge(run_dir: Path, texts_dir: Path, batch_root: Path, judge: str, ids: list, batch_size: int, rnd: int = 0) -> list:
+    """Blinded bundles in judge.py's format (same PROMPT, same shuffle by judge name and round)."""
     out_dir = run_dir / "outputs"
     systems = sorted(p.name for p in out_dir.iterdir() if p.is_dir())
     lack = ["%s/%s" % (s, t) for t in ids for s in systems if not (out_dir / s / (t + ".txt")).exists()]
     if lack:
         raise SystemExit("outputs missing: %s" % ", ".join(lack))
-    jdir = batch_root / ("judge-" + _slug(judge))
+    tag = _slug(judge) + ("" if rnd == 0 else "-r%d" % rnd)
+    jdir = batch_root / ("judge-" + tag)
     keys = {}
     for tid in ids:
         outputs = {s: lib.read_text(out_dir / s / (tid + ".txt")) for s in systems}
-        block, key = jg.build(tid, outputs, judge, 0)
+        block, key = jg.build(tid, outputs, judge, rnd)
         source = lib.read_text(texts_dir / (tid + ".txt")).strip()
         lib.write_text(jdir / "bundles" / (tid + ".md"), jg.PROMPT.format(n=len(key), source=source, candidates=block))
         keys[tid] = key
     # The label key sits next to the judge folder, not in it: the subagent reads only its bundles.
-    lib.write_json(batch_root / ("judge-%s-keys.json" % _slug(judge)), keys)
+    lib.write_json(batch_root / ("judge-%s-keys.json" % tag), keys)
     tasks = []
     for k in range(0, len(ids), batch_size):
         part = ids[k:k + batch_size]
@@ -149,10 +150,11 @@ def prepare_judge(run_dir: Path, texts_dir: Path, batch_root: Path, judge: str, 
     return tasks
 
 
-def collect_judge(run_dir: Path, batch_root: Path, judge: str, out: str = "judgments.jsonl") -> dict:
+def collect_judge(run_dir: Path, batch_root: Path, judge: str, out: str = "judgments.jsonl", rnd: int = 0) -> dict:
     """Parse the subagent's answers and append new rows; a text with a valid row is not added twice."""
-    jdir = batch_root / ("judge-" + _slug(judge))
-    keys = lib.read_json(batch_root / ("judge-%s-keys.json" % _slug(judge)))
+    tag = _slug(judge) + ("" if rnd == 0 else "-r%d" % rnd)
+    jdir = batch_root / ("judge-" + tag)
+    keys = lib.read_json(batch_root / ("judge-%s-keys.json" % tag))
     log = run_dir / out
     done = set()
     if log.exists():
@@ -167,9 +169,9 @@ def collect_judge(run_dir: Path, batch_root: Path, judge: str, out: str = "judgm
         if not f.exists():
             result["missing"].append(tid)
             continue
-        if (tid, judge, 0, tuple(sorted(key.values()))) in done:
+        if (tid, judge, rnd, tuple(sorted(key.values()))) in done:
             continue
-        row = jg.to_row(tid, judge, 0, key, lib.read_text(f))
+        row = jg.to_row(tid, judge, rnd, key, lib.read_text(f))
         row["cost"] = 0.0
         rows.append(row)
         if not row.get("ranking"):
@@ -193,6 +195,7 @@ def main() -> int:
     ap.add_argument("--judge", default="", help="judge label recorded in judgments.jsonl")
     ap.add_argument("--texts", default="", help="prepare-judge: comma list of ids")
     ap.add_argument("--batch-size", type=int, default=6)
+    ap.add_argument("--round", type=int, default=0, help="judge pass number (0, 1, ...) for independent shuffles")
     args = ap.parse_args()
     run_dir = lib.EVAL_DIR / "results" / args.run
     batch_root = lib.CACHE_DIR / "batch" / args.run
@@ -209,10 +212,11 @@ def main() -> int:
             print("missing:", ", ".join(missing))
             return 1
     elif args.action == "prepare-judge":
-        for task in prepare_judge(run_dir, texts_dir, batch_root, args.judge, args.texts.split(","), args.batch_size):
+        ids = [t for t in args.texts.split(",") if t] or lib.read_json(run_dir / "config.json")["texts"]
+        for task in prepare_judge(run_dir, texts_dir, batch_root, args.judge, ids, args.batch_size, args.round):
             print(task.as_posix())
     else:
-        res = collect_judge(run_dir, batch_root, args.judge)
+        res = collect_judge(run_dir, batch_root, args.judge, rnd=args.round)
         return 1 if res["errors"] or res["missing"] else 0
     return 0
 

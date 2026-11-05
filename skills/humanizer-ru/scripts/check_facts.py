@@ -26,7 +26,11 @@
 #          ban stayed as another negation, a number that lost its
 #          unit, a code-like ``` block that changed.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
-#          author utm tag is a lost link.
+#          author utm tag is a lost link. The source and the edit are both read without chat
+#          citation tokens and invisible characters (the set clean_paste.py removes), and a dot
+#          "time" that the other side writes as a decimal of the same digits is that number;
+#          compound number-unit adjectives («шестилетний», «6-летний») are numbers with their
+#          unit, and a negation merged into the prefix «не-» («без больших» → «небольшими») is kept.
 # SCOPE: heuristic, offline, stdlib only. Errors are likely real; "check" items need a human look.
 #        An empty report does not prove the meaning is intact.
 # DEPENDS: Python 3.8+ standard library.
@@ -57,7 +61,7 @@ import json
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote, urlsplit, urlunsplit
 
@@ -85,7 +89,7 @@ UNIT_SYNONYMS = [
     (("мин", "минута", "минуты", "минут"), "мин"),
     (("мс", "миллисекунда", "миллисекунды", "миллисекунд"), "мс"),
     (("сек", "с", "секунда", "секунды", "секунд"), "с"),
-    (("день", "дня", "дней", "дн"), "дн"),
+    (("день", "дня", "дней", "дн", "сутки", "суток", "суткам", "сутками", "сутках"), "дн"),
     (("неделя", "недели", "недель", "нед"), "нед"),
     (("месяц", "месяца", "месяцев", "мес"), "мес"),
     (("год", "года", "лет"), "год"),
@@ -106,7 +110,7 @@ WORD_NUM = {
     "десять": 10, "десяти": 10, "одиннадцать": 11, "двенадцать": 12, "пятнадцать": 15,
     "двадцать": 20, "двадцати": 20, "тридцать": 30, "тридцати": 30, "сорок": 40,
     "пятьдесят": 50, "шестьдесят": 60, "сто": 100, "двести": 200, "триста": 300,
-    "полтора": 1.5, "полторы": 1.5, "половина": 0.5, "половину": 0.5,
+    "полтора": 1.5, "полторы": 1.5, "полутора": 1.5, "половина": 0.5, "половину": 0.5,
     "одиннадцати": 11, "двенадцати": 12, "тринадцать": 13, "тринадцати": 13, "четырнадцать": 14,
     "четырнадцати": 14, "пятнадцати": 15, "шестнадцать": 16, "шестнадцати": 16, "семнадцать": 17,
     "семнадцати": 17, "восемнадцать": 18, "восемнадцати": 18, "девятнадцать": 19,
@@ -117,6 +121,26 @@ WORD_NUM = {
 }
 # "один" counts only inside a compound number: "двадцать один", "сто одну".
 ONE_FORMS = ("один", "одна", "одно", "одну", "одного", "одной", "одному", "одним", "одном")
+# Compound number-unit adjectives ("шестилетний" ↔ "шесть лет" ↔ "6-летний", "трёхдневный" ↔ "3 дня").
+# "одно-" is left out for the same reason as "один": "однодневный поход" → "поход на день" has no "1".
+COMPOUND_NUM = {k: v for k, v in WORD_NUM.items() if k.endswith(("х", "и", "а"))}
+COMPOUND_NUM.update({
+    "девяносто": 90, "сто": 100, "ста": 100, "двухсот": 200, "трехсот": 300, "четырехсот": 400,
+    "пятисот": 500, "шестисот": 600, "семисот": 700, "восьмисот": 800, "девятисот": 900, "тысяче": 1000,
+})
+COMPOUND_UNIT = {
+    "летн": "год", "годовал": "год", "дневн": "дн", "суточн": "дн", "недельн": "нед", "месячн": "мес",
+    "часов": "ч", "минутн": "мин", "секундн": "с", "процентн": "%", "метров": "м", "километров": "км",
+    "литров": "л", "килограммов": "кг",
+}
+HYPHEN_UNIT_RX = re.compile(r"-(%s)[а-яё]+" % "|".join(sorted(COMPOUND_UNIT, key=len, reverse=True)), re.I)
+COMPOUND_NUM_RX = re.compile(
+    r"(?<![а-яё])(%s)-?(%s)[а-яё]+" % (
+        "|".join(sorted(COMPOUND_NUM, key=len, reverse=True)),
+        "|".join(sorted(COMPOUND_UNIT, key=len, reverse=True)),
+    ),
+    re.I,
+)
 SCALE = {"тыс": 1000, "тыс.": 1000, "тысяча": 1000, "тысячи": 1000, "тысяч": 1000,
          "млн": 10 ** 6, "млн.": 10 ** 6, "миллион": 10 ** 6, "миллиона": 10 ** 6,
          "миллионов": 10 ** 6, "млрд": 10 ** 9, "миллиард": 10 ** 9, "миллиарда": 10 ** 9,
@@ -136,7 +160,16 @@ MONTH_STEM = {m[:3]: i for i, m in enumerate(
     "янв фев мар апр мая июн июл авг сен окт ноя дек".split(), 1)}
 MONTH_STEM["май"] = 5
 # Links with a scheme or www.; zero-width characters end a link (a paste can glue them on).
-URL_RX = r"(?:https?://|www\.)[^\s<>«»\"')\]`%s]+" % "".join(map(chr, (0x200B, 0x2060, 0xFEFF)))
+# A closing parenthesis ends a link unless it closes one opened inside it:
+# https://ru.wikipedia.org/wiki/Колос_(значения) is whole, "(см. https://a.ru)" stops at a.ru.
+_ZW = "\u200b\u2060\ufeff\u00ad\u200e\u200f\u202a-\u202e\u2066-\u2069\u180e\u200c\u200d"
+URL_RX = (r"(?:https?://|www\.)(?:\([^\s<>«»\"'()\]`%s]*\)|[^\s<>«»\"')\]`%s])+" % (_ZW, _ZW))
+# Chat citation tokens and invisible characters, the same set clean_paste.py removes: the source is
+# read without them, so a removed "[cite: 1]" is not a lost number and a soft hyphen inside a quoted
+# word or a zero-width space inside "20\u200b26" do not count as a change.
+CITATION_RX = re.compile(r":?contentReference\[oaicite:\d+\]\{index=\d+\}|\[oaicite:\d+\]"
+                         r"|【\d+(?::\d+)?(?:†[^】\n]{0,80})?】|\[cite_start\]|\[cite(?:_end)?(?::\s*[\d,\s]+)?\]")
+INVISIBLE_RX = re.compile("[\u200b\u2060\ufeff\u00ad\u200e\u200f\u202a-\u202e\u2066-\u2069\u180e\u200c]")
 # Sentence punctuation and Markdown emphasis after a link are not part of it: **https://a.ru**
 URL_TAIL = ".,;:!?…*_"
 
@@ -430,8 +463,9 @@ def extract(text: str, edited: bool = False) -> Facts:
             facts.items.append(Fact("number", year, m.group(3), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
     for m in re.finditer(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b(?![.,]\d)", text):
-        # "1.50 ₽" is a price, not ten to two: a dot time is never followed by a unit.
-        if text[m.end(1)] == "." and UNIT_RX.match(text, m.end()):
+        # "1.50 ₽" and "1.50 млн" are numbers, not ten to two: a dot time is never followed by a unit or scale.
+        if text[m.end(1)] == "." and (UNIT_RX.match(text, m.end()) or HYPHEN_UNIT_RX.match(_norm(text), m.end()) or
+                                      re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % SCALE_ALT, text[m.end():m.end() + 12], re.I)):
             continue
         if free(m.start(), m.end()):
             hh, mm = int(m.group(1)), m.group(2)
@@ -474,14 +508,26 @@ def extract(text: str, edited: bool = False) -> Facts:
         if um:
             unit = UNIT_CANON.get(um.group(1).lower(), "")
             end = um.end()
+        else:
+            hm = HYPHEN_UNIT_RX.match(_norm(text), end)
+            if hm:
+                unit = COMPOUND_UNIT[hm.group(1).lower()]
+                end = hm.end()
         if unit == "г" and not sc and v == int(v) and 1800 <= v <= 2100:
             unit = "год"  # "2020 г." is a year, not grams
         facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
                                 m.start(), hedge_before(m.start()), unit))
         taken.append((m.start(), end))
+    norm_text = _norm(text)
+    for m in COMPOUND_NUM_RX.finditer(norm_text):
+        if free(m.start(), m.end()):
+            v = float(COMPOUND_NUM[m.group(1).lower()])
+            unit = COMPOUND_UNIT[m.group(2).lower()]
+            facts.items.append(Fact("number", _fmt(v), text[m.start():m.end()], sent_of(m.start()),
+                                    m.start(), hedge_before(m.start()), unit))
+            taken.append((m.start(), m.end()))
     word_rx = re.compile(r"(?<![а-яё])(%s)(?![а-яё])" % "|".join(
         sorted(WORD_NUM, key=len, reverse=True)), re.I)
-    norm_text = _norm(text)
     for m in word_rx.finditer(norm_text):
         if not free(m.start(), m.end()):
             continue
@@ -589,7 +635,9 @@ def extract(text: str, edited: bool = False) -> Facts:
 
 
 def _occurrences(text: str, word: str) -> List[Tuple[int, int]]:
-    return [(m.start(), m.end()) for m in re.finditer(r"[а-яё]{3,}", text) if stem_match(m.group(), word, strict=True)]
+    return [(m.start(), m.end()) for m in re.finditer(r"[а-яё]{3,}", text)
+            if not (m.group() in ("больше", "меньше") and word not in ("больше", "меньше"))
+            and stem_match(m.group(), word, strict=True)]
 
 
 def _negated_near(text: str, start: int, end: int) -> bool:
@@ -657,13 +705,98 @@ def strip_utm(url: str) -> Tuple[str, int]:
 
 
 def _strip_tracking(text: str) -> str:
-    def fix(m: "re.Match") -> str:
+    def fix_url(m: "re.Match") -> str:
         url = m.group(0)
         tail = url[len(url.rstrip(URL_TAIL)):]
         return strip_utm(url[:len(url) - len(tail)])[0] + tail
-    text = re.sub(URL_RX, fix, text)
-    return re.sub(r":contentReference\[oaicite:\d+\]\{index=\d+\}|【\d+(?::\d+)?†[^】]*】", "", text)
 
+    def clean_prose(prose: str) -> str:
+        # Citations go before links so a citation glued to ?utm_source=chatgpt.com[cite: 1] does not
+        # hide the utm tail; `inline code` keeps both, as in clean_paste.py.
+        prose = re.sub(r"`[^`\n]+`|" + CITATION_RX.pattern,
+                       lambda m: m.group(0) if m.group(0).startswith("`") else "", prose)
+        return re.sub(r"`[^`\n]+`|" + URL_RX,
+                      lambda m: m.group(0) if m.group(0).startswith("`") else fix_url(m), prose)
+
+    # Code blocks (<30% Cyrillic) are copied as is; a ``` block of Russian prose is cleaned as prose.
+    spans = []
+    for m in re.finditer(r"(?ms)^```[^\n]*\n.*?^```[ \t]*\r?$", text):
+        letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group(0))
+        if sum(1 for x in letters if x > "z") < 0.3 * max(1, len(letters)):
+            spans.append((m.start(), m.end()))
+    parts, pos = [], 0
+    for s, e in spans:
+        parts += [clean_prose(text[pos:s]), text[s:e]]
+        pos = e
+    parts.append(clean_prose(text[pos:]))
+    text = "".join(parts)
+    text = INVISIBLE_RX.sub("", text)
+    # A zero-width joiner stays only next to an emoji (family, profession emoji), as in clean_paste.py.
+    emoji = "\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\U0001F3FB-\U0001F3FF"
+    return re.sub("(?<![%s])\u200d(?![%s])" % (emoji, emoji), "", text)
+
+
+def _pair_dot_decimals(mine: Facts, other: Facts) -> List[Dict]:
+    """"1.15" reads as a time (1:15), "1,15" as a decimal. Mentions of a dot "time" that the other
+    side lacks are paired, one by one, with decimals of the same digits that this side lacks
+    («коэффициент 1.15» → «коэффициент 1,15», «в 2.10 раза» → «в 2,10 раза»): those facts take the
+    decimal value and lose the time unit, in place, so the bindings block sees the same values on
+    both sides. Each pairing is a check (it may also be a time that became a number). A real time
+    keeps its reading: «14.30» → «14:30»; a time and a coefficient of the same digits pair by count
+    and sentence context."""
+    def count(facts: Facts, value: str) -> int:
+        return sum(1 for f in facts.items if f.kind == "number" and f.value == value)
+
+    def stems(facts: Facts, f: Fact) -> set:
+        names = {_norm(x.value.lower()) for x in facts.items if x.kind in ("name", "subject") and x.sent == f.sent}
+        out = {_norm(w.lower())[:4] for w in re.findall(r"[а-яё]{4,}", facts.sentences[f.sent], re.I)
+               if _norm(w.lower()) not in names}
+        if f.hedge:
+            out.add("#" + HEDGE_SAME.get(f.hedge, f.hedge))
+        return out
+
+    dots: Dict[str, List[int]] = {}
+    for i, f in enumerate(mine.items):
+        if f.kind == "number" and f.unit == "время" and "." in f.raw:
+            dots.setdefault(f.value, []).append(i)
+    checks = []
+    for value, idxs in dots.items():
+        num = _canon_num(mine.items[idxs[0]].raw)
+        if num is None:
+            continue
+        alt = _fmt(num)
+        n = min(count(mine, value) - count(other, value), count(other, alt) - count(mine, alt), len(idxs))
+        if n <= 0:
+            continue
+        twin = next(f.raw for f in other.items if f.kind == "number" and f.value == alt)
+        if len(idxs) > n:
+            dec_stems = set().union(*(stems(other, d) for d in other.items if d.kind == "number" and d.value == alt))
+            time_stems = set().union(*(stems(other, t) for t in other.items if t.kind == "number" and t.value == value))
+            other_order = [f.value == alt for f in other.items if f.kind == "number" and f.value in (alt, value)]
+
+            def rank(pair: Tuple[int, int]) -> tuple:
+                k, idx = pair
+                f = mine.items[idx]
+                sent = mine.sentences[f.sent]
+                off = f.pos - mine.starts[f.sent]
+                before_f = _norm(sent[:off].rstrip().lower())
+                after_f = _norm(sent[off + len(f.raw):].lstrip().lower())
+                time_prep = bool(re.search(r"(?<![а-яё])(?:в|к|до|после|с)$", before_f) and
+                                 not re.match(r"раз(?:а|у|ом|е)?(?![а-яё])", after_f))
+                st = stems(mine, f)
+                score = len(st & dec_stems) - len(st & time_stems)
+                pos_hint = not (k < len(other_order) and other_order[k])
+                return (time_prep, -score, pos_hint, idx)
+
+            chosen = [idx for _, idx in sorted(enumerate(idxs), key=rank)[:n]]
+        else:
+            chosen = idxs
+        for i in chosen:
+            f = mine.items[i]
+            mine.items[i] = replace(f, value=alt, unit="")
+            checks.append({"kind": "unit", "what": "число",
+                           "detail": "%s и %s сверены как одно число: проверь, что это не время" % (f.raw, twin)})
+    return checks
 
 
 # START_CONTRACT: compare
@@ -673,9 +806,10 @@ def _strip_tracking(text: str) -> str:
 # SIDE_EFFECTS: none.
 # END_CONTRACT: compare
 def compare(before: str, after: str) -> Dict:
+    before, after = _strip_tracking(before), _strip_tracking(after)
     fb, fa = extract(before), extract(after, edited=True)
     errors: List[Dict] = []
-    checks: List[Dict] = []
+    checks: List[Dict] = _pair_dot_decimals(fb, fa) + _pair_dot_decimals(fa, fb)
 
     # START_BLOCK_NUMBERS_DIFF
     def bag(facts: Facts, kind: str) -> Dict[str, List[Fact]]:
@@ -863,11 +997,11 @@ def compare(before: str, after: str) -> Dict:
                 checks.append({"kind": "negation", "what": "отрицание", "detail": "«%s» не найдено" % f.raw})
             continue
         word = f.value
+        if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
+            continue
         negated = [m for m in re.finditer(r"(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})", after_norm)
                    if stem_match(m.group(2), word, strict=True)]
         if negated:
-            continue
-        if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
             continue
         hits = _occurrences(after_norm, word)
         src_hits = _occurrences(before_norm, word)
@@ -878,8 +1012,15 @@ def compare(before: str, after: str) -> Dict:
                     {"kind": "inverted", "what": "отрицание",
                      "detail": "«%s» в правке стоит без отрицания" % f.raw})
         else:
-            checks.append({"kind": "negation", "what": "отрицание",
-                           "detail": "«%s» не найдено, проверь, что смысл сохранён" % f.raw})
+            # «без больших порций» → «порции небольшими»: the negation joined the word as the prefix «не-».
+            pref_rx = r"(?<![а-яё])не([а-яё]{4,})"
+            pref_b = sum(1 for m in re.finditer(pref_rx, before_norm)
+                         if stem_match(m.group(1), word, strict=True) and name_match(m.group(1), word))
+            pref_a = sum(1 for m in re.finditer(pref_rx, after_norm)
+                         if stem_match(m.group(1), word, strict=True) and name_match(m.group(1), word))
+            if pref_a <= pref_b:
+                checks.append({"kind": "negation", "what": "отрицание",
+                               "detail": "«%s» не найдено, проверь, что смысл сохранён" % f.raw})
     # The other way round: "Мы храним данные" → "Мы не храним данные".
     seen = set()
     for f in fa.of("negation"):
