@@ -165,6 +165,69 @@ class RepoTest(unittest.TestCase):
         self.assertFalse(any("__pycache__" in n for n in names))
 
 
+def _load_skill(name):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "skills" / "humanizer-ru" / "scripts" / (name + ".py"))
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def reference_pairs(patterns: str, examples: str):
+    """Every «Было → Стало» pair of the references: one-line pairs in patterns.md (a «A» / «B»
+    line gives two pairs) and quoted blocks in examples.md. «Стало» lines that only describe
+    the action («удалить абзац») are not pairs."""
+    import re
+    pairs = []
+    rx = re.compile(r"^Было: «(.+?)»(?: / «(.+?)»)?\nСтало: «(.+?)»(?: / «(.+?)»)?", re.M)
+    for m in rx.finditer(patterns):
+        pairs.append(("patterns: " + m.group(1)[:40], m.group(1), m.group(3)))
+        if m.group(2) and m.group(4):
+            pairs.append(("patterns: " + m.group(2)[:40], m.group(2), m.group(4)))
+
+    def unquote(block):
+        return "\n".join(line[2:] if line.startswith("> ") else line[1:] for line in block.splitlines())
+
+    for sec in re.split(r"^## ", examples, flags=re.M)[1:]:
+        m = re.search(r"Было:\n\n((?:>.*\n)+)\nСтало:\n\n((?:>.*\n)+)", sec)
+        if m:
+            pairs.append(("examples: " + sec.split("\n")[0], unquote(m.group(1)), unquote(m.group(2))))
+    return pairs
+
+
+class ReferencesTest(unittest.TestCase):
+    """R-REFERENCES-KEEP-FACTS: the examples teach the executor by imitation, so an example that
+    invents a number or a name teaches inventing (4.2.0 found «12 уроков», «версия 2.4»,
+    «портал HR» in patterns.md)."""
+
+    def setUp(self):
+        self.cf = _load_skill("check_facts")
+        ref = ROOT / "skills" / "humanizer-ru" / "references"
+        self.patterns = (ref / "patterns.md").read_text(encoding="utf-8")
+        self.examples = (ref / "examples.md").read_text(encoding="utf-8")
+
+    def bad(self, before, after):
+        r = self.cf.compare(before, after)
+        return r["errors"] + [c for c in r["checks"] if c["kind"] == "added"]
+
+    def test_every_example_keeps_the_facts_and_adds_none(self):
+        pairs = reference_pairs(self.patterns, self.examples)
+        self.assertGreaterEqual(len(pairs), 25)
+        self.assertGreaterEqual(sum(1 for p in pairs if p[0].startswith("examples")), 5)
+        for where, before, after in pairs:
+            self.assertEqual(self.bad(before, after), [], where)
+
+    def test_an_invented_fact_in_an_example_is_caught(self):
+        for old, new in (("Стало: «В курсе 12 уроков по Excel: от формул до сводных таблиц.»",
+                          "Стало: «В курсе 14 уроков по Excel: от формул до сводных таблиц.»"),
+                         ("Стало: «Вышла версия 2.4.»", "Стало: «Вышла версия 2.5.»"),
+                         ("Стало: «Заявку на отпуск подают на портале HR не позднее чем за две недели.»",
+                          "Стало: «Заявку на отпуск подают на портале HR не позднее чем за три недели.»")):
+            self.assertEqual(self.patterns.count(old), 1, old)
+            broken = reference_pairs(self.patterns.replace(old, new), self.examples)
+            self.assertTrue(any(self.bad(b, a) for _, b, a in broken), new)
+
+
 class DirectoryTest(unittest.TestCase):
     """The tree for Anthropic's plugin directory: the plugin and nothing else, links that resolve."""
 

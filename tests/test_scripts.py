@@ -446,6 +446,23 @@ class CheckFactsTest(unittest.TestCase):
             tmp.rmdir()
 
 
+    def test_list_markers_are_structure_not_facts(self):
+        # 4.2.0: examples.md #4 turns prose into steps; the markers were read as added numbers
+        # (98 such errors over 1596 old eval edits).
+        prose = ("Проверьте, что с покупки прошло не более 14 дней. Сохраните чек. "
+                 "Товары со скидкой более 50% возврату не подлежат.")
+        steps = ("1. Проверьте, что с покупки прошло не больше 14 дней.\n2) Сохраните чек.\n\n"
+                 "Товары со скидкой больше 50% вернуть нельзя.")
+        self.assertEqual(cf.compare(prose, steps)["errors"], [])
+        self.assertEqual(cf.compare(steps, prose)["errors"], [])
+        for marker in ("## 3. Раздел\n\nТекст.", "> 4. Пункт.", "- 5. Пункт.", "   6) Пункт.",
+                       "**7. Пункт**", "**8.** Пункт.", "9. Пункт.", "\ufeff1. Пункт."):
+            self.assertEqual(cf.compare(marker, "Текст без номера.")["errors"], [], marker)
+        # A number inside an item is still a fact, and a number that is not a marker too.
+        self.assertIn("lost", kinds(cf.compare("1. Возьмите 3 пакета.", "1. Возьмите пакеты.")))
+        self.assertIn("lost", kinds(cf.compare("Осталось 3. Потом ещё.", "Осталось немного. Потом ещё.")))
+        self.assertIn("lost", kinds(cf.compare("Мест:\n120. Это много.", "Мест много.")))
+
     # 4.1.4: defects found by a property run over the eval texts and by two model bug hunts.
     def errs(self, a, b):
         return {(e["kind"], e["what"]) for e in cf.compare(a, b)["errors"]}

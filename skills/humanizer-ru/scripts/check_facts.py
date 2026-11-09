@@ -489,7 +489,14 @@ def extract(text: str, edited: bool = False) -> Facts:
 
     # START_BLOCK_NUMBERS
     # Counters in headings ("Вариант 1", "Шаг 2") are structure, not facts.
-    for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава)\s+(\d+)", text):
+    for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава|блок)\s+(\d+)", text):
+        taken.append((m.start(1), m.end(1)))
+    # So are list markers at a line start ("1. Возьмите чек", "2) …", "## 3. Раздел", "> 4. …",
+    # "**5. Заголовок**"): turning steps into a numbered list or back is a legitimate edit (4.2.0:
+    # 98 false errors over 1596 old edits, 10 of them ours). A number inside the item stays a fact.
+    sp = "[ \\t\\u00a0\\u202f]"
+    for m in re.finditer(r"(?m)^[ \t\u00a0\u202f\ufeff]*(?:>%s*)*(?:#{1,6}%s+)?(?:[-*+]%s+)?(?:\*\*|__|\*|_)?"
+                         r"(\d{1,2})[.)](?=[ \t\u00a0\u202f*_])" % (sp, sp, sp), text):
         taken.append((m.start(1), m.end(1)))
     num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?(?![\w])" % SEP)
     for m in num_rx.finditer(text):
