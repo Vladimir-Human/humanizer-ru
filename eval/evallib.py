@@ -105,6 +105,18 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+# A plan quota does not come back in minutes (MiniMax Token Plan answers 429 «已达到 Token Plan 用量上限»).
+# The first such answer closes the route for this process: no retries, and every later call fails
+# at once without reaching the provider. 2026-11-09: a run kept retrying 24 calls 3 times each after
+# the MiniMax quota had ended. A per-minute rate limit («token rate limit» on Sol) is not a quota.
+QUOTA_RX = re.compile(r"Token Plan|用量上限|insufficient_quota|exceeded your current quota|usage limit|plan quota", re.I)
+EXHAUSTED: set = set()
+
+
+class QuotaExhausted(BudgetExceeded):
+    pass
+
+
 # START_CONTRACT: Ledger
 # PURPOSE: Keep the running total of API spend across all eval scripts and stop at the cap.
 # INPUTS: cost in USD from the API usage block.
@@ -175,7 +187,7 @@ def dsh_task_text(messages: list) -> str:
 def dsh_answer(report: dict):
     """Bridge --json report -> (message, usage). A failed run or an empty answer raises."""
     if not report.get("ok"):
-        why = report.get("errors") or report.get("stderrTail") or [report.get("endReason")]
+        why = report.get("errors") or report.get("stderrTail") or [report.get("error") or report.get("endReason")]
         raise RuntimeError("dsh run failed: %s %s" % (report.get("failKind"), "; ".join(map(str, why))[:300]))
     text = report.get("answer") or ""
     if report.get("answerTruncated") and report.get("answerPath"):
@@ -192,6 +204,8 @@ def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
     ref = model[len(DSH_PREFIX):]
     if ref not in DSH_FREE:
         raise SystemExit("%s is not an approved free DSH route (%s)" % (ref, ", ".join(sorted(DSH_FREE))))
+    if ref in EXHAUSTED:
+        raise QuotaExhausted("%s: the plan quota ended earlier in this run; nothing sent" % ref)
     work = CACHE_DIR / "dsh"
     (work / "cwd").mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", dir=work, delete=False) as fh:
@@ -217,6 +231,10 @@ def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
                 # The free routes restart now and then ("Server is restarting; please retry shortly").
                 last = exc
+                if QUOTA_RX.search(str(exc)):
+                    EXHAUSTED.add(ref)
+                    print("[M-EVAL-LIB][BLOCK_DSH] %s %s: plan quota ended, route closed for this run" % (tag, ref))
+                    raise QuotaExhausted("%s: plan quota ended: %s" % (ref, str(exc)[:200])) from exc
                 print("[M-EVAL-LIB][BLOCK_DSH] %s %s attempt %d failed: %s" % (tag, ref, attempt + 1, str(exc)[:200]))
                 time.sleep(30 * (attempt + 1))
                 continue

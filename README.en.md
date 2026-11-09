@@ -45,9 +45,11 @@ in Settings → Capabilities → Skills.
 - [Style check in the browser](https://vladimir-human.github.io/humanizer-ru/check/): paste a
   Russian text and see which machine-style habits it has and where. The page works offline and
   the text never leaves it. It rates style, not authorship: human text can score too.
-- [Prompt for any chat bot](prompt/chat.md): a compressed version of the skill for GigaChat,
-  Alice, DeepSeek, ChatGPT and Claude projects. It has no fact-check scripts, so reread numbers
-  and names after the edit yourself.
+- [Edit in a chat bot, then check the facts](https://vladimir-human.github.io/humanizer-ru/sverka/):
+  the page gives the [prompt](prompt/chat.md) (a compressed version of the skill for GigaChat,
+  Alice, DeepSeek, ChatGPT and Claude projects) and then compares the chat bot's answer with the
+  source the way `check_facts.py` does: lost, swapped and new numbers, dates and names show at
+  once. The texts never leave the page.
 
 ## Use
 

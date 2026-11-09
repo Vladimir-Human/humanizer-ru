@@ -131,6 +131,8 @@ class RepoTest(unittest.TestCase):
         too_long = [x for x in check_repo.check(self.tmp) if "4000" in x]
         self.assertEqual(len(too_long), 1)
         self.assertIn("prompt/chat.md: промпт длиннее 4000 знаков", too_long[0])
+        # The fact-check page copies its own prompt.txt: a stale copy is caught.
+        self.assertTrue(any("site/sverka/prompt.txt" in x for x in check_repo.check(self.tmp)))
 
     def _plugin_json(self, **changes):
         p = self.tmp / ".claude-plugin" / "plugin.json"

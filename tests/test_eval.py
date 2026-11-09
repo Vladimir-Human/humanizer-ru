@@ -190,6 +190,32 @@ class EvalDshRouteTest(unittest.TestCase):
         self.assertEqual((msg["content"], usage["cost"], usage["listed_cost"]), ("текст", 0.0, 0.0123))
         ledger.assert_not_called()
 
+    def test_plan_quota_closes_the_route_without_retries(self):
+        # 09.11: after the MiniMax Token Plan ended, a run retried 24 calls 3 times each.
+        quota = {"ok": False, "failKind": None, "stderrTail": [
+            'dsh: RATE_LIMIT: 429: {"type":"rate_limit_error","message":"已达到 Token Plan 用量上限：请升级"}']}
+        reply = mock.Mock(stdout=json.dumps(quota), stderr="", returncode=0)
+        msgs = [{"role": "user", "content": "x"}]
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "CACHE_DIR", Path(d)), \
+                mock.patch.object(lib, "EXHAUSTED", set()), mock.patch.object(lib.time, "sleep") as sleep, \
+                mock.patch.object(lib.subprocess, "run", return_value=reply) as run:
+            with self.assertRaises(lib.QuotaExhausted):
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)  # no retries
+            with self.assertRaises(lib.BudgetExceeded):  # run_systems stops on it
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)  # nothing sent after the quota ended
+            sleep.assert_not_called()
+        # The bridge itself refuses a route whose quota it remembers (R-QUOTA-STOP): same stop, no retries.
+        refused = {"ok": False, "state": "refused", "error": "minimax/MiniMax-M3.1-Flash: its plan quota has run out"}
+        reply = mock.Mock(stdout=json.dumps(refused), stderr="", returncode=2)
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "CACHE_DIR", Path(d)), \
+                mock.patch.object(lib, "EXHAUSTED", set()), mock.patch.object(lib.time, "sleep"), \
+                mock.patch.object(lib.subprocess, "run", return_value=reply) as run:
+            with self.assertRaises(lib.QuotaExhausted):
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)
+
     def test_failed_run_is_retried_on_the_same_free_route(self):
         failed = {"ok": False, "stderrTail": ["Server is restarting; please retry shortly"]}
         good = {"ok": True, "answer": "текст", "cost": 0.01, "seconds": 2, "tokens": {}}
@@ -521,6 +547,47 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertAlmostEqual(z["палермо"][0], 0.0, places=6)  # both sides: no lean
         self.assertEqual(z["стоит отметить"][1:], (20, 0))  # document counts, not repeats
         self.assertNotIn("9", " ".join(sf.doc_ngrams("Счёт 9:1, 2 гола.")))  # numbers are topic, not style
+
+    def test_receipt_line_and_its_counts(self):
+        # Gate 4 (M4): the line is found in the notes and its numbers are compared with check_facts.
+        import receipt_eval as re_
+        src = "Скидка 20% до 30 ноября. Пишите Анне."
+        good = "Скидка 20% до 30 ноября. Пишите Анне.\n\n---\n- Убрал повтор.\nСверка скриптом: 1 число, 1 дата, 1 имя на месте"
+        r = re_.score_one(src, good)
+        self.assertEqual(r["stated"], {"number": 1, "date": 1, "name": 1})
+        self.assertTrue(r["counts_match"])
+        self.assertEqual(r["script_errors"], [])
+        wrong = re_.score_one(src, good.replace("1 число", "3 числа"))
+        self.assertFalse(wrong["counts_match"])
+        self.assertEqual(wrong["wrong_counts"], {"number": (3, 1)})
+        none = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.")
+        self.assertEqual((none["line"], none["counts_match"]), ("", False))
+        self.assertIn("20%", none["script_errors"])
+        # Since 4.2.0 the agent copies the script's own line; it is compared word for word.
+        copied = "Скидка 20% до 30 ноября. Пишите Анне.\n\n---\n- Сверка скриптом: 1 число, 1 дата, 1 имя или название на месте."
+        r = re_.score_one(src, copied)
+        self.assertEqual(r["expected"], "Сверка скриптом: 1 число, 1 дата, 1 имя или название на месте.")
+        self.assertTrue(r["same_line"])
+        self.assertFalse(re_.score_one(src, good)["same_line"])  # retold, not copied
+        lost = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                  "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя или название; в правке нет: 20%")
+        self.assertTrue(lost["same_line"])
+        why = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                 "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя; в правке нет только 20% из приписки бота")
+        self.assertEqual((why["same_line"], why["facts_ok"]), (False, True))  # reworded, facts right
+        self.assertFalse(re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                            "Сверка скриптом: 1 число, 1 дата, 1 имя на месте")["facts_ok"])
+
+    def test_run_sets_are_a_comma_list(self):
+        # Plan v3 M3: holdout4 with the six saved chatbot answers, without traps (they are in M2).
+        index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
+        h4 = ",".join(["f%02d" % i for i in range(1, 37)] + ["r%02d" % i for i in range(1, 7)])
+        ids = rs.select_ids(index, "holdout4,test", h4)
+        self.assertEqual(len(ids), 42)
+        self.assertEqual(len(rs.select_ids(index, "holdout4")), 42)  # 36 + 6 traps, as before
+        self.assertTrue({"h01", "h06"} <= set(rs.select_ids(index, "holdout4")))
+        with self.assertRaises(SystemExit):
+            rs.select_ids(index, "holdout4,nosuchset")
 
     def test_pairs_index_names_the_model_that_wrote_each_pair(self):
         # Cross-review 09.11 (F6): gen rebuilt index.json from the current MODELS, so an old pair of

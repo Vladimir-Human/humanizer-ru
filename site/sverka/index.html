@@ -1,0 +1,277 @@
+<!doctype html>
+<!--
+START_MODULE_CONTRACT
+PURPOSE: Edit in your own chatbot, then check the facts here: copy the prompt, paste the text before
+         and the answer after; the page reports lost, invented and swapped facts and gives a ready
+         request to fix them. Everything runs in the browser.
+SCOPE: Static page; never sends or stores the entered texts (only same-origin fetch of prompt.txt).
+DEPENDS: ../check/facts.js (window.HumanizerFacts: compare, render, a port of check_facts.py);
+         ./notes.js (window.HumanizerNotes.splitNotes, the eval's split_notes); ./prompt.txt
+         (the body of prompt/chat.md, kept equal by scripts/check_repo.py).
+LINKS: M-SITE-SVERKA; R-SITE-FACTS; R-NOTES-NOT-TEXT; R-PORTABLE-PROMPT.
+END_MODULE_CONTRACT
+START_MODULE_MAP
+HTML: three steps (prompt, two texts, result) and a live result region.
+CSS: the notebook palette of site/check, light and dark, phone width first.
+UI: copyPrompt, runCheck (splitNotes -> compare -> render), showResult, fixRequest.
+END_MODULE_MAP
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+  <title>Сверка фактов после правки</title>
+  <link rel="icon" href="data:,">
+  <style>
+    /* START_BLOCK_CSS */
+    :root {
+      color-scheme: light dark;
+      --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
+      --pencil: #2346a8; --wash: #e6ecfa; --bad: #a3261d; --bad-wash: #fbeceb; --ok: #1f6b3a; --ok-wash: #e8f5ec;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0; --rule: #2c3442;
+        --pencil: #8fa9f2; --wash: #1f2a44; --bad: #f0928a; --bad-wash: #3a1f1f; --ok: #7fd09a; --ok-wash: #1b3324;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'PT Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1rem; line-height: 1.55; }
+    .page { max-width: 46rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    a { color: var(--pencil); }
+    .back-link { display: inline-block; margin-bottom: 1rem; font-size: .95rem; }
+    .eyebrow { margin: 0; color: var(--soft); font-size: .85rem; letter-spacing: .04em; text-transform: uppercase; }
+    h1 { margin: .25rem 0 .5rem; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.2; }
+    .lead { margin: 0 0 .5rem; }
+    .privacy-note { margin: 0; color: var(--soft); font-size: .95rem; }
+    .step { margin-top: 1.5rem; padding: 1rem; background: var(--sheet); border: 1px solid var(--rule); border-radius: .5rem; }
+    .step h2 { display: flex; gap: .6rem; align-items: baseline; margin: 0 0 .5rem; font-size: 1.15rem; }
+    .num { color: var(--pencil); font-variant-numeric: tabular-nums; font-size: .95rem; }
+    .step p { margin: .35rem 0; }
+    label { display: block; margin: .9rem 0 .3rem; font-weight: 600; }
+    .hint { color: var(--soft); font-size: .9rem; font-weight: 400; }
+    textarea { width: 100%; min-height: 9rem; padding: .7rem; border: 1px solid var(--rule); border-radius: .4rem; background: var(--paper); color: var(--ink); font: inherit; resize: vertical; }
+    textarea[aria-invalid="true"] { border-color: var(--bad); }
+    button { cursor: pointer; padding: .6rem 1.1rem; border: 1px solid var(--pencil); border-radius: .4rem; background: var(--pencil); color: var(--sheet); font: inherit; font-weight: 600; }
+    button.quiet { background: transparent; color: var(--pencil); }
+    button:disabled { opacity: .55; cursor: default; }
+    :focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+    .row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: .8rem; }
+    .status { margin: 0; color: var(--soft); font-size: .92rem; }
+    .status.is-error { color: var(--bad); }
+    details { margin-top: .6rem; }
+    details pre { max-height: 18rem; overflow: auto; padding: .7rem; background: var(--paper); border: 1px solid var(--rule); border-radius: .4rem; white-space: pre-wrap; font-size: .85rem; }
+    .verdict { margin: .2rem 0 .6rem; padding: .7rem .9rem; border-radius: .4rem; font-weight: 600; }
+    .verdict.bad { background: var(--bad-wash); color: var(--bad); }
+    .verdict.ok { background: var(--ok-wash); color: var(--ok); }
+    .result h3 { margin: 1rem 0 .3rem; font-size: 1rem; }
+    .result ul { margin: .2rem 0; padding-left: 1.2rem; }
+    .result li { margin: .25rem 0; overflow-wrap: anywhere; }
+    .result .errors li { color: var(--bad); }
+    .note { color: var(--soft); font-size: .92rem; }
+    .footer-note { margin-top: 1.5rem; color: var(--soft); font-size: .9rem; }
+    /* END_BLOCK_CSS */
+  </style>
+  <script src="../check/facts.js" defer referrerpolicy="no-referrer"></script>
+  <script src="./notes.js" defer referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <!-- START_BLOCK_HTML -->
+  <main class="page">
+    <a class="back-link" href="../">← humanizer-ru</a>
+    <header>
+      <p class="eyebrow">humanizer-ru · правка в вашем чат-боте</p>
+      <h1>Сверка фактов после правки</h1>
+      <p class="lead">Нейросеть, которая делает текст живее, иногда теряет цифру, меняет суммы местами или убирает «около». Вставьте текст до и после — страница покажет, что пропало, что появилось и что проверить глазами.</p>
+      <p id="privacy-note" class="privacy-note">Тексты не покидают браузер: сверка работает без сети.</p>
+    </header>
+
+    <section class="step" aria-labelledby="step1">
+      <h2 id="step1"><span class="num" aria-hidden="true">01</span>Промпт для чат-бота</h2>
+      <p>Скопируйте промпт в начало нового чата в GigaChat, Алисе, DeepSeek или ChatGPT и пришлите свой текст. Промпт велит не трогать факты и спросить вас, если подробностей не хватает.</p>
+      <div class="row">
+        <button id="copy-prompt" class="quiet" type="button" disabled>Скопировать промпт</button>
+        <p id="prompt-status" class="status" role="status" aria-live="polite">Загружаем промпт…</p>
+      </div>
+      <details>
+        <summary>Показать промпт</summary>
+        <pre id="prompt-text"></pre>
+      </details>
+    </section>
+
+    <form id="facts-form" class="step" autocomplete="off" novalidate aria-labelledby="step2">
+      <h2 id="step2"><span class="num" aria-hidden="true">02</span>Текст до и после</h2>
+      <label for="before">До правки <span class="hint">— исходный текст</span></label>
+      <textarea id="before" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note" placeholder="Вставьте текст, который отправили на правку."></textarea>
+      <label for="after">После <span class="hint">— ответ чат-бота целиком; заметки после строки «---» в сверку не идут</span></label>
+      <textarea id="after" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note" placeholder="Вставьте ответ чат-бота."></textarea>
+      <div class="row">
+        <button id="check-button" type="submit" disabled>Сверить</button>
+        <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем сверку…</p>
+      </div>
+      <noscript><p class="note">Для сверки нужен JavaScript. Без него тексты никуда не отправляются.</p></noscript>
+    </form>
+
+    <section id="result" class="step result" aria-labelledby="step3" hidden>
+      <h2 id="step3"><span class="num" aria-hidden="true">03</span>Результат</h2>
+      <div id="result-body" aria-live="polite" aria-atomic="true"></div>
+      <div class="row" id="fix-row" hidden>
+        <button id="copy-fix" type="button">Скопировать просьбу исправить</button>
+        <p id="fix-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <p class="footer-note">Сверка ищет числа, даты, время, имена и названия, ссылки, телефоны, цитаты, отрицания, оговорки («около», «может») и кто что получил. Если ошибок нет, это не гарантия смысла: перечитайте условия и связи. Это та же проверка, что <code>check_facts.py</code> в навыке humanizer-ru; код страницы открыт: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/site">site/</a>.</p>
+  </main>
+  <!-- END_BLOCK_HTML -->
+
+  <script>
+    // START_BLOCK_UI
+    (() => {
+      "use strict";
+      const $ = id => document.getElementById(id);
+      const form = $("facts-form"), before = $("before"), after = $("after"), checkButton = $("check-button");
+      const status = $("form-status"), result = $("result"), body = $("result-body");
+      const fixRow = $("fix-row"), fixStatus = $("fix-status");
+      let prompt = "", fix = "";
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = String(text);
+        return node;
+      }
+
+      function setStatus(node, message, isError = false) {
+        node.textContent = message;
+        node.classList.toggle("is-error", isError);
+      }
+
+      // Russian plural: 1 число, 2 числа, 5 чисел.
+      function plural(n, forms) {
+        const a = n % 10, b = n % 100;
+        return n + " " + (a === 1 && b !== 11 ? forms[0] : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? forms[1] : forms[2]);
+      }
+
+      const COUNTS = [
+        ["number", ["число", "числа", "чисел"]], ["date", ["дата", "даты", "дат"]],
+        ["name", ["имя или название", "имени и названия", "имён и названий"]], ["url", ["ссылка", "ссылки", "ссылок"]],
+        ["phone", ["телефон", "телефона", "телефонов"]], ["quote", ["цитата", "цитаты", "цитат"]],
+        ["negation", ["отрицание", "отрицания", "отрицаний"]]
+      ];
+
+      // The lines of render() under «Ошибки (N):» and «Проверь глазами (N):», so the page and the
+      // script say the same words.
+      function sections(text) {
+        const out = { errors: [], checks: [] };
+        let cur = null;
+        for (const line of text.split("\n")) {
+          if (line.startsWith("Ошибки (")) cur = out.errors;
+          else if (line.startsWith("Проверь глазами (")) cur = out.checks;
+          else if (line.startsWith("  - ") && cur) cur.push(line.slice(4));
+          else if (!line.startsWith("  ")) cur = null;
+        }
+        return out;
+      }
+
+      // START_CONTRACT: fixRequest
+      // PURPOSE: A message the author pastes back into the chat to get the facts restored.
+      // INPUTS: error and check lines of render(). OUTPUTS: Russian text; "" when there is nothing to fix.
+      // END_CONTRACT: fixRequest
+      function fixRequest(lines) {
+        if (!lines.errors.length && !lines.checks.length) return "";
+        const parts = ["Сверь свою правку с исходным текстом. Ничего больше не меняй, только исправь это:"];
+        for (const e of lines.errors) parts.push("- " + e);
+        if (lines.checks.length) {
+          parts.push("", "И проверь, не изменился ли смысл:");
+          for (const c of lines.checks) parts.push("- " + c);
+        }
+        parts.push("", "Верни текст целиком.");
+        return parts.join("\n");
+      }
+
+      function showResult(res, lines, notesCut) {
+        body.replaceChildren();
+        const present = COUNTS.filter(([k]) => res.counts[k] > 0).map(([k, f]) => plural(res.counts[k], f));
+        const bad = lines.errors.length > 0;
+        body.append(el("p", "verdict " + (bad ? "bad" : "ok"),
+          bad ? "Есть ошибки: " + lines.errors.length + ". Верните факты в текст."
+              : "Ошибок не найдено" + (present.length ? ": " + present.join(", ") + " на месте." : ".")));
+        if (present.length && bad) body.append(el("p", "note", "В исходнике: " + present.join(", ") + "."));
+        for (const [title, items, cls] of [["Ошибки", lines.errors, "errors"], ["Проверьте глазами", lines.checks, "checks"]]) {
+          if (!items.length) continue;
+          body.append(el("h3", "", title));
+          const ul = el("ul", cls);
+          for (const item of items) ul.append(el("li", "", item));
+          body.append(ul);
+        }
+        if (notesCut) body.append(el("p", "note", "Заметки чат-бота после строки «---» в сверку не вошли."));
+        fix = fixRequest(lines);
+        fixRow.hidden = !fix;
+        fixStatus.textContent = "";
+        result.hidden = false;
+      }
+
+      function runCheck(event) {
+        event.preventDefault();
+        const facts = window.HumanizerFacts, notes = window.HumanizerNotes;
+        if (!facts || !notes) { setStatus(status, "Сверка не загрузилась. Обновите страницу.", true); return; }
+        for (const box of [before, after]) box.toggleAttribute("aria-invalid", !box.value.trim());
+        if (!before.value.trim() || !after.value.trim()) {
+          setStatus(status, "Вставьте оба текста: до и после правки.", true);
+          return;
+        }
+        try {
+          const [edit, cut] = notes.splitNotes(after.value, before.value);
+          const res = facts.compare(before.value, edit);
+          showResult(res, sections(facts.render(res)), Boolean(cut));
+          setStatus(status, "Готово. Результат ниже.");
+          result.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (err) {
+          setStatus(status, "Не удалось сверить тексты. Они остались в полях; попробуйте ещё раз.", true);
+          console.error("[M-SITE-SVERKA][BLOCK_UI] check failed", err);
+        }
+      }
+
+      async function copy(text, node, done) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setStatus(node, done);
+        } catch {
+          setStatus(node, "Не получилось скопировать: выделите текст и скопируйте вручную.", true);
+        }
+      }
+
+      async function loadPrompt() {
+        try {
+          const r = await fetch("./prompt.txt", { credentials: "omit", mode: "same-origin", redirect: "error", referrerPolicy: "no-referrer" });
+          if (!r.ok) throw new Error("prompt request failed");
+          prompt = (await r.text()).trim();
+          $("prompt-text").textContent = prompt;
+          $("copy-prompt").disabled = false;
+          setStatus($("prompt-status"), "Промпт готов (" + plural(prompt.length, ["знак", "знака", "знаков"]) + ").");
+        } catch {
+          setStatus($("prompt-status"), "Промпт не загрузился. Он есть в репозитории: prompt/chat.md.", true);
+        }
+      }
+
+      form.addEventListener("submit", runCheck);
+      for (const box of [before, after]) box.addEventListener("input", () => {
+        box.removeAttribute("aria-invalid");
+        if (!result.hidden) setStatus(status, "Текст изменён. Нажмите «Сверить» ещё раз.");
+      });
+      $("copy-prompt").addEventListener("click", () => copy(prompt, $("prompt-status"), "Промпт скопирован. Вставьте его в начало нового чата."));
+      $("copy-fix").addEventListener("click", () => copy(fix, fixStatus, "Скопировано. Вставьте это в тот же чат."));
+      document.addEventListener("DOMContentLoaded", () => {
+        const ready = window.HumanizerFacts && window.HumanizerNotes;
+        checkButton.disabled = !ready;
+        setStatus(status, ready ? "Можно сверять." : "Сверка не загрузилась. Обновите страницу.", !ready);
+        loadPrompt();
+      }, { once: true });
+    })();
+    // END_BLOCK_UI
+  </script>
+</body>
+</html>

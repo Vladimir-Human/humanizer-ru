@@ -6,7 +6,7 @@
 #          domain authors from ru.wikisource; each text is split into a sample (given to the
 #          editor) and a held-out part (the target), so copying phrases from the sample earns
 #          nothing. Closeness = voice_profile.py distance (character 3-grams) to the held-out part.
-# SCOPE: `fetch` writes eval/corpus/voice/<slug>.txt and index.json; `run` makes 2 model notes per
+# SCOPE: `fetch` writes eval/corpus/voice/<slug>.txt and index.json; `run` makes NOTES model notes per
 #        author (MiniMax, free route) and edits them with each system, with and without the
 #        sample; `score` writes eval/results/<run>/voice.md and voice.json.
 # DEPENDS: evallib, run_systems (load_system, inline_system, REQUEST), fetch_human (_Paragraphs),
@@ -46,6 +46,9 @@ AUTHORS = [
 ]
 NOTE_MODEL = "dsh:minimax/MiniMax-M3.1-Flash"
 SAMPLE_WORDS, HELD_WORDS = 700, 1200
+# Plan v3 (eval/README, 09.11): 4 authors x 3 notes, the gate counts notes, not authors: >= 10 of 12
+# closer with the sample (sign test p = 0.02); "3 of 4 authors" passed by chance 5 times in 16.
+NOTES, GATE = 3, 10
 VOICE_REQUEST = ("Вот образец моего текста:\n\n{sample}\n\nПерепиши текст ниже в моей манере, как будто его "
                  "написал я. Факты не меняй.\n\n")
 
@@ -108,7 +111,7 @@ def run(run_name: str, systems: list, executor: str, workers: int) -> int:
     jobs = []
     for slug, _, _ in AUTHORS:
         sample, _, rest = parts(lib.read_text(VOICE / (slug + ".txt")))
-        topics = [p for p in rest.split("\n\n") if len(p) > 300][:2]
+        topics = [p for p in rest.split("\n\n") if len(p) > 300][:NOTES]
         for k, topic in enumerate(topics):
             note_path = run_dir / "notes" / ("%s-%d.txt" % (slug, k))
             if not note_path.exists():
@@ -146,34 +149,35 @@ def run(run_name: str, systems: list, executor: str, workers: int) -> int:
     return 1 if failed else 0
 
 
-def _body(text: str) -> str:
-    """The edited text without the notes after the last line '---'."""
-    lines = text.rstrip().split("\n")
-    for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip() == "---":
-            return "\n".join(lines[:i]).strip()
-    return text.strip()
+def _body(text: str, source: str = "") -> str:
+    """The edited text without the notes to the author (evallib.split_notes, R-NOTES-NOT-TEXT)."""
+    return lib.split_notes(text, source)[0]
 
 
 def score(run_name: str) -> int:
     run_dir = lib.EVAL_DIR / "results" / run_name / "voice"
     labels = sorted(d.name for d in run_dir.iterdir() if d.is_dir() and d.name != "notes")
-    res = {}
+    res, pairs = {}, []
     for slug, author, _ in AUTHORS:
         _, held, _ = parts(lib.read_text(VOICE / (slug + ".txt")))
         prof = voice_profile.build(held)
         row = {"note": []}
         for f in sorted((run_dir / "notes").glob(slug + "-*.txt")):
-            row["note"].append(voice_profile.distance(prof, lib.read_text(f))["distance"])
+            note = lib.read_text(f)
+            row["note"].append(voice_profile.distance(prof, note)["distance"])
+            dist = {}
             for label in labels:
                 p = run_dir / label / f.name
                 if p.exists():
-                    row.setdefault(label, []).append(voice_profile.distance(prof, _body(lib.read_text(p)))["distance"])
+                    dist[label] = voice_profile.distance(prof, _body(lib.read_text(p), note))["distance"]
+                    row.setdefault(label, []).append(dist[label])
+            pairs.append(dist)
         res[slug] = {k: round(sum(v) / len(v), 4) for k, v in row.items() if v}
         res[slug]["author"] = author
     systems = sorted({l.replace("+sample", "") for l in labels})
-    verdict = {s: sum(1 for slug in res if s + "+sample" in res[slug] and s in res[slug]
-                      and res[slug][s + "+sample"] < res[slug][s]) for s in systems}
+    # Per note: the edit with the sample is closer to the author than the same system's edit without.
+    verdict = {s: [sum(1 for d in pairs if s + "+sample" in d and s in d and d[s + "+sample"] < d[s]),
+                   sum(1 for d in pairs if s + "+sample" in d and s in d)] for s in systems}
     md = ["# Голос автора: %s" % run_name, "",
           "Расстояние по символьным триграммам до отложенной части текста автора (0 — та же манера). "
           "Образец (первые ~%d слов) получает только правка «+sample»; отложенная часть (следующие ~%d слов) "
@@ -181,8 +185,8 @@ def score(run_name: str) -> int:
           "| Автор | Заметка модели | " + " | ".join(labels) + " |", "|---" * (len(labels) + 2) + "|"]
     for slug, r in res.items():
         md.append("| %s | %.3f | " % (r["author"], r["note"]) + " | ".join("%.3f" % r[l] if l in r else "—" for l in labels) + " |")
-    md += [""] + ["- `%s`: правка с образцом ближе к автору у %d из %d авторов (порог 6: хотя бы у 3)." % (s, verdict[s], len(res))
-                  for s in systems]
+    md += [""] + ["- `%s`: правка с образцом ближе к автору в %d из %d заметок (порог 6: хотя бы %d из 12)."
+                  % (s, verdict[s][0], verdict[s][1], GATE) for s in systems]
     lib.write_text(run_dir / "voice.md", "\n".join(md) + "\n")
     lib.write_json(run_dir / "voice.json", {"authors": res, "closer_with_sample": verdict})
     print("\n".join(md))

@@ -1,0 +1,112 @@
+{
+  "f03": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "1350",
+      "600",
+      "1800",
+      "ТР",
+      "ТС",
+      "Ozon",
+      "Длинное"
+    ]
+  },
+  "f06": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "f09": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "504",
+      "500"
+    ]
+  },
+  "f12": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "два"
+    ]
+  },
+  "f15": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "630",
+      "650",
+      "ГВС"
+    ]
+  },
+  "f18": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "f21": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "f24": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "f27": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "650",
+      "600",
+      "800",
+      "1",
+      "30%"
+    ]
+  },
+  "f30": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "f33": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "1 100",
+      "Яндекс"
+    ]
+  },
+  "f36": {
+    "line": "",
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  }
+}

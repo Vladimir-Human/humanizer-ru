@@ -236,6 +236,10 @@ def check(root: Path) -> list:
             body = raw.split("<!-- prompt:start -->", 1)[1].split("<!-- prompt:end -->", 1)[0].strip()
             if len(body) > 4000:
                 problems.append("prompt/chat.md: промпт длиннее 4000 знаков (%d)" % len(body))
+            # The fact-check page copies the prompt from its own file (GitHub Pages serves site/ only).
+            site_prompt = root / "site" / "sverka" / "prompt.txt"
+            if site_prompt.exists() and site_prompt.read_text(encoding="utf-8") != body + "\n":
+                problems.append("site/sverka/prompt.txt отличается от промпта в prompt/chat.md: скопируйте его")
         if any(ord(c) in INVISIBLE for c in raw):
             problems.append("prompt/chat.md: невидимые символы")
     # END_BLOCK_PORTABLE

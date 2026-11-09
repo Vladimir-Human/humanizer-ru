@@ -45,6 +45,7 @@
 #          quotes block matches quoted words in order; bindings block pairs numbers with names
 #          (clause by clause when a sentence names several people).
 # render: human-readable Russian report.
+# receipt: the «Сверка скриптом: …» notes line the skill copies word for word; receipt_hint frames it.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
 # END_MODULE_MAP
 """Сверка фактов до и после правки.
@@ -53,6 +54,7 @@
     python check_facts.py до.txt после.txt --json   # то же в JSON
     python check_facts.py - после.txt               # исходник из stdin
 
+В конце отчёта — готовая строка для заметок «Сверка скриптом: …».
 Код выхода: 0 — ошибок нет, 1 — есть ошибки, 2 — файл не читается.
 """
 from __future__ import annotations
@@ -1262,12 +1264,14 @@ def _dedupe(items: List[Dict]) -> List[Dict]:
     return out
 
 
-KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перестановка",
+KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перепутано",
            "inverted": "перевёрнуто",
            "fewer": "реже", "hedge": "потеряна", "negation": "проверь"}
 # The verb agrees with the noun: «потеряна цитата», «потерян телефон», «потеряно число».
-KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута"}
-KIND_MASC = {"потеряно": "потерян", "появилось": "появился", "перевёрнуто": "перевёрнут"}
+KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута",
+               "перепутано": "перепутана"}
+KIND_MASC = {"потеряно": "потерян", "появилось": "появился", "перевёрнуто": "перевёрнут",
+                "перепутано": "перепутан"}
 MASC_WHAT = {"телефон", "код"}
 
 
@@ -1295,6 +1299,52 @@ def render(result: Dict) -> str:
     return "\n".join(lines)
 
 
+# START_BLOCK_RECEIPT
+# The notes line the skill copies word for word (SKILL.md step 6, R-RECEIPT): written by the script,
+# so its numbers are the script's. M4 on 2026-11-09: agents that retold the report in their own words
+# gave other numbers in 3 of 9 lines («8 чисел, телефон» for 9 numbers and 1 phone).
+RECEIPT_FORMS = (  # counts key, forms for 1 / 2-4 / 5 and more
+    ("number", ("число", "числа", "чисел")),
+    ("date", ("дата", "даты", "дат")),
+    ("name", ("имя или название", "имени и названия", "имён и названий")),
+    ("url", ("ссылка", "ссылки", "ссылок")),
+    ("phone", ("телефон", "телефона", "телефонов")),
+    ("quote", ("цитата", "цитаты", "цитат")),
+    ("negation", ("отрицание", "отрицания", "отрицаний")),
+)
+
+
+def plural(n: int, forms: Tuple[str, str, str]) -> str:
+    if n % 10 == 1 and n % 100 != 11:
+        return forms[0]
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return forms[1]
+    return forms[2]
+
+
+def receipt(result: Dict) -> str:
+    """«Сверка скриптом: …» for the notes; "" while there are errors other than lost facts."""
+    c = result["counts"]
+    have = ", ".join("%d %s" % (c[k], plural(c[k], forms)) for k, forms in RECEIPT_FORMS if c.get(k))
+    if not result["errors"]:
+        return "Сверка скриптом: " + ("%s на месте." % have if have else "чисел, дат и имён в тексте нет.")
+    if all(e["kind"] == "lost" for e in result["errors"]):
+        return "Сверка скриптом: в исходнике %s; в правке нет: %s." % (
+            have or "фактов нет", ", ".join(e["detail"] for e in result["errors"]))
+    return ""
+
+
+def receipt_hint(result: Dict) -> str:
+    line = receipt(result)
+    if not result["errors"]:
+        return "Строка для заметок: " + line
+    if line:
+        return ("Если пропавшее убрано намеренно (служебные слова чат-бота), строка для заметок: %s\n"
+                "Иначе верни факты и запусти сверку снова." % line)
+    return "Строки для заметок нет: исправь ошибки и запусти сверку снова."
+# END_BLOCK_RECEIPT
+
+
 def _read(path: str) -> str:
     if path == "-":
         # Bytes, not sys.stdin: on Windows it decodes with the console code page (cp1251), and two
@@ -1317,7 +1367,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Не могу прочитать файл: %s" % exc, file=sys.stderr)
         return 2
     result = compare(before, after)
-    print(json.dumps(result, ensure_ascii=False, indent=2) if as_json else render(result))
+    print(json.dumps(result, ensure_ascii=False, indent=2) if as_json else
+          render(result) + "\n\n" + receipt_hint(result))
     return 1 if result["errors"] else 0
 
 

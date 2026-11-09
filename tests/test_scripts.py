@@ -545,6 +545,27 @@ class CheckFactsTest(unittest.TestCase):
         text = cf.render(cf.compare("Звоните: +7 999 123-45-67.", "Звоните нам."))
         self.assertIn("потерян телефон", text)
 
+    def test_receipt_line_is_the_scripts_own(self):
+        # R-RECEIPT, M4 2026-11-09: agents retold the report and gave other numbers in 3 of 9 lines, so
+        # the script writes the notes line itself; it never says «на месте» while an error is left.
+        src = "Анна, скидка 20% до 30 ноября, звоните +7 999 123-45-67."
+        self.assertEqual(cf.receipt(cf.compare(src, src)),
+                         "Сверка скриптом: 1 число, 1 дата, 1 имя или название, 1 телефон на месте.")
+        lost = cf.compare(src, "Анна, скидка до 30 ноября, звоните +7 999 123-45-67.")
+        self.assertEqual(cf.receipt(lost), "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя или название, "
+                                           "1 телефон; в правке нет: 20%.")
+        added = cf.compare(src, src.replace("20%", "25%"))
+        self.assertEqual(cf.receipt(added), "")
+        self.assertIn("Строки для заметок нет", cf.receipt_hint(added))
+        self.assertIn("Строка для заметок: Сверка скриптом:", cf.receipt_hint(cf.compare(src, src)))
+        self.assertEqual(cf.receipt(cf.compare("Хорошо.", "Хорошо.")), "Сверка скриптом: чисел, дат и имён в тексте нет.")
+        forms = ("число", "числа", "чисел")
+        self.assertEqual([cf.plural(n, forms) for n in (1, 2, 5, 11, 12, 14, 21, 22, 25, 101, 111, 112)],
+                         ["число", "числа", "чисел", "чисел", "чисел", "чисел", "число", "числа", "чисел",
+                          "число", "чисел", "чисел"])
+        for text in ("Анна, 5 мая.", "Числа 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21."):
+            self.assertTrue(cf.receipt(cf.compare(text, text)).endswith("на месте."), text)
+
     # 4.1.5: findings of the cross-review of 4.1.4 (GPT-6.1 Sol, Gemini 4 Argon), each rerun first.
     def test_ip_addresses_and_versions_are_whole_tokens(self):
         self.assertIn(("lost", "число"), self.errs("Адрес 10.0.10.1.", "Адрес 10.0.10.2."))
