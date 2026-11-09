@@ -1,0 +1,8 @@
+{
+  "executor": "dsh:minimax/MiniMax-M3.1-Flash",
+  "systems": [
+    "ours417",
+    "ours"
+  ],
+  "repeat": 2
+}

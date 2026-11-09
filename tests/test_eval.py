@@ -106,6 +106,48 @@ class EvalReportTest(unittest.TestCase):
         self.assertIn("не отличить от 50%", report._with_interval(0.46, (0.3, 0.6)))
         self.assertIn("выше 50%", report._with_interval(0.9, (0.8, 0.97)))
 
+    def test_agreed_wins_need_every_pass_and_sign_test_is_exact(self):
+        # 4.2.0 rule: a win counts only when both shuffles put ours above; a split is a tie.
+        def row(tid, rnd, rank, judge="opus"):
+            return {"id": tid, "judge": judge, "round": rnd, "ranking": rank}
+        rows = [row("a", 0, ["x", "y"]), row("a", 1, ["x", "y"]),      # win
+                row("b", 0, ["x", "y"]), row("b", 1, ["y", "x"]),      # split: tie
+                row("c", 0, ["y", "x", "z"]), row("c", 1, ["z", "y", "x"]),  # loss
+                row("d", 0, ["x", "y"]), row("d", 1, ["y", "x"], judge="sol")]
+        self.assertEqual(report.agreed_record(rows, {"a", "b", "c", "d"}, "x", "y"),
+                         {"wins": 1, "losses": 1, "ties": 2, "texts": 4})
+        # Sol only votes on facts: with rank judges = opus, text d is decided by opus alone
+        self.assertEqual(report.agreed_record(rows, {"a", "b", "c", "d"}, "x", "y", rank_judges={"opus"}),
+                         {"wins": 2, "losses": 1, "ties": 1, "texts": 4})
+        # exact one-sided binomial: 17 of 24 is the first count below 0.05 (README: 71%)
+        self.assertAlmostEqual(report.sign_test(17, 7), 536155 / 2 ** 24)
+        self.assertGreater(report.sign_test(16, 8), 0.05)
+        self.assertEqual(report.critical_wins(24), 17)
+        self.assertIsNone(report.critical_wins(4))  # 4 of 4 is p = 1/16: four texts can never decide
+        self.assertEqual(report.sign_test(0, 0), 1.0)
+
+    def test_release_gates_two_and_three(self):
+        rows = [{"id": t, "judge": "opus", "round": r, "ranking": ["ours", "ours417"]} for t in ("f01", "f02") for r in (0, 1)]
+        src = "Встреча 12 марта в 10:00, взнос 500 ₽."
+        outputs = {("ours", "f01"): src, ("ours417", "f01"): src, ("ours", "f02"): src, ("ours417", "f02"): src,
+                   ("ours", "wn1"): src, ("ours417", "wn1"): "Встреча в марте, взнос 500 ₽."}
+        sources = {"f01": src, "f02": src, "wn1": src}
+        table, _, _ = report.aggregate(rows, {"f01", "f02"}, outputs, sources)
+        result = {"groups": {"ai": {"ids": ["f01", "f02"], "table": table}, "human": {"ids": ["wn1"]}}}
+        gates = report.release_gates(result, rows, outputs, sources, "ours", "ours417")
+        self.assertEqual([g[1] for g in gates], [True, True])
+        self.assertIn("2:0", gates[0][2])
+        # the previous version keeps the facts on the human text and ours loses one: gate 3 fails
+        outputs[("ours", "wn1")], outputs[("ours417", "wn1")] = outputs[("ours417", "wn1")], src
+        gates = report.release_gates(result, rows, outputs, sources, "ours", "ours417")
+        self.assertFalse(gates[1][1])
+        # without the previous version in the run there is nothing to gate
+        self.assertEqual(report.release_gates(result, rows, outputs, sources, "ours", "ours410"), [])
+        # a run without judges still gets its human-text table from the outputs
+        table, _, _ = report.aggregate([], {"wn1"}, outputs, sources)
+        self.assertEqual(sorted(table), ["ours", "ours417"])
+        self.assertIsNone(table["ours"]["mean_position"])
+
 
 class EvalDshRouteTest(unittest.TestCase):
     """R-EVAL-DSH: only the owner's free routes, no paid fallback, nothing booked, plain reply."""
@@ -280,6 +322,126 @@ class EvalPatternsTest(unittest.TestCase):
     def test_assistant_utm_but_not_author_utm(self):
         table = patterns.survival({"x": "https://a.ru/?utm_source=openai https://b.ru/?utm_source=newsletter"}, {})
         self.assertEqual(table["assistant_utm"]["in_sources"], 1)
+
+
+class EvalProbesTest(unittest.TestCase):
+    """V-M-EVAL-PROBES: each oracle holds on a correct edit and fails on the edit that breaks
+    the rule it stands for; the real probe bank is well formed."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location("eval_probes", EVAL / "probes.py")
+        cls.probes = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.probes)
+
+    def ok(self, probe, out):
+        return all(self.probes.score_one(probe, out).values())
+
+    def test_bank_is_well_formed(self):
+        bank = json.loads((EVAL / "corpus" / "probes.json").read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(bank), 60)
+        self.assertEqual(len({p["id"] for p in bank}), len(bank))
+        rules = {p["rule"] for p in bank}
+        self.assertGreaterEqual(len(rules), 15)
+        for p in bank:
+            oracles = [k for k in p if k in self.probes.ORACLES]
+            self.assertTrue(oracles, p["id"])
+            self.assertEqual(set(p) - set(self.probes.ORACLES) - {"id", "rule", "text", "request"}, set(), p["id"])
+            # A probe that demands a change gives the unedited source no free pass.
+            demands = p["rule"] in ("no_add", "gram_dash", "false_contrast", "chat_wrapper", "interview")
+            if demands and any(k in p for k in ("drop", "asks", "bold_less")):
+                self.assertFalse(self.ok(p, p["text"]), p["id"])
+
+    def test_keep_and_keep_any_ignore_case_and_yo(self):
+        p = {"text": "x", "keep": ["Соколов"], "keep_any": [["по словам", "считает"]]}
+        self.assertTrue(self.ok(p, "Как считает Ирина СОКОЛОВА, ходьба полезна."))
+        self.assertFalse(self.ok(p, "Ходьба полезна."))
+        self.assertTrue(self.ok({"text": "x", "keep": ["тёмная"]}, "темная тема"))
+
+    def test_drop_and_keep_re_are_regexes(self):
+        p = {"text": "x", "drop": ["не просто\\b[^.!?]{0,80},\\s*а\\b"], "keep_re": ["[Кк]эш\\s+—"]}
+        self.assertTrue(self.ok(p, "Кэш — быстрая память. Кофейня с 40 местами."))
+        self.assertFalse(self.ok(p, "Кэш — быстрая память. Это не просто кофейня, а место встреч."))
+        self.assertFalse(self.ok(p, "Кэш является быстрой памятью."))
+
+    def test_facts_oracle_catches_lost_and_added_facts(self):
+        # A lost hedge is only a "check" for check_facts, so probes name hedges in keep_any.
+        p = {"text": "Ремонт займёт примерно три недели, стоимость 4 500 рублей.", "facts": True,
+             "keep_any": [["примерно", "около"]]}
+        self.assertTrue(self.ok(p, "Ремонт займёт примерно три недели и обойдётся в 4 500 рублей."))
+        self.assertFalse(self.ok(p, "Ремонт займёт три недели и обойдётся в 4 500 рублей."), "hedge lost")
+        self.assertFalse(self.ok(p, "Ремонт займёт примерно три недели и обойдётся в 5 000 рублей."))
+        self.assertFalse(self.ok({"text": "Курс по Excel.", "facts": True}, "В курсе 12 уроков по Excel."))
+
+    def test_yo_asks_lists_bold_counts_similarity_length(self):
+        P = self.probes
+        self.assertTrue(all(P.score_one({"text": "Артём Королёв", "yo": True}, "Шеф Артём Королёв").values()))
+        self.assertFalse(all(P.score_one({"text": "Артём Королёв", "yo": True}, "Шеф Артем Королев").values()))
+        self.assertTrue(self.ok({"text": "Кофейня.", "asks": True}, "Кофейня.\n\n---\nКакой у вас фирменный напиток?"))
+        self.assertFalse(self.ok({"text": "Кофейня?", "asks": True}, "Кофейня?"))
+        steps = "1. Раз.\n2) Два.\n- три\n**Шаг 4.** Четыре"
+        self.assertTrue(self.ok({"text": "x", "list_items": 4}, steps))
+        self.assertFalse(self.ok({"text": "x", "list_items": 4}, "Раз, два, три и четыре."))
+        self.assertTrue(self.ok({"text": "**a** **b**", "bold_less": True}, "**a** b"))
+        self.assertFalse(self.ok({"text": "**a**", "bold_less": True}, "**a**"))
+        self.assertTrue(self.ok({"text": "x", "min_count": [["20%", 2]]}, "20% и снова 20%"))
+        self.assertFalse(self.ok({"text": "x", "min_count": [["20%", 2]]}, "20%"))
+        legal = "Арендатор обязуется вносить арендную плату не позднее 5 числа каждого месяца."
+        self.assertTrue(self.ok({"text": legal, "min_similarity": 0.9}, legal))
+        self.assertFalse(self.ok({"text": legal, "min_similarity": 0.9}, "Платите аренду до пятого."))
+        self.assertFalse(self.ok({"text": "Скидки до 31 января, до 40%.", "min_len_ratio": 0.4}, "ГОТОВО"))
+
+    def test_summary_counts_runs_and_spread(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp)
+            bank = {p["id"]: p for p in json.loads((EVAL / "corpus" / "probes.json").read_text(encoding="utf-8"))}
+            good = bank["pr20"]["text"]
+            for rnd, text in (("r0", good), ("r1", "Мы отключаем API.")):
+                path = run_dir / "probes" / "ours" / rnd / "pr20.txt"
+                path.parent.mkdir(parents=True)
+                path.write_text(text, encoding="utf-8")
+            s = self.probes.summarize(run_dir)
+            cell = s["table"]["ours"]["false_contrast"]
+            self.assertEqual((cell["passed"], cell["total"], cell["per_run"], cell["spread"]), (1, 2, [1, 0], 1))
+            self.assertIn("pr20 keep:не весь", s["fails"]["ours"])
+            self.assertIn("| false_contrast | 1/2 (1, 0) |", self.probes.render(s, "t"))
+
+
+class EvalNewMeasuresTest(unittest.TestCase):
+    """4.2.0 measures: frequency candidates, interview gate, voice gate (README «Замер 4.2.0»)."""
+
+    def test_log_odds_leans_to_the_side_that_uses_a_phrase(self):
+        import style_freq as sf
+        ai = [sf.doc_ngrams("Стоит отметить, что матч прошёл в Палермо.") for _ in range(20)]
+        hu = [sf.doc_ngrams("Матч прошёл в Палермо и закончился 9:1.") for _ in range(20)]
+        z = sf.log_odds(ai, hu)
+        # 20 of 20 texts against 0 of 20: z = 3.67 with 0.5 added to every cell
+        self.assertGreater(z["стоит отметить"][0], 3)
+        self.assertLess(z["закончился"][0], -3)
+        self.assertAlmostEqual(z["стоит отметить"][0], max(v[0] for v in z.values()))  # tied with its own words
+        self.assertAlmostEqual(z["палермо"][0], 0.0, places=6)  # both sides: no lean
+        self.assertEqual(z["стоит отметить"][1:], (20, 0))  # document counts, not repeats
+        self.assertNotIn("9", " ".join(sf.doc_ngrams("Счёт 9:1, 2 гола.")))  # numbers are topic, not style
+
+    def test_interview_questions_and_invented_facts(self):
+        import interview_eval as iv
+        answer = "Кофейня на Ленина.\n\n---\n- Что вы обжариваете сами?\n- Во сколько открываетесь?"
+        self.assertEqual(iv.questions(answer), ["- Что вы обжариваете сами?", "- Во сколько открываетесь?"])
+        self.assertEqual(iv.questions("Кофейня на Ленина."), [])
+        added = iv._added("Кофейня на Ленина.", "Кофейня на Ленина, 14, с 8:00. Хозяйка Марина.")
+        self.assertEqual(sorted(a.split(": ")[1] for a in added), ["14", "8:00", "Марина"])
+        # what the author answered is not invented
+        self.assertEqual(iv._added("Кофейня на Ленина.\n\nЛенина, 14; с 8:00; хозяйка Марина.",
+                                   "Кофейня на Ленина, 14, с 8:00. Хозяйка Марина."), [])
+
+    def test_voice_split_keeps_sample_and_target_apart(self):
+        import voice_eval as ve
+        text = "\n\n".join(("Абзац %d. " % i) + "слово " * 100 for i in range(30))
+        sample, held, _ = ve.parts(text)
+        n = lambda t: len(ve.voice_profile.WORD_RX.findall(t))
+        self.assertTrue(600 <= n(sample) <= ve.SAMPLE_WORDS and 1100 <= n(held) <= ve.HELD_WORDS, (n(sample), n(held)))
+        self.assertFalse(set(sample.split("\n\n")) & set(held.split("\n\n")))
+        self.assertEqual(ve._body("Текст правки.\n\n---\n- заметка"), "Текст правки.")
 
 
 if __name__ == "__main__":

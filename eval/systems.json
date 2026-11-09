@@ -1,7 +1,9 @@
 [
   {"name": "ours", "title": "humanizer-ru 4 (этот репозиторий)", "kind": "local", "path": "skills/humanizer-ru"},
+  {"name": "chat", "title": "humanizer-ru: промпт для чат-ботов (prompt/chat.md)", "kind": "prompt_file", "path": "prompt/chat.md"},
   {"name": "ours410", "title": "humanizer-ru 4.1.0 (прошлая версия)", "kind": "tag", "ref": "v4.1.0:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "ours411", "title": "humanizer-ru 4.1.1 (прошлая версия)", "kind": "tag", "ref": "v4.1.1:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
+  {"name": "ours417", "title": "humanizer-ru 4.1.7 (прошлая версия)", "kind": "tag", "ref": "v4.1.7:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "old_v3", "title": "humanizer-ru 3.36.4 (прошлая версия)", "kind": "tag", "ref": "v3.36.4", "paths": ["SKILL.md", "references", "knowledge"]},
   {"name": "ilyautov", "title": "ilyautov/humanizer-ru", "kind": "github", "repo": "ilyautov/humanizer-ru", "sha": "8c337c3567096758433c475f1d60f2543f6bc94f", "path": "skills/humanizer-ru"},
   {"name": "ilyautov332", "title": "ilyautov/humanizer-ru v3.32.0", "kind": "github", "repo": "ilyautov/humanizer-ru", "sha": "3621b1ca6b9a2f84f28f692222470dc25706255d", "path": "skills/humanizer-ru"},

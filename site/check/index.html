@@ -1,0 +1,597 @@
+<!doctype html>
+<!--
+START_MODULE_CONTRACT
+PURPOSE: A Russian, browser-only style check presented as editorial notes.
+SCOPE: Static form and report UI; never send or persist the entered text.
+DEPENDS: ./engine.js (window.RuSlop); one fetch of ./rules.json.
+LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+END_MODULE_CONTRACT
+START_MODULE_MAP
+HTML: Title, privacy note, accessible text form, status and result live region.
+CSS: Responsive notebook layout, required light/dark palette and visible focus.
+UI: initialize loads rules once; submitCheck runs lint; renderReport builds safe DOM.
+END_MODULE_MAP
+-->
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
+  <title>Проверка стиля</title>
+  <link rel="icon" href="data:,">
+  <style>
+    /* START_BLOCK_CSS
+       LINKS: M-PAGE; R-PAGE.ui.
+    */
+    :root {
+      color-scheme: light dark;
+      --paper: #f7f8fa;
+      --sheet: #ffffff;
+      --ink: #1b2230;
+      --soft: #4a5468;
+      --rule: #d9dee8;
+      --pencil: #2346a8;
+      --wash: #e6ecfa;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #12161e;
+        --sheet: #191e28;
+        --ink: #e4e8f0;
+        --soft: #a3adc0;
+        --rule: #2c3442;
+        --pencil: #8fa9f2;
+        --wash: #1f2a44;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'PT Sans', 'Segoe UI', system-ui, sans-serif;
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    button, textarea { font: inherit; }
+    [hidden] { display: none !important; }
+
+    .page {
+      max-width: 46rem;
+      margin-inline: auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    a {
+      color: var(--pencil);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.2em;
+    }
+
+    a:hover { text-decoration-thickness: 2px; }
+
+    :focus-visible {
+      outline: 3px solid var(--pencil);
+      outline-offset: 4px;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding-block: 0.3rem;
+      font-size: 0.95rem;
+    }
+
+    .masthead { margin: 2rem 0 1.65rem; }
+
+    .eyebrow {
+      margin: 0 0 0.7rem;
+      color: var(--pencil);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+    }
+
+    .purpose-note {
+      max-width: 42rem;
+      margin: 1rem 0 0;
+      color: var(--soft);
+      line-height: 1.6;
+    }
+
+    .privacy-note {
+      margin: 0.85rem 0 0;
+      padding-left: 0.7rem;
+      border-left: 2px solid var(--pencil);
+      color: var(--pencil);
+      font-size: 0.9rem;
+    }
+
+    .editor {
+      padding: 1.25rem;
+      border: 1px solid var(--rule);
+      border-top: 3px solid var(--pencil);
+      background: var(--sheet);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .section-index {
+      flex: 0 0 auto;
+      color: var(--pencil);
+      font-size: 0.8rem;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field-help {
+      margin: 0.45rem 0 0.9rem;
+      color: var(--soft);
+      font-size: 0.9rem;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 15rem;
+      padding: 0.9rem 1rem;
+      resize: vertical;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      background: var(--sheet);
+      color: var(--ink);
+      line-height: 1.65;
+      caret-color: var(--pencil);
+    }
+
+    textarea::placeholder { color: var(--soft); opacity: 1; }
+    textarea[aria-invalid="true"] { border-color: var(--pencil); }
+
+    .form-bottom {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .check-button {
+      flex: 0 0 auto;
+      min-height: 2.75rem;
+      padding: 0.55rem 1.35rem;
+      border: 1px solid var(--pencil);
+      border-radius: 2px;
+      background: var(--pencil);
+      color: var(--sheet);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .check-button:hover:not(:disabled) {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .check-button:disabled {
+      border-color: var(--rule);
+      background: var(--wash);
+      color: var(--soft);
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.9rem;
+      overflow-wrap: anywhere;
+    }
+
+    .status.is-error { color: var(--ink); font-weight: 700; }
+
+    .noscript-note {
+      margin: 1rem 0 0;
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .results:not(:empty) { margin-top: 2rem; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1.25rem;
+      margin-top: 0.85rem;
+      padding: 1.1rem 1.25rem;
+      border-block: 1px solid var(--rule);
+      background: var(--wash);
+    }
+
+    .summary-label {
+      margin: 0;
+      color: var(--soft);
+      font-size: 0.8rem;
+    }
+
+    .level {
+      margin: 0.15rem 0 0;
+      color: var(--pencil);
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 1.4rem;
+      margin: 0;
+    }
+
+    .stat-value {
+      margin: 0.15rem 0 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.3;
+    }
+
+    .report-section { margin-top: 1.65rem; }
+
+    .report-section-title {
+      margin: 0;
+      padding-bottom: 0.55rem;
+      border-bottom: 1px solid var(--rule);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .findings, .examples { margin: 0; padding: 0; list-style: none; }
+
+    .finding {
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .finding-heading {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .finding-sign {
+      color: var(--pencil);
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .finding-name {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .finding-count {
+      color: var(--soft);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .finding-body { margin: 0.65rem 0 0 3.5rem; }
+
+    .example {
+      display: grid;
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.3rem;
+    }
+
+    .example-line {
+      padding-top: 0.1rem;
+      color: var(--soft);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .example-text { overflow-wrap: anywhere; }
+
+    .finding-hint {
+      margin: 0.55rem 0 0;
+      color: var(--soft);
+      font-size: 0.95rem;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .empty-note { margin: 0.8rem 0 0; color: var(--soft); }
+
+    .footer-note {
+      margin: 1.5rem 0 0;
+      color: var(--soft);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 34rem) {
+      .page { padding: 1rem 1rem 2rem; }
+      .masthead { margin-top: 1.5rem; }
+      .editor { padding: 1rem; }
+      .form-bottom { align-items: stretch; flex-direction: column; gap: 0.75rem; }
+      .check-button { width: 100%; }
+      .summary { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+      .stats { justify-content: start; gap: 2rem; }
+      .finding-heading { grid-template-columns: 2.25rem minmax(0, 1fr); }
+      .finding-count { grid-column: 2; }
+      .finding-body { margin-left: 2.75rem; }
+    }
+    /* END_BLOCK_CSS */
+  </style>
+  <script src="./engine.js" defer referrerpolicy="no-referrer"></script>
+</head>
+<body>
+  <!-- START_BLOCK_HTML
+       LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+  -->
+  <main class="page">
+    <a class="back-link" href="../">← Назад</a>
+    <header class="masthead">
+      <p class="eyebrow">RuSlop · заметки на полях</p>
+      <h1>Проверка стиля</h1>
+      <p class="purpose-note">Это оценка стиля, а не авторства: так пишут и люди, когда торопятся. Признаки — места, на которые стоит посмотреть.</p>
+      <p id="privacy-note" class="privacy-note">Текст не покидает браузер.</p>
+    </header>
+
+    <form id="check-form" class="editor" autocomplete="off" novalidate>
+      <label class="section-heading" for="text-input">
+        <span class="section-index" aria-hidden="true">01</span>
+        Текст для проверки
+      </label>
+      <p id="text-help" class="field-help">Поиск фраз пропускает цитаты и блоки кода.</p>
+      <textarea id="text-input" rows="12" required spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="text-help privacy-note form-status" placeholder="Вставьте сюда текст, который хотите проверить."></textarea>
+      <div class="form-bottom">
+        <button id="check-button" class="check-button" type="submit" disabled>Проверить</button>
+        <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем правила…</p>
+      </div>
+      <noscript><p class="noscript-note">Для проверки нужен JavaScript. Без него текст никуда не отправляется.</p></noscript>
+    </form>
+
+    <section id="results" class="results" aria-label="Результат проверки" aria-live="polite" aria-atomic="true"></section>
+    <p class="footer-note">Признак — не ошибка. Оставляйте то, что нужно тексту.</p>
+  </main>
+  <!-- END_BLOCK_HTML -->
+
+  <script>
+    // START_BLOCK_UI
+    // LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+    (() => {
+      "use strict";
+
+      const form = document.getElementById("check-form");
+      const textInput = document.getElementById("text-input");
+      const checkButton = document.getElementById("check-button");
+      const status = document.getElementById("form-status");
+      const results = document.getElementById("results");
+      const numbers = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 3 });
+      const scores = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+      let rules = null;
+      let loadFailed = false;
+      let hasReport = false;
+
+      function element(tag, className, text) {
+        const node = document.createElement(tag);
+        node.className = className;
+        if (text !== undefined) node.textContent = String(text);
+        return node;
+      }
+
+      function bySignAndId(left, right) {
+        return left.sign - right.sign || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+      }
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle("is-error", isError);
+      }
+
+      function clearReport() {
+        results.replaceChildren();
+        hasReport = false;
+      }
+
+      function findingHeading(sign, name) {
+        const heading = element("div", "finding-heading");
+        heading.append(
+          element("span", "finding-sign", "#" + sign),
+          element("h4", "finding-name", name)
+        );
+        return heading;
+      }
+
+      function appendHits(report, parent) {
+        const section = element("section", "report-section");
+        section.append(element("h3", "report-section-title", "Фразы"));
+        const hits = report.hits.slice().sort(bySignAndId);
+        if (!hits.length) {
+          section.append(element("p", "empty-note", "Фразовые признаки не найдены."));
+        } else {
+          const list = element("ul", "findings");
+          for (const hit of hits) {
+            const item = element("li", "finding");
+            const heading = findingHeading(hit.sign, hit.name);
+            heading.append(element("span", "finding-count", "Совпадений: " + numbers.format(hit.count)));
+            const body = element("div", "finding-body");
+            const examples = element("ul", "examples");
+            for (const example of hit.examples) {
+              const row = element("li", "example");
+              row.append(
+                element("span", "example-line", "стр. " + example.line),
+                element("span", "example-text", "«" + example.text + "»")
+              );
+              examples.append(row);
+            }
+            body.append(examples, element("p", "finding-hint", hit.hint));
+            item.append(heading, body);
+            list.append(item);
+          }
+          section.append(list);
+        }
+        parent.append(section);
+      }
+
+      function appendMetrics(report, parent) {
+        const metrics = Object.entries(report.metrics)
+          .filter(([, metric]) => metric.over === true)
+          .map(([id, metric]) => ({ id, ...metric }))
+          .sort(bySignAndId);
+        if (!metrics.length) return;
+        const section = element("section", "report-section");
+        section.append(element("h3", "report-section-title", "Метрики за границей"));
+        const list = element("ul", "findings");
+        for (const metric of metrics) {
+          const item = element("li", "finding");
+          const body = element("div", "finding-body");
+          body.append(
+            element("p", "metric-value", "Значение: " + numbers.format(metric.value) + " · граница: " + numbers.format(metric.limit)),
+            element("p", "finding-hint", metric.hint)
+          );
+          if (metric.scored === false) body.append(element("p", "finding-hint", "Для сведения: в балл не входит."));
+          item.append(findingHeading(metric.sign, metric.name), body);
+          list.append(item);
+        }
+        section.append(list);
+        parent.append(section);
+      }
+
+      // START_CONTRACT: renderReport
+      // PURPOSE: Show level, score, words, sorted hits and strictly over-limit metrics.
+      // INPUTS: A report from RuSlop.lint and RuSlop.LEVEL_TEXT.
+      // OUTPUTS: A complete report in the persistent result live region.
+      // SIDE_EFFECTS: Replace result DOM; every report string is assigned via textContent.
+      // END_CONTRACT: renderReport
+      function renderReport(report) {
+        const level = window.RuSlop.LEVEL_TEXT[report.level];
+        if (typeof level !== "string" || !Number.isFinite(report.score) || !Number.isSafeInteger(report.words)) {
+          throw new Error("Invalid report summary");
+        }
+        const content = document.createDocumentFragment();
+        const heading = element("h2", "section-heading");
+        const index = element("span", "section-index", "02");
+        index.setAttribute("aria-hidden", "true");
+        heading.append(index, element("span", "", "Результат проверки"));
+        const summary = element("div", "summary");
+        const assessment = element("div", "summary-main");
+        assessment.append(element("p", "summary-label", "Оценка"), element("p", "level", level));
+        const stats = element("dl", "stats");
+        for (const [label, value] of [["Балл", scores.format(report.score)], ["Слов", numbers.format(report.words)]]) {
+          const stat = element("div", "stat");
+          stat.append(element("dt", "summary-label", label), element("dd", "stat-value", value));
+          stats.append(stat);
+        }
+        summary.append(assessment, stats);
+        content.append(heading, summary);
+        appendHits(report, content);
+        appendMetrics(report, content);
+        results.replaceChildren(content);
+        hasReport = true;
+      }
+
+      function submitCheck(event) {
+        event.preventDefault();
+        if (!rules) {
+          setStatus(loadFailed ? "Проверка недоступна. Обновите страницу." : "Правила ещё загружаются…", loadFailed);
+          return;
+        }
+        if (textInput.value.length === 0) {
+          clearReport();
+          textInput.setAttribute("aria-invalid", "true");
+          setStatus("Сначала вставьте текст для проверки.", true);
+          textInput.focus();
+          return;
+        }
+        textInput.removeAttribute("aria-invalid");
+        checkButton.disabled = true;
+        setStatus("Проверяем текст…");
+        try {
+          renderReport(window.RuSlop.lint(textInput.value, rules));
+          setStatus("Проверка завершена. Результат ниже.");
+        } catch {
+          clearReport();
+          setStatus("Не удалось проверить текст. Он остался в поле; можно попробовать ещё раз.", true);
+          console.error("[M-PAGE][BLOCK_UI] local check failed");
+        } finally {
+          checkButton.disabled = false;
+        }
+      }
+
+      async function initialize() {
+        try {
+          const response = await fetch("./rules.json", {
+            credentials: "omit",
+            mode: "same-origin",
+            redirect: "error",
+            referrerPolicy: "no-referrer"
+          });
+          if (!response.ok) throw new Error("Rules request failed");
+          const data = await response.json();
+          const engine = window.RuSlop;
+          if (!engine || typeof engine.loadRules !== "function" || typeof engine.lint !== "function" || !engine.LEVEL_TEXT) {
+            throw new Error("Engine unavailable");
+          }
+          rules = engine.loadRules(data);
+          if (!rules || typeof rules !== "object") throw new Error("Rules unavailable");
+          checkButton.disabled = false;
+          setStatus("Правила готовы. Можно проверять.");
+          console.info("[M-PAGE][BLOCK_UI] rules ready");
+        } catch {
+          loadFailed = true;
+          checkButton.disabled = true;
+          setStatus("Не удалось загрузить проверку. Обновите страницу. Текст остаётся в браузере.", true);
+          console.error("[M-PAGE][BLOCK_UI] rules unavailable");
+        }
+      }
+
+      form.addEventListener("submit", submitCheck);
+      textInput.addEventListener("input", () => {
+        textInput.removeAttribute("aria-invalid");
+        if (hasReport) {
+          clearReport();
+          setStatus("Текст изменён. Нажмите «Проверить» ещё раз.");
+        } else if (rules && status.classList.contains("is-error")) {
+          setStatus("Правила готовы. Можно проверять.");
+        }
+      });
+      document.addEventListener("DOMContentLoaded", initialize, { once: true });
+    })();
+    // END_BLOCK_UI
+  </script>
+</body>
+</html>

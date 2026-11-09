@@ -1,0 +1,54 @@
+Мы делаем разные вещи для бизнеса — от малого до крупного. Работаем по-современному и делаем качественно.
+
+Hmm, that's thin. Let me actually follow the skill: strip "широкий спектр", "комплексный подход", "обеспечить высокое качество" — all empty. The text has almost no content. The anchors: "для бизнеса любого масштаба", "современные технологии". The facts are minimal.
+
+I should produce a humanized version without adding facts. The source says: company offers services for business of any size; uses integrated approach and modern technologies to ensure high quality of work.
+
+Since almost everything is vacuous boilerplate, the edit should reduce it to something short and honest, without inventing specifics. Something like:
+
+«Мы работаем с бизнесом любого масштаба и используем современные технологии.»
+
+But "комплексный подход" — "комплексный" is a штамп; "обеспечить высокое качество работы" — empty. Keep: services for business of any scale, modern technologies. Quality claim is a vague promise — it's a marketing claim from the company about itself; "высокое качество работы" is a self-assessment. Should I keep it? The skill says promises in advertising/вакансии/карточка товара are meaning, not штамп: say simpler but don't throw out. So "делаем качественно" — hmm, that's a quality claim without specifics. Keeping it as plain: "и делаем работу качественно" — I'd keep it but plainer.
+
+Let me write: «Мы делаем разные услуги для бизнеса любого масштаба, используем современные технологии и стараемся, чтобы работа вышла качественной.»
+
+Hmm, "стараемся, чтобы работа вышла качественной" adds an effort qualifier that wasn't there. Better: "Мы делаем разные услуги для бизнеса любого масштаба, берёмся за задачи по-современному и делаем качественно." That's weak.
+
+Let's think about the actual anchors:
+- компания предлагает широкий спектр услуг → услуги разные / много услуг
+- для бизнеса любого масштаба → для бизнеса любого размера
+- комплексный подход → штамп, можно убрать (нет конкретики)
+- современные технологии → оставить
+- обеспечить высокое качество работы → «работаем качественно» / «делаем качественно»
+
+Result: «Мы предлагаем разные услуги для бизнеса любого масштаба, работаем на современных технологиях и делаем качественно.»
+
+Hmm "на современных технологиях" — better "используем современные технологии". 
+
+Final: «Мы предлагаем разные услуги для бизнеса любого масштаба, используем современные технологии и делаем работу качественно.»
+
+Should I keep "комплексный подход"? It's a штамп (#3 "комплексный подход" explicitly listed). Remove.
+
+Also need a bit of rhythm — two sentences might be better:
+
+«Мы предлагаем разные услуги — для бизнеса любого масштаба. Работаем на современных технологиях и стараемся делать качественно.»
+
+"стараемся" adds modality. Hmm. The original "обеспечить высокое качество работы" is a goal/claim. Simplify to "делаем качественно" without extra modality. That's fine.
+
+Em-dash usage: "Мы предлагаем разные услуги для бизнеса любого масштаба." — clean. Let me finalize.
+
+The user asked only for the final text, no explanation. The instruction says "В ответе дай только готовый текст, без пояснений и комментариев." So output just the text. The skill says to add a note if there's something to say — here nothing important to say (no placeholders, no broken sentence). So just the text.
+
+Also the harness instruction says answer in reply only, no files, no commands. Good — no tool calls needed (the skill's script check can't be run anyway, and I shouldn't run commands).
+
+Let me do the fact check manually:
+- "бизнеса любого масштаба" ✓ kept
+- "современные технологии" ✓ kept
+- "высокое качество работы" → "качественно" ✓ kept as claim
+- Nothing added, nothing removed that carries meaning.
+
+Final text:
+
+«Мы предлагаем разные услуги для бизнеса любого масштаба. Используем современные технологии и делаем работу качественно.»
+
+Good, varied rhythm (short-ishМы предлагаем разные услуги для бизнеса любого масштаба. Используем современные технологии и делаем работу качественно.

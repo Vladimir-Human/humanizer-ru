@@ -105,6 +105,21 @@ class RepoTest(unittest.TestCase):
         self.assertTrue(any("CRLF" in x for x in problems))
         self.assertTrue(any("невидимые" in x for x in problems))
 
+    def test_site_rules_copy_and_chat_prompt_length(self):
+        # 4.2.0: the browser checker reads site/check/rules.json; the chat prompt must fit 4000 characters.
+        shutil.copytree(ROOT / "site", self.tmp / "site")
+        shutil.copytree(ROOT / "prompt", self.tmp / "prompt")
+        self.assertEqual(check_repo.check(self.tmp), [])
+        rules = self.tmp / "skills" / "humanizer-ru" / "scripts" / "rules.json"
+        rules.write_text(rules.read_text(encoding="utf-8").replace('"many": 5.0', '"many": 6.0'), encoding="utf-8")
+        self.assertTrue(any("site/check/rules.json" in x for x in check_repo.check(self.tmp)))
+        shutil.copy(rules, self.tmp / "site" / "check" / "rules.json")
+        chat = self.tmp / "prompt" / "chat.md"
+        chat.write_text(chat.read_text(encoding="utf-8").replace("<!-- prompt:end -->", "я" * 1000 + "\n<!-- prompt:end -->"), encoding="utf-8")
+        too_long = [x for x in check_repo.check(self.tmp) if "4000" in x]
+        self.assertEqual(len(too_long), 1)
+        self.assertIn("prompt/chat.md: промпт длиннее 4000 знаков", too_long[0])
+
     def _plugin_json(self, **changes):
         p = self.tmp / ".claude-plugin" / "plugin.json"
         data = json.loads(p.read_text(encoding="utf-8"))

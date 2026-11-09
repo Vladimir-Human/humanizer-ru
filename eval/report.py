@@ -14,7 +14,9 @@
 # aggregate: per-system positions, first places, pairwise wins, send_as_is, fact flags.
 # share_interval: 95% paired bootstrap interval over texts for a share "a above b" (R-EVAL-NOISE).
 # fact_flag: one vote per judge, the error counts on a majority of judges.
-# thresholds: usefulness criteria for "ours" (rule set 2, see README).
+# agreed_record, sign_test, critical_wins: wins only when every pass agrees; exact sign test.
+# release_gates: gates 2 and 3 of the 4.2.0 rules (README); a run without judges (human set) works.
+# thresholds: usefulness criteria for "ours" (rule set 2, see README), reported only since 4.2.0.
 # render: Markdown summary.
 # END_MODULE_MAP
 from __future__ import annotations
@@ -23,6 +25,7 @@ import argparse
 import difflib
 import importlib.util
 import json
+import math
 import random
 import sys
 from collections import Counter, defaultdict
@@ -66,7 +69,8 @@ def fact_flag(votes: dict):
 # OUTPUTS: (table per system, pairwise shares "a>b", fact notes).
 # END_CONTRACT: aggregate
 def aggregate(rows, ids, outputs, sources, rank_judges=None):
-    systems = sorted({s for r in rows for s in r["ranking"]})
+    # Systems come from the rankings and, for a run without judges (set human), from the outputs.
+    systems = sorted({s for r in rows for s in r["ranking"]} | {s for (s, t) in outputs if t in ids})
     pos = defaultdict(lambda: defaultdict(list))  # system -> judge -> positions
     first = defaultdict(int)
     wins = defaultdict(lambda: defaultdict(list))  # (a, b) -> judge -> [1 if a above b else 0]
@@ -158,6 +162,52 @@ def share_interval(rows, ids, a, b, rank_judges=None, rounds=2000, seed=0):
     return vals[int(0.025 * (len(vals) - 1))], vals[int(round(0.975 * (len(vals) - 1)))]
 
 
+# START_CONTRACT: agreed_record
+# PURPOSE: Wins, losses and ties of a over b where a win needs every pass to agree (4.2.0 rule).
+# INPUTS: judgment rows with a ranking, text ids, systems a and b, rank_judges (None = all).
+# OUTPUTS: {"wins", "losses", "ties", "texts"}; a text without a pass that ranks both is skipped.
+# RULE: per text, every counted pass (all rounds of all rank judges) must put a above b for a win,
+#       b above a for a loss; any disagreement is a tie. Order effects of one shuffle cancel out.
+# END_CONTRACT: agreed_record
+def agreed_record(rows, ids, a, b, rank_judges=None):
+    votes = defaultdict(list)  # text -> [True if a above b]
+    for r in rows:
+        rank = r.get("ranking") or []
+        if r["id"] not in ids or a not in rank or b not in rank:
+            continue
+        if rank_judges is not None and r["judge"] not in rank_judges:
+            continue
+        votes[r["id"]].append(rank.index(a) < rank.index(b))
+    rec = {"wins": 0, "losses": 0, "ties": 0, "texts": len(votes)}
+    for v in votes.values():
+        rec["wins" if all(v) else "losses" if not any(v) else "ties"] += 1
+    return rec
+
+
+def sign_test(wins: int, losses: int) -> float:
+    """One-sided exact sign test: P(at least `wins` of wins+losses at a fair coin). Ties are dropped."""
+    n = wins + losses
+    if n == 0:
+        return 1.0
+    return sum(math.comb(n, k) for k in range(wins, n + 1)) / 2 ** n
+
+
+def critical_wins(n: int, alpha: float = 0.05):
+    """Fewest wins out of n decisive texts that the one-sided sign test calls real (None if none can)."""
+    for k in range(n + 1):
+        if sign_test(k, n - k) <= alpha:
+            return k
+    return None
+
+
+def _agreed_line(rec) -> str:
+    n = rec["wins"] + rec["losses"]
+    need = critical_wins(n)
+    return "согласных побед %d, поражений %d, ничьих %d; знаковый тест p = %.3f (на %d решённых текстах перевес виден от %s побед)" % (
+        rec["wins"], rec["losses"], rec["ties"], sign_test(rec["wins"], rec["losses"]), n,
+        need if need is not None else "—")
+
+
 def _with_interval(share, ci):
     """"46%" → "46% (95%: 33–58%, не отличить от 50%)"."""
     if ci is None:
@@ -165,6 +215,35 @@ def _with_interval(share, ci):
     lo, hi = ci
     verdict = "не отличить от 50%" if lo <= 0.5 <= hi else ("выше 50%" if lo > 0.5 else "ниже 50%")
     return "%.0f%% (95%%: %.0f–%.0f%%, %s)" % (100 * share, 100 * lo, 100 * hi, verdict)
+
+
+# START_CONTRACT: release_gates
+# PURPOSE: Gates 2 and 3 of the 4.2.0 rules (eval/README) for one run, against the previous version.
+# INPUTS: result with groups from main, judgment rows, outputs, sources, ours, prev, rank_judges.
+# OUTPUTS: [(name, ok, value)]; empty when prev is not in the run.
+# RULE: gate 2 (AI texts): agreed wins of ours over prev >= agreed losses, and texts with a meaning
+#       error not more than prev's. Gate 3 (human texts plus traps): mean similarity to the source
+#       >= prev's minus 0.02, and texts with check_facts errors not more than prev's.
+# END_CONTRACT: release_gates
+def release_gates(result, rows, outputs, sources, ours, prev, rank_judges=None) -> list:
+    gates = []
+    ai = result["groups"].get("ai")
+    if ai and ours in ai["table"] and prev in ai["table"] and rows:
+        rec = agreed_record(rows, set(ai["ids"]), ours, prev, rank_judges)
+        e_ours, e_prev = len(ai["table"][ours]["texts_with_fact_errors"]), len(ai["table"][prev]["texts_with_fact_errors"])
+        gates.append(("2. ИИ-тексты: согласных побед над %s не меньше поражений, ошибок смысла не больше" % prev,
+                      rec["wins"] >= rec["losses"] and e_ours <= e_prev,
+                      "%d:%d (ничьих %d); ошибок %d против %d" % (rec["wins"], rec["losses"], rec["ties"], e_ours, e_prev)))
+    ids = set(result["groups"].get("human", {}).get("ids", [])) | set(result["groups"].get("trap", {}).get("ids", []))
+    if ids:
+        table, _, _ = aggregate([], ids, outputs, sources)
+        if ours in table and prev in table:
+            s_ours, s_prev = table[ours]["similarity"], table[prev]["similarity"]
+            f_ours, f_prev = len(table[ours]["script_errors"]), len(table[prev]["script_errors"])
+            gates.append(("3. Человеческие тексты: сходство не ниже, чем у %s, минус 0,02; ошибок сверки не больше" % prev,
+                          s_ours >= s_prev - 0.02 and f_ours <= f_prev,
+                          "сходство %.3f против %.3f; ошибок сверки %d против %d (текстов %d)" % (s_ours, s_prev, f_ours, f_prev, len(ids))))
+    return gates
 
 
 def main() -> int:
@@ -184,7 +263,9 @@ def main() -> int:
         args.out = "summary-" + "-".join(j.split("/")[-1] for j in args.judges.split(","))
     run_dir = lib.EVAL_DIR / "results" / args.run
     index = {t["id"]: t for t in lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")}
-    rows = [json.loads(l) for l in (run_dir / args.judgments).read_text(encoding="utf-8").splitlines() if l.strip()]
+    # A run of the human set has no judges: similarity and the fact script are its measures.
+    jpath = run_dir / args.judgments
+    rows = [json.loads(l) for l in jpath.read_text(encoding="utf-8").splitlines() if l.strip()] if jpath.exists() else []
     errors = [r for r in rows if not r.get("ranking")]
     rows = [r for r in rows if r.get("ranking")]
     if args.judges:
@@ -195,12 +276,13 @@ def main() -> int:
     for d in (run_dir / "outputs").iterdir():
         for f in d.glob("*.txt"):
             outputs[(d.name, f.stem)] = lib.read_text(f)
-    all_ids = sorted({r["id"] for r in rows})
+    all_ids = sorted({r["id"] for r in rows} if rows else {t for (_, t) in outputs if t in index})
     for tid in all_ids:
         sources[tid] = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (tid + ".txt"))
     groups = {
         "ai": [t for t in all_ids if index[t]["kind"] in ("generated", "real")],
         "trap": [t for t in all_ids if index[t]["kind"] == "trap"],
+        "human": [t for t in all_ids if index[t]["kind"] == "human"],
     }
     # Coverage: every text of the run must have the same number of valid judge passes,
     # otherwise the thresholds are reported as unverified instead of passed.
@@ -228,14 +310,16 @@ def main() -> int:
             continue
         table, pair, notes = aggregate(rows, set(ids), outputs, sources, rank_judges)
         result["groups"][gname] = {"ids": ids, "table": table, "pairwise": pair, "fact_notes": notes}
-        title = "ИИ-тексты" if gname == "ai" else "Ловушки (человеческие тексты и закон)"
+        title = {"ai": "ИИ-тексты", "trap": "Ловушки (человеческие тексты и закон)",
+                 "human": "Человеческие тексты (Викиновости до 2022 и тексты v3)"}[gname]
         md += ["## %s: %d текстов" % (title, len(ids)), "",
                "| Система | Среднее место | 1-е места | Готов к отправке, 1–10 | Тексты с ошибкой смысла (большинство судей) | Отметил хоть один судья | Ошибки скрипта сверки | Сходство с исходником |",
                "|---|---|---|---|---|---|---|---|"]
         for s in sorted(table, key=lambda x: table[x]["mean_position"] or 99):
             t = table[s]
             md.append("| %s | %s | %d из %d | %s | %d | %d | %d | %.2f |" % (
-                s, t["mean_position"], t["first_places"], t["passes"], t["send_as_is"],
+                s, "—" if t["mean_position"] is None else t["mean_position"], t["first_places"], t["passes"],
+                "—" if t["send_as_is"] is None else t["send_as_is"],
                 len(t["texts_with_fact_errors"]), len(t["texts_flagged_by_any_judge"]),
                 len(t["script_errors"]), t["similarity"]))
         md.append("")
@@ -245,16 +329,21 @@ def main() -> int:
         if args.ours in table:
             md.append("Доля сравнений, где `%s` выше соперника:" % args.ours)
             md.append("")
-            cis = {}
+            cis, agreed = {}, {}
             for s in sorted(table):
                 if s != args.ours and ("%s>%s" % (args.ours, s)) in pair:
                     cis[s] = share_interval(rows, set(ids), args.ours, s, rank_judges)
-                    md.append("- %s: %s" % (s, _with_interval(pair["%s>%s" % (args.ours, s)], cis[s])))
+                    agreed[s] = agreed_record(rows, set(ids), args.ours, s, rank_judges)
+                    md.append("- %s: %s; %s" % (s, _with_interval(pair["%s>%s" % (args.ours, s)], cis[s]),
+                                                _agreed_line(agreed[s])))
             result["groups"][gname]["pairwise_ci"] = {"%s>%s" % (args.ours, s): (list(ci) if ci else None)
                                                       for s, ci in cis.items()}
+            result["groups"][gname]["agreed"] = {"%s>%s" % (args.ours, s): dict(rec, p=round(sign_test(rec["wins"], rec["losses"]), 4))
+                                                 for s, rec in agreed.items()}
             md.append("")
             md.append("В скобках 95%% интервал: тексты выбраны заново с повторами %d раз (бутстрэп по текстам). "
-                      "Если интервал включает 50%%, этот прогон не различает двух участников." % 2000)
+                      "Если интервал включает 50%%, этот прогон не различает двух участников. Согласная победа — "
+                      "все проходы судей мест ставят `%s` выше; разногласие — ничья." % (2000, args.ours))
             md.append("")
         missing = {s: sorted(t for t in ids if (s, t) not in outputs) for s in table}
         missing = {s: v for s, v in missing.items() if v}
@@ -313,6 +402,13 @@ def main() -> int:
             md.append("| %s | %s | %s |" % (name, verdict, val))
         md.append("")
         result["thresholds"] = [{"name": n, "ok": (None if gaps else ok), "value": v} for n, ok, v in checks]
+    gates = release_gates(result, rows, outputs, sources, args.ours, args.prev, rank_judges)
+    if gates:
+        md += ["## Пороги выпуска 4.2.0 (README, правила от 09.11.2026)", "", "| Порог | Итог | Значение |", "|---|---|---|"]
+        for name, ok, val in gates:
+            md.append("| %s | %s | %s |" % (name, "не проверено" if gaps else ("выполнено" if ok else "не выполнено"), val))
+        md.append("")
+        result["release_gates"] = [{"name": n, "ok": (None if gaps else ok), "value": v} for n, ok, v in gates]
     md.append("Расходы на API за все прогоны: $%.2f." % lib.ledger().data["total"])
     lib.write_text(run_dir / (args.out + ".md"), "\n".join(md) + "\n")
     lib.write_json(run_dir / (args.out + ".json"), result)

@@ -45,6 +45,10 @@ TOOLS = [{"type": "function", "function": {
 def load_system(sysdef: dict):
     if sysdef["kind"] == "prompt":
         return sysdef["system"], {}
+    if sysdef["kind"] == "prompt_file":
+        # A chat prompt kept in the repository (prompt/chat.md): the text between its markers.
+        text = (REPO / sysdef["path"]).read_text(encoding="utf-8")
+        return text.split("<!-- prompt:start -->", 1)[1].split("<!-- prompt:end -->", 1)[0].strip(), {}
     root = REPO / sysdef["path"] if sysdef["kind"] == "local" else lib.CACHE_DIR / "systems" / sysdef["name"]
     files = {}
     for p in sorted(root.rglob("*.md")):
