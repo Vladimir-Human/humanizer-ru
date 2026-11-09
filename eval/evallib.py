@@ -14,11 +14,13 @@
 # dsh_task_text / dsh_answer: messages -> one bridge task; bridge JSON -> (message, usage).
 # Ledger: reads/writes eval/.cache/spend.json, refuses calls past the cap.
 # read_json / write_json / read_text / write_text: UTF-8 file helpers.
+# split_notes: answer -> (edited text, notes after the last '---'); fact checks use the text.
 # END_MODULE_MAP
 from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -55,6 +57,48 @@ def read_json(path):
 
 def write_json(path, data) -> None:
     write_text(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+
+# START_CONTRACT: split_notes
+# PURPOSE: The edited text of an answer without the notes to the author (R-NOTES-NOT-TEXT).
+# INPUTS: answer; source (the text that was edited, "" when unknown).
+# OUTPUTS: (text, notes); notes follow the last line that is exactly "---".
+# RULES: the tail after the answer's last "---" is notes when it talks about the edit, not the
+#        topic: at most NOTE_MAX_CHARS, an editing word or a question mark outside quotes, and
+#        under half of its word stems (outside «quotes») found in the source. Counting "---" lines
+#        does not decide it: sources carry their own sections and chat wrappers, and an edit may
+#        drop, keep or add separators. Calibrated 09.11.2026 on all 320 saved eval answers with a
+#        "---" (1841 answers): 19 notes cut, 301 text sections kept, no disagreement with a
+#        reading by eye; the old count-and-similarity rule cut a text's closing paragraph and
+#        kept notes that open with prose (cross-review F1-F3).
+#        Fact checks compare source with text: «Три вопроса» in the notes is not an added fact.
+# END_CONTRACT: split_notes
+NOTE_MAX_CHARS = 1200
+NOTE_QUOTE_RX = re.compile(r"«[^»\n]*»|\"[^\"\n]*\"|“[^”\n]*”")
+NOTE_EDIT_RX = re.compile(
+    r"(?i)\?|\b(?:убра|убир|замен|сократ|переп|правк|правил|исправ|оставил|оставлен|остал|не трога|"
+    r"вопрос|сверк|уточн|знак|обёрт|оберт|заметк|провер|добав|удал|заглушк|плейсхолдер|текст|"
+    r"абзац|заголов|сня[лв]|штамп|канцел|изменен|изменил)")
+NOTE_WORD_RX = re.compile(r"[A-Za-zА-Яа-яЁё]{4,}")
+
+
+def _stems(text: str) -> set:
+    return {w.lower().replace("ё", "е")[:5] for w in NOTE_WORD_RX.findall(text)}
+
+
+def split_notes(answer: str, source: str = "") -> tuple:
+    lines = answer.rstrip().split("\n")
+    rules = [i for i, ln in enumerate(lines) if ln.strip() == "---"]
+    if not rules:
+        return answer.strip(), ""
+    text, notes = "\n".join(lines[:rules[-1]]).strip(), "\n".join(lines[rules[-1] + 1:]).strip()
+    if notes and len(notes) <= NOTE_MAX_CHARS:
+        bare = NOTE_QUOTE_RX.sub(" ", notes)
+        if NOTE_EDIT_RX.search(bare):
+            stems = _stems(bare)
+            if not stems or len(stems & _stems(source)) / len(stems) < 0.5:
+                return text, notes
+    return answer.strip(), ""
 
 
 class BudgetExceeded(RuntimeError):
@@ -153,7 +197,10 @@ def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", dir=work, delete=False) as fh:
         fh.write(dsh_task_text(messages))
     # --no-fallback: when the free route fails the bridge must not switch to a paid fal model.
-    cmd = ["node", str(DSH_TASK), "--model", ref, "--cwd", str(work / "cwd"), "--confirm", "--no-fallback",
+    # --bare (R-BARE-EXECUTOR): no installed skills and no AGENTS.md / CLAUDE.md in the agent's context.
+    # Without it the agent loaded the installed humanizer-ru by itself: 61 of 63 runs of the plain
+    # request on 2026-11-05 were the skill, not the plain request.
+    cmd = ["node", str(DSH_TASK), "--model", ref, "--cwd", str(work / "cwd"), "--confirm", "--no-fallback", "--bare",
            "--max-cost", "1", "--max-chars", "100000", "--json", "--task-file", fh.name]
     if effort:
         cmd += ["--effort", effort]

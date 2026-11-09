@@ -67,10 +67,13 @@ def norm(s: str) -> str:
 #        (multiline, as written); facts = check_facts finds no error and no added fact; yo = no
 #        word written with ё in the source appears with е; asks = more question marks than the
 #        source (the editor asked the author); list_items = at least N lines start a list item.
+#        Every oracle reads the edited text without the notes to the author (evallib.split_notes,
+#        R-NOTES-NOT-TEXT) except asks, which reads the whole answer: the questions are the notes.
 # SIDE_EFFECTS: none.
 # END_CONTRACT: score_one
 def score_one(probe: dict, output: str) -> dict:
-    src, out = probe["text"], output or ""
+    src, answer = probe["text"], output or ""
+    out = lib.split_notes(answer, src)[0]  # «Убрал слово "шедевр"» in the notes is not the edit
     res = {}
     for s in probe.get("keep", []):
         res["keep:%s" % s] = norm(s) in norm(out)
@@ -88,7 +91,7 @@ def score_one(probe: dict, output: str) -> dict:
         res["yo"] = not any(re.search(r"(?<![А-Яа-яЁё])%s(?![А-Яа-яЁё])" % re.escape(w.replace("ё", "е").replace("Ё", "Е")),
                                       out, re.I) for w in words)
     if probe.get("asks"):
-        res["asks"] = out.count("?") > src.count("?")
+        res["asks"] = answer.count("?") > src.count("?")
     if probe.get("list_items"):
         res["list_items"] = len(LIST_RX.findall(out)) >= probe["list_items"]
     if probe.get("bold_less"):

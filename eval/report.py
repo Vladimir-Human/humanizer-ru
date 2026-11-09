@@ -104,7 +104,7 @@ def aggregate(rows, ids, outputs, sources, rank_judges=None):
             out = outputs.get((s, tid))
             if out is None:
                 continue
-            res = check_facts.compare(sources[tid], out)
+            res = check_facts.compare(sources[tid], lib.split_notes(out, sources[tid])[0])  # R-NOTES-NOT-TEXT
             script[(s, tid)] = res["errors"]
     table = {}
     for s in systems:

@@ -35,7 +35,10 @@ from build_corpus import CHAT_PERSONA, human_wikinews
 HUMAN = lib.EVAL_DIR / "corpus" / "human"
 PAIRS = lib.EVAL_DIR / "corpus" / "pairs"
 OUT = lib.EVAL_DIR / "results" / "style-freq"
-MODELS = ("dsh:minimax/MiniMax-M3.1-Flash", "dsh:agentrouter-astra/gpt-6.1-sol")
+# MiniMax only since 2026-11-09: Sol answered «token rate limit» under the parallel gate runs, and the
+# first 108 pairs were void (the agent loaded the installed skill, see evallib --bare). Candidates are
+# checked on texts of other models by lint_calibrate.py before they enter rules.json.
+MODELS = ("dsh:minimax/MiniMax-M3.1-Flash",)
 
 
 def pool_rows() -> list:
@@ -48,7 +51,8 @@ def pool_rows() -> list:
 def pair_prompt(title: str, text: str) -> str:
     lead = text.split("\n\n")[0]
     return ("Напиши новость для новостного сайта, примерно %d знаков. Заголовок: «%s». "
-            "Главное, что известно: %s" % (round(len(text), -2), title, lead))
+            "Главное, что известно: %s\n\nВ ответе только текст новости, без пояснений и примечаний."
+            % (round(len(text), -2), title, lead))
 
 
 def _one(row: dict, model: str) -> tuple:
@@ -64,15 +68,19 @@ def _one(row: dict, model: str) -> tuple:
 
 # START_CONTRACT: gen
 # PURPOSE: The AI side of every pair that is not generated yet.
-# INPUTS: workers; the pool from pool_rows (row k goes to MODELS[k % 2]).
-# OUTPUTS: pairs/<id>.txt per text, pairs/index.json {id: model} for the texts that exist.
+# INPUTS: workers; the pool from pool_rows (row k goes to MODELS[k % len(MODELS)]).
+# OUTPUTS: pairs/<id>.txt per text, pairs/index.json {id: model that wrote it}. Entries are added when a
+#          text is written and kept from the old index otherwise (cross-review 09.11, F6: the index was
+#          rebuilt from the current MODELS, so an old pair of another model got the new label). A pair
+#          file with no entry is reported and left out of rank: delete it or give it an entry.
 # SIDE_EFFECTS: free DSH calls only (evallib refuses any other route for dsh: models).
 # END_CONTRACT: gen
 def gen(workers: int) -> int:
     PAIRS.mkdir(parents=True, exist_ok=True)
     rows = pool_rows()
-    plan = {r["id"]: (r, MODELS[k % 2]) for k, r in enumerate(rows)}
+    plan = {r["id"]: (r, MODELS[k % len(MODELS)]) for k, r in enumerate(rows)}
     todo = [v for k, v in plan.items() if not (PAIRS / (k + ".txt")).exists()]
+    index = lib.read_json(PAIRS / "index.json") if (PAIRS / "index.json").exists() else {}
     failed = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(_one, r, m): r["id"] for r, m in todo}
@@ -84,9 +92,14 @@ def gen(workers: int) -> int:
                 print("[M-EVAL-STYLE-FREQ][gen] failed %s %s" % (futures[fut], repr(exc)[:200]))
                 continue
             lib.write_text(PAIRS / (tid + ".txt"), out)
+            index[tid] = next(m for r, m in todo if r["id"] == tid)
             print("[M-EVAL-STYLE-FREQ][gen] %s %d chars" % (tid, len(out)))
-    index = {k: m for k, (_, m) in plan.items() if (PAIRS / (k + ".txt")).exists()}
+    index = {k: m for k, m in sorted(index.items()) if (PAIRS / (k + ".txt")).exists()}
     lib.write_json(PAIRS / "index.json", index)
+    unknown = sorted(f.stem for f in PAIRS.glob("*.txt") if f.stem not in index)
+    if unknown:
+        print("[M-EVAL-STYLE-FREQ][gen] %d pair files with no model in index.json, left out of rank: %s"
+              % (len(unknown), ", ".join(unknown[:10])))
     print("[M-EVAL-STYLE-FREQ][gen] pairs=%d failed=%d" % (len(index), len(failed)))
     return 1 if failed else 0
 
@@ -153,7 +166,7 @@ def rank(min_docs: int, min_z: float, top: int) -> int:
                                              "ai_leaning": lean_ai, "human_leaning": lean_hu})
     md = ["# Частотное сравнение: %d пар «человек — модель» на одну тему" % len(ids), "",
           "Человек: статьи Викиновостей в редакции до 31.12.2021. Модель: новость по тому же заголовку и "
-          "первому абзацу (MiniMax M3.1 Flash и GPT-6.1 Sol поровну). Счёт по текстам: сколько текстов "
+          "первому абзацу (MiniMax M3.1 Flash, исполнитель без установленных навыков). Счёт по текстам: сколько текстов "
           "содержат сочетание. z — логарифм отношения шансов (текстов с сочетанием и без него) со "
           "сглаживанием 0,5, делённый на его стандартную ошибку. Порог: z ≥ %.1f и не меньше %d текстов. Это кандидаты, правила "
           "отбираются вручную." % (min_z, min_docs), ""]

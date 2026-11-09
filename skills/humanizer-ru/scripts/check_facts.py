@@ -1297,7 +1297,9 @@ def render(result: Dict) -> str:
 
 def _read(path: str) -> str:
     if path == "-":
-        return sys.stdin.read()
+        # Bytes, not sys.stdin: on Windows it decodes with the console code page (cp1251), and two
+        # identical UTF-8 texts with the source piped in gave four false errors (found 2026-11-09).
+        return sys.stdin.buffer.read().decode("utf-8-sig")
     with open(path, encoding="utf-8-sig") as fh:
         return fh.read()
 

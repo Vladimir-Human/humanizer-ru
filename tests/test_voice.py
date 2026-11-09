@@ -66,6 +66,19 @@ class AuthorTest(unittest.TestCase):
 
 
 class CliTest(unittest.TestCase):
+    def test_stdin_is_read_as_utf8_whatever_the_console(self):
+        # 4.2.0: sys.stdin decodes with the console code page on Windows (cp1251).
+        import os
+        env = dict(os.environ, PYTHONIOENCODING="cp1251")
+        env.pop("PYTHONUTF8", None)
+        with tempfile.TemporaryDirectory() as d:
+            sample = Path(d) / "s.txt"
+            sample.write_text(LONG, encoding="utf-8")
+            res = subprocess.run([sys.executable, str(SCRIPTS_VOICE := SCRIPT), "distance", str(sample), "-", "--json"],
+                                 input=LONG.encode("utf-8"), capture_output=True, env=env)
+            self.assertEqual(res.returncode, 0, res.stderr)
+            self.assertEqual(json.loads(res.stdout.decode("cp1251"))["-"]["distance"], 0.0)
+
     def test_build_then_distance_from_profile_or_sample(self):
         with tempfile.TemporaryDirectory() as d:
             sample, text, prof = Path(d) / "s.txt", Path(d) / "t.txt", Path(d) / "p.json"

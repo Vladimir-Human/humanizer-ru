@@ -1,6 +1,6 @@
 # humanizer-ru
 
-Навык для Claude Code, Codex, Cursor и Claude.ai. Правит русский текст после нейросети:
+Навык для Claude Code, Codex, Cursor, Gemini CLI и Claude.ai. Правит русский текст после нейросети:
 убирает канцелярит, штампы и оформление «как у ChatGPT» и следит, чтобы цифры, даты, имена
 и оговорки остались прежними.
 
@@ -54,8 +54,8 @@ npx skills add Vladimir-Human/humanizer-ru
 
 ## Установка
 
-Любой агент с поддержкой [Agent Skills](https://agentskills.io) (Claude Code, Codex, Cursor
-и другие):
+Любой агент с поддержкой [Agent Skills](https://agentskills.io) (Claude Code, Codex, Cursor,
+Gemini CLI и другие):
 
 ```bash
 npx skills add Vladimir-Human/humanizer-ru
@@ -71,11 +71,34 @@ npx skills add Vladimir-Human/humanizer-ru
 Для каталога плагинов Claude плагин собран под именем `humanizer-russian`; навык везде
 называется `humanizer-ru`.
 
+В Gemini CLI как расширение:
+
+```bash
+gemini extensions install https://github.com/Vladimir-Human/humanizer-ru
+```
+
+В Cursor, кроме `npx skills add`, можно взять репозиторий целиком как плагин (манифест
+`.cursor-plugin/plugin.json`): Cursor подхватывает плагины из `~/.cursor/plugins/local/` без
+установки.
+
+```bash
+git clone https://github.com/Vladimir-Human/humanizer-ru ~/.cursor/plugins/local/humanizer-ru
+```
+
 В Claude.ai скачайте `humanizer-ru-skill.zip` из
 [последнего релиза](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) и
 загрузите в Settings → Capabilities → Skills.
 
 Вручную: скопируйте папку `skills/humanizer-ru` в `~/.claude/skills/` или `~/.agents/skills/`.
+
+## Без установки
+
+- [Проверка стиля в браузере](https://vladimir-human.github.io/humanizer-ru/check/): вставьте
+  текст и посмотрите, какие приёмы машинного стиля в нём есть и где. Страница работает без сети,
+  текст никуда не уходит. Она оценивает стиль, а не авторство: у живого текста тоже бывают баллы.
+- [Промпт для любого чат-бота](prompt/chat.md): сжатая версия навыка для GigaChat, Алисы,
+  DeepSeek, ChatGPT и проектов Claude. Вставляется в начало чата или в инструкции проекта.
+  Скриптов сверки в нём нет, поэтому цифры и имена после правки перечитайте сами.
 
 ## Как пользоваться
 
@@ -132,12 +155,13 @@ ilyautov 52–78%, выше avoid-ai-writing-russian 58–81%, выше прос
 
 ## Скрипты
 
-В папке навыка два скрипта без зависимостей. Агент с терминалом запускает их сам, можно и
+В папке навыка скрипты без зависимостей. Агент с терминалом запускает их сам, можно и
 вручную:
 
 ```bash
 python skills/humanizer-ru/scripts/check_facts.py до.txt после.txt
 python skills/humanizer-ru/scripts/clean_paste.py текст.txt --in-place
+python skills/humanizer-ru/scripts/lint_style.py текст.txt
 ```
 
 `check_facts.py` сравнивает исходник с правкой и показывает пропавшие или новые числа, даты,
@@ -145,6 +169,9 @@ python skills/humanizer-ru/scripts/clean_paste.py текст.txt --in-place
 утверждения и потерянные HTML-теги. `clean_paste.py` снимает следы вставки из чата: contentReference, 【N†source】,
 хвосты `utm_source=chatgpt.com` и `utm_source=openai`, невидимые символы. Метки самого автора
 (`utm_campaign` в рассылке и т. п.) остаются, а их пропажу `check_facts.py` считает потерей ссылки.
+`lint_style.py` находит признаки из таблицы навыка и считает тире, жирный, эмодзи и заголовки на
+объём текста; цитаты в кавычках и блоки кода не трогает. Правила лежат в `scripts/rules.json`,
+их же читает страница проверки. Ключ `--json` отдаёт отчёт для программ.
 
 Скрипты работают только с файлами, которые им передали, не ходят в сеть и не запускают другие
 программы. `clean_paste.py` меняет файл лишь с ключом `--in-place` и только если нашёл мусор
@@ -191,7 +218,8 @@ python skills/humanizer-ru/scripts/clean_paste.py текст.txt --in-place
 
 Прошлая версия с исследованиями, пакетом PyPI и MCP-сервером лежит в ветке
 [`legacy-v3`](https://github.com/Vladimir-Human/humanizer-ru/tree/legacy-v3) и теге `v3.36.4`.
-Пакет на PyPI и запись в реестре MCP остались на 3.36.4.
+Пакет на PyPI и запись в реестре MCP остались на 3.36.4: `pip install humanizer-ru` ставит
+сервер версии 3, а не навык.
 
 ## Лицензия
 

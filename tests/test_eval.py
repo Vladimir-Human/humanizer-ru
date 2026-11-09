@@ -185,6 +185,7 @@ class EvalDshRouteTest(unittest.TestCase):
             msg, usage = lib.chat("dsh:agentrouter-astra/gpt-6.1-sol", [{"role": "user", "content": "x"}], effort="medium")
         cmd = run.call_args[0][0]
         self.assertIn("--no-fallback", cmd)
+        self.assertIn("--bare", cmd)  # R-BARE-EXECUTOR: the installed skill must not answer for a participant
         self.assertEqual(cmd[cmd.index("--model") + 1], "agentrouter-astra/gpt-6.1-sol")
         self.assertEqual((msg["content"], usage["cost"], usage["listed_cost"]), ("текст", 0.0, 0.0123))
         ledger.assert_not_called()
@@ -249,6 +250,32 @@ class EvalBatchTest(unittest.TestCase):
         self.assertLess(bodies[0].index("q01.txt"), bodies[0].index("q02.txt"))
         self.assertEqual(request, rs.REQUEST + "Исходник q02.")
         self.assertEqual(copied, ["skill/SKILL.md", "skill/references/a.md"])
+        self.assertIn("Do not run scripts or commands and do not read any other files.", bodies[0])
+
+    def test_prepare_run_with_scripts_for_gate_four(self):
+        # 4.2.0 gate 4: the executor gets the real skill scripts and may run only them.
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            lib.write_text(d / "texts" / "q01.txt", "Исходник.")
+            ours = next(s for s in lib.read_json(lib.EVAL_DIR / "systems.json") if s["name"] == "ours")
+            lib.write_text(d / "texts" / "q02.txt", "Второй.")
+            tasks = batches.prepare_run([ours], [["q01"], ["q02"]], d / "batch", d / "run", d / "texts", "exec",
+                                        scripts=True)
+            body, body2 = (t.read_text(encoding="utf-8") for t in tasks)
+            system = (d / "batch" / "ours" / "system.txt").read_text(encoding="utf-8")
+            copied = sorted(p.name for p in (d / "batch" / "ours" / "skill" / "scripts").iterdir())
+            cfg = lib.read_json(d / "run" / "config.json")
+        self.assertIn("except the skill scripts named below", body)
+        self.assertIn((d / "batch" / "ours" / "skill").as_posix() + "/scripts/check_facts.py", body)
+        # Cross-review 09.11. F4: each batch has its own temp folder. F5: the system prompt no longer
+        # says the scripts cannot run.
+        self.assertIn((d / "batch" / "tmp" / "ours" / "batch1").as_posix(), body)
+        self.assertIn((d / "batch" / "tmp" / "ours" / "batch2").as_posix(), body2)
+        self.assertNotIn("batch2", body)
+        self.assertNotIn("запустить нельзя", system)
+        self.assertIn((d / "batch" / "ours" / "skill").as_posix() + "/scripts", system)
+        self.assertEqual(copied, ["check_facts.py", "clean_paste.py", "lint_style.py", "rules.json", "voice_profile.py"])
+        self.assertTrue(cfg["scripts"])
 
     def test_collect_run_flags_missing_and_empty_outputs(self):
         with tempfile.TemporaryDirectory() as d:
@@ -337,6 +364,78 @@ class EvalProbesTest(unittest.TestCase):
     def ok(self, probe, out):
         return all(self.probes.score_one(probe, out).values())
 
+    def test_notes_after_the_last_rule_are_not_the_edit(self):
+        # R-NOTES-NOT-TEXT (09.11, after the bare probe run): «Три вопроса» and a quoted source
+        # phrase in the notes were scored as an added number and an added quote.
+        src = "Я давно хотел поделиться своим опытом перехода в IT. Это был непростой путь."
+        probe = {"id": "t", "rule": "interview", "text": src, "facts": True, "asks": True}
+        good = ("Давно хотел рассказать, как перешёл в IT. Путь был непростой.\n\n---\n\n"
+                "- Убрал «Это был… путь, который…».\n- Три вопроса:\n  1. Сколько времени занял переход?")
+        self.assertTrue(self.ok(probe, good))
+        invented = good.replace("Путь был непростой.", "За 2 года путь был непростой.")
+        self.assertFalse(self.ok(probe, invented))  # a number added to the text itself still fails
+
+    def test_split_notes_cuts_only_the_answer_own_rule(self):
+        split = self.probes.lib.split_notes
+        self.assertEqual(split("Текст.\n---\n- заметка"), ("Текст.", "- заметка"))
+        self.assertEqual(split("Без заметок."), ("Без заметок.", ""))
+        src = "Часть 1.\n---\nЧасть 2."
+        self.assertEqual(split("Часть первая.\n---\nЧасть вторая.", src), ("Часть первая.\n---\nЧасть вторая.", ""))
+        self.assertEqual(split("Часть 1.\n---\nЧасть 2.\n\n---\n- заметка", src), ("Часть 1.\n---\nЧасть 2.", "- заметка"))
+        # Cross-review 09.11 (F1, F4): the edit removed a chat wrapper with its own "---" lines
+        # (holdout4 f01, f03, f19 ...) and added one "---" before its notes: still cut.
+        wrapped = "Вот пост:\n---\nСкидка 20% до воскресенья.\n---\nПара замечаний:\n- можно добавить эмодзи"
+        self.assertEqual(split("Скидка 20% до воскресенья.\n\n---\n- Три вопроса: 1. Сколько лет кафе?", wrapped),
+                         ("Скидка 20% до воскресенья.", "- Три вопроса: 1. Сколько лет кафе?"))
+        self.assertEqual(split("Скидка 20% до воскресенья.\n---\nСверка скриптом: 1 число на месте", wrapped)[1],
+                         "Сверка скриптом: 1 число на месте")
+        # A source's own last section, kept or rewritten as prose, is never cut.
+        two = "Итоги года.\n---\nВ 2025 году открыли 3 филиала и наняли 40 человек."
+        self.assertEqual(split("Итоги года.\n---\nЗа 2025 год появились 3 филиала и 40 новых сотрудников.", two)[1], "")
+        # A kept bulleted section of the source is the source's tail, not notes.
+        rules = "Правила:\n---\n- вход до 22:00\n- дети до 7 лет бесплатно"
+        self.assertEqual(split("Правила.\n---\n- вход до 22:00\n- дети до 7 лет — бесплатно", rules)[1], "")
+
+    def test_split_notes_reads_what_the_tail_talks_about(self):
+        # Cross-review 09.11, round 2. F1: notes that open with prose after a removed wrapper.
+        split = self.probes.lib.split_notes
+        wrapped = "Вот текст:\n---\nЗавтрак в «Крошке» с 8 утра.\n---\nЧто учтено: тон дружелюбный."
+        self.assertEqual(split("Завтрак в «Крошке» с 8 утра.\n\n---\n\nУбрал обёртку, длина 683 знака.", wrapped),
+                         ("Завтрак в «Крошке» с 8 утра.", "Убрал обёртку, длина 683 знака."))
+        # F2: a source section rewritten in new words stays text, so invented hours are seen and
+        # a kept term is not lost.
+        hours = "Вход свободный.\n---\n- Работаем ежедневно."
+        self.assertEqual(split("Вход свободный.\n---\n- Заходите каждый день с 9:00 до 21:00.", hours)[1], "")
+        probe = {"id": "h", "rule": "no_add", "text": hours, "facts": True}
+        self.assertFalse(self.ok(probe, "Вход свободный.\n---\n- Заходите каждый день с 9:00 до 21:00."))
+        term = "Условия доставки.\n---\n- Срок: 3 дня."
+        self.assertTrue(self.ok({"id": "d", "rule": "no_add", "text": term, "facts": True},
+                                "Условия доставки.\n---\n- На доставку заказа требуется 3 дня."))
+        # F3: merged sections whose last part is a list made of the source's own words.
+        src = ("Вступление с суммой 450 ₽.\n\n---\n\nУсловия: скидка 20% действует только в приложении "
+               "и только для новых карт до 30 ноября.")
+        self.assertEqual(split("Вступление с суммой 450 ₽.\n\n---\n\n- только в приложении\n- до 30 ноября", src)[1], "")
+        # Notes that quote the source a lot are still notes: quotes do not count as source words.
+        quoting = "Это был непростой путь, который многому меня научил."
+        self.assertEqual(split("Путь был непростой.\n---\n- Убрал «который многому меня научил».", quoting)[1],
+                         "- Убрал «который многому меня научил».")
+        # A text's own closing question after a separator the edit added is text (it3 n23).
+        poll = "Закрывать ли проезд к набережной по выходным? Голосуйте в нашем канале."
+        self.assertEqual(split("Новость.\n---\nЗакрывать ли проезд к набережной по выходным? Голосуйте в канале.",
+                               poll)[1], "")
+        # Notes longer than NOTE_MAX_CHARS are a section, not 1-3 short points.
+        self.assertEqual(split("Текст.\n---\n" + "Убрал повтор. " * 100, "Текст.")[1], "")
+
+    def test_oracles_read_the_edit_and_asks_reads_the_notes(self):
+        # Cross-review 09.11 (F3): «Убрал слово "шедевр"» in the notes must not fail drop:шедевр,
+        # and a phrase kept only in the notes must not pass keep; questions live in the notes.
+        probe = {"id": "t", "rule": "x", "text": "Этот фильм настоящий шедевр. Сходите на него.",
+                 "drop": ["шедевр"], "keep": ["Сходите"]}
+        self.assertTrue(self.ok(probe, "Хороший фильм. Сходите на него.\n\n---\n- Убрал «шедевр»."))
+        self.assertFalse(self.ok(probe, "Хороший фильм.\n\n---\n- «Сходите на него» убрал."))
+        asks = {"id": "a", "rule": "interview", "text": "Было интересно.", "asks": True}
+        self.assertTrue(self.ok(asks, "Было интересно.\n\n---\n- Что именно понравилось?"))
+
     def test_bank_is_well_formed(self):
         bank = json.loads((EVAL / "corpus" / "probes.json").read_text(encoding="utf-8"))
         self.assertGreaterEqual(len(bank), 60)
@@ -422,6 +521,23 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertAlmostEqual(z["палермо"][0], 0.0, places=6)  # both sides: no lean
         self.assertEqual(z["стоит отметить"][1:], (20, 0))  # document counts, not repeats
         self.assertNotIn("9", " ".join(sf.doc_ngrams("Счёт 9:1, 2 гола.")))  # numbers are topic, not style
+
+    def test_pairs_index_names_the_model_that_wrote_each_pair(self):
+        # Cross-review 09.11 (F6): gen rebuilt index.json from the current MODELS, so an old pair of
+        # another model got the new label.
+        import style_freq as sf
+        with tempfile.TemporaryDirectory() as d:
+            pairs = Path(d)
+            lib.write_text(pairs / "wn01.txt", "старая пара\n")
+            lib.write_text(pairs / "wn09.txt", "пара без записи\n")
+            lib.write_json(pairs / "index.json", {"wn01": "dsh:old/model"})
+            rows = [{"id": "wn01", "revision": 1}, {"id": "wn02", "revision": 2}]
+            with mock.patch.object(sf, "PAIRS", pairs), mock.patch.object(sf, "pool_rows", return_value=rows), \
+                    mock.patch.object(sf, "MODELS", ("dsh:new/model",)), \
+                    mock.patch.object(sf, "_one", side_effect=lambda r, m: (r["id"], "новая\n")):
+                sf.gen(1)
+            index = lib.read_json(pairs / "index.json")
+        self.assertEqual(index, {"wn01": "dsh:old/model", "wn02": "dsh:new/model"})
 
     def test_interview_questions_and_invented_facts(self):
         import interview_eval as iv

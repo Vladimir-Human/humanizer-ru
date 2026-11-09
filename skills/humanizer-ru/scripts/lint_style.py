@@ -174,7 +174,9 @@ def main(argv=None) -> int:
     ap.add_argument("--max-score", type=float, default=None)
     args = ap.parse_args(argv)
     try:
-        text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+        # stdin as bytes: on Windows sys.stdin decodes with the console code page (cp1251), and
+        # UTF-8 text piped in turned into mojibake with no signs found.
+        text = sys.stdin.buffer.read().decode("utf-8-sig") if args.file == "-" else Path(args.file).read_text(encoding="utf-8-sig")
     except (OSError, UnicodeDecodeError) as exc:
         print("[M-LINT-STYLE] не читается: %s" % exc, file=sys.stderr)
         return 2

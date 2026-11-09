@@ -67,9 +67,10 @@ check_scripts = _load("check_scripts")
 class RepoTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        for rel in ("skills", ".claude-plugin", ".codex-plugin"):
+        for rel in ("skills", ".claude-plugin", ".codex-plugin", ".cursor-plugin"):
             shutil.copytree(ROOT / rel, self.tmp / rel)
-        shutil.copy(ROOT / "CHANGELOG.md", self.tmp / "CHANGELOG.md")
+        for rel in ("CHANGELOG.md", "gemini-extension.json"):
+            shutil.copy(ROOT / rel, self.tmp / rel)
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -83,6 +84,17 @@ class RepoTest(unittest.TestCase):
         data["version"] = "0.0.1"
         p.write_text(json.dumps(data), encoding="utf-8")
         self.assertTrue(any("plugin.json" in x for x in check_repo.check(self.tmp)))
+
+    def test_cursor_and_gemini_manifest_versions_are_checked(self):
+        for rel in (".cursor-plugin/plugin.json", "gemini-extension.json"):
+            p = self.tmp / rel
+            saved = p.read_text(encoding="utf-8")
+            data = json.loads(saved)
+            data["version"] = "0.0.1"
+            p.write_text(json.dumps(data), encoding="utf-8")
+            with self.subTest(manifest=rel):
+                self.assertTrue(any(x.startswith(rel) for x in check_repo.check(self.tmp)))
+            p.write_text(saved, encoding="utf-8")
 
     def test_grace_requirements_version_is_checked(self):
         # 4.1.7: requirements.xml said 4.1.1 while the release was 4.1.6.

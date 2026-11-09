@@ -140,7 +140,8 @@ def distance(profile: dict, text: str) -> dict:
 
 
 def _read(path: str) -> str:
-    return sys.stdin.read() if path == "-" else Path(path).read_text(encoding="utf-8")
+    # stdin as bytes: sys.stdin decodes with the console code page on Windows (cp1251).
+    return sys.stdin.buffer.read().decode("utf-8-sig") if path == "-" else Path(path).read_text(encoding="utf-8-sig")
 
 
 def main(argv=None) -> int:

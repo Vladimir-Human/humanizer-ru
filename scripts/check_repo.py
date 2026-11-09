@@ -138,6 +138,8 @@ def check(root: Path) -> list:
         ".claude-plugin/plugin.json": lambda d: d.get("version"),
         ".claude-plugin/marketplace.json": lambda d: d["plugins"][0].get("version"),
         ".codex-plugin/plugin.json": lambda d: d.get("version"),
+        ".cursor-plugin/plugin.json": lambda d: d.get("version"),
+        "gemini-extension.json": lambda d: d.get("version"),
     }
     for rel, get in manifests.items():
         p = root / rel

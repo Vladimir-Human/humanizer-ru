@@ -40,12 +40,8 @@ _spec.loader.exec_module(check_facts)
 
 
 def _split(answer: str) -> tuple:
-    """(edited text, notes): notes are what follows the last line '---'."""
-    lines = answer.rstrip().split("\n")
-    for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip() == "---":
-            return "\n".join(lines[:i]).strip(), "\n".join(lines[i + 1:]).strip()
-    return answer.strip(), ""
+    """(edited text, notes): notes are what follows the last line '---' (evallib.split_notes)."""
+    return lib.split_notes(answer)
 
 
 def questions(answer: str) -> list:

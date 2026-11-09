@@ -426,6 +426,24 @@ class CheckFactsTest(unittest.TestCase):
         self.assertEqual(r["counts"]["quote"], 0)
         self.assertEqual(r["errors"], [])
 
+    def test_source_from_stdin_is_read_as_utf8_whatever_the_console(self):
+        # 4.2.0: on Windows sys.stdin decodes with the console code page (cp1251); two identical
+        # UTF-8 texts with the source piped in gave four false errors. cp1251 imitates that console.
+        import os
+        tmp = ROOT / "tests" / "_tmp_cf"
+        tmp.mkdir(exist_ok=True)
+        try:
+            text = "Анна получила 30 000 рублей 12 марта по словам бухгалтера."
+            (tmp / "same.txt").write_text(text, encoding="utf-8")
+            env = dict(os.environ, PYTHONIOENCODING="cp1251")
+            env.pop("PYTHONUTF8", None)
+            res = subprocess.run([sys.executable, str(SCRIPTS / "check_facts.py"), "-", str(tmp / "same.txt")],
+                                 input=text.encode("utf-8"), capture_output=True, env=env)
+            self.assertEqual(res.returncode, 0, res.stdout.decode("cp1251", "replace"))
+        finally:
+            for p in tmp.glob("*"):
+                p.unlink()
+
     def test_cli_exit_codes(self):
         tmp = ROOT / "tests" / "_tmp_cf"
         tmp.mkdir(exist_ok=True)

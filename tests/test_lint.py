@@ -167,6 +167,17 @@ class CliTest(unittest.TestCase):
         return subprocess.run([sys.executable, str(SCRIPTS / "lint_style.py"), *args], input=text,
                               capture_output=True, text=True, encoding="utf-8")
 
+    def test_stdin_is_read_as_utf8_whatever_the_console(self):
+        # 4.2.0: through stdin a Windows console (cp1251) turned the text into mojibake: no signs.
+        import os
+        env = dict(os.environ, PYTHONIOENCODING="cp1251")
+        env.pop("PYTHONUTF8", None)
+        res = subprocess.run([sys.executable, str(SCRIPTS / "lint_style.py"), "-", "--json"],
+                             input="Важно отметить, что данный продукт готов.".encode("utf-8"), capture_output=True, env=env)
+        self.assertEqual(res.returncode, 0)
+        ids = {h["id"] for h in json.loads(res.stdout.decode("cp1251"))["hits"]}
+        self.assertIn("empty_opener", ids)
+
     def test_json_exit_codes_and_bad_input(self):
         res = self.run_cli("-", "--json", text="Важно отметить, что всё готово.")
         self.assertEqual(res.returncode, 0)

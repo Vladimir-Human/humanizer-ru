@@ -1,6 +1,6 @@
 # humanizer-ru
 
-An agent skill for Claude Code, Codex, Cursor and Claude.ai that edits Russian text written by
+An agent skill for Claude Code, Codex, Cursor, Gemini CLI and Claude.ai that edits Russian text written by
 an AI model. It removes bureaucratese, stock phrases and ChatGPT-style formatting and checks
 that numbers, dates, names and hedges stay as they were. The skill speaks Russian and edits
 Russian text only.
@@ -23,9 +23,31 @@ Claude Code plugin:
 For Claude's plugin directory the plugin is built under the name `humanizer-russian`; the skill is
 called `humanizer-ru` everywhere.
 
+Gemini CLI extension:
+
+```bash
+gemini extensions install https://github.com/Vladimir-Human/humanizer-ru
+```
+
+Cursor also takes the whole repository as a plugin (`.cursor-plugin/plugin.json`) from its local
+plugin folder, no install step:
+
+```bash
+git clone https://github.com/Vladimir-Human/humanizer-ru ~/.cursor/plugins/local/humanizer-ru
+```
+
 Claude.ai: download `humanizer-ru-skill.zip` from the
 [latest release](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) and upload it
 in Settings → Capabilities → Skills.
+
+## Without installing
+
+- [Style check in the browser](https://vladimir-human.github.io/humanizer-ru/check/): paste a
+  Russian text and see which machine-style habits it has and where. The page works offline and
+  the text never leaves it. It rates style, not authorship: human text can score too.
+- [Prompt for any chat bot](prompt/chat.md): a compressed version of the skill for GigaChat,
+  Alice, DeepSeek, ChatGPT and Claude projects. It has no fact-check scripts, so reread numbers
+  and names after the edit yourself.
 
 ## Use
 
@@ -75,12 +97,13 @@ text, answer and judgment: [eval/](eval/). The judges are models, not human edit
 
 ## Scripts
 
-The skill folder has two helper scripts, standard library only. An agent with a terminal runs
+The skill folder has helper scripts, standard library only. An agent with a terminal runs
 them itself; you can run them by hand:
 
 ```bash
 python skills/humanizer-ru/scripts/check_facts.py before.txt after.txt
 python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place
+python skills/humanizer-ru/scripts/lint_style.py text.txt
 ```
 
 `check_facts.py` compares the original with the edit and reports lost or new numbers, dates,
@@ -89,7 +112,10 @@ HTML tags. `clean_paste.py` removes chat-paste leftovers: contentReference, 【N
 `utm_source=chatgpt.com` tails, invisible characters. The scripts work only on the files they
 are given, do not use the network and do not start other programs. `clean_paste.py` rewrites a
 file only with `--in-place`, and only when it found paste leftovers; first it saves a copy of the
-original next to it with `.bak` added to the name. Python 3.8 or newer is needed.
+original next to it with `.bak` added to the name. `lint_style.py` finds the signs of the skill's
+table and counts dashes, bold, emoji and headings per length of text; quotes and code blocks are
+skipped. Its rules live in `scripts/rules.json`, which the browser check page reads too; `--json`
+gives the report for programs. Python 3.8 or newer is needed.
 
 ## Data and privacy
 
@@ -129,7 +155,8 @@ about them. What is known about them (checked 2026-10-21):
 
 The previous version (research, PyPI package, MCP server) lives in the
 [`legacy-v3`](https://github.com/Vladimir-Human/humanizer-ru/tree/legacy-v3) branch and the
-`v3.36.4` tag.
+`v3.36.4` tag. The PyPI package and the MCP registry entry are still 3.36.4: `pip install
+humanizer-ru` installs the version 3 server, not the skill.
 
 ## License
 

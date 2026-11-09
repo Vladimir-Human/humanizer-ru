@@ -13,7 +13,7 @@ humanizer-ru — навык (Agent Skill), который переписывае
 | `eval/` | слепое сравнение с другими навыками на русских ИИ-текстах |
 | `scripts/` | проверка репозитория, проверка скриптов навыка на текстах замеров, сборка архива для Claude.ai, сборка дерева для каталога Anthropic |
 | `tests/` | тесты скриптов и проверки репозитория |
-| `.claude-plugin/`, `.codex-plugin/` | манифесты плагинов; `icon.png` и ссылки в `plugin.json` читает каталог плагинов Anthropic |
+| `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `gemini-extension.json` | манифесты плагинов (Claude Code, Codex, Cursor, Gemini CLI); `icon.png` и ссылки в `.claude-plugin/plugin.json` читает каталог плагинов Anthropic |
 | ветка `directory` | только плагин (10 файлов, без `eval/`, `scripts/`, `tests/` и этих заметок): её читает портал каталога Anthropic; собирает `scripts/build_directory.py`; имя плагина в ней `humanizer-russian` |
 | `.grace/` | требования, граф модулей и карта проверок (GRACE) |
 
@@ -24,7 +24,8 @@ humanizer-ru — навык (Agent Skill), который переписывае
 2. SKILL.md держи коротким: новое правило заменяет старое, а не добавляется сверху.
    Примеры — в `references/`.
 3. Скрипты навыка без внешних зависимостей. Новый случай — тест в `tests/`.
-4. Версия меняется одновременно в SKILL.md, `.claude-plugin/*.json`, `.codex-plugin/plugin.json`
+4. Версия меняется одновременно в SKILL.md, `.claude-plugin/*.json`, `.codex-plugin/plugin.json`,
+   `.cursor-plugin/plugin.json`, `gemini-extension.json`
    и CHANGELOG; `python scripts/check_repo.py` это проверяет.
 5. Переводы строк LF, без невидимых символов в файлах навыка.
 6. Не запускать локальные нейросетевые модели (решение владельца).
