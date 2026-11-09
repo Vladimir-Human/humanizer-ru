@@ -172,15 +172,27 @@ DSH_RULES = ("Answer in your reply only: do not create, read or change files and
              "Everything you need is below.")
 
 
+DSH_TURNS = {"user": "Сообщение пользователя:", "assistant": "Твой ответ:"}
+DSH_LAST = "Новое сообщение пользователя, ответь на него:"
+
+
 def dsh_task_text(messages: list) -> str:
-    """System instructions first, then the user's messages, under the bridge rules."""
+    """System instructions first, then the user's messages, under the bridge rules. A conversation
+    with earlier answers (the interview's third turn) is written out turn by turn, since the bridge
+    takes one task text; it has to end with a user message."""
     def text(content):
         return content if isinstance(content, str) else "".join(c.get("text", "") for c in content)
     roles = {m["role"] for m in messages}
-    if roles - {"system", "user"}:
-        raise ValueError("the dsh route takes system and user messages only")
+    if roles - {"system", "user", "assistant"}:
+        raise ValueError("the dsh route takes system, user and assistant messages only")
     parts = [DSH_RULES] + [text(m["content"]) for m in messages if m["role"] == "system"]
-    parts += [text(m["content"]) for m in messages if m["role"] == "user"]
+    talk = [m for m in messages if m["role"] != "system"]
+    if "assistant" not in roles:
+        return "\n\n".join(parts + [text(m["content"]) for m in talk])
+    if not talk or talk[-1]["role"] != "user":
+        raise ValueError("a conversation for the dsh route has to end with a user message")
+    parts += ["%s\n%s" % (DSH_TURNS[m["role"]], text(m["content"])) for m in talk[:-1]]
+    parts.append("%s\n%s" % (DSH_LAST, text(talk[-1]["content"])))
     return "\n\n".join(parts)
 
 

@@ -489,6 +489,11 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn(("lost", "число"), self.errs("Версия 2.1.3 вышла.", "Версия 2.1.4 вышла."))
         self.assertIn(("lost", "дата"), self.errs("Встреча в среду.", "Встреча в четверг."))
         self.assertEqual(self.errs("Рабочая среда готова.", "Окружение готово."), set())
+        # Frontier arm 09.11 (f30): «пн–пт» spelled out as «с понедельника по пятницу» was two added dates.
+        self.assertEqual(self.errs("Работаем пн–пт с 9:00.", "Работаем с понедельника по пятницу с 9:00."), set())
+        self.assertEqual(self.errs("Сб-Вс: выходной.", "В субботу и воскресенье выходной."), set())
+        self.assertIn(("lost", "дата"), self.errs("Работаем пн–пт.", "Работаем с понедельника по четверг."))
+        self.assertEqual(self.errs("Ср. выше.", "Сравните выше."), set())  # «ср.» alone is «сравни»
         self.assertIn(("lost", "код"), self.errs("Код: `npm run build`", "Код: `npm run dev`"))
         r = cf.compare("Запуск: `make`", "Запуск: make")
         self.assertEqual(r["errors"], [])

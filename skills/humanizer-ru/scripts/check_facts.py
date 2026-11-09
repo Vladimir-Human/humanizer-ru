@@ -188,6 +188,11 @@ WEEKDAY_RX = re.compile(r"(?<![а-яё])(понедельник|вторник|�
                         r"сред(?=у|ам)|сред(?=а[ \t]*[,:]))[а-яё]*", re.I)
 WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, "четверг": 4, "пятниц": 5, "суббот": 6,
                "воскресень": 7}
+# A schedule range of two-letter forms («пн–пт», «Сб-Вс»): alone «ср.» is «сравни», «вс» and «пт» are
+# too short to trust, so only two of them joined by a dash count (frontier arm 2026-11-09, f30).
+WEEKDAY_ABBR = {"пн": 1, "вт": 2, "ср": 3, "чт": 4, "пт": 5, "сб": 6, "вс": 7}
+WEEKDAY_RANGE_RX = re.compile(r"(?<![а-яё])(пн|вт|ср|чт|пт|сб|вс)\.?[ \t\u00a0]*[-–—][ \t\u00a0]*"
+                              r"(пн|вт|ср|чт|пт|сб|вс)\.?(?![а-яё])", re.I)
 HEDGES = ("около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
           "не менее", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
           "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
@@ -478,6 +483,10 @@ def extract(text: str, edited: bool = False) -> Facts:
     for m in WEEKDAY_RX.finditer(text):
         day = WEEKDAY_NUM[_norm(m.group(1).lower())]
         facts.items.append(Fact("date", "день недели %d" % day, m.group(), sent_of(m.start()), m.start()))
+    for m in WEEKDAY_RANGE_RX.finditer(text):
+        for g in (1, 2):
+            facts.items.append(Fact("date", "день недели %d" % WEEKDAY_ABBR[m.group(g).lower()], m.group(g),
+                                    sent_of(m.start(g)), m.start(g)))
     # A month without a day ("в марте 2026") is a date fact of its own; see MONTHS_DIFF.
     for m in MONTH_ANY_RX.finditer(text):
         # A month is written in lower case; in the middle of a sentence "Марту", "Августа" are names.

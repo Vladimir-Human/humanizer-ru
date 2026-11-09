@@ -466,6 +466,9 @@
     }
     const WEEKDAY_RX = compile(r`(?<![а-яё])(понедельник|вторник|четверг|пятниц|суббот|воскресень|сред(?=у|ам)|сред(?=а[ \t]*[,:]))[а-яё]*`, "i");
     const WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, "четверг": 4, "пятниц": 5, "суббот": 6, "воскресень": 7};
+    // A schedule range of two-letter forms («пн–пт», «Сб-Вс»), as WEEKDAY_RANGE_RX in check_facts.py.
+    const WEEKDAY_ABBR = {"пн": 1, "вт": 2, "ср": 3, "чт": 4, "пт": 5, "сб": 6, "вс": 7};
+    const WEEKDAY_RANGE_RX = compile(r`(?<![а-яё])(пн|вт|ср|чт|пт|сб|вс)\.?[ \t\u00a0]*[-–—][ \t\u00a0]*(пн|вт|ср|чт|пт|сб|вс)\.?(?![а-яё])`, "i");
     const HEDGES = ["около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
         "не менее", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
         "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
@@ -678,6 +681,12 @@
         for (const m of WEEKDAY_RX.finditer(text)) {
             const day = WEEKDAY_NUM[_norm(lower(m.group(1)))];
             facts.items.push(new Fact("date", "день недели " + day, m.group(), sent_of(m.start()), m.start()));
+        }
+        for (const m of WEEKDAY_RANGE_RX.finditer(text)) {
+            for (const g of [1, 2]) {
+                facts.items.push(new Fact("date", "день недели " + WEEKDAY_ABBR[lower(m.group(g))], m.group(g),
+                                          sent_of(m.start(g)), m.start(g)));
+            }
         }
         for (const m of MONTH_ANY_RX.finditer(text)) {
             const before = rstrip(slice(text, 0, m.start()), " \t\u00a0");

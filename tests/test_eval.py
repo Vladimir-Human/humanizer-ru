@@ -169,6 +169,20 @@ class EvalDshRouteTest(unittest.TestCase):
         self.assertLess(text.index("SYS-INSTR"), text.index("USER-REQ"))
         with self.assertRaises(ValueError):
             lib.dsh_task_text([{"role": "assistant", "content": "x"}])
+        with self.assertRaises(ValueError):
+            lib.dsh_task_text([{"role": "tool", "content": "x"}])
+
+    def test_task_text_writes_out_an_earlier_answer(self):
+        # M5 on 2026-11-09: the interview's third turn (answer + the author's reply) failed on the
+        # dsh route in 11 of 24 jobs, since only system and user messages were taken.
+        text = lib.dsh_task_text([{"role": "system", "content": "SYS"}, {"role": "user", "content": "Q1"},
+                                  {"role": "assistant", "content": "A1"}, {"role": "user", "content": "Q2"}])
+        self.assertTrue(text.startswith(lib.DSH_RULES))
+        order = [text.index(x) for x in ("SYS", lib.DSH_TURNS["user"] + "\nQ1", lib.DSH_TURNS["assistant"] + "\nA1",
+                                         lib.DSH_LAST + "\nQ2")]
+        self.assertEqual(order, sorted(order))
+        with self.assertRaises(ValueError):
+            lib.dsh_task_text([{"role": "user", "content": "Q1"}, {"role": "assistant", "content": "A1"}])
 
     def test_other_routes_are_refused_before_anything_runs(self):
         with mock.patch.object(lib.subprocess, "run") as run:
@@ -577,6 +591,21 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertEqual((why["same_line"], why["facts_ok"]), (False, True))  # reworded, facts right
         self.assertFalse(re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
                                             "Сверка скриптом: 1 число, 1 дата, 1 имя на месте")["facts_ok"])
+
+    def test_frontier_scorer_reads_the_edit_without_its_notes(self):
+        # Frontier arm (eval/README, 09.11 21:00 UTC): facts and style of the edit, notes cut first.
+        import frontier_eval as fe
+        src = "Скидка 20% до 30 ноября. Подробнее: https://kolos.ru/?utm_source=chatgpt.com"
+        clean = fe.score_text(src, "Скидка 20% до 30 ноября. Подробнее: https://kolos.ru/\n\n---\n"
+                                   "Сверка скриптом: 1 число, 1 дата, 1 ссылка на месте.")
+        self.assertEqual(clean["errors"], [])
+        self.assertTrue(clean["receipt"])
+        self.assertEqual(clean["lint_score"], 0.0)
+        dirty = fe.score_text(src, "Скидка до 30 ноября. Подробнее: https://kolos.ru/?utm_source=chatgpt.com")
+        self.assertIn(["lost", "число", "20%"], dirty["errors"])
+        self.assertGreater(dirty["lint_score"], 0)
+        s = fe.summarize({"a": clean, "b": dirty})
+        self.assertEqual((s["texts_with_errors"], s["errors"], s["receipts"]), (["b"], 1, 1))
 
     def test_run_sets_are_a_comma_list(self):
         # Plan v3 M3: holdout4 with the six saved chatbot answers, without traps (they are in M2).
