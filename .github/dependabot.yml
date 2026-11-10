@@ -1,0 +1,20 @@
+# Dependabot keeps the GitHub Actions in .github/workflows/* current.
+#
+# The repo has no package manifest (no pyproject, requirements or package.json),
+# so the only dependencies to watch are the actions. They are pinned to commit
+# SHAs with the version in a comment; Dependabot updates both together.
+# Minor and patch bumps land as one grouped PR a week; majors stay separate.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
