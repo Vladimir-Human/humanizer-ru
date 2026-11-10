@@ -717,6 +717,143 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn(("lost", "имя или название"), self.errs(tbl, "Кассир получил 30 000 ₽, курьер — 50 000 ₽."))
         self.assertIn(("swap", "привязка"), self.errs(tbl, "Кассир Смирнов получил 50 000 ₽, а курьер Кузнецов — 30 000 ₽."))
 
+    # 4.2.1: review of check_facts by Fable 5.2 (10.11), every case reproduced before the fix.
+    def test_sentence_start_words_are_not_names(self):
+        # «То» matched «Томске» and «Там» matched «Тамара» by a raw prefix; a footnote mark and a
+        # chat citation in place of the period hid the sentence start (M3 09.11: «Его», «Там»).
+        for a, b in (("То, что мы видим в Томске, удивляет.", "Увиденное в Томске удивляет."),
+                     ("Мы открылись на улице Октябрьской, 19! Там 60 мест. Пришла Тамара.",
+                      "Мы открылись на улице Октябрьской, 19, на 60 мест. Пришла Тамара."),
+                     ("Здесь были болота.[1] Там, где они были, теперь парк.", "Здесь были болота, теперь парк."),
+                     ("Здесь были болота.[12] Там, где они были, теперь парк.", "Здесь были болота, теперь парк."),
+                     ("Здесь были болота. (127) Там, где они были, теперь парк.", "Здесь были болота, теперь парк."),
+                     ("Центр открыт в 2019 году. :contentReference[oaicite:1]{index=1} Его площадь — 340 м².",
+                      "Центр открыт в 2019 году, площадь — 340 м².")):
+            self.assertFalse({e for e in self.errs(a, b) if e[1] in ("имя или название", "привязка")}, a)
+        self.assertIn(("lost", "имя или название"), self.errs("Сбер вырос. Акции Сбера подорожали.", "Банк вырос. Акции подорожали."))
+        self.assertIn(("lost", "имя или название"), self.errs("Пришла Тамара.", "Пришла подруга."))
+        # Second round (Sol, F2): a first name with a fleeting vowel («Павел» → «Павлу») is a name.
+        self.assertIn(("lost", "имя или название"), self.errs("Павлу выдали пропуск.", "Выдали пропуск."))
+        self.assertIn(("swap", "привязка"), self.errs("Павлу выплатили 30 000 рублей, Анна получила 50 000 рублей.",
+                                                     "Павлу выплатили 50 000 рублей, Анна получила 30 000 рублей."))
+        # Cross-review 10.11 (Sol, F2): a citation inside a sentence does not make the next name a
+        # sentence start (the first 4.2.1 draft read it as a period and lost «Microsoft»).
+        self.assertIn(("lost", "имя или название"), self.errs("Мы сотрудничаем[cite: 1] Microsoft.", "Мы сотрудничаем."))
+        self.assertIn(("lost", "имя или название"), self.errs("Утром Томск проснулся. Томск ждал снега.", "Утром город проснулся. Он ждал снега."))
+
+    def test_numbers_glued_to_units(self):
+        for a, b in (("Объём 500мл, вес 10кг, цена 990р.", "Объём 300мл, вес 12кг, цена 890р."),
+                     ("Матрас 160х200 см.", "Матрас 140х200 см."),
+                     ("30к подписчиков. Основан в 2019г.", "50к подписчиков. Основан в 2021г.")):
+            self.assertIn(("lost", "число"), self.errs(a, b), a)
+        for a, b in (("Объём 500мл, вес 10кг.", "Объём 500 мл, вес 10 кг."),
+                     ("Основан в 2019г.", "Основан в 2019 году."),
+                     ("30к подписчиков.", "30 тыс. подписчиков."),
+                     ("Матрас 160х200 см.", "Матрас 160 × 200 см.")):
+            self.assertEqual(self.errs(a, b), set(), a)
+        lost = self.errs("Сервис для B2B и 3D-печати, учёт в 1С, тариф Pro2.", "Сервис для бизнеса и печати, учёт в программе.")
+        self.assertNotIn(("lost", "число"), lost)
+        # Cross-review 10.11 (Sol, F4, F5): «м²» glued to the number and a unit after «30к».
+        self.assertEqual(self.errs("Площадь 50м².", "Площадь 50 м²."), set())
+        self.assertIn(("unit", "единица"), self.errs("Площадь 50м².", "Площадь 50 м."))
+        self.assertEqual(self.errs("Зарплата 30к рублей.", "Зарплата 30 тыс. рублей."), set())
+        self.assertIn(("unit", "единица"), self.errs("Зарплата 30к рублей.", "Зарплата 30 тыс. долларов."))
+
+    def test_a_lost_mention_with_its_own_unit_is_an_error(self):
+        # The bag was keyed by the value alone: «5 дней» kept made the dropped «скидка 5%» a «fewer» check.
+        self.assertIn(("lost", "число"), self.errs("Доставка занимает 5 дней. Скидка 5%.", "Доставка занимает 5 дней."))
+        self.assertEqual(self.errs("Доставка 5 дней, скидка 5%.", "Скидка 5%, доставка за 5 дней."), set())
+
+    def test_a_hedge_turned_the_other_way_is_an_error(self):
+        self.assertIn(("inverted", "оговорка"), self.errs("Нужно не менее 5 человек.", "Нужно не более 5 человек."))
+        self.assertIn(("inverted", "оговорка"), self.errs("Скидка до 30%.", "Скидка от 30%."))
+        self.assertIn(("inverted", "оговорка"), self.errs("Оплата после 20 мая.", "Оплата до 20 мая."))
+        self.assertEqual(self.errs("Нужно не менее 5 человек.", "Нужно минимум 5 человек."), set())
+        # Second round (Sol, F3): spaces or bold inside «не менее» are the same hedge.
+        for a, b in (("Нужно не менее 5 человек.", "Нужно не  менее 5 человек."),
+                     ("Нужно не менее 5 человек.", "Нужно не **менее** 5 человек."),
+                     ("Нужно не  менее 5 человек.", "Нужно не менее 5 человек.")):
+            self.assertNotIn(("inverted", "оговорка"), self.errs(a, b), b)
+        self.assertEqual(self.errs("Подайте заявку не позднее 15 марта.", "Заявку подайте не позже 15 марта."), set())
+        checks = cf.compare("Подайте заявку не позднее 15 марта.", "Подайте заявку 15 марта.")["checks"]
+        self.assertIn("hedge", {c["kind"] for c in checks})
+        # check_scripts --against main 10.11 (final3 prompt m03): the source bounds the date both ways
+        # («до 30 ноября» … «После 30 ноября»), the edit kept «до» and said «После этого»: not a flip.
+        both = cf.compare("Скидка до 30 ноября. После 30 ноября цена вырастет.",
+                          "Скидка до 30 ноября. После этого цена вырастет.")
+        self.assertNotIn(("inverted", "оговорка"), {(e["kind"], e["what"]) for e in both["errors"]})
+        self.assertIn("hedge", {c["kind"] for c in both["checks"]})
+
+    def test_instead_of_is_not_a_lost_negation(self):
+        r = cf.compare("Не покупайте новый ноутбук, обновите старый.",
+                       "Вместо того чтобы покупать новый ноутбук, обновите старый.")
+        self.assertEqual(r["errors"], [])
+        self.assertTrue(r["checks"])
+        self.assertIn(("inverted", "отрицание"), self.errs("Не покупайте новый ноутбук.", "Покупайте новый ноутбук."))
+        # Cross-review 10.11 (Sol, F3): only «вместо того чтобы» right before the verb, and only for
+        # that mention; «Вместо писем отправляйте» and a second, plain «Покупайте» are still errors.
+        self.assertIn(("inverted", "отрицание"), self.errs("Не отправляйте деньги.", "Вместо писем отправляйте деньги."))
+        self.assertIn(("inverted", "отрицание"), self.errs(
+            "Не покупайте товар. Не покупайте подписку.",
+            "Вместо того чтобы покупать товар, возьмите его в аренду. Покупайте подписку."))
+
+    def test_long_digit_runs(self):
+        self.assertIn(("lost", "число"), self.errs("Расчётный счёт 40702810500000012345.", "Расчётный счёт 40702810500000012346."))
+        self.assertEqual(self.errs("Счёт 40702810500000012345.", "Счёт: 40702810500000012345."), set())
+        # Cross-review 10.11 (Sol, F6): the same digits in groups are the same account.
+        self.assertEqual(self.errs("Счёт 40702810500000012345.", "Счёт 40 702 810 500 000 012 345."), set())
+        self.assertIn(("lost", "число"), self.errs("Счёт 40702810500000012345.", "Счёт 40 702 810 500 000 012 346."))
+        # Second round (Sol, F4): a scale after a long number still counts.
+        self.assertIn(("lost", "число"), self.errs("Сумма 1000000000000000 тыс. рублей.", "Сумма 1000000000000000 рублей."))
+        self.assertEqual(self.errs("Сумма 1000000000000000 тыс. рублей.", "Сумма 1000000000000000000 рублей."), set())
+        cf.compare("Код " + "9" * 320 + ".", "Код.")  # raised OverflowError
+
+    def test_long_text_is_checked_in_time(self):
+        import time
+        text = "".join("Пункт %d: компания не открыла %d магазинов в Казани и не планирует, Анна не согласна. " % (i, i + 7)
+                       for i in range(1100))
+        t0 = time.time()
+        self.assertEqual(cf.compare(text, text)["errors"], [])
+        self.assertLess(time.time() - t0, 10, len(text))
+
+    def test_chat_wrapper_values_are_reported_apart(self):
+        src = ("Готово. Текст — **≈630 знаков**, в лимит 650 укладывается.\n\n```\nКафе на Ленина откроется 1 марта.\n```\n\n"
+               "- Если хотите, могу переделать текст в формате карточки Ozon.")
+        r = cf.compare(src, "Кафе на Ленина откроется 1 марта.")
+        self.assertEqual(r["errors"], [])
+        self.assertEqual({s["detail"] for s in r["service"]}, {"630", "650", "Ozon"})
+        line = cf.receipt(r)
+        self.assertIn("служебными строками", line)
+        self.assertIn("630", line)
+        self.assertNotIn("в правке нет", line)
+        post = ("Вот готовый вариант поста для Telegram-канала. Он структурирован так, чтобы клиенты сразу увидели главное.\n\n"
+                "Кофейня «Зерно» откроется 5 мая.\n\nЕсли нужно, могу сократить его до 300 символов.")
+        self.assertEqual(cf.compare(post, "Кофейня «Зерно» откроется 5 мая.")["errors"], [])
+        # A real loss stays an error: a text that opens with «Вот», a tail with a phone, a date in the wrapper,
+        # and a wrapper the edit kept.
+        self.assertIn(("lost", "число"), self.errs("Вот уже 15 лет мы печём хлеб.\n\nПриходите на Ленина, 5.",
+                                                   "Приходите на Ленина, 5."))
+        tail = "Кафе открыто до 22:00.\n\nЕсли хотите заказать торт, звоните +7 900 123-45-67."
+        self.assertIn("lost", {e[0] for e in self.errs(tail, "Кафе открыто до 22:00.")})
+        self.assertIn(("lost", "дата"), self.errs("Готово, отправил 3 марта.\n\n---\n\nКафе на Ленина.", "Кафе на Ленина."))
+        self.assertIn(("lost", "число"), self.errs(src, src.replace("650", "")))
+        # Cross-review 10.11 (Sol, F1): the author's own intro, conclusion and option headings are text.
+        body = "\n\nКурьер приедет в течение 5 дней. Стоимость доставки составляет 300 рублей."
+        self.assertIn(("lost", "имя или название"), self.errs("Вариант 1 — доставка в Казань." + body, body.strip()))
+        self.assertIn(("lost", "число"), self.errs("Готовим к запуску 3 магазина.\n\n---\n\nКурьер приедет через 5 дней.",
+                                                   "Курьер приедет через 5 дней."))
+        self.assertIn(("lost", "имя или название"), self.errs("Курьер приедет через 5 дней.\n\n---\n\nСоветы покупателям: забирайте заказы в Москве.",
+                                                             "Курьер приедет через 5 дней."))
+        self.assertIn(("lost", "число"), self.errs("Вот наши новости: открыли 3 магазина.\n\n---\n\nКурьер приедет через 5 дней.",
+                                                   "Курьер приедет через 5 дней."))
+        # Second round (Sol, F1): «Вот письмо от …» without a colon, an option heading and an offer
+        # that is not about the text are the author's; option headings are never service lines.
+        body = "Курьер приедет в течение 5 дней. Стоимость доставки составляет 300 рублей."
+        for a in ("Вот письмо от Microsoft.\n\n" + body, "**Вариант 1 (доставка в Казань)**\n" + body,
+                  body + "\n\nЕсли хотите, могу доставить заказ в Казань."):
+            self.assertIn(("lost", "имя или название"), self.errs(a, body), a)
+        self.assertIn("проверь", cf.render(r))
+
 
 class CleanPasteTest(unittest.TestCase):
     def test_utm_tail_in_markup_html_and_before_invisible(self):

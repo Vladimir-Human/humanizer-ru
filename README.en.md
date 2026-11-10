@@ -133,6 +133,8 @@ python skills/humanizer-ru/scripts/lint_style.py text.txt
 names and links, flipped negations, swapped amounts, weakened or strengthened claims and lost
 HTML tags. At the end of its report it prints a «Сверка скриптом: …» line (how many facts are in
 place or which values the edit lacks); the skill copies it into its notes word for word.
+Values from the chatbot's own lines around the text («Готово, вот текст: ≈630 знаков», «Если
+хотите, могу…») are not counted as errors; the script lists them apart.
 `clean_paste.py` removes chat-paste leftovers: contentReference, 【N†source】,
 `utm_source=chatgpt.com` tails, invisible characters. The scripts work only on the files they
 are given, do not use the network and do not start other programs. `clean_paste.py` rewrites a
