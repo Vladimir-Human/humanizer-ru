@@ -4,7 +4,7 @@ description: "Переписывает русский текст со следа
 license: MIT
 metadata:
   author: Vladimir-Human
-  version: "4.1.7"
+  version: "4.2.0"
   homepage: "https://github.com/Vladimir-Human/humanizer-ru"
 ---
 

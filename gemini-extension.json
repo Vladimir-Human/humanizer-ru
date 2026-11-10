@@ -1,5 +1,5 @@
 {
   "name": "humanizer-ru",
-  "version": "4.1.7",
+  "version": "4.2.0",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived."
 }

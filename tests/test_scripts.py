@@ -497,6 +497,11 @@ class CheckFactsTest(unittest.TestCase):
         # M3 09.11 (f01 ours): «15 или 16 ноября» read 15 as a new number.
         self.assertEqual(self.errs("Завтрак только 14, 15 и 16 ноября.", "Приходите 14, 15 или 16 ноября."), set())
         self.assertIn(("lost", "дата"), self.errs("Приходите 15 или 16 ноября.", "Приходите 16 ноября."))
+        # check_scripts --against main 10.11 (final2 chukovsky n20): «в 2 раза дешевле» → «вдвое дешевле»
+        # was a lost 2 once list numbers stopped hiding it.
+        self.assertEqual(self.errs("Парафин в 2 раза дешевле.", "Парафин вдвое дешевле."), set())
+        self.assertEqual(self.errs("Цена выросла втрое.", "Цена выросла в три раза."), set())
+        self.assertIn(("lost", "число"), self.errs("Гостей вдвое больше.", "Гостей больше."))
         self.assertIn(("lost", "код"), self.errs("Код: `npm run build`", "Код: `npm run dev`"))
         r = cf.compare("Запуск: `make`", "Запуск: make")
         self.assertEqual(r["errors"], [])

@@ -33,7 +33,7 @@ check_facts = importlib.util.module_from_spec(_spec)
 sys.modules["check_facts"] = check_facts
 _spec.loader.exec_module(check_facts)
 
-LINE_RX = re.compile(r"^\W*Сверка скриптом\b.*$", re.M)
+LINE_RX = re.compile(r"^\W*Сверка скриптом:.*$", re.M)  # the form check_facts.py prints; «не проводилась» is not one
 COUNT_RX = {
     "number": re.compile(r"(\d+)\s+чис", re.I),
     "date": re.compile(r"(\d+)\s+дат", re.I),

@@ -3,19 +3,18 @@
     "summary": {
       "texts": 12,
       "texts_with_errors": [
-        "f03",
         "f09",
-        "f15",
-        "f27",
-        "f33"
+        "f15"
       ],
-      "errors": 19,
+      "errors": 5,
+      "wrapper": 14,
       "lint_mean": 0.49,
       "receipts": 12
     },
     "rows": {
       "f03": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -58,6 +57,7 @@
       },
       "f06": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: 9 чисел, 5 дат, 2 имени и названия, 1 цитата, 3 отрицания на месте."
@@ -75,12 +75,14 @@
             "500"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: в исходнике 10 чисел, 1 имя или название, 1 цитата, 4 отрицания; в правке нет только 504 и 500 из убранных служебных строк."
       },
       "f12": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: 9 чисел, 4 даты, 9 имён и названий, 3 цитаты, 3 отрицания на месте."
@@ -103,30 +105,35 @@
             "ГВС"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: в исходнике 13 чисел, 3 даты, 6 имён и названий, 2 цитаты, 4 отрицания; в правке нет только 630, 650 и ГВС (из реплик ассистента)."
       },
       "f18": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: 9 чисел, 2 даты, 12 имён и названий, 2 цитаты, 1 отрицание на месте."
       },
       "f21": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.58,
         "lint_level": "мало",
         "receipt": "- Сверка скриптом: 65 чисел, 3 даты, 21 имя или название, 7 цитат, 15 отрицаний на месте."
       },
       "f24": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: 3 числа, 3 имени и названия, 2 цитаты на месте."
       },
       "f27": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -159,12 +166,14 @@
       },
       "f30": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": "- Сверка скриптом: 9 чисел, 2 даты, 2 имени и названия, 1 телефон, 1 цитата, 2 отрицания на месте."
       },
       "f33": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -182,6 +191,7 @@
       },
       "f36": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 4.33,
         "lint_level": "есть",
         "receipt": "- Сверка скриптом: 8 чисел, 2 даты, 7 имён и названий, 2 цитаты на месте."
@@ -192,19 +202,18 @@
     "summary": {
       "texts": 12,
       "texts_with_errors": [
-        "f03",
         "f09",
-        "f15",
-        "f27",
-        "f33"
+        "f15"
       ],
-      "errors": 19,
+      "errors": 5,
+      "wrapper": 14,
       "lint_mean": 0.49,
       "receipts": 0
     },
     "rows": {
       "f03": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -247,6 +256,7 @@
       },
       "f06": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
@@ -264,12 +274,14 @@
             "500"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f12": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
@@ -292,30 +304,35 @@
             "ГВС"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f18": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f21": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.56,
         "lint_level": "мало",
         "receipt": ""
       },
       "f24": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f27": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -348,12 +365,14 @@
       },
       "f30": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f33": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -371,6 +390,7 @@
       },
       "f36": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 3.33,
         "lint_level": "есть",
         "receipt": ""
@@ -381,20 +401,19 @@
     "summary": {
       "texts": 12,
       "texts_with_errors": [
-        "f03",
         "f09",
         "f12",
-        "f15",
-        "f27",
-        "f33"
+        "f15"
       ],
-      "errors": 16,
+      "errors": 5,
+      "wrapper": 11,
       "lint_mean": 0.96,
       "receipts": 0
     },
     "rows": {
       "f03": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -422,6 +441,7 @@
       },
       "f06": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
@@ -439,6 +459,7 @@
             "500"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
@@ -451,6 +472,7 @@
             "два"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
@@ -468,30 +490,35 @@
             "650"
           ]
         ],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f18": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f21": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.56,
         "lint_level": "мало",
         "receipt": ""
       },
       "f24": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f27": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -524,12 +551,14 @@
       },
       "f30": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 0.0,
         "lint_level": "нет",
         "receipt": ""
       },
       "f33": {
-        "errors": [
+        "errors": [],
+        "wrapper": [
           [
             "lost",
             "число",
@@ -547,6 +576,7 @@
       },
       "f36": {
         "errors": [],
+        "wrapper": [],
         "lint_score": 3.33,
         "lint_level": "есть",
         "receipt": ""

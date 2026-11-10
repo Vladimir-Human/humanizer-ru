@@ -1,0 +1,12 @@
+{
+  "executor": "dsh:minimax/MiniMax-M3.1-Flash",
+  "set": "holdout4",
+  "texts": [
+    "f14"
+  ],
+  "systems": [
+    "ours",
+    "ours417"
+  ],
+  "request": "Очеловечь этот текст. В ответе дай только готовый текст, без пояснений и комментариев.\n\n"
+}

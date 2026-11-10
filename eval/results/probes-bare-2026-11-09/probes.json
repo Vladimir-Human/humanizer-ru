@@ -162,7 +162,7 @@
         4
       ],
       "legal": [
-        3,
+        4,
         4
       ],
       "human_good": [
@@ -515,7 +515,6 @@
       "pr14 keep_re:—\\s*450": 2,
       "pr21 keep_re:\\b[Вв](?:ы|ас|ам|аш)": 1,
       "pr28 drop:неоценим": 1,
-      "pr40 keep:нарушает мои права": 1,
       "pr59 asks": 1,
       "pr52 drop:шедевр": 1
     },
@@ -788,13 +787,13 @@
         "spread": 1
       },
       "legal": {
-        "passed": 7,
+        "passed": 8,
         "total": 8,
         "per_run": [
-          3,
+          4,
           4
         ],
-        "spread": 1
+        "spread": 0
       },
       "no_add": {
         "passed": 6,
@@ -851,13 +850,13 @@
         "spread": 1
       },
       "_all": {
-        "passed": 111,
+        "passed": 112,
         "total": 120,
         "per_run": [
-          53,
+          54,
           58
         ],
-        "spread": 5
+        "spread": 4
       }
     },
     "ours417": {

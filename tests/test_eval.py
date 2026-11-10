@@ -415,6 +415,28 @@ class EvalProbesTest(unittest.TestCase):
         invented = good.replace("Путь был непростой.", "За 2 года путь был непростой.")
         self.assertFalse(self.ok(probe, invented))  # a number added to the text itself still fails
 
+    def test_legal_probe_keeps_the_phrase_at_a_sentence_start(self):
+        # Cross-review 10.11 F2: the pr40 amendment made «нарушает мои права» case-sensitive, so a split
+        # sentence starting «Нарушает мои права…» failed with every fact in place.
+        pr40 = next(p for p in self.probes.lib.read_json(self.probes.PROBES) if p["id"] == "pr40")
+        split = ("Прошу в установленном законом порядке вернуть уплаченные за товар денежные средства в размере "
+                 "6 990 рублей, поскольку товар имеет существенный недостаток. Нарушает мои права как "
+                 "потребителя именно этот недостаток.")
+        self.assertTrue(self.ok(pr40, split))
+        self.assertFalse(self.ok(pr40, split.replace("Нарушает мои права", "Это плохо")))
+
+    def test_apology_probes_keep_the_names_and_drop_the_filler(self):
+        # Cross-review 10.11 F1: the genres.md line on names in a shortened apology came from holdout4 f14;
+        # its dev cases are the apology_names probes.
+        bank = {p["id"]: p for p in self.probes.lib.read_json(self.probes.PROBES)}
+        pr61 = bank["pr61"]
+        good = ("Здравствуйте, Марина! Простите за долгое ожидание в мастерской «Синий ключ» на Садовой. "
+                "Мастер уже вернул вам 500 рублей за срочный ремонт.")
+        self.assertTrue(self.ok(pr61, good))
+        self.assertFalse(self.ok(pr61, good.replace(" в мастерской «Синий ключ» на Садовой", "")))
+        self.assertFalse(self.ok(pr61, pr61["text"]))  # the filler left in place fails too
+        self.assertEqual(sum(1 for p in bank.values() if p["rule"] == "apology_names"), 4)
+
     def test_split_notes_cuts_only_the_answer_own_rule(self):
         split = self.probes.lib.split_notes
         self.assertEqual(split("Текст.\n---\n- заметка"), ("Текст.", "- заметка"))
@@ -591,6 +613,10 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertEqual((why["same_line"], why["facts_ok"]), (False, True))  # reworded, facts right
         self.assertFalse(re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
                                             "Сверка скриптом: 1 число, 1 дата, 1 имя на месте")["facts_ok"])
+        # probes-ours-2026-11-10 ours/r1/pr58, no terminal: an honest «not run» note is not a receipt line.
+        self.assertEqual(re_.receipt_line("Текст.\n\n---\n- Сверка скриптом не проводилась: команды не "
+                                          "запускаются."), "")
+        self.assertTrue(re_.receipt_line("Текст.\n\n---\n- Сверка скриптом: 2 числа на месте."))
 
     def test_probe_config_keeps_every_participant(self):
         # Cross-review 09.11 (F4): the chat/prompt run overwrote the record of ours/ours417.
@@ -616,6 +642,26 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertGreater(dirty["lint_score"], 0)
         s = fe.summarize({"a": clean, "b": dirty})
         self.assertEqual((s["texts_with_errors"], s["errors"], s["receipts"]), (["b"], 1, 1))
+
+    def test_frontier_scorer_lists_the_chat_wrapper_apart(self):
+        # Cross-review 10.11 F3: values from the chat's own head and tail («Готовый пост (≈683 знака)»,
+        # «в лимит 1200») counted as lost facts of the edit.
+        import frontier_eval as fe
+        src = ("Готовый пост (≈683 знака):\n\n---\n\nСкидка 20% до 30 ноября в кафе «Клён».\n\n---\n\n"
+               "Объём в лимит 1200 знаков.")
+        self.assertEqual(fe.text_part(src), "Скидка 20% до 30 ноября в кафе «Клён».")
+        self.assertEqual(fe.text_part("Без черты 5 раз."), "Без черты 5 раз.")
+        sections = "# Памятка\n\nШаг 1: 5 минут.\n\n---\n\n## После\n\nЕщё 7 пунктов, длинный раздел текста."
+        self.assertEqual(fe.text_part(sections), sections)  # «---» between sections is text
+        self.assertEqual(fe.text_part("Текст письма, 3 пункта.\n\n---\n\nЕсли нужно, могу сделать короче."),
+                         "Текст письма, 3 пункта.")
+        r = fe.score_text(src, "Скидка 20% до 30 ноября в кафе «Клён».")
+        self.assertEqual(r["errors"], [])
+        self.assertTrue(r["wrapper"])
+        lost = fe.score_text(src, "Скидка до 30 ноября в кафе «Клён».")
+        self.assertIn(["lost", "число", "20%"], lost["errors"])
+        self.assertNotIn(["lost", "число", "20%"], lost["wrapper"])
+        self.assertEqual(fe.summarize({"a": r, "b": lost})["errors"], 1)
 
     def test_run_sets_are_a_comma_list(self):
         # Plan v3 M3: holdout4 with the six saved chatbot answers, without traps (they are in M2).

@@ -85,8 +85,26 @@ the one-line prompt damaged three.
 How much of this is chance: a bootstrap over texts (`report.py`, since 4.1.7) gives 95% intervals
 of 52–78% above ilyautov, 58–81% above avoid-ai-writing-russian and 67–85% above the one-line
 prompt, all clear of 50%. The variants of our own instructions that did not ship (49%, 42%, 46%)
-cannot be told apart from 4.1.1 by these runs: their intervals hold 50%. The instructions have not
-changed since 4.1.1; 4.1.2–4.1.7 changed the fact-check and paste-cleanup scripts.
+cannot be told apart from 4.1.1 by these runs: their intervals hold 50%. 4.1.2–4.1.7 changed only
+the scripts; the 4.2.0 instructions were checked with a new ruler (below).
+
+**4.2.0 run, 09–10.11.2026.** The main measures are deterministic: probes checked by script, fact
+check, similarity to human text. The run cost no money. Details and every answer:
+[eval/README.md](eval/README.md) (in Russian).
+
+- With a terminal (Claude Sonnet 5.5 subagents, 12 new AI texts): 4.2.0 checked the facts with the
+  script and ended its notes with the «Сверка скриптом: …» line in 12 answers of 12; its counts
+  matched the script in all 12. No participant lost a fact (4.2.0, 4.1.7, the one-line prompt);
+  the prompt left a `utm_source=chatgpt.com` tail in one text.
+- 60 probes over 15 rules (MiniMax M3.1 Flash without a terminal, two runs): 4.2.0 passed 112 of
+  120, 4.1.7 108, the one-line prompt 79. The prompt strengthens hedged claims, leaves the chat
+  wrapper and rewrites legal text.
+- "Make it livelier" on a template text: 4.2.0 edits without inventing and asks the author
+  questions in 12 cases of 12; 4.1.7 does not ask.
+- 39 human texts a good editor would barely touch: similarity of the edit to the original 0.90
+  for 4.2.0 against 0.85 for 4.1.7.
+- Editing to the author's voice from a sample failed its gate (closer to the author in 7 cases
+  of 12, 10 needed) and is not in 4.2.0. This run did not measure a style edge over the plain prompt.
 
 A fresh reduced run on 21.10.2026 (`final4`): 12 new texts by GPT-6.1 Sol and Gemini 4 Argon,
 Sonnet 5.5 as the executor, places by Gemini 4 Argon and Claude Opus 5.5. humanizer-ru 4.1.1 came
@@ -110,7 +128,9 @@ python skills/humanizer-ru/scripts/lint_style.py text.txt
 
 `check_facts.py` compares the original with the edit and reports lost or new numbers, dates,
 names and links, flipped negations, swapped amounts, weakened or strengthened claims and lost
-HTML tags. `clean_paste.py` removes chat-paste leftovers: contentReference, 【N†source】,
+HTML tags. At the end of its report it prints a «Сверка скриптом: …» line (how many facts are in
+place or which values the edit lacks); the skill copies it into its notes word for word.
+`clean_paste.py` removes chat-paste leftovers: contentReference, 【N†source】,
 `utm_source=chatgpt.com` tails, invisible characters. The scripts work only on the files they
 are given, do not use the network and do not start other programs. `clean_paste.py` rewrites a
 file only with `--in-place`, and only when it found paste leftovers; first it saves a copy of the

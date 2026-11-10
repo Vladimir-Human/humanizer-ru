@@ -2,7 +2,7 @@
   "name": "humanizer-ru",
   "displayName": "humanizer-ru",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived.",
-  "version": "4.1.7",
+  "version": "4.2.0",
   "author": {"name": "Vladimir-Human"},
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": "https://github.com/Vladimir-Human/humanizer-ru",

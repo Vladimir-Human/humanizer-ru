@@ -1,0 +1,8 @@
+{
+  "by_system": {
+    "ours": {
+      "executor": "dsh:minimax/MiniMax-M3.1-Flash",
+      "repeat": 2
+    }
+  }
+}

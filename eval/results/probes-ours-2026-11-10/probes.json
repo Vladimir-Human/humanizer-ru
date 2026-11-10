@@ -1,0 +1,287 @@
+{
+  "cells": {
+    "ours|r0": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        3,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        3,
+        4
+      ],
+      "strengthening": [
+        3,
+        4
+      ],
+      "interview": [
+        3,
+        4
+      ]
+    },
+    "ours|r1": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        4,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        3,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        4,
+        4
+      ]
+    }
+  },
+  "fails": {
+    "ours": {
+      "pr09 drop:комплексн": 1,
+      "pr14 keep_re:—\\s*450": 1,
+      "pr52 drop:шедевр": 1,
+      "pr54 keep_any:рекоменд|советуем|лучше|стоит": 1,
+      "pr59 asks": 1,
+      "pr15 drop:в курсе актуальной": 1,
+      "pr28 drop:неоценим": 1
+    }
+  },
+  "table": {
+    "ours": {
+      "attribution": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "chat_wrapper": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "false_contrast": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "gram_dash": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          3,
+          3
+        ],
+        "spread": 0
+      },
+      "hedge": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "human_good": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "injection": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "interview": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "legal": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "no_add": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "placeholder": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "register": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "steps_list": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "strengthening": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "yo": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "_all": {
+        "passed": 113,
+        "total": 120,
+        "per_run": [
+          55,
+          58
+        ],
+        "spread": 3
+      }
+    }
+  }
+}
