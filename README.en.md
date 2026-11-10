@@ -92,17 +92,20 @@ the scripts; the 4.2.0 instructions were checked with a new ruler (below).
 check, similarity to human text. The run cost no money. Details and every answer:
 [eval/README.md](eval/README.md) (in Russian).
 
-- With a terminal (Claude Sonnet 5.5 subagents, 12 new AI texts): 4.2.0 checked the facts with the
+- With a terminal (Claude Sonnet 5.5 subagents, 12 new AI texts; the 4.2.0 draft, whose last two
+  instruction edits did not touch the fact-check step): the skill checked the facts with the
   script and ended its notes with the «Сверка скриптом: …» line in 12 answers of 12; its counts
   matched the script in all 12. No participant lost a fact (4.2.0, 4.1.7, the one-line prompt);
   the prompt left a `utm_source=chatgpt.com` tail in one text.
-- 60 probes over 15 rules (MiniMax M3.1 Flash without a terminal, two runs): 4.2.0 passed 112 of
-  120, 4.1.7 108, the one-line prompt 79. The prompt strengthens hedged claims, leaves the chat
-  wrapper and rewrites legal text.
+- 60 probes over 15 rules (MiniMax M3.1 Flash without a terminal, two runs): 4.2.0 passed 109 of
+  120 (the draft 112), 4.1.7 108, the one-line prompt 79. 4.2.0 drops the polite «вы» more often:
+  in a recheck with six runs each, 3 failures of 48 against 1 of 48 for 4.1.7, not significant
+  (p = 0.31). The prompt strengthens hedged claims, leaves the chat wrapper and rewrites legal text.
 - "Make it livelier" on a template text: 4.2.0 edits without inventing and asks the author
   questions in 12 cases of 12; 4.1.7 does not ask.
-- 39 human texts a good editor would barely touch: similarity of the edit to the original 0.90
-  for 4.2.0 against 0.85 for 4.1.7.
+- 39 human texts a good editor would barely touch: similarity of the edit to the original 0.87
+  for 4.2.0 against 0.85 for 4.1.7, texts with a fact-check error 3 against 6. Of six traps 4.2.0
+  got one wrong: it removed the footnote numbers from a Herzen excerpt.
 - Editing to the author's voice from a sample failed its gate (closer to the author in 7 cases
   of 12, 10 needed) and is not in 4.2.0. This run did not measure a style edge over the plain prompt.
 
