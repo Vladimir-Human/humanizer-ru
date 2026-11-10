@@ -314,7 +314,7 @@ class EvalBatchTest(unittest.TestCase):
         self.assertNotIn("batch2", body)
         self.assertNotIn("запустить нельзя", system)
         self.assertIn((d / "batch" / "ours" / "skill").as_posix() + "/scripts", system)
-        self.assertEqual(copied, ["check_facts.py", "clean_paste.py", "lint_style.py", "rules.json", "voice_profile.py"])
+        self.assertEqual(copied, ["check_facts.py", "clean_paste.py", "lint_style.py", "rules.json"])
         self.assertTrue(cfg["scripts"])
 
     def test_collect_run_flags_missing_and_empty_outputs(self):
@@ -592,6 +592,16 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertFalse(re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
                                             "Сверка скриптом: 1 число, 1 дата, 1 имя на месте")["facts_ok"])
 
+    def test_probe_config_keeps_every_participant(self):
+        # Cross-review 09.11 (F4): the chat/prompt run overwrote the record of ours/ours417.
+        import probes as pb
+        old = {"executor": "dsh:minimax/MiniMax-M3.1-Flash", "systems": ["ours", "ours417"], "repeat": 2}
+        new = pb.merge_config(old, ["chat"], "dsh:agentrouter-astra/gpt-6.1-sol", 1)
+        self.assertEqual(set(new["by_system"]), {"ours", "ours417", "chat"})
+        self.assertEqual(new["by_system"]["ours"]["executor"], "dsh:minimax/MiniMax-M3.1-Flash")
+        self.assertEqual(new["by_system"]["chat"], {"executor": "dsh:agentrouter-astra/gpt-6.1-sol", "repeat": 1})
+        self.assertEqual(pb.merge_config(new, ["ours"], "x", 3)["by_system"]["chat"]["repeat"], 1)
+
     def test_frontier_scorer_reads_the_edit_without_its_notes(self):
         # Frontier arm (eval/README, 09.11 21:00 UTC): facts and style of the edit, notes cut first.
         import frontier_eval as fe
@@ -640,6 +650,13 @@ class EvalNewMeasuresTest(unittest.TestCase):
         answer = "Кофейня на Ленина.\n\n---\n- Что вы обжариваете сами?\n- Во сколько открываетесь?"
         self.assertEqual(iv.questions(answer), ["- Что вы обжариваете сами?", "- Во сколько открываетесь?"])
         self.assertEqual(iv.questions("Кофейня на Ленина."), [])
+        # Cross-review 09.11 (F1, m5 ours/iv08): a question put as a request («Уточните …») with no «?»
+        # was not a question, so the author never answered and the third turn was not checked.
+        ask = ("Квартира в центре.\n\n---\n- Прилагательные заменил.\n- Уточните квартиру: сколько комнат, этаж.\n"
+               "- Если есть подробности, скажите, и я впишу.")
+        self.assertEqual(iv.questions(ask), ["- Уточните квартиру: сколько комнат, этаж."])
+        self.assertEqual(iv.questions("Текст.\n\n---\n1. **Назовите** адрес и часы работы."),
+                         ["1. **Назовите** адрес и часы работы."])
         added = iv._added("Кофейня на Ленина.", "Кофейня на Ленина, 14, с 8:00. Хозяйка Марина.")
         self.assertEqual(sorted(a.split(": ")[1] for a in added), ["14", "8:00", "Марина"])
         # what the author answered is not invented

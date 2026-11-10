@@ -10,7 +10,7 @@
 #        author (MiniMax, free route) and edits them with each system, with and without the
 #        sample; `score` writes eval/results/<run>/voice.md and voice.json.
 # DEPENDS: evallib, run_systems (load_system, inline_system, REQUEST), fetch_human (_Paragraphs),
-#          skills/humanizer-ru/scripts/voice_profile.py.
+#          eval/voice_profile.py (left the skill in 4.2.0: M6 7 of 12).
 # LINKS: M-EVAL-VOICE; R-VOICE; V-M-VOICE-PROFILE.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
@@ -52,7 +52,7 @@ NOTES, GATE = 3, 10
 VOICE_REQUEST = ("Вот образец моего текста:\n\n{sample}\n\nПерепиши текст ниже в моей манере, как будто его "
                  "написал я. Факты не меняй.\n\n")
 
-_spec = importlib.util.spec_from_file_location("voice_profile", lib.EVAL_DIR.parent / "skills/humanizer-ru/scripts/voice_profile.py")
+_spec = importlib.util.spec_from_file_location("voice_profile", lib.EVAL_DIR / "voice_profile.py")
 voice_profile = importlib.util.module_from_spec(_spec)
 sys.modules["voice_profile"] = voice_profile
 _spec.loader.exec_module(voice_profile)

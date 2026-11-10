@@ -1,0 +1,34 @@
+{
+  "authors": {
+    "gilyarovsky": {
+      "note": 0.3933,
+      "ours": 0.4042,
+      "ours+sample": 0.3936,
+      "author": "В. А. Гиляровский"
+    },
+    "rozanov": {
+      "note": 0.4074,
+      "ours": 0.4088,
+      "ours+sample": 0.4032,
+      "author": "В. В. Розанов"
+    },
+    "chekhov": {
+      "note": 0.3686,
+      "ours": 0.3691,
+      "ours+sample": 0.3655,
+      "author": "А. П. Чехов"
+    },
+    "doroshevich": {
+      "note": 0.387,
+      "ours": 0.3852,
+      "ours+sample": 0.3907,
+      "author": "В. М. Дорошевич"
+    }
+  },
+  "closer_with_sample": {
+    "ours": [
+      7,
+      12
+    ]
+  }
+}

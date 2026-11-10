@@ -56,7 +56,7 @@ def main(argv=None) -> int:
     ap.add_argument("--systems", default="ours,ours417,prompt")
     args = ap.parse_args(argv)
     run_dir = lib.EVAL_DIR / "results" / args.run
-    data, md = {}, ["# Фронтир-агент: %s" % args.run, "",
+    data, md = {}, ["# Сверка фактов и стиль правок: %s" % args.run, "",
                     "| Участник | Правок | С ошибкой сверки | Ошибок | Стиль, средний балл | Строка сверки |",
                     "|---|---|---|---|---|---|"]
     for name in args.systems.split(","):

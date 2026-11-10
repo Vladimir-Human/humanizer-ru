@@ -63,7 +63,7 @@
     <test file="tests/test_lint.py" title="test_engine_js_gives_the_same_report, test_site_copy_of_rules_is_identical" checks="node runs engine.js on the same 57 texts and an NBSP fixture and gives the same report as lint_style.py; site/check/rules.json is byte-identical to the skill copy (also in check_repo.py)" />
     <test file="manual browser check 2026-11-09" title="the page in the built-in browser" checks="a pasted text gets the report; the network log shows only the three same-origin files (page, engine, rules), nothing leaves the page" />
   </entry>
-  <entry id="V-M-VOICE-PROFILE" module="M-VOICE-PROFILE" file="skills/humanizer-ru/scripts/voice_profile.py" requirements="R-VOICE">
+  <entry id="V-M-VOICE-PROFILE" module="M-VOICE-PROFILE" file="eval/voice_profile.py" requirements="R-VOICE">
     <test file="tests/test_voice.py" title="FeaturesTest, AuthorTest, CliTest" checks="sentence length, punctuation and ё share; the same text is at distance 0; a short sample is flagged; differences say what to change; on four public-domain authors each ~700-word sample is closest to the same author's held-out part (4 of 4); build then distance from a profile or a sample give the same number; stdin is read as UTF-8 whatever the console code page" />
   </entry>
   <entry id="V-M-EVAL-PROBES" module="M-EVAL-PROBES" file="eval/probes.py, eval/corpus/probes.json" requirements="R-PROBES, R-NOTES-NOT-TEXT">

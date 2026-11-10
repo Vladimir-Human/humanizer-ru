@@ -10,7 +10,8 @@
 # LINKS: M-EVAL-INTERVIEW; R-INTERVIEW; V-M-EVAL-INTERVIEW.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
-# questions: question lines of an answer (after its last '---', else the whole answer).
+# questions: question lines of an answer (after its last '---', else the whole answer): a «?» or a line
+#            that opens with a request to the author («Уточните …», «Назовите …»).
 # run: turn 1 (edit + questions), turn 2 (author answers from the sheet), turn 3 (rewrite).
 # score: asked (turn 1 has a question to the author), invented (a number, date or name in turn 1
 #        or turn 3 that is in neither the text nor the author's answers), per system.
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -44,9 +46,15 @@ def _split(answer: str) -> tuple:
     return lib.split_notes(answer)
 
 
+# A question put as a request (m5 ours/iv08: «Уточните квартиру: сколько комнат, этаж…»). Only at the
+# start of a line, so «если есть подробности, скажите, и я впишу» is an offer, not a question.
+ASK_RX = re.compile(r"^[\s\-*•\d.)]*(?:\*\*)?(?:уточните|назовите|напишите|подскажите|скажите|расскажите|"
+                    r"опишите|укажите|пришлите|ответьте)(?![а-яё])", re.I)
+
+
 def questions(answer: str) -> list:
     body, notes = _split(answer)
-    return [ln.strip() for ln in (notes or body).split("\n") if "?" in ln]
+    return [ln.strip() for ln in (notes or body).split("\n") if "?" in ln or ASK_RX.match(ln)]
 
 
 def run(run_name: str, systems: list, executor: str, author: str, workers: int) -> int:
@@ -61,16 +69,23 @@ def run(run_name: str, systems: list, executor: str, author: str, workers: int) 
         for c in cases:
             path = out_dir / name / (c["id"] + ".json")
             if not path.exists():
-                jobs.append((path, system, c))
+                jobs.append((path, system, c, None))
+            else:  # a saved first turn that asks in a way the old count missed: finish turns 2 and 3
+                rec = lib.read_json(path)
+                if not rec["turn3"] and questions(rec["turn1"]):
+                    jobs.append((path, system, c, rec))
 
     def one(job):
-        path, system, c = job
+        path, system, c, rec = job
         msgs = [{"role": "system", "content": system}, {"role": "user", "content": REQUEST + c["text"]}]
-        m1, _ = lib.chat(executor, msgs, max_tokens=6000, tag="interview")
-        turn1 = (m1.get("content") or "").strip()
-        if not turn1:
-            raise RuntimeError("empty turn 1")
-        rec = {"id": c["id"], "turn1": turn1, "questions": questions(turn1), "answers": "", "turn3": ""}
+        if rec is None:
+            m1, _ = lib.chat(executor, msgs, max_tokens=6000, tag="interview")
+            turn1 = (m1.get("content") or "").strip()
+            if not turn1:
+                raise RuntimeError("empty turn 1")
+            rec = {"id": c["id"], "turn1": turn1, "questions": [], "answers": "", "turn3": ""}
+        turn1 = rec["turn1"]
+        rec["questions"] = questions(turn1)
         if rec["questions"]:
             m2, _ = lib.chat(author, [{"role": "user", "content": AUTHOR.format(
                 sheet="\n".join("- " + s for s in c["sheet"]), text=c["text"], answer=turn1)}], max_tokens=3000, tag="interview")
@@ -114,9 +129,10 @@ def score(run_name: str) -> int:
             body1, _ = _split(rec["turn1"])
             add1 = _added(c["text"], body1)
             add3 = _added(c["text"] + "\n\n" + rec["answers"], _split(rec["turn3"])[0]) if rec["turn3"] else []
-            asked += bool(rec["questions"])
+            asked += bool(questions(rec["turn1"]))
             invented += bool(add1 or add3)
-            rows.append({"id": rec["id"], "questions": len(rec["questions"]), "added_turn1": add1, "added_turn3": add3})
+            rows.append({"id": rec["id"], "questions": len(questions(rec["turn1"])), "added_turn1": add1,
+                         "added_turn3": add3})
         table[sdir.name] = {"cases": len(rows), "asked": asked, "invented": invented}
         details[sdir.name] = rows
     md = ["# Вопросы автору: %s" % run_name, "",

@@ -1,0 +1,7 @@
+Акция действует до 10 декабря, и участвовать в ней могут только новые клиенты.
+
+По ссылке https://example.com/promo сейчас открывается не страница акции, а стандартная заглушка example.com с кодом 404. Вот её содержимое целиком:
+
+> Example Domain
+>
+> This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.

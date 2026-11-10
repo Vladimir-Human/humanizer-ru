@@ -494,6 +494,9 @@ class CheckFactsTest(unittest.TestCase):
         self.assertEqual(self.errs("Сб-Вс: выходной.", "В субботу и воскресенье выходной."), set())
         self.assertIn(("lost", "дата"), self.errs("Работаем пн–пт.", "Работаем с понедельника по четверг."))
         self.assertEqual(self.errs("Ср. выше.", "Сравните выше."), set())  # «ср.» alone is «сравни»
+        # M3 09.11 (f01 ours): «15 или 16 ноября» read 15 as a new number.
+        self.assertEqual(self.errs("Завтрак только 14, 15 и 16 ноября.", "Приходите 14, 15 или 16 ноября."), set())
+        self.assertIn(("lost", "дата"), self.errs("Приходите 15 или 16 ноября.", "Приходите 16 ноября."))
         self.assertIn(("lost", "код"), self.errs("Код: `npm run build`", "Код: `npm run dev`"))
         r = cf.compare("Запуск: `make`", "Запуск: make")
         self.assertEqual(r["errors"], [])

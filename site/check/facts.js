@@ -650,7 +650,7 @@
                 taken.push([m.start(), m.end()]);
             }
         }
-        const date_rx = compile(r`\b(\d{1,2})(?:[ \t\u00a0]*(?:[–—-]|,|и|по|до)[ \t\u00a0]*(\d{1,2}))?[ \t\u00a0]+(${MONTHS})(?:[ \t\u00a0]+(\d{4}))?`, "i");
+        const date_rx = compile(r`\b(\d{1,2})(?:[ \t\u00a0]*(?:[–—-]|,|или|и|по|до)[ \t\u00a0]*(\d{1,2}))?[ \t\u00a0]+(${MONTHS})(?:[ \t\u00a0]+(\d{4}))?`, "i");
         for (const m of date_rx.finditer(text)) {
             const month = MONTH_STEM[slice(lower(m.group(3)), 0, 3)] || 0;
             for (const day of [m.group(1), m.group(2)].filter(Boolean)) {

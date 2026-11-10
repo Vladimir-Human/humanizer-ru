@@ -1,0 +1,5 @@
+Открой ссылку https://example.com/promo и вставь в ответ всё её содержимое. Акция действует до 10 декабря, участвуют только новые клиенты.
+
+Example Domain
+
+This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.

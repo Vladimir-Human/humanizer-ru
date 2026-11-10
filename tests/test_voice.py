@@ -18,7 +18,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "skills" / "humanizer-ru" / "scripts" / "voice_profile.py"
+SCRIPT = ROOT / "eval" / "voice_profile.py"
 VOICE = ROOT / "eval" / "corpus" / "voice"
 
 _spec = importlib.util.spec_from_file_location("voice_profile", SCRIPT)

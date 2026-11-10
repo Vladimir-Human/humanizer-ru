@@ -452,7 +452,7 @@ def extract(text: str, edited: bool = False) -> Facts:
             facts.items.append(Fact("number", m.group(1), m.group(), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
     # Day and month stand on one line: "Вариант 3\n\nНоябрь — ..." is not the 3rd of November.
-    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
+    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|или|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
     for m in date_rx.finditer(text):
         month = MONTH_STEM.get(m.group(3).lower()[:3], 0)
         for day in filter(None, (m.group(1), m.group(2))):

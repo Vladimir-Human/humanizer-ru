@@ -1,0 +1,8 @@
+{
+  "executor": "dsh:minimax/MiniMax-M3.1-Flash",
+  "author": "dsh:agentrouter-astra/gpt-6.1-sol",
+  "systems": [
+    "ours",
+    "ours417"
+  ]
+}

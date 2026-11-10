@@ -16,6 +16,7 @@
 # ORACLES: names of the checks a probe may carry; score_one: (probe, output) -> {check: bool}.
 # LIST_RX: a line that starts a list item; norm: lower case, ё -> е, for substring checks.
 # run: outputs for systems x repeats with one executor (thread pool, resumable).
+# merge_config: probes/config.json keeps who answered for each participant across runs.
 # summarize: pass counts per (system, run) and rule, the spread between runs, failed checks.
 # render: Markdown table for probes.md.
 # main: CLI run | score.
@@ -142,8 +143,20 @@ def run(run_dir: Path, systems: list, executor: str, repeat: int, workers: int, 
             except Exception as exc:  # one failed probe must not lose the others; a rerun resumes
                 failed += 1
                 print("[M-EVAL-PROBES][BLOCK_RUN] failed %s: %s" % (futures[fut][0], str(exc)[:200]))
-    lib.write_json(run_dir / "probes" / "config.json", {"executor": executor, "systems": systems, "repeat": repeat})
+    # One record per participant: a later run with other systems in the same folder (chat and prompt
+    # after ours and ours417 on 2026-11-09) used to overwrite who answered the earlier ones.
+    cfg_path = run_dir / "probes" / "config.json"
+    lib.write_json(cfg_path, merge_config(lib.read_json(cfg_path) if cfg_path.exists() else {},
+                                          systems, executor, repeat))
     return failed
+
+
+def merge_config(cfg: dict, systems: list, executor: str, repeat: int) -> dict:
+    """{"by_system": {name: {executor, repeat}}}; an old flat config is read as one record per system."""
+    per = dict(cfg.get("by_system") or {s: {"executor": cfg.get("executor"), "repeat": cfg.get("repeat")}
+                                        for s in cfg.get("systems", [])})
+    per.update({s: {"executor": executor, "repeat": repeat} for s in systems})
+    return {"by_system": per}
 # END_BLOCK_RUN
 
 

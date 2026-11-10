@@ -10,3 +10,4 @@ Thumbs.db
 
 # Comparison stand: downloaded skills of other projects and the API spend ledger.
 eval/.cache/
+.claude/
