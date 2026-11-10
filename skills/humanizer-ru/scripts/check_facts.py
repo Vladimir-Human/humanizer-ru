@@ -25,6 +25,24 @@
 #          contrast negation ("а не в феврале"), an added negation, "нельзя" → "можно" when the
 #          ban stayed as another negation, a number that lost its
 #          unit, a code-like ``` block that changed.
+#          A word at the start of a sentence is a name only when the same name stands elsewhere
+#          in another case ("Сбер" … "Сбера"): a shared prefix is not enough ("То" is not
+#          "Томске"), a footnote mark ("болота.[1] Там") and a chat citation between a word and
+#          a capital letter do not hide the sentence start.
+#          A number written without a space before its unit ("500мл", "990р.", "2019г."), a
+#          "к" meaning thousand ("30к") and a dimension ("160х200" is "160 × 200") are numbers
+#          with that unit; an uppercase letter after the digits ("3D", "1С") is not a unit.
+#          A mention of a number that is gone together with its own unit ("скидка 5%") is a
+#          lost fact, not a rarer one.
+#          A hedge turned the other way ("не менее 5" → "не более 5", "после 20 мая" → "до
+#          20 мая") is an error; the same hedge said in other words ("минимум", "не позже")
+#          is not. Dates are compared by their hedge too.
+#          "Вместо того чтобы купить" is the same refusal as "не покупать": a check, not an
+#          inverted negation.
+#          A run of 16 digits or more (a bank account) is compared as it is written.
+#          The values of the chat assistant's own lines around the text ("Готово, вот текст:",
+#          "Если нужно, могу…") are not errors: they are reported apart, as removed together
+#          with the service lines.
 #          Links are compared without the chat assistant's utm_source tail only: a lost
 #          author utm tag is a lost link. The source and the edit are both read without chat
 #          citation tokens and invisible characters (the set clean_paste.py removes), and a dot
@@ -41,9 +59,12 @@
 # clause_spans / clause_span / is_list: the comma-separated clauses of a sentence, the clause around
 #          an offset, and whether the sentence lists parallel items (two clauses, each one person
 #          and a number).
-# compare: (before, after) -> {"errors": [...], "checks": [...]}; markup block counts HTML tags;
+# compare: (before, after) -> {"errors": [...], "checks": [...], "service": [...], "counts": {...}};
+#          markup block counts HTML tags;
 #          quotes block matches quoted words in order; bindings block pairs numbers with names
 #          (clause by clause when a sentence names several people).
+# _service_spans: the parts of the source that are the chat assistant's own lines (head, tail,
+#          headings), with the guards that keep a real fact an error.
 # render: human-readable Russian report.
 # receipt: the «Сверка скриптом: …» notes line the skill copies word for word; receipt_hint frames it.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
@@ -59,6 +80,7 @@
 """
 from __future__ import annotations
 
+import bisect
 import json
 import re
 import sys
@@ -103,10 +125,26 @@ UNIT_SYNONYMS = [
 UNIT_CANON = {s.lower(): c for syns, c in UNIT_SYNONYMS for s in syns}
 UNIT_RX = re.compile(r"[ \u00a0\u202f]?(%s)(?![0-9A-Za-zА-Яа-яЁё])" % "|".join(
     sorted((re.escape(u) for u in UNIT_CANON), key=len, reverse=True)), re.I)
+# A unit written right after the digits ("500мл", "990р.", "2019г."): only the lower-case
+# spellings of the table and a non-letter after them, so "3D" and "1С" are not numbers with a
+# unit. The scale "к" ("30к" = "30 тыс.") and the dimension "х" ("160х200" = "160 × 200") are
+# read apart.
+GLUED_UNITS = ("%", "₽", "р.", "руб.", "руб", "$", "€", "кг", "г", "км", "м²", "м", "см", "мм", "л",
+               "мл", "шт", "ч", "мин", "мс", "сек", "с", "день", "дня", "дней", "дн", "сутки",
+               "неделя", "недели", "недель", "нед", "месяц", "месяца", "месяцев", "мес", "год",
+               "года", "лет", "человек", "человека", "чел")
+GLUED_UNIT_RX = re.compile(r"(%s)(?![0-9A-Za-zА-Яа-яЁё²³])" % "|".join(
+    sorted((re.escape(u) for u in GLUED_UNITS), key=len, reverse=True)))
+DIM_RX = re.compile(r"[хx](\d+(?:[%s]\d{3})*(?:[.,]\d+)?)" % SEP)
+# A capitalised word of the text: the shape the names are read with.
+NAME_RX = re.compile(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))")
 
 WORD_NUM = {
     # "один/одна/одного" are left out on purpose: "одна из причин" is not a number.
     "ноль": 0, "два": 2, "две": 2, "двух": 2, "трое": 3, "двое": 2, "три": 3, "трех": 3,
+    # The other cases of "два": "нужны двоим из семи" is the same fact as "касались двух
+    # человек из семи".
+    "двоим": 2, "двоих": 2,
     "четыре": 4, "четырех": 4, "четверо": 4, "пять": 5, "пяти": 5, "пятеро": 5, "шесть": 6,
     "шести": 6, "семь": 7, "семи": 7, "восемь": 8, "восьми": 8, "девять": 9, "девяти": 9,
     "десять": 10, "десяти": 10, "одиннадцать": 11, "двенадцать": 12, "пятнадцать": 15,
@@ -212,6 +250,19 @@ def hedge_class(hedge: str) -> str:
     return HEDGE_SAME.get(hedge, hedge)
 
 
+# The direction of a hedge: a lower bound ("не менее 5", "от 30%", "после 20 мая") or an upper
+# one ("не более 5", "до 30%", "не позднее 15 марта"). A hedge turned the other way changes the
+# meaning of the number.
+HEDGE_DIR = {"≥": "lower", ">": "lower", "≤": "upper", "<": "upper", "≤д": "upper",
+             "от": "lower", "после": "lower", "не раньше": "lower", "до": "upper"}
+HEDGE_OPPOSITE = {"lower": "upper", "upper": "lower"}
+
+
+def hedge_direction(hedge: str) -> str:
+    """The direction a hedge points to: "lower", "upper" or "" (it points nowhere)."""
+    return HEDGE_DIR.get(hedge_class(hedge), "")
+
+
 # A name after these prepositions gives the money or passes it on, it does not get it.
 SOURCE_PREPOSITIONS = ("от", "через")
 NEG_WORDS = ("не", "ни", "нет", "нельзя", "без", "никаких", "никакой", "никакого", "никакие", "никакая",
@@ -260,6 +311,22 @@ FIRST_NAMES = set("""Александр Александра Алексей Ал
 Максим Маргарита Марина Мария Марк Матвей Михаил Надежда Наталья Наталия Никита Николай Нина
 Олег Ольга Павел Пётр Петр Полина Роман Руслан Светлана Семён Семен Сергей Софья Станислав
 Степан Тамара Татьяна Тимофей Тимур Фёдор Федор Эдуард Юлия Юрий Яна Ярослав""".split())
+# The chat assistant's own lines around the text: the head («Готово, вот текст:»), the tail
+# («Если нужно, могу…») and the headings («Вариант 1 …»). Their values are not facts of the text.
+SERVICE_SEP_RX = re.compile(r"^[ \t]*(?:-{3,}|\*{3,}|_{3,}|```[^\n]*)[ \t]*$", re.M)
+SERVICE_HEAD_RX = re.compile(r"(?i)^\W*(?:вот\b|готов(?:о|ый|ая|ое|ые)\b)")
+SERVICE_HEAD_STRICT_RX = re.compile(r"(?i)^\W*(?:готово\b|вот\s+(?:готов|ваш|текст|вариант|пост|письмо))")
+SERVICE_TAIL_RX = re.compile(r"(?i)^\W*(?:пара замечаний|несколько (?:замечаний|пояснений|слов)|"
+                             r"что (?:учтено|нужно|стоит)|объём|замечани|служебн|заметки для|"
+                             r"если (?:нужно|хотите)|могу\b|готово|советы?\W|перед отправкой)")
+SERVICE_FIRST_RX = re.compile(r"(?i)могу|сделаю|напишу|переделаю|сокращу|я (?:оформил|добавил|убрал)")
+# The author's own lines also open with «Вот», «Советы…», «Если хотите, могу…» (cross-review 10.11,
+# two rounds): a head counts only with «готов…», a size or a colon at its end; a tail only when it
+# speaks about the text itself. Option headings («Вариант 1 (…)») are never service lines.
+SERVICE_ABOUT_RX = re.compile(r"(?i)текст|вариант|верси|пост(?:а|у|ом|е)?\b|письм|сообщени|объявлени|"
+                              r"рассылк|описани|карточк|ваканси|резюме|стать[яи]|объ[её]м|знак|символ|"
+                              r"публикац|отправк|абзац|заголов")
+SERVICE_SIZE_RX = re.compile(r"(?i)готов(?:о|ый|ая|ое|ые)(?![а-яё])|(?<![а-яё])(?:знак|символ|слов)(?:ов|а|о|и|ы)?(?![а-яё])")
 # END_BLOCK_LEXICON
 
 
@@ -271,6 +338,38 @@ CASE_ENDINGS = frozenset(("", "а", "я", "о", "е", "и", "ы", "у", "ю", "�
                           "ам", "ям", "ами", "ями", "ах", "ях", "ов", "ев", "ий", "ия", "ие", "ья", "ье",
                           "ью", "ая", "ое", "ые", "ый", "ого", "его", "ому", "ему", "ым", "им", "ую", "ых",
                           "их", "ыми", "ими"))
+
+
+def _case_tail(tail: str) -> bool:
+    """The rest of a word after its stem: a case ending, or a soft sign («Гриша» → «Гришу»)."""
+    return tail in CASE_ENDINGS or tail in ("ь", "й")
+
+
+def _first_name_case(word: str, name: str) -> bool:
+    """A case of a first name of the list, also with a fleeting vowel: «Павлу», «Павлом» of
+    «Павел» (cross-review 10.11: «Павлу» was not a name, and the swap of its sum went unseen)."""
+    if _same_name_case(word, name):
+        return True
+    n = _norm(name.lower())
+    return bool(re.search(r"[бвгджзклмнпрстфхцчшщ][ео][лнр]$", n)) and \
+        _same_name_case(word, n[:-2] + n[-1] + "а")
+
+
+def _same_name_case(a: str, b: str) -> bool:
+    """Two spellings of one name («Сбер» … «Сбера», «Соколовы» … «Соколовых»): they share a
+    stem and the rest of each word is a case ending. «То» and «Томске» share no stem: not one
+    name."""
+    a, b = _norm(a.lower()), _norm(b.lower())
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    for k in range(n, 2, -1):
+        # The stem is the longest common prefix that leaves a case ending in both words.
+        if _case_tail(a[k:]) and _case_tail(b[k:]):
+            return k >= min(len(a), len(b)) - 2
+    return False
 
 
 def name_match(a: str, b: str) -> bool:
@@ -412,7 +511,8 @@ def extract(text: str, edited: bool = False) -> Facts:
         left = _norm(text[max(0, pos - 24):pos].lower())
         for h in sorted(HEDGES, key=len, reverse=True):
             # «не менее чем 6»: «чем» may stand between the hedge and the number
-            if re.search(r"(?:^|[^а-яa-z])%s(?:%s+чем)?%s*$" % (re.escape(_norm(h)), gap, gap), left):
+            words = (gap + "+").join(re.escape(p) for p in _norm(h).split(" "))
+            if re.search(r"(?:^|[^а-яa-z])%s(?:%s+чем)?%s*$" % (words, gap, gap), left):
                 return h
         return ""
 
@@ -511,31 +611,89 @@ def extract(text: str, edited: bool = False) -> Facts:
     for m in re.finditer(r"(?m)^[ \t\u00a0\u202f\ufeff]*(?:>%s*)*(?:#{1,6}%s+)?(?:[-*+]%s+)?(?:\*\*|__|\*|_)?"
                          r"(\d{1,2})[.)](?=[ \t\u00a0\u202f*_])" % (sp, sp, sp), text):
         taken.append((m.start(1), m.end(1)))
-    num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?(?![\w])" % SEP)
+    def read_number(start: int, digits: str, glued: bool = True) -> Optional[Tuple[str, str, int]]:
+        """The value, the unit and the end of a number that starts at `start`.
+        None when the digits are not a number at all ("3D", "1С", "Pro2")."""
+        plain = re.sub("[%s]" % SEP, "", digits)
+        if re.fullmatch(r"\d{16,}", plain):
+            value = plain             # a bank account: its digits as written, groups aside
+        else:
+            value = _canon_num(digits)
+            if value is None:
+                return None
+        end = start + len(digits)
+        sc, unit = None, ""
+        if glued and text[end:end + 1].isalpha():
+            # The unit is glued to the digits ("500мл", "990р."): the same value and unit as
+            # the spaced form. A capital letter is not a unit ("3D", "1С").
+            gm = GLUED_UNIT_RX.match(text, end)
+            if gm:
+                unit = UNIT_CANON.get(gm.group(1).lower(), "")
+                end = gm.end()
+            elif text[end] in ("к", "k") and not text[end + 1:end + 2].isalpha():
+                if isinstance(value, str):
+                    value += "000"
+                else:
+                    value *= 1000      # "30к" is "30 тыс."
+                end += 1
+                um = UNIT_RX.match(text, end)
+                if um:                 # "30к рублей" is "30 тыс. рублей"
+                    unit = UNIT_CANON.get(um.group(1).lower(), "")
+                    end = um.end()
+            else:
+                return None
+        else:
+            sc = re.match(r"[%s]+(%s)(?![а-я])" % (SEP, SCALE_ALT), text[end:end + 12], re.I)
+            if sc:
+                scale = SCALE[sc.group(1).lower()]
+                if isinstance(value, str):
+                    value += "0" * (len(str(scale)) - 1)   # exact: «10…0 тыс.» is three zeros more
+                else:
+                    value *= scale
+                end += sc.end()
+            um = UNIT_RX.match(text, end)
+            if um:
+                unit = UNIT_CANON.get(um.group(1).lower(), "")
+                end = um.end()
+            else:
+                hm = HYPHEN_UNIT_RX.match(_norm(text), end)
+                if hm:
+                    unit = COMPOUND_UNIT[hm.group(1).lower()]
+                    end = hm.end()
+        if unit == "г" and not sc and not isinstance(value, str) and value == int(value) \
+                and 1800 <= value <= 2100:
+            unit = "год"  # "2020 г." is a year, not grams
+        return (value if isinstance(value, str) else _fmt(value), unit, end)
+
+    num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?" % SEP)
     for m in num_rx.finditer(text):
         if not free(m.start(), m.end()):
             continue
-        v = _canon_num(m.group())
-        if v is None:
-            continue
+        digits = m.group()
         end = m.end()
-        sc = re.match(r"[ \u00a0\u202f]+(%s)(?![а-я])" % SCALE_ALT, text[end:end + 12], re.I)
-        if sc:
-            v *= SCALE[sc.group(1).lower()]
-            end += sc.end()
-        unit = ""
-        um = UNIT_RX.match(text, end)
-        if um:
-            unit = UNIT_CANON.get(um.group(1).lower(), "")
-            end = um.end()
-        else:
-            hm = HYPHEN_UNIT_RX.match(_norm(text), end)
-            if hm:
-                unit = COMPOUND_UNIT[hm.group(1).lower()]
-                end = hm.end()
-        if unit == "г" and not sc and v == int(v) and 1800 <= v <= 2100:
-            unit = "год"  # "2020 г." is a year, not grams
-        facts.items.append(Fact("number", _fmt(v), text[m.start():end], sent_of(m.start()),
+        if text[end:end + 1] in ("х", "x"):
+            dm = DIM_RX.match(text, end)
+            if dm:
+                # «160х200» is two numbers: «160 × 200». The unit belongs to the second one.
+                first = read_number(m.start(), digits, glued=False)
+                if first is None:
+                    continue
+                value, unit, end1 = first
+                facts.items.append(Fact("number", value, text[m.start():end1], sent_of(m.start()),
+                                        m.start(), hedge_before(m.start()), ""))
+                second = read_number(end + 1, dm.group(1))
+                if second is None:
+                    continue
+                value2, unit2, end2 = second
+                facts.items.append(Fact("number", value2, text[end + 1:end2], sent_of(m.start()),
+                                        end + 1, hedge_before(end + 1), unit2))
+                taken.append((m.start(), end2))
+                continue
+        got = read_number(m.start(), digits)
+        if got is None:
+            continue
+        value, unit, end = got
+        facts.items.append(Fact("number", value, text[m.start():end], sent_of(m.start()),
                                 m.start(), hedge_before(m.start()), unit))
         taken.append((m.start(), end))
     norm_text = _norm(text)
@@ -598,14 +756,14 @@ def extract(text: str, edited: bool = False) -> Facts:
     for s_start, sent in sents:
         # Latin acronyms of any length; Cyrillic ones up to 4 letters (США, РФ, МЧС), longer
         # all-caps words are usually shouting ("ВНИМАНИЕ").
-        for m in re.finditer(r"(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))", sent):
+        for m in NAME_RX.finditer(sent):
             word = m.group(1)
             first = _is_initial(text, s_start + m.start())
             if word in SENT_START_STOP or POLITE_PRONOUN.fullmatch(word):
                 continue
             pos = s_start + m.start()
             if first and not (_capitalized_elsewhere(word, text, pos) or
-                              any(len(word) <= len(n) + 3 and stem_match(word, n) for n in FIRST_NAMES)):
+                              any(len(word) <= len(n) + 3 and _first_name_case(word, n) for n in FIRST_NAMES)):
                 # Sentence subject in capitals ("Капучино дорожает"): kept only as an anchor
                 # for "who got which number", not as a name that must survive.
                 facts.items.append(Fact("subject", word, word, sent_of(pos), pos))
@@ -654,30 +812,129 @@ def extract(text: str, edited: bool = False) -> Facts:
     return facts
 
 
-def _occurrences(text: str, word: str) -> List[Tuple[int, int]]:
-    return [(m.start(), m.end()) for m in re.finditer(r"[а-яё]{3,}", text)
-            if not (m.group() in ("больше", "меньше") and word not in ("больше", "меньше"))
-            and stem_match(m.group(), word, strict=True)]
+class _TextIndex:
+    """One text, read once: the words by their first three letters and the ends of the
+    sentences. A long text is checked once per word, not once per mention (4.2.1: the negation
+    check took 23 s on a text of 97 000 characters)."""
+
+    def __init__(self, text: str):
+        self.text = text
+        self.stops = [m.start() for m in re.finditer(r"[.!?\n]", text)]
+        self.buckets: Dict[str, List[Tuple[int, int, str]]] = {}
+        for m in re.finditer(r"[а-яё]{3,}", text):
+            self.buckets.setdefault(m.group()[:3], []).append((m.start(), m.end(), m.group()))
+        self._occ: Dict[str, List[Tuple[int, int]]] = {}
+        self._neg: Dict[str, List[bool]] = {}
+        self._instead: Dict[str, List[bool]] = {}
+        self._neg_words: Optional[Dict[str, List[str]]] = None
+        self._neg_word: Dict[str, bool] = {}
+
+    def occurrences(self, word: str) -> List[Tuple[int, int]]:
+        """The places of the text where the word stands (in any case)."""
+        got = self._occ.get(word)
+        if got is None:
+            got = [(a, b) for a, b, w in self.buckets.get(word[:3], ())
+                   if not (w in ("больше", "меньше") and word not in ("больше", "меньше"))
+                   and stem_match(w, word, strict=True)]
+            self._occ[word] = got
+        return got
+
+    def negated(self, word: str) -> List[bool]:
+        """For every place of the word: a negation stands near it."""
+        got = self._neg.get(word)
+        if got is None:
+            got = [self.negated_at(a, b) for a, b in self.occurrences(word)]
+            self._neg[word] = got
+        return got
+
+    def instead(self, word: str) -> List[bool]:
+        """For every place of the word: «вместо того чтобы» stands in its left window."""
+        got = self._instead.get(word)
+        if got is None:
+            got = [self.instead_at(a, b) for a, b in self.occurrences(word)]
+            self._instead[word] = got
+        return got
+
+    def all_negated(self, word: str) -> bool:
+        return all(self.negated(word))
+
+    def none_negated(self, word: str) -> bool:
+        return not any(self.negated(word))
+
+    def all_instead(self, word: str) -> bool:
+        """Every mention of the word without a negation stands after «вместо того чтобы»."""
+        plain = [i for i, n in zip(self.instead(word), self.negated(word)) if not n]
+        return bool(plain) and all(plain)
+
+    def negation_words(self) -> Dict[str, List[str]]:
+        """The words that stand right after a negation («не покупать»), by their first three
+        letters."""
+        if self._neg_words is None:
+            buckets: Dict[str, List[str]] = {}
+            for m in re.finditer(r"(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})",
+                                 self.text):
+                buckets.setdefault(m.group(2)[:3], []).append(m.group(2))
+            self._neg_words = buckets
+        return self._neg_words
+
+    def negated_word(self, word: str) -> bool:
+        """The word stands right after a negation somewhere in the text."""
+        got = self._neg_word.get(word)
+        if got is None:
+            got = any(stem_match(w, word, strict=True)
+                      for w in self.negation_words().get(word[:3], ()))
+            self._neg_word[word] = got
+        return got
+
+    def sentence(self, start: int, end: int) -> Tuple[int, int]:
+        """The bounds of the sentence that holds the place."""
+        i = bisect.bisect_left(self.stops, start)
+        s_from = self.stops[i - 1] + 1 if i else 0
+        j = bisect.bisect_left(self.stops, end)
+        s_to = self.stops[j] if j < len(self.stops) else len(self.text)
+        return s_from, s_to
+
+    def negated_at(self, start: int, end: int) -> bool:
+        """A negation within 3 words before or 4 words after, inside the same sentence."""
+        s_from, s_to = self.sentence(start, end)
+        left = self.text[s_from:start].split()[-3:]
+        right = self.text[end:s_to].split()[:4]
+        return any(re.sub(r"[^а-яё]", "", w) in NEG_WORDS for w in left + right)
+
+    def instead_at(self, start: int, end: int) -> bool:
+        """«Вместо того чтобы» right before the word: the refusal was reworded, not lost.
+        «Вместо писем отправляйте» is not one: there «вместо» rejects the letters."""
+        s_from, _ = self.sentence(start, end)
+        return bool(re.search(r"(?<![а-яё])вместо\s+того,?\s+чтобы\s+$", self.text[s_from:start]))
 
 
-def _negated_near(text: str, start: int, end: int) -> bool:
-    """A negation within 3 words before or 4 words after, inside the same sentence."""
-    s_from = max(text.rfind(c, 0, start) for c in ".!?\n") + 1
-    stops = [i for i in (text.find(c, end) for c in ".!?\n") if i != -1]
-    s_to = min(stops) if stops else len(text)
-    left = text[s_from:start].split()[-3:]
-    right = text[end:s_to].split()[:4]
-    return any(re.sub(r"[^а-яё]", "", w) in NEG_WORDS for w in left + right)
+# The indexes of the texts of the last comparison; they are dropped when it ends.
+_INDEXES: Dict[int, Tuple[str, _TextIndex]] = {}
+
+
+def _index(text: str) -> _TextIndex:
+    got = _INDEXES.get(id(text))
+    if got is not None and got[0] is text:
+        return got[1]
+    made = _TextIndex(text)
+    _INDEXES[id(text)] = (text, made)
+    return made
 
 
 def _is_initial(text: str, pos: int) -> bool:
     """True when only markup, list markers, emoji or spaces stand between the word and the
-    start of a line or the end of the previous sentence."""
+    start of a line or the end of the previous sentence. A footnote mark («болота.[1] Там»)
+    stands between the sentences, not inside one."""
     i = pos - 1
     while i >= 0:
         ch = text[i]
         if ch == "\n" or ch in ".!?…:":
             return True
+        if ch in "])":
+            mark = re.search(r"[\[(]\d{1,3}[\])]$", text[max(0, i - 4):i + 1])
+            if mark:
+                i -= len(mark.group())  # step back over the whole mark and keep looking
+                continue
         if ch.isalnum() and not (ch.isdigit() and re.match(r"\d+[.)]", text[i:pos].lstrip())):
             return False
         if ch.isalpha():
@@ -686,11 +943,31 @@ def _is_initial(text: str, pos: int) -> bool:
     return True
 
 
-def _capitalized_elsewhere(word: str, text: str, pos: int) -> bool:
-    for m in re.finditer(r"(?<![\w-])" + re.escape(word[:max(3, len(word) - 2)]), text):
-        if m.start() == pos:
+# The capitalised words of a text that stand not at the start of a sentence, by their first
+# three letters: a sentence-initial word is a name when the same name stands elsewhere.
+_CAP_WORDS: Dict[int, Tuple[str, Dict[str, List[Tuple[int, str]]]]] = {}
+
+
+def _cap_words(text: str) -> Dict[str, List[Tuple[int, str]]]:
+    got = _CAP_WORDS.get(id(text))
+    if got is not None and got[0] is text:
+        return got[1]
+    buckets: Dict[str, List[Tuple[int, str]]] = {}
+    for m in NAME_RX.finditer(text):
+        if _is_initial(text, m.start()):
             continue
-        if text[m.start()].isupper() and not _is_initial(text, m.start()):
+        buckets.setdefault(_norm(m.group(1).lower())[:3], []).append((m.start(), m.group(1)))
+    _CAP_WORDS[id(text)] = (text, buckets)
+    return buckets
+
+
+def _capitalized_elsewhere(word: str, text: str, pos: int) -> bool:
+    """The same name stands elsewhere in another case («Сбер» … «Сбера»). A shared prefix is
+    not enough: «То» is not «Томске» and «Там» is not «Тамара»."""
+    for start, other in _cap_words(text).get(_norm(word.lower())[:3], ()):
+        if start == pos:
+            continue
+        if _same_name_case(word, other):
             return True
     return False
 
@@ -733,6 +1010,9 @@ def _strip_tracking(text: str) -> str:
     def clean_prose(prose: str) -> str:
         # Citations go before links so a citation glued to ?utm_source=chatgpt.com[cite: 1] does not
         # hide the utm tail; `inline code` keeps both, as in clean_paste.py.
+        # A citation is dropped without a trace. Reading it as a period («году :contentReference…
+        # Его площадь») was tried in 4.2.1 and dropped: «Мы сотрудничаем[cite: 1] Microsoft.» then
+        # made «Microsoft» a sentence start, and its loss went unseen (cross-review 10.11, F2).
         prose = re.sub(r"`[^`\n]+`|" + CITATION_RX.pattern,
                        lambda m: m.group(0) if m.group(0).startswith("`") else "", prose)
         return re.sub(r"`[^`\n]+`|" + URL_RX,
@@ -819,17 +1099,123 @@ def _pair_dot_decimals(mine: Facts, other: Facts) -> List[Dict]:
     return checks
 
 
+def _service_spans(before: str, after_norm: str) -> List[Tuple[int, int]]:
+    """The parts of the source that are the chat assistant's own lines around the text: the
+    head («Готово, вот текст:») and the tail («Если нужно, могу переделать текст…»). Their
+    values are not facts of the text.
+    G1: a span counts only when the edit does not keep its beginning: a wrapper the edit kept
+    is still the author's text, and a fact lost with it is an error."""
+    seps = list(SERVICE_SEP_RX.finditer(before))
+    parts: List[Tuple[int, int]] = []
+    prev = 0
+    if seps:
+        for m in seps:
+            parts.append((prev, m.start()))
+            prev = m.end()
+        parts.append((prev, len(before)))
+        head_rx = SERVICE_HEAD_RX
+    else:
+        for m in re.finditer(r"\n[ \t]*\n", before):
+            parts.append((prev, m.start()))
+            prev = m.end()
+        parts.append((prev, len(before)))
+        head_rx = SERVICE_HEAD_STRICT_RX
+    spans: List[Tuple[int, int]] = []
+    # The head: the first part, when it is one short line that opens like a chat answer.
+    if len(parts) > 1:
+        body = before[parts[0][0]:parts[0][1]].strip()
+        about = SERVICE_SIZE_RX.search(body) or body.rstrip("*_ ").endswith(":")
+        if len(body) <= 300 and "\n" not in body and head_rx.match(body) and about:
+            spans.append(parts[0])
+    # The tail: walk back from the last part while it talks like the assistant.
+    i = len(parts) - 1
+    while i >= 0:
+        body = before[parts[i][0]:parts[i][1]].strip()
+        if not SERVICE_TAIL_RX.match(body.split("\n", 1)[0]):
+            break
+        if not SERVICE_ABOUT_RX.search(body) or (not seps and not SERVICE_FIRST_RX.search(body)):
+            break
+        spans.append(parts[i])
+        i -= 1
+    # G1: the edit kept the beginning of the span: the values there are still facts.
+    kept = []
+    for a, b in spans:
+        key = _norm(before[a:b].lower())[:20]
+        if key and key not in after_norm:
+            kept.append((a, b))
+    return kept
+
+
 # START_CONTRACT: compare
 # PURPOSE: Find lost, invented, re-bound or inverted facts between two versions.
 # INPUTS: before, after (str).
-# OUTPUTS: {"errors": [ {kind, what, detail} ], "checks": [...], "counts": {...}}.
+# OUTPUTS: {"errors": [ {kind, what, detail} ], "checks": [...], "service": [...], "counts": {...}}.
 # SIDE_EFFECTS: none.
 # END_CONTRACT: compare
 def compare(before: str, after: str) -> Dict:
+    _INDEXES.clear()
+    _CAP_WORDS.clear()
     before, after = _strip_tracking(before), _strip_tracking(after)
     fb, fa = extract(before), extract(after, edited=True)
     errors: List[Dict] = []
+    service: List[Dict] = []
     checks: List[Dict] = _pair_dot_decimals(fb, fa) + _pair_dot_decimals(fa, fb)
+
+    # START_BLOCK_SERVICE
+    # The chat assistant's own lines around the text («Готово, вот текст:», «Если нужно,
+    # могу…»): their values are not facts of the text, but they are not errors either.
+    service_spans = _service_spans(before, _norm(after.lower()))
+    service_groups: Dict[Tuple[str, str], bool] = {}
+    service_items: Dict[str, Dict[str, List[Fact]]] = {}
+
+    def group_key(kind: str, f: Fact) -> str:
+        if kind == "name":
+            return _norm(f.value.lower())[:5]
+        return f.value
+
+    for kind in ("number", "name", "quote"):
+        by_value: Dict[str, List[Fact]] = {}
+        for f in fb.of(kind):
+            by_value.setdefault(group_key(kind, f), []).append(f)
+        service_items[kind] = by_value
+
+    def service_only(kind: str, items: List[Fact]) -> bool:
+        """Every mention of the value stands inside the service lines of the chat assistant and
+        the fact is one that may be re-labelled (G2, G3)."""
+        if not service_spans or not items or kind not in ("number", "name", "quote"):
+            return False
+        for f in items:
+            if kind == "number" and f.unit:
+                return False        # a number with a unit is a fact of the text
+            if kind == "quote" and f.speech:
+                return False        # somebody's words are a fact of the text
+            if not any(a <= f.pos < b for a, b in service_spans):
+                return False
+        return True
+
+    def in_service(kind: str, f: Fact) -> bool:
+        """The value of the fact stands only in the service lines of the chat assistant."""
+        key = (kind, group_key(kind, f))
+        got = service_groups.get(key)
+        if got is None:
+            got = service_only(kind, service_items[kind].get(key[1], []))
+            service_groups[key] = got
+        return got
+
+    # G4: the service lines may not swallow the source: when they take more than 40% of its
+    # text and hold more than 40% of its facts, the source is a chat answer, not a text, and
+    # no span applies.
+    if service_spans:
+        eligible = [f for f in fb.items
+                    if (f.kind == "number" and not f.unit) or f.kind == "name"
+                    or (f.kind == "quote" and not f.speech)]
+        held = sum(1 for f in eligible
+                   if any(a <= f.pos < b for a, b in service_spans))
+        if sum(b - a for a, b in service_spans) > 0.4 * len(before) \
+                and held > 0.4 * len(fb.items):
+            service_spans = []
+            service_groups.clear()
+    # END_BLOCK_SERVICE
 
     # START_BLOCK_NUMBERS_DIFF
     def bag(facts: Facts, kind: str) -> Dict[str, List[Fact]]:
@@ -837,6 +1223,21 @@ def compare(before: str, after: str) -> Dict:
         for f in facts.of(kind):
             d.setdefault(f.value, []).append(f)
         return d
+
+    def unit_of(f: Fact) -> str:
+        # "16:00" and "16 часов" are the same hour.
+        return "ч" if f.unit == "время" else f.unit
+
+    def lost_unit(items: List[Fact], other: List[Fact]) -> Optional[Fact]:
+        """A mention whose unit is in none of the mentions of the edit: the fact is lost, not
+        only rarer. The edit keeps a unit of its own: if it kept none, the unit check says so."""
+        have = {unit_of(f) for f in other if f.unit}
+        if not have:
+            return None
+        for f in items:
+            if f.unit and unit_of(f) not in have:
+                return f
+        return None
 
     # "одну минуту" ↔ "1 минуту": the word "один" alone is not extracted (see ONE_FORMS).
     one_rx = r"(?<![а-яё])(?:%s)(?![а-яё])" % "|".join(ONE_FORMS)
@@ -849,44 +1250,63 @@ def compare(before: str, after: str) -> Dict:
             if missing > 0 and value not in ba:
                 if value == "1" and one_in["after"]:
                     continue
+                if kind == "number" and in_service("number", items[0]):
+                    service.append({"kind": "lost", "what": label, "detail": items[0].raw})
+                    continue
                 errors.append({"kind": "lost", "what": label, "detail": items[0].raw})
             elif missing > 0:
+                # A mention with its own unit that is gone: the fact is lost, not just rarer.
+                gone = lost_unit(items, ba[value]) if kind == "number" else None
+                if gone is not None:
+                    errors.append({"kind": "lost", "what": label, "detail": gone.raw})
+                    continue
                 checks.append({"kind": "fewer", "what": label,
                                "detail": "%s встречается реже (%d → %d)" % (items[0].raw, len(items), len(ba[value]))})
         for value, items in ba.items():
             if value not in bb and not (value == "1" and one_in["before"]):
                 errors.append({"kind": "added", "what": label, "detail": items[0].raw})
-        # units and hedges for numbers present in both
-        if kind == "number":
-            for value, items in bb.items():
-                if value not in ba:
-                    continue
-                # "16:00" and "16 часов" are the same hour.
-                units_b = {"ч" if f.unit == "время" else f.unit for f in items if f.unit}
-                units_a = {"ч" if f.unit == "время" else f.unit for f in ba[value] if f.unit}
+        # units and hedges for the values present in both
+        for value, items in bb.items():
+            if value not in ba:
+                continue
+            if kind == "number":
+                units_b = {unit_of(f) for f in items if f.unit}
+                units_a = {unit_of(f) for f in ba[value] if f.unit}
                 if units_b and units_a and not (units_b & units_a):
                     errors.append({"kind": "unit", "what": "единица",
                                    "detail": "%s → %s" % (items[0].raw, ba[value][0].raw)})
                 elif units_b and not units_a:
                     checks.append({"kind": "unit", "what": "единица",
                                    "detail": "%s → %s без единицы" % (items[0].raw, ba[value][0].raw)})
-                # A hedge without a synonym has to stay somewhere in the edit. Hedges that say the same
-                # («около» → «примерно») are counted mention by mention, so three hedged mentions of 40
-                # need three hedges of that meaning in the edit: «около 40 … примерно 40 … около 40» →
-                # «40 … примерно 40 … примерно 40» has lost one. A mention of the number that is gone
-                # took its hedge along, and the «fewer» check says so.
-                was = Counter(f.hedge for f in items if f.hedge)
-                now = Counter(f.hedge for f in ba[value] if f.hedge)
-                gone = max(0, len(items) - len(ba[value]))
-                lost = {h for h in was if h not in HEDGE_SAME and h not in now}
-                for cls in {hedge_class(h) for h in was if h in HEDGE_SAME}:
-                    need = sum(n for h, n in was.items() if hedge_class(h) == cls)
-                    have = sum(n for h, n in now.items() if hedge_class(h) == cls)
-                    if have < need and not (have and need - have <= gone):
-                        lost |= {h for h in was if hedge_class(h) == cls and was[h] > now[h]}
-                for h in sorted(lost):
-                    checks.append({"kind": "hedge", "what": "оговорка",
-                                   "detail": "«%s» перед %s не найдено" % (h, items[0].raw)})
+            # A hedge without a synonym has to stay somewhere in the edit. Hedges that say the same
+            # («около» → «примерно») are counted mention by mention, so three hedged mentions of 40
+            # need three hedges of that meaning in the edit: «около 40 … примерно 40 … около 40» →
+            # «40 … примерно 40 … примерно 40» has lost one. A mention of the number that is gone
+            # took its hedge along, and the «fewer» check says so.
+            was = Counter(f.hedge for f in items if f.hedge)
+            now = Counter(f.hedge for f in ba[value] if f.hedge)
+            gone = max(0, len(items) - len(ba[value]))
+            lost = {h for h in was if h not in HEDGE_SAME and h not in now}
+            for cls in {hedge_class(h) for h in was if h in HEDGE_SAME}:
+                need = sum(n for h, n in was.items() if hedge_class(h) == cls)
+                have = sum(n for h, n in now.items() if hedge_class(h) == cls)
+                if have < need and not (have and need - have <= gone):
+                    lost |= {h for h in was if hedge_class(h) == cls and was[h] > now[h]}
+            for h in sorted(lost):
+                checks.append({"kind": "hedge", "what": "оговорка",
+                               "detail": "«%s» перед %s не найдено" % (h, items[0].raw)})
+            # A hedge turned the other way ("не менее 5" → "не более 5") changes the meaning. A
+            # source that bounds the value both ways («до 30 ноября» … «После 30 ноября») has no
+            # single way to turn: an edit that keeps one of them dropped the other (the check above).
+            dirs_b = {hedge_direction(f.hedge) for f in items if f.hedge}
+            dirs_a = {hedge_direction(f.hedge) for f in ba[value] if f.hedge}
+            for d in sorted(x for x in dirs_b if x):
+                if d in dirs_a or HEDGE_OPPOSITE[d] not in dirs_a or HEDGE_OPPOSITE[d] in dirs_b:
+                    continue
+                src = next(f for f in items if hedge_direction(f.hedge) == d)
+                dst = next(f for f in ba[value] if hedge_direction(f.hedge) == HEDGE_OPPOSITE[d])
+                errors.append({"kind": "inverted", "what": "оговорка",
+                               "detail": "«%s %s» → «%s %s»" % (src.hedge, src.raw, dst.hedge, dst.raw)})
     # END_BLOCK_NUMBERS_DIFF
 
     # START_BLOCK_MONTHS_DIFF
@@ -917,6 +1337,9 @@ def compare(before: str, after: str) -> Dict:
         if f.value.isupper() and 2 <= len(f.value) <= 4 and any(
                 "".join(w[0] for w in after_words[i:i + len(f.value)]).lower() == f.value.lower()
                 for i in range(len(after_words) - len(f.value) + 1)):
+            continue
+        if in_service("name", f):
+            service.append({"kind": "lost", "what": "имя или название", "detail": f.raw})
             continue
         errors.append({"kind": "lost", "what": "имя или название", "detail": f.raw})
     before_words = re.findall(r"[\w-]+", before)
@@ -965,6 +1388,8 @@ def compare(before: str, after: str) -> Dict:
             continue
         if contains(after_words, w, f.speech):
             checks.append({"kind": "unquoted", "what": "цитата", "detail": "«%s» без кавычек" % f.raw})
+        elif not f.speech and in_service("quote", f):
+            service.append({"kind": "lost", "what": "цитата", "detail": f.raw})
         else:
             (errors if f.speech else checks).append({"kind": "lost", "what": "цитата", "detail": "«%s»" % f.raw})
     seen = set()
@@ -1003,6 +1428,7 @@ def compare(before: str, after: str) -> Dict:
     # START_BLOCK_NEGATIONS_DIFF
     after_norm = _norm(after.lower())
     before_norm = _norm(before.lower())
+    idx_a, idx_b = _index(after_norm), _index(before_norm)
     for f in fb.of("negation"):
         if f.hedge in ("нет", "нельзя"):
             gone = not re.search(r"(?<![а-яё])%s(?![а-яё])" % f.hedge, after_norm)
@@ -1019,18 +1445,18 @@ def compare(before: str, after: str) -> Dict:
         word = f.value
         if word in ("только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
             continue
-        negated = [m for m in re.finditer(r"(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})", after_norm)
-                   if stem_match(m.group(2), word, strict=True)]
+        negated = idx_a.negated_word(word)
         if negated:
             continue
-        hits = _occurrences(after_norm, word)
-        src_hits = _occurrences(before_norm, word)
-        only_negated_in_source = all(_negated_near(before_norm, a, b) for a, b in src_hits)
+        hits = idx_a.occurrences(word)
+        src_hits = idx_b.occurrences(word)
+        only_negated_in_source = idx_b.all_negated(word)
         if hits:
-            if only_negated_in_source and all(not _negated_near(after_norm, a, b) for a, b in hits):
-                (checks if f.unit == "contrast" else errors).append(
-                    {"kind": "inverted", "what": "отрицание",
-                     "detail": "«%s» в правке стоит без отрицания" % f.raw})
+            if only_negated_in_source and idx_a.none_negated(word):
+                item = {"kind": "inverted", "what": "отрицание",
+                        "detail": "«%s» в правке стоит без отрицания" % f.raw}
+                # «Вместо того чтобы купить» is the same refusal in other words: a check.
+                (checks if f.unit == "contrast" or idx_a.all_instead(word) else errors).append(item)
         else:
             # «без больших порций» → «порции небольшими»: the negation joined the word as the prefix «не-».
             pref_rx = r"(?<![а-яё])не([а-яё]{4,})"
@@ -1049,9 +1475,8 @@ def compare(before: str, after: str) -> Dict:
                 "только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"):
             continue
         seen.add(word)
-        src_hits = _occurrences(before_norm, word)
-        if src_hits and all(not _negated_near(before_norm, a, b) for a, b in src_hits) and \
-                all(_negated_near(after_norm, a, b) for a, b in _occurrences(after_norm, word)):
+        src_hits = idx_b.occurrences(word)
+        if src_hits and idx_b.none_negated(word) and idx_a.all_negated(word):
             # A check: over the old eval outputs the word was mostly used in another sense
             # ("может" in the original, "не можете" in the edit).
             checks.append({"kind": "inverted", "what": "отрицание",
@@ -1261,8 +1686,18 @@ def compare(before: str, after: str) -> Dict:
                                    n.raw, "/".join(sorted(want)), "/".join(sorted(here)))})
     # END_BLOCK_BINDINGS
 
-    counts = {k: len(fb.of(k)) for k in ("number", "date", "name", "url", "phone", "quote", "negation")}
-    return {"errors": _dedupe(errors), "checks": _dedupe(checks), "counts": counts}
+    # The values of the chat assistant's own lines are not facts of the text: they are not
+    # counted as facts of the source either.
+    counts: Dict[str, int] = {}
+    for k in ("number", "date", "name", "url", "phone", "quote", "negation"):
+        items = fb.of(k)
+        counts[k] = len(items)
+        if k in ("number", "name", "quote"):
+            for key, group in service_items[k].items():
+                if in_service(k, group[0]):
+                    counts[k] -= len(group)
+    return {"errors": _dedupe(errors), "checks": _dedupe(checks),
+            "service": _dedupe(service), "counts": counts}
 
 
 def _dedupe(items: List[Dict]) -> List[Dict]:
@@ -1301,6 +1736,10 @@ def render(result: Dict) -> str:
             elif e["what"] in MASC_WHAT:
                 verb = KIND_MASC.get(verb, verb)
             lines.append("  - %s %s: %s" % (verb, e["what"], e["detail"]))
+    if result.get("service"):
+        lines.append("Убрано вместе со служебными строками чат-бота (не ошибка, но проверь, что это не текст автора):")
+        for e in result["service"]:
+            lines.append("  - %s: %s" % (e["what"], e["detail"]))
     if result["checks"]:
         lines.append("Проверь глазами (%d):" % len(result["checks"]))
         for e in result["checks"]:
@@ -1337,11 +1776,16 @@ def receipt(result: Dict) -> str:
     """«Сверка скриптом: …» for the notes; "" while there are errors other than lost facts."""
     c = result["counts"]
     have = ", ".join("%d %s" % (c[k], plural(c[k], forms)) for k, forms in RECEIPT_FORMS if c.get(k))
+    # The values of the chat assistant's own lines are not facts of the text: they are named
+    # apart, so the notes line does not read as a list of lost facts.
+    service = "; вместе со служебными строками чат-бота убрано: %s" % \
+        ", ".join(s["detail"] for s in result.get("service", [])) if result.get("service") else ""
     if not result["errors"]:
-        return "Сверка скриптом: " + ("%s на месте." % have if have else "чисел, дат и имён в тексте нет.")
+        return "Сверка скриптом: " + ("%s на месте%s." % (have, service) if have
+                                     else "чисел, дат и имён в тексте нет%s." % service)
     if all(e["kind"] == "lost" for e in result["errors"]):
-        return "Сверка скриптом: в исходнике %s; в правке нет: %s." % (
-            have or "фактов нет", ", ".join(e["detail"] for e in result["errors"]))
+        return "Сверка скриптом: в исходнике %s; в правке нет: %s%s." % (
+            have or "фактов нет", ", ".join(e["detail"] for e in result["errors"]), service)
     return ""
 
 

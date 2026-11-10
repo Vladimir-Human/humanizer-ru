@@ -65,11 +65,19 @@ def _errors(source: str, edit: str) -> list:
     return [[e["kind"], e["what"], e["detail"]] for e in receipt_eval.check_facts.compare(source, edit)["errors"]]
 
 
+def _service(source: str, edit: str) -> list:
+    """The values of the chat assistant's own lines: not errors, but removed with the wrapper
+    (check_facts reports them apart, 4.2.1)."""
+    result = receipt_eval.check_facts.compare(source, edit)
+    return [[s["kind"], s["what"], s["detail"]] for s in result.get("service", [])]
+
+
 def score_text(source: str, answer: str) -> dict:
     edit = lib.split_notes(answer, source)[0]
     errors = _errors(text_part(source), edit)
     rep = lint_style.lint(edit, RULES)
-    return {"errors": errors, "wrapper": [e for e in _errors(source, edit) if e not in errors],
+    return {"errors": errors,
+            "wrapper": [e for e in _errors(source, edit) if e not in errors] + _service(source, edit),
             "lint_score": rep["score"], "lint_level": rep["level"],
             "receipt": receipt_eval.receipt_line(answer)}
 

@@ -3,8 +3,8 @@
  *          Russian text with its edit and render the same fact report, checked by
  *          scripts/check_site_facts.py (compare results and Russian report text).
  * SCOPE: deterministic, offline, no dependencies, no network; module.exports in Node,
- *        window.HumanizerFacts = {compare, render} in a browser. An empty report is not a
- *        guarantee that the meaning survived; checks need a human look.
+ *        window.HumanizerFacts = {compare, render, receipt, receipt_hint} in a browser. An empty
+ *        report is not a guarantee that the meaning survived; checks need a human look.
  * DEPENDS: JavaScript with Unicode regexes, lookbehind, match indices, BigInt and TextDecoder.
  * LINKS: M-SITE-FACTS; R-SITE-FACTS; M-CHECK-FACTS; V-M-SITE-FACTS (scripts/check_site_facts.py).
  * END_MODULE_CONTRACT
@@ -15,8 +15,11 @@
  * extract: text -> Facts (numbers, dates, URLs, names, quotes, negations, code and sentences).
  * clause_spans / clause_span / is_list: comma-separated clauses and parallel name-number lists.
  * _pair_dot_decimals: pair a dot time with the other text's decimal, by count and context.
- * compare: (before, after) -> {errors, checks, counts}, including name-number bindings.
+ * TextIndex: one text read once (words by their first three letters, sentence ends).
+ * _service_spans: the chat assistant's own lines around the text (head, tail).
+ * compare: (before, after) -> {errors, checks, service, counts}, including name-number bindings.
  * render: result -> the Python checker's human-readable Russian report.
+ * receipt / receipt_hint: the «Сверка скриптом: …» notes line and its frame.
  * END_MODULE_MAP
  */
 (function (root, factory) {
@@ -406,9 +409,24 @@
     ];
     const UNIT_CANON = Object.fromEntries(UNIT_SYNONYMS.flatMap(([syns, canonical]) => syns.map(s => [lower(s), canonical])));
     const UNIT_RX = compile(r`[ \u00a0\u202f]?(${sorted(Object.keys(UNIT_CANON).map(re_escape), len, true).join("|")})(?![0-9A-Za-zА-Яа-яЁё])`, "i");
+    // A unit written right after the digits ("500мл", "990р.", "2019г."): only the lower-case
+    // spellings of the table and a non-letter after them, so "3D" and "1С" are not numbers with a
+    // unit. The scale "к" ("30к" = "30 тыс.") and the dimension "х" ("160х200" = "160 × 200") are
+    // read apart.
+    const GLUED_UNITS = ["%", "₽", "р.", "руб.", "руб", "$", "€", "кг", "г", "км", "м²", "м", "см", "мм", "л",
+        "мл", "шт", "ч", "мин", "мс", "сек", "с", "день", "дня", "дней", "дн", "сутки",
+        "неделя", "недели", "недель", "нед", "месяц", "месяца", "месяцев", "мес", "год",
+        "года", "лет", "человек", "человека", "чел"];
+    const GLUED_UNIT_RX = compile(r`(${sorted(GLUED_UNITS.map(re_escape), len, true).join("|")})(?![0-9A-Za-zА-Яа-яЁё²³])`);
+    const DIM_RX = compile(r`[хx](\d+(?:[${SEP}]\d{3})*(?:[.,]\d+)?)`);
+    // A capitalised word of the text: the shape the names are read with.
+    const NAME_RX = compile(r`(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))`);
     const WORD_NUM = {
         // One alone is deliberately not a number: "одна из причин".
         "ноль": 0, "два": 2, "две": 2, "двух": 2, "трое": 3, "двое": 2, "три": 3, "трех": 3,
+        // The other cases of "два": "нужны двоим из семи" is the same fact as "касались двух
+        // человек из семи".
+        "двоим": 2, "двоих": 2,
         "четыре": 4, "четырех": 4, "четверо": 4, "пять": 5, "пяти": 5, "пятеро": 5, "шесть": 6,
         "шести": 6, "семь": 7, "семи": 7, "восемь": 8, "восьми": 8, "девять": 9, "девяти": 9,
         "десять": 10, "десяти": 10, "одиннадцать": 11, "двенадцать": 12, "пятнадцать": 15,
@@ -481,6 +499,29 @@
         "более": ">", "свыше": ">", "больше": ">", "менее": "<", "меньше": "<",
         "не позже": "≤д", "не позднее": "≤д"};
     const hedge_class = hedge => has(HEDGE_SAME, hedge) ? HEDGE_SAME[hedge] : hedge;
+    // The direction of a hedge: a lower bound ("не менее 5", "от 30%", "после 20 мая") or an upper
+    // one ("не более 5", "до 30%", "не позднее 15 марта"). A hedge turned the other way changes the
+    // meaning of the number.
+    const HEDGE_DIR = {"≥": "lower", ">": "lower", "≤": "upper", "<": "upper", "≤д": "upper",
+        "от": "lower", "после": "lower", "не раньше": "lower", "до": "upper"};
+    const HEDGE_OPPOSITE = {"lower": "upper", "upper": "lower"};
+    const hedge_direction = hedge => HEDGE_DIR[hedge_class(hedge)] || "";
+    // The chat assistant's own lines around the text: the head ("Готово, вот текст:") and the tail
+    // ("Если нужно, могу переделать текст…"). Their values are not facts of the text.
+    const SERVICE_SEP_RX = compile(r`^[ \t]*(?:-{3,}|\*{3,}|_{3,}|\x60\x60\x60[^\n]*)[ \t]*$`, "m");
+    const SERVICE_HEAD_RX = compile(r`(?i)^\W*(?:вот\b|готов(?:о|ый|ая|ое|ые)\b)`);
+    const SERVICE_HEAD_STRICT_RX = compile(r`(?i)^\W*(?:готово\b|вот\s+(?:готов|ваш|текст|вариант|пост|письмо))`);
+    const SERVICE_TAIL_RX = compile(r`(?i)^\W*(?:пара замечаний|несколько (?:замечаний|пояснений|слов)|`
+        + r`что (?:учтено|нужно|стоит)|объём|замечани|служебн|заметки для|`
+        + r`если (?:нужно|хотите)|могу\b|готово|советы?\W|перед отправкой)`);
+    const SERVICE_FIRST_RX = compile(r`(?i)могу|сделаю|напишу|переделаю|сокращу|я (?:оформил|добавил|убрал)`);
+    // The author's own lines also open with "Вот", "Советы…", "Если хотите, могу…" (cross-review 10.11,
+    // two rounds): a head counts only with "готов…", a size or a colon at its end; a tail only when it
+    // speaks about the text itself. Option headings ("Вариант 1 (…)") are never service lines.
+    const SERVICE_ABOUT_RX = compile(r`(?i)текст|вариант|верси|пост(?:а|у|ом|е)?\b|письм|сообщени|объявлени|`
+        + r`рассылк|описани|карточк|ваканси|резюме|стать[яи]|объ[её]м|знак|символ|`
+        + r`публикац|отправк|абзац|заголов`);
+    const SERVICE_SIZE_RX = compile(r`(?i)готов(?:о|ый|ая|ое|ые)(?![а-яё])|(?<![а-яё])(?:знак|символ|слов)(?:ов|а|о|и|ы)?(?![а-яё])`);
     const SOURCE_PREPOSITIONS = new Set(["от", "через"]);
     const NEG_WORDS = new Set(["не", "ни", "нет", "нельзя", "без", "никаких", "никакой", "никакого", "никакие", "никакая",
         "никогда", "ничего", "ничто", "ничем", "никто", "никого", "никому", "нигде", "никак", "нисколько"]);
@@ -519,6 +560,32 @@
     const CASE_ENDINGS = new Set(["", "а", "я", "о", "е", "и", "ы", "у", "ю", "ой", "ей", "ою", "ею", "ом", "ем",
         "ам", "ям", "ами", "ями", "ах", "ях", "ов", "ев", "ий", "ия", "ие", "ья", "ье", "ью", "ая", "ое", "ые",
         "ый", "ого", "его", "ому", "ему", "ым", "им", "ую", "ых", "их", "ыми", "ими"]);
+    function _case_tail(tail) {
+        // The rest of a word after its stem: a case ending, or a soft sign ("Гриша" → "Гришу").
+        return CASE_ENDINGS.has(tail) || tail === "ь" || tail === "й";
+    }
+    function _first_name_case(word, name) {
+        // A case of a first name of the list, also with a fleeting vowel: "Павлу", "Павлом" of
+        // "Павел" (cross-review 10.11: "Павлу" was not a name, and the swap of its sum went unseen).
+        if (_same_name_case(word, name)) return true;
+        const n = _norm(lower(name));
+        return search(r`[бвгджзклмнпрстфхцчшщ][ео][лнр]$`, n) !== null &&
+            _same_name_case(word, slice(n, 0, -2) + slice(n, -1) + "а");
+    }
+    function _same_name_case(a, b) {
+        // Two spellings of one name ("Сбер" … "Сбера", "Соколовы" … "Соколовых"): they share a
+        // stem and the rest of each word is a case ending. "То" and "Томске" share no stem: not
+        // one name.
+        a = _norm(lower(a)); b = _norm(lower(b));
+        const n = common_prefix(a, b);
+        for (let k = n; k > 2; k -= 1) {
+            // The stem is the longest common prefix that leaves a case ending in both words.
+            if (_case_tail(slice(a, k)) && _case_tail(slice(b, k))) {
+                return k >= Math.min(len(a), len(b)) - 2;
+            }
+        }
+        return false;
+    }
     function common_prefix(a, b) {
         const aa = Array.from(a), bb = Array.from(b);
         let n = 0;
@@ -612,7 +679,9 @@
         function hedge_before(pos) {
             const left = _norm(lower(slice(text, Math.max(0, pos - 24), pos)));
             for (const h of sorted(HEDGES, len, true)) {
-                if (search(r`(?:^|[^а-яa-z])${re_escape(_norm(h))}(?:${gap}+чем)?${gap}*$`, left)) return h;
+                // The words of a hedge may stand apart by spaces, non-breaking ones or markup.
+                const parts = _norm(h).split(" ").map(re_escape).join(gap + "+");
+                if (search(r`(?:^|[^а-яa-z])${parts}(?:${gap}+чем)?${gap}*$`, left)) return h;
             }
             return "";
         }
@@ -705,24 +774,95 @@
         for (const m of finditer(r`(?:вариант|шаг|этап|пункт|раздел|часть|глава|блок)\s+(\d+)`, text, "i")) taken.push([m.start(1), m.end(1)]);
         const sp = r`[ \t\u00a0\u202f]`;
         for (const m of finditer(r`^[ \t\u00a0\u202f\ufeff]*(?:>${sp}*)*(?:#{1,6}${sp}+)?(?:[-*+]${sp}+)?(?:\*\*|__|\*|_)?(\d{1,2})[.)](?=[ \t\u00a0\u202f*_])`, text, "m")) taken.push([m.start(1), m.end(1)]);
-        const num_rx = compile(r`(?<![\w.,])[+\-−]?\d+(?:[${SEP}]\d{3})*(?:[.,]\d+)?(?![\w])`);
+        function read_number(start, digits, glued = true) {
+            // The value, the unit and the end of a number that starts at `start`.
+            // null when the digits are not a number at all ("3D", "1С", "Pro2").
+            let value;
+            const plain = sub(`[${SEP}]`, "", digits);
+            if (fullmatch(r`\d{16,}`, plain)) {
+                value = plain;             // a bank account: its digits as written, groups aside
+            } else {
+                value = _canon_num(digits);
+                if (value === null) return null;
+            }
+            let end = start + len(digits);
+            let sc = null, unit = "";
+            if (glued && isalpha(char(text, end))) {
+                // The unit is glued to the digits ("500мл", "990р."): the same value and unit as
+                // the spaced form. A capital letter is not a unit ("3D", "1С").
+                const gm = GLUED_UNIT_RX.match(text, end);
+                if (gm) {
+                    unit = UNIT_CANON[lower(gm.group(1))] || "";
+                    end = gm.end();
+                } else if ("кk".includes(char(text, end)) && !isalpha(char(text, end + 1))) {
+                    if (typeof value === "number") value *= 1000;      // "30к" is "30 тыс."
+                    else value += "000";
+                    end += 1;
+                    const um = UNIT_RX.match(text, end);
+                    if (um) {                  // "30к рублей" is "30 тыс. рублей"
+                        unit = UNIT_CANON[lower(um.group(1))] || "";
+                        end = um.end();
+                    }
+                } else {
+                    return null;
+                }
+            } else {
+                sc = match(r`[${SEP}]+(${SCALE_ALT})(?![а-я])`, slice(text, end, end + 12), "i");
+                if (sc) {
+                    const scale = SCALE[lower(sc.group(1))];
+                    // exact: "10…0 тыс." is three zeros more
+                    if (typeof value === "number") value *= scale;
+                    else value += "0".repeat(String(scale).length - 1);
+                    end += sc.end();
+                }
+                const um = UNIT_RX.match(text, end);
+                if (um) {
+                    unit = UNIT_CANON[lower(um.group(1))] || "";
+                    end = um.end();
+                } else {
+                    const hm = HYPHEN_UNIT_RX.match(_norm(text), end);
+                    if (hm) {
+                        unit = COMPOUND_UNIT[lower(hm.group(1))];
+                        end = hm.end();
+                    }
+                }
+            }
+            if (unit === "г" && !sc && typeof value === "number" && value === int(value)
+                && 1800 <= value && value <= 2100) {
+                unit = "год";  // "2020 г." is a year, not grams
+            }
+            return [typeof value === "string" ? value : _fmt(value), unit, end];
+        }
+        const num_rx = compile(r`(?<![\w.,])[+\-−]?\d+(?:[${SEP}]\d{3})*(?:[.,]\d+)?`);
         for (const m of num_rx.finditer(text)) {
             if (!free(m.start(), m.end())) continue;
-            let v = _canon_num(m.group());
-            if (v === null) continue;
-            let end = m.end();
-            const sc = match(r`[ \u00a0\u202f]+(${SCALE_ALT})(?![а-я])`, slice(text, end, end + 12), "i");
-            if (sc) { v *= SCALE[lower(sc.group(1))]; end += sc.end(); }
-            let unit = "";
-            const um = UNIT_RX.match(text, end);
-            if (um) { unit = UNIT_CANON[lower(um.group(1))] || ""; end = um.end(); }
-            else {
-                const hm = HYPHEN_UNIT_RX.match(_norm(text), end);
-                if (hm) { unit = COMPOUND_UNIT[lower(hm.group(1))]; end = hm.end(); }
+            const digits = m.group();
+            const end = m.end();
+            const glue = char(text, end);
+            if (glue === "х" || glue === "x") {
+                const dm = DIM_RX.match(text, end);
+                if (dm) {
+                    // "160х200" is two numbers: "160 × 200". The unit belongs to the second one.
+                    const first = read_number(m.start(), digits, false);
+                    if (first === null) continue;
+                    const [value, unit, end1] = first;
+                    facts.items.push(new Fact("number", value, slice(text, m.start(), end1), sent_of(m.start()),
+                                             m.start(), hedge_before(m.start()), ""));
+                    const second = read_number(end + 1, dm.group(1));
+                    if (second === null) continue;
+                    const [value2, unit2, end2] = second;
+                    facts.items.push(new Fact("number", value2, slice(text, end + 1, end2), sent_of(m.start()),
+                                             end + 1, hedge_before(end + 1), unit2));
+                    taken.push([m.start(), end2]);
+                    continue;
+                }
             }
-            if (unit === "г" && !sc && v === int(v) && 1800 <= v && v <= 2100) unit = "год";
-            facts.items.push(new Fact("number", _fmt(v), slice(text, m.start(), end), sent_of(m.start()), m.start(), hedge_before(m.start()), unit));
-            taken.push([m.start(), end]);
+            const got = read_number(m.start(), digits);
+            if (got === null) continue;
+            const [value, unit, end3] = got;
+            facts.items.push(new Fact("number", value, slice(text, m.start(), end3), sent_of(m.start()),
+                                     m.start(), hedge_before(m.start()), unit));
+            taken.push([m.start(), end3]);
         }
         const norm_text = _norm(text);
         for (const m of COMPOUND_NUM_RX.finditer(norm_text)) {
@@ -768,13 +908,13 @@
             facts.items.push(new Fact("quote", lower(q), q, sent_of(m.start()), m.start(), "", "", speech));
         }
         for (const [s_start, sent] of sents) {
-            for (const m of finditer(r`(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))`, sent)) {
+            for (const m of NAME_RX.finditer(sent)) {
                 const word = m.group(1);
                 const first = _is_initial(text, s_start + m.start());
                 if (SENT_START_STOP.has(word) || POLITE_PRONOUN.fullmatch(word)) continue;
                 const pos = s_start + m.start();
                 if (first && !(_capitalized_elsewhere(word, text, pos) ||
-                    Array.from(FIRST_NAMES).some(n => len(word) <= len(n) + 3 && stem_match(word, n)))) {
+                    Array.from(FIRST_NAMES).some(n => len(word) <= len(n) + 3 && _first_name_case(word, n)))) {
                     facts.items.push(new Fact("subject", word, word, sent_of(pos), pos));
                     continue;
                 }
@@ -818,34 +958,158 @@
     // END_BLOCK_EXTRACT
 
     // START_BLOCK_CONTEXT_HELPERS
-    function _occurrences(text, word) {
-        return finditer(r`[а-яё]{3,}`, text).filter(m =>
-            !(["больше", "меньше"].includes(m.group()) && !["больше", "меньше"].includes(word)) && stem_match(m.group(), word, true))
-            .map(m => [m.start(), m.end()]);
+    function bisect_left(arr, value) {
+        let lo = 0, hi = arr.length;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (arr[mid] < value) lo = mid + 1; else hi = mid;
+        }
+        return lo;
     }
-    function _negated_near(text, start, end) {
-        const s_from = Math.max(...Array.from(".!?\n", c => rfind(text, c, 0, start))) + 1;
-        const stops = Array.from(".!?\n", c => find(text, c, end)).filter(i => i !== -1);
-        const s_to = stops.length ? Math.min(...stops) : len(text);
-        const left = split_space(slice(text, s_from, start)).slice(-3);
-        const right = split_space(slice(text, end, s_to)).slice(0, 4);
-        return left.concat(right).some(w => NEG_WORDS.has(sub(r`[^а-яё]`, "", w)));
+    // One text, read once: the words by their first three letters and the ends of the
+    // sentences. A long text is checked once per word, not once per mention (4.2.1).
+    class TextIndex {
+        constructor(text) {
+            this.text = text;
+            this.stops = finditer(r`[.!?\n]`, text).map(m => m.start());
+            this.buckets = new Map();
+            for (const m of finditer(r`[а-яё]{3,}`, text)) {
+                const key = slice(m.group(), 0, 3);
+                if (!this.buckets.has(key)) this.buckets.set(key, []);
+                this.buckets.get(key).push([m.start(), m.end(), m.group()]);
+            }
+            this._occ = new Map();
+            this._neg = new Map();
+            this._instead = new Map();
+            this._neg_words = null;
+            this._neg_word = new Map();
+        }
+        // The places of the text where the word stands (in any case).
+        occurrences(word) {
+            if (!this._occ.has(word)) {
+                const bucket = this.buckets.get(slice(word, 0, 3)) || [];
+                this._occ.set(word, bucket.filter(([a, b, w]) =>
+                    !(["больше", "меньше"].includes(w) && !["больше", "меньше"].includes(word))
+                    && stem_match(w, word, true)).map(([a, b]) => [a, b]));
+            }
+            return this._occ.get(word);
+        }
+        // For every place of the word: a negation stands near it.
+        negated(word) {
+            if (!this._neg.has(word)) {
+                this._neg.set(word, this.occurrences(word).map(([a, b]) => this.negated_at(a, b)));
+            }
+            return this._neg.get(word);
+        }
+        // For every place of the word: "вместо того чтобы" stands in its left window.
+        instead(word) {
+            if (!this._instead.has(word)) {
+                this._instead.set(word, this.occurrences(word).map(([a, b]) => this.instead_at(a, b)));
+            }
+            return this._instead.get(word);
+        }
+        all_negated(word) { return this.negated(word).every(Boolean); }
+        none_negated(word) { return !this.negated(word).some(Boolean); }
+        all_instead(word) {
+            // Every mention of the word without a negation stands after "вместо того чтобы".
+            const neg = this.negated(word);
+            const plain = this.instead(word).filter((_, k) => !neg[k]);
+            return plain.length > 0 && plain.every(Boolean);
+        }
+        // The words that stand right after a negation ("не покупать"), by their first three
+        // letters.
+        negation_words() {
+            if (!this._neg_words) {
+                const buckets = new Map();
+                for (const m of finditer(r`(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})`, this.text)) {
+                    const key = slice(m.group(2), 0, 3);
+                    if (!buckets.has(key)) buckets.set(key, []);
+                    buckets.get(key).push(m.group(2));
+                }
+                this._neg_words = buckets;
+            }
+            return this._neg_words;
+        }
+        // The word stands right after a negation somewhere in the text.
+        negated_word(word) {
+            if (!this._neg_word.has(word)) {
+                const bucket = this.negation_words().get(slice(word, 0, 3)) || [];
+                this._neg_word.set(word, bucket.some(w => stem_match(w, word, true)));
+            }
+            return this._neg_word.get(word);
+        }
+        // The bounds of the sentence that holds the place.
+        sentence(start, end) {
+            const i = bisect_left(this.stops, start);
+            const s_from = i ? this.stops[i - 1] + 1 : 0;
+            const j = bisect_left(this.stops, end);
+            const s_to = j < this.stops.length ? this.stops[j] : len(this.text);
+            return [s_from, s_to];
+        }
+        // A negation within 3 words before or 4 words after, inside the same sentence.
+        negated_at(start, end) {
+            const [s_from, s_to] = this.sentence(start, end);
+            const left = split_space(slice(this.text, s_from, start)).slice(-3);
+            const right = split_space(slice(this.text, end, s_to)).slice(0, 4);
+            return left.concat(right).some(w => NEG_WORDS.has(sub(r`[^а-яё]`, "", w)));
+        }
+        // "Вместо того чтобы" in the left window: the negation was reworded, not lost.
+        instead_at(start, end) {
+            // "Вместо того чтобы" right before the word; "Вместо писем отправляйте" is not one.
+            const [s_from] = this.sentence(start, end);
+            return Boolean(search(r`(?<![а-яё])вместо\s+того,?\s+чтобы\s+$`, slice(this.text, s_from, start)));
+        }
+    }
+    // The indexes of the texts of the last comparison; they are dropped when it ends.
+    const indexes = new Map();
+    function _index(text) {
+        if (!indexes.has(text)) indexes.set(text, new TextIndex(text));
+        return indexes.get(text);
     }
     function _is_initial(text, pos) {
+        // True when only markup, list markers, emoji or spaces stand between the word and the
+        // start of a line or the end of the previous sentence. A footnote mark ("болота.[1] Там")
+        // stands between the sentences, not inside one.
         let i = pos - 1;
         while (i >= 0) {
             const ch = char(text, i);
             if (ch === "\n" || ".!?…:".includes(ch)) return true;
+            if ("])".includes(ch)) {
+                const mark = search(r`[\[(]\d{1,3}[\])]$`, slice(text, Math.max(0, i - 4), i + 1));
+                if (mark) {
+                    i -= len(mark.group());  // step back over the whole mark and keep looking
+                    continue;
+                }
+            }
             if (isalnum(ch) && !(isdigit(ch) && match(r`\d+[.)]`, lstrip(slice(text, i, pos))))) return false;
             if (isalpha(ch)) return false;
             i -= 1;
         }
         return true;
     }
+    // The capitalised words of a text that stand not at the start of a sentence, by their first
+    // three letters: a sentence-initial word is a name when the same name stands elsewhere.
+    const capWords = new Map();
+    function _cap_words(text) {
+        if (capWords.has(text)) return capWords.get(text);
+        const buckets = new Map();
+        for (const m of NAME_RX.finditer(text)) {
+            if (_is_initial(text, m.start())) continue;
+            const key = slice(_norm(lower(m.group(1))), 0, 3);
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push([m.start(), m.group(1)]);
+        }
+        capWords.set(text, buckets);
+        return buckets;
+    }
     function _capitalized_elsewhere(word, text, pos) {
-        for (const m of finditer(r`(?<![\w-])${re_escape(slice(word, 0, Math.max(3, len(word) - 2)))}`, text)) {
-            if (m.start() === pos) continue;
-            if (isupper(char(text, m.start())) && !_is_initial(text, m.start())) return true;
+        // The same name stands elsewhere in another case ("Сбер" … "Сбера"). A shared prefix is
+        // not enough: "То" is not "Томске" and "Там" is not "Тамара".
+        const bucket = _cap_words(text).get(slice(_norm(lower(word)), 0, 3));
+        if (!bucket) return false;
+        for (const [start, other] of bucket) {
+            if (start === pos) continue;
+            if (_same_name_case(word, other)) return true;
         }
         return false;
     }
@@ -936,7 +1200,13 @@
         }
         function clean_prose(prose) {
             // Citations go before URLs; inline code keeps both citations and tracking tails.
-            prose = sub(r`\x60[^\x60\n]+\x60|${CITATION_RX.pattern}`, m => m.group().startsWith("`") ? m.group() : "", prose);
+            // A citation is dropped without a trace: read as a period it made the name after it a
+            // sentence start ("Мы сотрудничаем[cite: 1] Microsoft.", cross-review 10.11, F2).
+            function drop_citation(m) {
+                const token = m.group();
+                return token.startsWith("`") ? token : "";
+            }
+            prose = sub(r`\x60[^\x60\n]+\x60|${CITATION_RX.pattern}`, drop_citation, prose);
             return sub(r`\x60[^\x60\n]+\x60|${URL_RX}`, m => m.group().startsWith("`") ? m.group() : fix_url(m), prose);
         }
         const spans = [];
@@ -957,6 +1227,58 @@
         return sub(r`(?<![${emoji}])\u200d(?![${emoji}])`, "", text);
     }
     // END_BLOCK_TRACKING
+
+    // START_BLOCK_SERVICE
+    // The parts of the source that are the chat assistant's own lines around the text: the
+    // head ("Готово, вот текст:") and the tail ("Если нужно, могу переделать текст…"). Their
+    // values are not facts of the text.
+    // G1: a span counts only when the edit does not keep its beginning: a wrapper the edit kept
+    // is still the author's text, and a fact lost with it is an error.
+    function _service_spans(before, after_norm) {
+        const seps = SERVICE_SEP_RX.finditer(before);
+        const parts = [];
+        let prev = 0;
+        let head_rx;
+        if (seps.length) {
+            for (const m of seps) {
+                parts.push([prev, m.start()]);
+                prev = m.end();
+            }
+            parts.push([prev, len(before)]);
+            head_rx = SERVICE_HEAD_RX;
+        } else {
+            for (const m of finditer(r`\n[ \t]*\n`, before)) {
+                parts.push([prev, m.start()]);
+                prev = m.end();
+            }
+            parts.push([prev, len(before)]);
+            head_rx = SERVICE_HEAD_STRICT_RX;
+        }
+        const spans = [];
+        // The head: the first part, when it is one short line that opens like a chat answer.
+        if (parts.length > 1) {
+            const body = strip(slice(before, parts[0][0], parts[0][1]));
+            const about = SERVICE_SIZE_RX.search(body) || rstrip(body, "*_ ").endsWith(":");
+            if (len(body) <= 300 && !body.includes("\n") && head_rx.match(body) && about) spans.push(parts[0]);
+        }
+        // The tail: walk back from the last part while it talks like the assistant.
+        let i = parts.length - 1;
+        while (i >= 0) {
+            const body = strip(slice(before, parts[i][0], parts[i][1]));
+            if (!SERVICE_TAIL_RX.match(body.split("\n", 1)[0])) break;
+            if (!SERVICE_ABOUT_RX.search(body) || (!seps.length && !SERVICE_FIRST_RX.search(body))) break;
+            spans.push(parts[i]);
+            i -= 1;
+        }
+        // G1: the edit kept the beginning of the span: the values there are still facts.
+        const kept = [];
+        for (const [a, b] of spans) {
+            const key = slice(_norm(lower(slice(before, a, b))), 0, 20);
+            if (key && !after_norm.includes(key)) kept.push([a, b]);
+        }
+        return kept;
+    }
+    // END_BLOCK_SERVICE
 
     // START_BLOCK_DOT_DECIMALS
     function _pair_dot_decimals(mine, other) {
@@ -1020,10 +1342,70 @@
     // END_CONTRACT: compare
     function compare(before, after) {
         textViews.clear();
+        indexes.clear();
+        capWords.clear();
         before = _strip_tracking(before); after = _strip_tracking(after);
         const fb = extract(before), fa = extract(after, true);
         const errors = [];
+        const service = [];
         const checks = _pair_dot_decimals(fb, fa).concat(_pair_dot_decimals(fa, fb));
+
+        // START_BLOCK_SERVICE
+        // The chat assistant's own lines around the text ("Готово, вот текст:", "Если нужно,
+        // могу…"): their values are not facts of the text, but they are not errors either.
+        let service_spans = _service_spans(before, _norm(lower(after)));
+        const service_groups = new Map();
+        const service_items = {};
+
+        function group_key(kind, f) {
+            if (kind === "name") return slice(_norm(lower(f.value)), 0, 5);
+            return f.value;
+        }
+        for (const kind of ["number", "name", "quote"]) {
+            const groups = new Map();
+            for (const f of fb.of(kind)) {
+                const key = group_key(kind, f);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(f);
+            }
+            service_items[kind] = groups;
+        }
+        // Every mention of the value stands inside the service lines of the chat assistant and
+        // the fact is one that may be re-labelled (G2, G3).
+        function service_only(kind, items) {
+            if (!service_spans.length || !items.length || !["number", "name", "quote"].includes(kind)) return false;
+            for (const f of items) {
+                if (kind === "number" && f.unit) return false;         // a number with a unit is a fact of the text
+                if (kind === "quote" && f.speech) return false;        // somebody's words are a fact of the text
+                if (!service_spans.some(([a, b]) => a <= f.pos && f.pos < b)) return false;
+            }
+            return true;
+        }
+        // The value of the fact stands only in the service lines of the chat assistant.
+        function in_service(kind, f) {
+            const key = group_key(kind, f);
+            if (!service_groups.has(kind)) service_groups.set(kind, new Map());
+            const group = service_groups.get(kind);
+            if (!group.has(key)) {
+                const items = service_items[kind].get(key) || [];
+                group.set(key, service_only(kind, items));
+            }
+            return group.get(key);
+        }
+        // G4: the service lines may not swallow the source: when they take more than 40% of its
+        // text and hold more than 40% of its facts, the source is a chat answer, not a text, and
+        // no span applies.
+        if (service_spans.length) {
+            const eligible = fb.items.filter(f => (f.kind === "number" && !f.unit) || f.kind === "name"
+                || (f.kind === "quote" && !f.speech));
+            const held = eligible.filter(f => service_spans.some(([a, b]) => a <= f.pos && f.pos < b)).length;
+            const covered = service_spans.reduce((total, [a, b]) => total + (b - a), 0);
+            if (covered > 0.4 * len(before) && held > 0.4 * fb.items.length) {
+                service_spans = [];
+                service_groups.clear();
+            }
+        }
+        // END_BLOCK_SERVICE
 
         // START_BLOCK_NUMBERS_DIFF
         function bag(facts, kind) {
@@ -1033,44 +1415,77 @@
         }
         const one_rx = r`(?<![а-яё])(?:${ONE_FORMS.join("|")})(?![а-яё])`;
         const one_in = {before: Boolean(search(one_rx, _norm(lower(before)))), after: Boolean(search(one_rx, _norm(lower(after))))};
+        // "16:00" and "16 часов" are the same hour.
+        const unit_of = f => f.unit === "время" ? "ч" : f.unit;
+        // A mention whose unit is in none of the mentions of the edit: the fact is lost, not
+        // only rarer. The edit keeps a unit of its own: if it kept none, the unit check says so.
+        function lost_unit(items, other) {
+            const have = new Set(other.filter(f => f.unit).map(unit_of));
+            if (!have.size) return null;
+            for (const f of items) {
+                if (f.unit && !have.has(unit_of(f))) return f;
+            }
+            return null;
+        }
         for (const [kind, label] of [["number", "число"], ["date", "дата"]]) {
             const bb = bag(fb, kind), ba = bag(fa, kind);
             for (const [value, items] of bb) {
                 const missing = items.length - (ba.get(value) || []).length;
                 if (missing > 0 && !ba.has(value)) {
                     if (value === "1" && one_in.after) continue;
+                    if (kind === "number" && in_service("number", items[0])) {
+                        service.push({kind: "lost", what: label, detail: items[0].raw});
+                        continue;
+                    }
                     errors.push({kind: "lost", what: label, detail: items[0].raw});
                 } else if (missing > 0) {
+                    // A mention with its own unit that is gone: the fact is lost, not just rarer.
+                    const gone = kind === "number" ? lost_unit(items, ba.get(value)) : null;
+                    if (gone !== null) {
+                        errors.push({kind: "lost", what: label, detail: gone.raw});
+                        continue;
+                    }
                     checks.push({kind: "fewer", what: label, detail: `${items[0].raw} встречается реже (${items.length} → ${ba.get(value).length})`});
                 }
             }
             for (const [value, items] of ba) {
                 if (!bb.has(value) && !(value === "1" && one_in.before)) errors.push({kind: "added", what: label, detail: items[0].raw});
             }
-            if (kind === "number") {
-                for (const [value, items] of bb) {
-                    if (!ba.has(value)) continue;
-                    const units_b = new Set(items.filter(f => f.unit).map(f => f.unit === "время" ? "ч" : f.unit));
-                    const units_a = new Set(ba.get(value).filter(f => f.unit).map(f => f.unit === "время" ? "ч" : f.unit));
+            // units and hedges for the values present in both
+            for (const [value, items] of bb) {
+                if (!ba.has(value)) continue;
+                if (kind === "number") {
+                    const units_b = new Set(items.filter(f => f.unit).map(unit_of));
+                    const units_a = new Set(ba.get(value).filter(f => f.unit).map(unit_of));
                     if (units_b.size && units_a.size && !intersection(units_b, units_a).size) {
                         errors.push({kind: "unit", what: "единица", detail: `${items[0].raw} → ${ba.get(value)[0].raw}`});
                     } else if (units_b.size && !units_a.size) {
                         checks.push({kind: "unit", what: "единица", detail: `${items[0].raw} → ${ba.get(value)[0].raw} без единицы`});
                     }
-                    // Equivalent hedges count by mention; other hedges must remain somewhere.
-                    const was = new Counter(items.filter(f => f.hedge).map(f => f.hedge));
-                    const now = new Counter(ba.get(value).filter(f => f.hedge).map(f => f.hedge));
-                    const gone = Math.max(0, items.length - ba.get(value).length);
-                    const lost = new Set(Array.from(was.keys()).filter(h => !has(HEDGE_SAME, h) && !now.has(h)));
-                    const classes = new Set(Array.from(was.keys()).filter(h => has(HEDGE_SAME, h)).map(hedge_class));
-                    for (const cls of classes) {
-                        const need = Array.from(was).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
-                        const have = Array.from(now).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
-                        if (have < need && !(have && need - have <= gone)) {
-                            for (const h of was.keys()) if (hedge_class(h) === cls && was.get(h) > now.get(h)) lost.add(h);
-                        }
+                }
+                // Equivalent hedges count by mention; other hedges must remain somewhere.
+                const was = new Counter(items.filter(f => f.hedge).map(f => f.hedge));
+                const now = new Counter(ba.get(value).filter(f => f.hedge).map(f => f.hedge));
+                const gone = Math.max(0, items.length - ba.get(value).length);
+                const lost = new Set(Array.from(was.keys()).filter(h => !has(HEDGE_SAME, h) && !now.has(h)));
+                const classes = new Set(Array.from(was.keys()).filter(h => has(HEDGE_SAME, h)).map(hedge_class));
+                for (const cls of classes) {
+                    const need = Array.from(was).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
+                    const have = Array.from(now).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
+                    if (have < need && !(have && need - have <= gone)) {
+                        for (const h of was.keys()) if (hedge_class(h) === cls && was.get(h) > now.get(h)) lost.add(h);
                     }
-                    for (const h of sorted(lost)) checks.push({kind: "hedge", what: "оговорка", detail: `«${h}» перед ${items[0].raw} не найдено`});
+                }
+                for (const h of sorted(lost)) checks.push({kind: "hedge", what: "оговорка", detail: `«${h}» перед ${items[0].raw} не найдено`});
+                // A hedge turned the other way ("не менее 5" → "не более 5") changes the meaning.
+                const dirs_b = new Set(items.filter(f => f.hedge).map(f => hedge_direction(f.hedge)).filter(Boolean));
+                const dirs_a = new Set(ba.get(value).filter(f => f.hedge).map(f => hedge_direction(f.hedge)).filter(Boolean));
+                for (const d of sorted(dirs_b)) {
+                    // A source that bounds the value both ways has no single way to turn.
+                    if (dirs_a.has(d) || !dirs_a.has(HEDGE_OPPOSITE[d]) || dirs_b.has(HEDGE_OPPOSITE[d])) continue;
+                    const src = items.find(f => hedge_direction(f.hedge) === d);
+                    const dst = ba.get(value).find(f => hedge_direction(f.hedge) === HEDGE_OPPOSITE[d]);
+                    errors.push({kind: "inverted", what: "оговорка", detail: `«${src.hedge} ${src.raw}» → «${dst.hedge} ${dst.raw}»`});
                 }
             }
         }
@@ -1104,6 +1519,10 @@
                 }
             }
             if (spelled_out) continue;
+            if (in_service("name", f)) {
+                service.push({kind: "lost", what: "имя или название", detail: f.raw});
+                continue;
+            }
             errors.push({kind: "lost", what: "имя или название", detail: f.raw});
         }
         const before_words = findall(r`[\w-]+`, before);
@@ -1140,6 +1559,7 @@
             seen.add(key);
             if (quotes_a.some(q => contains(q, w, f.speech))) continue;
             if (contains(after_words, w, f.speech)) checks.push({kind: "unquoted", what: "цитата", detail: `«${f.raw}» без кавычек`});
+            else if (!f.speech && in_service("quote", f)) service.push({kind: "lost", what: "цитата", detail: f.raw});
             else (f.speech ? errors : checks).push({kind: "lost", what: "цитата", detail: `«${f.raw}»`});
         }
         seen = new Set();
@@ -1174,6 +1594,7 @@
         // START_BLOCK_NEGATIONS_DIFF
         const after_norm = _norm(lower(after)), before_norm = _norm(lower(before));
         const NEG_SKIP = new Set(["только", "менее", "более", "раньше", "позже", "позднее", "просто", "всегда", "совсем"]);
+        const idx_a = _index(after_norm), idx_b = _index(before_norm);
         for (const f of fb.of("negation")) {
             if (["нет", "нельзя"].includes(f.hedge)) {
                 const gone = !search(r`(?<![а-яё])${f.hedge}(?![а-яё])`, after_norm);
@@ -1188,13 +1609,15 @@
             }
             const word = f.value;
             if (NEG_SKIP.has(word)) continue;
-            const negated = finditer(r`(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})`, after_norm).filter(m => stem_match(m.group(2), word, true));
-            if (negated.length) continue;
-            const hits = _occurrences(after_norm, word), src_hits = _occurrences(before_norm, word);
-            const only_negated_in_source = src_hits.every(([a, b]) => _negated_near(before_norm, a, b));
+            const negated = idx_a.negated_word(word);
+            if (negated) continue;
+            const hits = idx_a.occurrences(word);
+            const only_negated_in_source = idx_b.all_negated(word);
             if (hits.length) {
-                if (only_negated_in_source && hits.every(([a, b]) => !_negated_near(after_norm, a, b))) {
-                    (f.unit === "contrast" ? checks : errors).push({kind: "inverted", what: "отрицание", detail: `«${f.raw}» в правке стоит без отрицания`});
+                if (only_negated_in_source && idx_a.none_negated(word)) {
+                    const item = {kind: "inverted", what: "отрицание", detail: `«${f.raw}» в правке стоит без отрицания`};
+                    // «Вместо того чтобы купить» is the same refusal in other words: a check.
+                    (f.unit === "contrast" || idx_a.all_instead(word) ? checks : errors).push(item);
                 }
             } else {
                 const pref_rx = r`(?<![а-яё])не([а-яё]{4,})`;
@@ -1208,9 +1631,8 @@
             const word = f.value;
             if (!["не", "ни"].includes(f.hedge) || seen.has(word) || NEG_SKIP.has(word)) continue;
             seen.add(word);
-            const src_hits = _occurrences(before_norm, word);
-            if (src_hits.length && src_hits.every(([a, b]) => !_negated_near(before_norm, a, b)) &&
-                _occurrences(after_norm, word).every(([a, b]) => _negated_near(after_norm, a, b))) {
+            const src_hits = idx_b.occurrences(word);
+            if (src_hits.length && idx_b.none_negated(word) && idx_a.all_negated(word)) {
                 checks.push({kind: "inverted", what: "отрицание", detail: `«${f.raw}» в правке стоит с отрицанием`});
             }
         }
@@ -1381,9 +1803,22 @@
         }
         // END_BLOCK_BINDINGS
 
-        const counts = Object.fromEntries(["number", "date", "name", "url", "phone", "quote", "negation"].map(k => [k, fb.of(k).length]));
-        const result = {errors: _dedupe(errors), checks: _dedupe(checks), counts};
+        // The values of the chat assistant's own lines are not facts of the text: they are not
+        // counted as facts of the source either.
+        const counts = {};
+        for (const k of ["number", "date", "name", "url", "phone", "quote", "negation"]) {
+            const items = fb.of(k);
+            counts[k] = items.length;
+            if (["number", "name", "quote"].includes(k)) {
+                for (const [key, group] of service_items[k]) {
+                    if (in_service(k, group[0])) counts[k] -= group.length;
+                }
+            }
+        }
+        const result = {errors: _dedupe(errors), checks: _dedupe(checks), service: _dedupe(service), counts};
         textViews.clear();
+        indexes.clear();
+        capWords.clear();
         return result;
     }
     function _dedupe(items) {
@@ -1417,6 +1852,10 @@
                 lines.push(`  - ${verb} ${e.what}: ${e.detail}`);
             }
         }
+        if (result.service && result.service.length) {
+            lines.push("Убрано вместе со служебными строками чат-бота (не ошибка, но проверь, что это не текст автора):");
+            for (const e of result.service) lines.push(`  - ${e.what}: ${e.detail}`);
+        }
         if (result.checks.length) {
             lines.push(`Проверь глазами (${result.checks.length}):`);
             for (const e of result.checks) lines.push(`  - ${e.what}: ${e.detail}`);
@@ -1426,5 +1865,49 @@
     }
     // END_BLOCK_RENDER
 
-    return {compare, render};
+    // START_BLOCK_RECEIPT
+    // The notes line the skill copies word for word (SKILL.md step 6, R-RECEIPT).
+    const RECEIPT_FORMS = [  // counts key, forms for 1 / 2-4 / 5 and more
+        ["number", ["число", "числа", "чисел"]],
+        ["date", ["дата", "даты", "дат"]],
+        ["name", ["имя или название", "имени и названия", "имён и названий"]],
+        ["url", ["ссылка", "ссылки", "ссылок"]],
+        ["phone", ["телефон", "телефона", "телефонов"]],
+        ["quote", ["цитата", "цитаты", "цитат"]],
+        ["negation", ["отрицание", "отрицания", "отрицаний"]]
+    ];
+    function plural(n, forms) {
+        if (n % 10 === 1 && n % 100 !== 11) return forms[0];
+        if (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) return forms[1];
+        return forms[2];
+    }
+    function receipt(result) {
+        // «Сверка скриптом: …» for the notes; "" while there are errors other than lost facts.
+        const c = result.counts;
+        const have = RECEIPT_FORMS.filter(([k]) => c[k]).map(([k, forms]) => `${c[k]} ${plural(c[k], forms)}`).join(", ");
+        // The values of the chat assistant's own lines are not facts of the text: they are named
+        // apart, so the notes line does not read as a list of lost facts.
+        const service = result.service && result.service.length
+            ? "; вместе со служебными строками чат-бота убрано: " + result.service.map(s => s.detail).join(", ")
+            : "";
+        if (!result.errors.length) {
+            return "Сверка скриптом: " + (have ? `${have} на месте${service}.` : `чисел, дат и имён в тексте нет${service}.`);
+        }
+        if (result.errors.every(e => e.kind === "lost")) {
+            return `Сверка скриптом: в исходнике ${have || "фактов нет"}; в правке нет: ${result.errors.map(e => e.detail).join(", ")}${service}.`;
+        }
+        return "";
+    }
+    function receipt_hint(result) {
+        const line = receipt(result);
+        if (!result.errors.length) return "Строка для заметок: " + line;
+        if (line) {
+            return "Если пропавшее убрано намеренно (служебные слова чат-бота), строка для заметок: " + line + "\n"
+                + "Иначе верни факты и запусти сверку снова.";
+        }
+        return "Строки для заметок нет: исправь ошибки и запусти сверку снова.";
+    }
+    // END_BLOCK_RECEIPT
+
+    return {compare, render, receipt, receipt_hint};
 }));

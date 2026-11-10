@@ -162,14 +162,15 @@ END_MODULE_MAP
         ["negation", ["отрицание", "отрицания", "отрицаний"]]
       ];
 
-      // The lines of render() under «Ошибки (N):» and «Проверь глазами (N):», so the page and the
-      // script say the same words.
+      // The lines of render() under «Ошибки (N):», «Проверь глазами (N):» and «Убрано вместе со
+      // служебными строками чат-бота» (4.2.1: not errors), so the page and the script say the same words.
       function sections(text) {
-        const out = { errors: [], checks: [] };
+        const out = { errors: [], checks: [], service: [] };
         let cur = null;
         for (const line of text.split("\n")) {
           if (line.startsWith("Ошибки (")) cur = out.errors;
           else if (line.startsWith("Проверь глазами (")) cur = out.checks;
+          else if (line.startsWith("Убрано вместе со служебными строками")) cur = out.service;
           else if (line.startsWith("  - ") && cur) cur.push(line.slice(4));
           else if (!line.startsWith("  ")) cur = null;
         }
@@ -200,7 +201,8 @@ END_MODULE_MAP
           bad ? "Есть ошибки: " + lines.errors.length + ". Верните факты в текст."
               : "Ошибок не найдено" + (present.length ? ": " + present.join(", ") + " на месте." : ".")));
         if (present.length && bad) body.append(el("p", "note", "В исходнике: " + present.join(", ") + "."));
-        for (const [title, items, cls] of [["Ошибки", lines.errors, "errors"], ["Проверьте глазами", lines.checks, "checks"]]) {
+        for (const [title, items, cls] of [["Ошибки", lines.errors, "errors"], ["Проверьте глазами", lines.checks, "checks"],
+                                           ["Убрано вместе со служебными строками чат-бота (не ошибка, но проверь, что это не текст автора)", lines.service, "service"]]) {
           if (!items.length) continue;
           body.append(el("h3", "", title));
           const ul = el("ul", cls);
