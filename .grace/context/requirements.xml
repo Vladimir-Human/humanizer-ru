@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<requirements project="humanizer-ru" version="4.1.7" evidence="SKILL.md (instruction unchanged since 4.1.1), scripts, eval results of 2026-10-15 (results/final3)">
+<requirements project="humanizer-ru" version="4.2.0" evidence="SKILL.md (new instruction in 4.2.0), scripts, eval/README «Замер 4.2.0» (results/*-2026-11-09, *-2026-11-10)">
   <requirement id="R-REWRITE-DEFAULT" source="skills/humanizer-ru/SKILL.md: Режимы, Как править">
     Given Russian text with machine traces, the skill rewrites it by default and returns ready-to-send text. Other modes only on request: analysis without edits, a targeted single-layer edit, file mode (prose only), voice by the author's sample.
   </requirement>
@@ -36,6 +36,45 @@
   <requirement id="R-DIRECTORY" source="Anthropic docs: claude.com/docs/plugins/pre-submission-checklist and code.claude.com/docs/en/plugins/publish, read 2026-10-28">
     The plugin is prepared for Anthropic's plugin directory: plugin.json has a square PNG icon inside the plugin (512-2048 px, under 2 MB) and https links to the documentation and to support, and `claude plugin validate --profile directory --strict` passes. The directory reads the git branch `directory`, not main: scripts/build_directory.py builds the plugin and nothing else (manifest and icon, the skill, both READMEs, LICENSE; under 512 files, none over 256 KiB, no text file other than plugin.json names the icon), and the branch is rebuilt after every release. Reason: the portal's Validate of main on 2026-10-29 (0 blocks, 4 warnings, 12 policy holds) held the listing for eval/, scripts/, tests/ and the notes in the repository root, which name the icon, read FAL_KEY and add up to 1820 files. The directory's plugin name is humanizer-russian, put into the tree's plugin.json by the script (name and displayName only; main and the GitHub marketplace keep humanizer-ru): the portal held humanizer-ru as two characters from the plugins humanizer, and passed humanizer-russian (portal Validate, 2026-10-29). Left by design: plugin.json's icon, documentationUrl and supportUrl are fields only the directory reads (the portal says no action is needed). The README says what the scripts run and send (nothing leaves the machine). Submitting the plugin is the owner's action in the developer portal; the owner submitted it on 2026-10-29 (branch directory @ f63efc2), and the portal says no version goes live without an Anthropic reviewer (auto-publish «Doesn't apply for now»), so each commit to the branch is a version a person reads.
   </requirement>
+  <requirement id="R-REFERENCES-KEEP-FACTS" source="4.2.0 research 2026-11-09: patterns.md #1, #7, #12, #18 and examples.md #3, #5 added or dropped facts">
+    Every «Было → Стало» example in references/patterns.md and examples.md keeps every fact of «Было» and adds none: check_facts.compare reports no errors and no added checks for each pair.
+  </requirement>
+  <requirement id="R-PROBES" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0»">
+    A bank of short probes (at least 4 per rule of the instruction) with deterministic oracles: kept and dropped phrases, facts by check_facts, ё, questions asked, list items, bold, similarity and length. A candidate may not lose more on any rule than the spread between two runs of the previous version, and its total may not be lower. Met for 4.2.0: draft 112, final 109 of 120 against 108 for 4.1.7 (results/probes-bare-2026-11-09, probes-final-2026-11-10); the final run fell short on register and strengthening, and the pre-registered recheck (probes-regcheck-2026-11-10, 6 runs each, one-sided Fisher) found no regression: 3 of 48 failed against 1 of 48, p = 0.31.
+  </requirement>
+  <requirement id="R-HUMAN-CONTROLS" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0»">
+    The set human holds texts a good editor leaves almost untouched: 20 ru.wikinews articles as they stood on 2021-12-31 (seeded sample, permanent links and licence in the index), the v3 human texts written by people (not the ones written inside the project) and the traps. On it a candidate keeps similarity to the source within 0.02 of the previous version and has no more check_facts errors.
+  </requirement>
+  <requirement id="R-AGREED-WINS" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0»">
+    A place judge makes two passes with independent shuffles. ours wins over a rival on a text only when every pass puts it above; any split is a tie. Reports give agreed wins, losses and ties with a one-sided exact sign test and the number of wins needed, next to the bootstrap interval. Release gate: agreed wins over the previous version not fewer than agreed losses, and meaning-error texts not more.
+  </requirement>
+  <requirement id="R-LINT-STYLE" source="4.2.0 plan approved 2026-11-09 (RuSlop)">
+    lint_style.py finds the signs of the SKILL.md table as phrases from rules.json plus structure metrics, skips quotes and code blocks, and says it judges style, not authorship. rules.json is the single source for the script and the browser page site/check, whose engine gives the same report on the same text. Its rate on human texts is measured and published.
+  </requirement>
+  <requirement id="R-RULES-EVIDENCE" source="4.2.0 plan approved 2026-11-09: prevalence-first">
+    A heuristic is added to a script or to rules.json only after an observed failure or a measured lean: for a phrase, support in at least 8 texts and z of at least 3 in the matched human/model comparison (style_freq.py), then an eye check of its contexts.
+  </requirement>
+  <requirement id="R-RECEIPT" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0» gate 4">
+    When the agent can run commands it must run check_facts.py (step 6), and the last line of its notes is the line «Сверка скриптом: …» that check_facts.py prints (receipt): the counts of numbers, dates, names, links, phones, quotes and negations of the source and, if facts of the chat bot's service words were removed on purpose, the values missing in the edit; the script prints no line while another error is left. Without a terminal, or on a «только текст» request, there is no such line. Gate (eval/README amendment of 09.11 evening): the line is in at least 10 of 12 answers of an executor with a terminal and the counts and missing values it names are the script's for that source and edit. Met on 2026-11-09 (results/m4-receipt-line-2026-11-09: 12 of 12 and 12 of 12, word for word in 7).
+  </requirement>
+  <requirement id="R-INTERVIEW" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0» gate 5">
+    When the user asks to make a schematic text livelier and it has only general words, the agent edits without inventing details and asks up to three concrete questions after ---; it adds no fact that is neither in the text nor in the user's answers (references/interview.md). Gate: on 12 cases with a simulated author holding a hidden fact sheet, questions in at least 8 and no invented fact. Met: 12 of 12 asked, 0 invented (results/m5-interview-2026-11-09 draft, m5c-interview-2026-11-10 final); 4.1.7 asked in 0 of 12.
+  </requirement>
+  <requirement id="R-VOICE" status="dropped" source="4.2.0 plan approved 2026-11-09; eval/README «Замер 4.2.0» gate 6">
+    Not in 4.2.0: gate 6 (amended to at least 10 of 12 notes) failed on 2026-11-09, results/m6-voice-2026-11-09: the edit with the author's sample was closer to the author in 7 of 12 notes. references/voice.md left the skill and voice_profile.py moved to eval/ as the measuring tool of M-EVAL-VOICE. What it was meant to do: voice_profile.py builds a profile from the author's own text (a warning under 300 words) and gives a character 3-gram cosine distance plus up to five plain differences (sentence length, punctuation, ё, first person); references/voice.md tells the agent to use it only with the author's sample. Gate: for three authors of four the edit with the profile is closer to the author's held-out text than the edit without it.
+  </requirement>
+  <requirement id="R-PORTABLE-PROMPT" source="4.2.0 plan approved 2026-11-09 (reach)">
+    prompt/chat.md holds a compressed skill for chat bots between prompt:start and prompt:end markers, at most 4000 characters, without invisible characters; it is evaluated as the system chat on probes and holdout4 next to the plain request, and the site check page uses the same rules.json as the script.
+  </requirement>
+  <requirement id="R-SITE-FACTS" source="4.2.0 plan v3 P1, 2026-11-09 (reach: most Russian writers edit in chat bots, not in agents)">
+    The page site/sverka checks an edit made in any chat bot with nothing installed: it gives the chat prompt (site/sverka/prompt.txt, the prompt/chat.md body, kept identical by check_repo.py), cuts the notes after the last --- like evallib.split_notes and compares facts like check_facts.py through a JavaScript port (site/check/facts.js) whose report is the same, line for line; the texts never leave the page.
+  </requirement>
+  <requirement id="R-BARE-EXECUTOR" source="found 2026-11-09 in DSH run logs (events.ndjson: tool skill, skill_content humanizer-ru)">
+    An executor on the dsh: route sees only the system and user messages of its participant: evallib passes --bare to the DSH bridge, which switches off installed skills and AGENTS.md / CLAUDE.md. Without it the agent loaded the installed humanizer-ru by itself in 61 of 63 runs of the plain request on 2026-11-05 (the free-executor check of 4.1.7) and in 18 of 419 runs of skill participants, 47 of 125 news pairs and 16 of 36 generations of the holdout4 texts on 2026-11-09; those runs and texts are void (holdout4 regenerated with --bare before any kept measurement).
+  </requirement>
+  <requirement id="R-NOTES-NOT-TEXT" source="found 2026-11-09 in probes-bare-2026-11-09 (pr58: «Три вопроса» in the notes scored as an added number)">
+    Every fact check of the eval (report.py script errors, interview scorer) and every probe oracle except asks reads the edited text only: the notes to the author after the answer's last line "---" are cut when that tail talks about the edit, not the topic: at most 1200 characters, an editing word or a question mark outside quotes, and under half of its word stems (outside quotes) found in the source (evallib.split_notes). Counting "---" lines decides nothing, since sources carry their own sections and chat wrappers. Calibrated 09.11 on all 320 saved answers with a "---": 19 notes cut, 301 text sections kept, none misread; the earlier count-and-similarity rule missed notes that open with prose and cut text sections (cross-review 09.11, two rounds). asks reads the whole answer, since the questions are the notes. Applied to all participants alike.
+  </requirement>
   <rule id="R-NO-VERDICT" source="SKILL.md: Что вернуть, Границы">
     No authorship verdicts and no promise to fool AI detectors.
   </rule>
@@ -50,5 +89,6 @@
   </rule>
   <rule id="R-HOLDOUT" source="review 2026-10-15">
     Rules are tuned on the dev set only. Public claims come from texts the skill was never tuned on; once a set has been used to change the skill, a fresh set is generated for the next public comparison.
+    holdout4 was used on 2026-11-10 (f21 gave the step-5 clause on data for publishing, f14 the genres.md line on names in a shortened apology): its public numbers come only from results/m3-holdout4-2026-11-09; later holdout4 runs check the changes. The f14 case lives on as the apology_names probes (pr61-pr64).
   </rule>
 </requirements>

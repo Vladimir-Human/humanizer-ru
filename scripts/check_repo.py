@@ -17,7 +17,8 @@
 # png_size: bytes -> (width, height) of a whole PNG (chunk CRCs, IHDR first, IEND last, a header a
 #          decoder accepts, image data of exactly the declared size), None for anything else, a PNG
 #          cut short or damaged included.
-# check: list of problems for a repository root.
+# check: list of problems for a repository root (frontmatter, versions, listing, skill files,
+#        the site copy of rules.json and the length of prompt/chat.md).
 # main: CLI; exit 0 when clean, 1 with problems printed.
 # END_MODULE_MAP
 from __future__ import annotations
@@ -137,6 +138,8 @@ def check(root: Path) -> list:
         ".claude-plugin/plugin.json": lambda d: d.get("version"),
         ".claude-plugin/marketplace.json": lambda d: d["plugins"][0].get("version"),
         ".codex-plugin/plugin.json": lambda d: d.get("version"),
+        ".cursor-plugin/plugin.json": lambda d: d.get("version"),
+        "gemini-extension.json": lambda d: d.get("version"),
     }
     for rel, get in manifests.items():
         p = root / rel
@@ -205,7 +208,7 @@ def check(root: Path) -> list:
         if not (root / SKILL_DIR / target).exists():
             problems.append("SKILL.md ссылается на %s, файла нет" % target)
     for p in sorted((root / SKILL_DIR).rglob("*")):
-        if not p.is_file() or p.suffix not in (".md", ".py"):
+        if not p.is_file() or p.suffix not in (".md", ".py", ".json"):
             continue
         raw = p.read_bytes()
         rel = p.relative_to(root).as_posix()
@@ -216,6 +219,30 @@ def check(root: Path) -> list:
         if bad:
             problems.append("%s: невидимые символы %s" % (rel, ", ".join(bad)))
     # END_BLOCK_FILES
+
+    # START_BLOCK_PORTABLE
+    # The browser checker reads its own copy of rules.json; the chat prompt must fit the smallest
+    # instruction fields of chat services (4000 characters). Trees without them skip the check.
+    rules = root / SKILL_DIR / "scripts" / "rules.json"
+    site_rules = root / "site" / "check" / "rules.json"
+    if site_rules.exists() and rules.exists() and site_rules.read_bytes() != rules.read_bytes():
+        problems.append("site/check/rules.json отличается от %s: скопируйте его" % (SKILL_DIR / "scripts" / "rules.json"))
+    chat = root / "prompt" / "chat.md"
+    if chat.exists():
+        raw = chat.read_text(encoding="utf-8")
+        if "<!-- prompt:start -->" not in raw or "<!-- prompt:end -->" not in raw:
+            problems.append("prompt/chat.md: нет меток <!-- prompt:start --> и <!-- prompt:end -->")
+        else:
+            body = raw.split("<!-- prompt:start -->", 1)[1].split("<!-- prompt:end -->", 1)[0].strip()
+            if len(body) > 4000:
+                problems.append("prompt/chat.md: промпт длиннее 4000 знаков (%d)" % len(body))
+            # The fact-check page copies the prompt from its own file (GitHub Pages serves site/ only).
+            site_prompt = root / "site" / "sverka" / "prompt.txt"
+            if site_prompt.exists() and site_prompt.read_text(encoding="utf-8") != body + "\n":
+                problems.append("site/sverka/prompt.txt отличается от промпта в prompt/chat.md: скопируйте его")
+        if any(ord(c) in INVISIBLE for c in raw):
+            problems.append("prompt/chat.md: невидимые символы")
+    # END_BLOCK_PORTABLE
     return problems
 
 

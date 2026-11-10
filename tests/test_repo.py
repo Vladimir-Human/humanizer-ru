@@ -67,9 +67,10 @@ check_scripts = _load("check_scripts")
 class RepoTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        for rel in ("skills", ".claude-plugin", ".codex-plugin"):
+        for rel in ("skills", ".claude-plugin", ".codex-plugin", ".cursor-plugin"):
             shutil.copytree(ROOT / rel, self.tmp / rel)
-        shutil.copy(ROOT / "CHANGELOG.md", self.tmp / "CHANGELOG.md")
+        for rel in ("CHANGELOG.md", "gemini-extension.json"):
+            shutil.copy(ROOT / rel, self.tmp / rel)
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
@@ -83,6 +84,17 @@ class RepoTest(unittest.TestCase):
         data["version"] = "0.0.1"
         p.write_text(json.dumps(data), encoding="utf-8")
         self.assertTrue(any("plugin.json" in x for x in check_repo.check(self.tmp)))
+
+    def test_cursor_and_gemini_manifest_versions_are_checked(self):
+        for rel in (".cursor-plugin/plugin.json", "gemini-extension.json"):
+            p = self.tmp / rel
+            saved = p.read_text(encoding="utf-8")
+            data = json.loads(saved)
+            data["version"] = "0.0.1"
+            p.write_text(json.dumps(data), encoding="utf-8")
+            with self.subTest(manifest=rel):
+                self.assertTrue(any(x.startswith(rel) for x in check_repo.check(self.tmp)))
+            p.write_text(saved, encoding="utf-8")
 
     def test_grace_requirements_version_is_checked(self):
         # 4.1.7: requirements.xml said 4.1.1 while the release was 4.1.6.
@@ -104,6 +116,23 @@ class RepoTest(unittest.TestCase):
         problems = check_repo.check(self.tmp)
         self.assertTrue(any("CRLF" in x for x in problems))
         self.assertTrue(any("невидимые" in x for x in problems))
+
+    def test_site_rules_copy_and_chat_prompt_length(self):
+        # 4.2.0: the browser checker reads site/check/rules.json; the chat prompt must fit 4000 characters.
+        shutil.copytree(ROOT / "site", self.tmp / "site")
+        shutil.copytree(ROOT / "prompt", self.tmp / "prompt")
+        self.assertEqual(check_repo.check(self.tmp), [])
+        rules = self.tmp / "skills" / "humanizer-ru" / "scripts" / "rules.json"
+        rules.write_text(rules.read_text(encoding="utf-8").replace('"many": 5.0', '"many": 6.0'), encoding="utf-8")
+        self.assertTrue(any("site/check/rules.json" in x for x in check_repo.check(self.tmp)))
+        shutil.copy(rules, self.tmp / "site" / "check" / "rules.json")
+        chat = self.tmp / "prompt" / "chat.md"
+        chat.write_text(chat.read_text(encoding="utf-8").replace("<!-- prompt:end -->", "я" * 1000 + "\n<!-- prompt:end -->"), encoding="utf-8")
+        too_long = [x for x in check_repo.check(self.tmp) if "4000" in x]
+        self.assertEqual(len(too_long), 1)
+        self.assertIn("prompt/chat.md: промпт длиннее 4000 знаков", too_long[0])
+        # The fact-check page copies its own prompt.txt: a stale copy is caught.
+        self.assertTrue(any("site/sverka/prompt.txt" in x for x in check_repo.check(self.tmp)))
 
     def _plugin_json(self, **changes):
         p = self.tmp / ".claude-plugin" / "plugin.json"
@@ -163,6 +192,69 @@ class RepoTest(unittest.TestCase):
         self.assertIn("humanizer-ru/SKILL.md", names)
         self.assertTrue(all(n.startswith("humanizer-ru/") and n.isascii() for n in names))
         self.assertFalse(any("__pycache__" in n for n in names))
+
+
+def _load_skill(name):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "skills" / "humanizer-ru" / "scripts" / (name + ".py"))
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def reference_pairs(patterns: str, examples: str):
+    """Every «Было → Стало» pair of the references: one-line pairs in patterns.md (a «A» / «B»
+    line gives two pairs) and quoted blocks in examples.md. «Стало» lines that only describe
+    the action («удалить абзац») are not pairs."""
+    import re
+    pairs = []
+    rx = re.compile(r"^Было: «(.+?)»(?: / «(.+?)»)?\nСтало: «(.+?)»(?: / «(.+?)»)?", re.M)
+    for m in rx.finditer(patterns):
+        pairs.append(("patterns: " + m.group(1)[:40], m.group(1), m.group(3)))
+        if m.group(2) and m.group(4):
+            pairs.append(("patterns: " + m.group(2)[:40], m.group(2), m.group(4)))
+
+    def unquote(block):
+        return "\n".join(line[2:] if line.startswith("> ") else line[1:] for line in block.splitlines())
+
+    for sec in re.split(r"^## ", examples, flags=re.M)[1:]:
+        m = re.search(r"Было:\n\n((?:>.*\n)+)\nСтало:\n\n((?:>.*\n)+)", sec)
+        if m:
+            pairs.append(("examples: " + sec.split("\n")[0], unquote(m.group(1)), unquote(m.group(2))))
+    return pairs
+
+
+class ReferencesTest(unittest.TestCase):
+    """R-REFERENCES-KEEP-FACTS: the examples teach the executor by imitation, so an example that
+    invents a number or a name teaches inventing (4.2.0 found «12 уроков», «версия 2.4»,
+    «портал HR» in patterns.md)."""
+
+    def setUp(self):
+        self.cf = _load_skill("check_facts")
+        ref = ROOT / "skills" / "humanizer-ru" / "references"
+        self.patterns = (ref / "patterns.md").read_text(encoding="utf-8")
+        self.examples = (ref / "examples.md").read_text(encoding="utf-8")
+
+    def bad(self, before, after):
+        r = self.cf.compare(before, after)
+        return r["errors"] + [c for c in r["checks"] if c["kind"] == "added"]
+
+    def test_every_example_keeps_the_facts_and_adds_none(self):
+        pairs = reference_pairs(self.patterns, self.examples)
+        self.assertGreaterEqual(len(pairs), 25)
+        self.assertGreaterEqual(sum(1 for p in pairs if p[0].startswith("examples")), 5)
+        for where, before, after in pairs:
+            self.assertEqual(self.bad(before, after), [], where)
+
+    def test_an_invented_fact_in_an_example_is_caught(self):
+        for old, new in (("Стало: «В курсе 12 уроков по Excel: от формул до сводных таблиц.»",
+                          "Стало: «В курсе 14 уроков по Excel: от формул до сводных таблиц.»"),
+                         ("Стало: «Вышла версия 2.4.»", "Стало: «Вышла версия 2.5.»"),
+                         ("Стало: «Заявку на отпуск подают на портале HR не позднее чем за две недели.»",
+                          "Стало: «Заявку на отпуск подают на портале HR не позднее чем за три недели.»")):
+            self.assertEqual(self.patterns.count(old), 1, old)
+            broken = reference_pairs(self.patterns.replace(old, new), self.examples)
+            self.assertTrue(any(self.bad(b, a) for _, b, a in broken), new)
 
 
 class DirectoryTest(unittest.TestCase):

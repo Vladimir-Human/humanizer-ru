@@ -14,11 +14,13 @@
 # dsh_task_text / dsh_answer: messages -> one bridge task; bridge JSON -> (message, usage).
 # Ledger: reads/writes eval/.cache/spend.json, refuses calls past the cap.
 # read_json / write_json / read_text / write_text: UTF-8 file helpers.
+# split_notes: answer -> (edited text, notes after the last '---'); fact checks use the text.
 # END_MODULE_MAP
 from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -57,7 +59,61 @@ def write_json(path, data) -> None:
     write_text(path, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
 
 
+# START_CONTRACT: split_notes
+# PURPOSE: The edited text of an answer without the notes to the author (R-NOTES-NOT-TEXT).
+# INPUTS: answer; source (the text that was edited, "" when unknown).
+# OUTPUTS: (text, notes); notes follow the last line that is exactly "---".
+# RULES: the tail after the answer's last "---" is notes when it talks about the edit, not the
+#        topic: at most NOTE_MAX_CHARS, an editing word or a question mark outside quotes, and
+#        under half of its word stems (outside «quotes») found in the source. Counting "---" lines
+#        does not decide it: sources carry their own sections and chat wrappers, and an edit may
+#        drop, keep or add separators. Calibrated 09.11.2026 on all 320 saved eval answers with a
+#        "---" (1841 answers): 19 notes cut, 301 text sections kept, no disagreement with a
+#        reading by eye; the old count-and-similarity rule cut a text's closing paragraph and
+#        kept notes that open with prose (cross-review F1-F3).
+#        Fact checks compare source with text: «Три вопроса» in the notes is not an added fact.
+# END_CONTRACT: split_notes
+NOTE_MAX_CHARS = 1200
+NOTE_QUOTE_RX = re.compile(r"«[^»\n]*»|\"[^\"\n]*\"|“[^”\n]*”")
+NOTE_EDIT_RX = re.compile(
+    r"(?i)\?|\b(?:убра|убир|замен|сократ|переп|правк|правил|исправ|оставил|оставлен|остал|не трога|"
+    r"вопрос|сверк|уточн|знак|обёрт|оберт|заметк|провер|добав|удал|заглушк|плейсхолдер|текст|"
+    r"абзац|заголов|сня[лв]|штамп|канцел|изменен|изменил)")
+NOTE_WORD_RX = re.compile(r"[A-Za-zА-Яа-яЁё]{4,}")
+
+
+def _stems(text: str) -> set:
+    return {w.lower().replace("ё", "е")[:5] for w in NOTE_WORD_RX.findall(text)}
+
+
+def split_notes(answer: str, source: str = "") -> tuple:
+    lines = answer.rstrip().split("\n")
+    rules = [i for i, ln in enumerate(lines) if ln.strip() == "---"]
+    if not rules:
+        return answer.strip(), ""
+    text, notes = "\n".join(lines[:rules[-1]]).strip(), "\n".join(lines[rules[-1] + 1:]).strip()
+    if notes and len(notes) <= NOTE_MAX_CHARS:
+        bare = NOTE_QUOTE_RX.sub(" ", notes)
+        if NOTE_EDIT_RX.search(bare):
+            stems = _stems(bare)
+            if not stems or len(stems & _stems(source)) / len(stems) < 0.5:
+                return text, notes
+    return answer.strip(), ""
+
+
 class BudgetExceeded(RuntimeError):
+    pass
+
+
+# A plan quota does not come back in minutes (MiniMax Token Plan answers 429 «已达到 Token Plan 用量上限»).
+# The first such answer closes the route for this process: no retries, and every later call fails
+# at once without reaching the provider. 2026-11-09: a run kept retrying 24 calls 3 times each after
+# the MiniMax quota had ended. A per-minute rate limit («token rate limit» on Sol) is not a quota.
+QUOTA_RX = re.compile(r"Token Plan|用量上限|insufficient_quota|exceeded your current quota|usage limit|plan quota", re.I)
+EXHAUSTED: set = set()
+
+
+class QuotaExhausted(BudgetExceeded):
     pass
 
 
@@ -116,22 +172,34 @@ DSH_RULES = ("Answer in your reply only: do not create, read or change files and
              "Everything you need is below.")
 
 
+DSH_TURNS = {"user": "Сообщение пользователя:", "assistant": "Твой ответ:"}
+DSH_LAST = "Новое сообщение пользователя, ответь на него:"
+
+
 def dsh_task_text(messages: list) -> str:
-    """System instructions first, then the user's messages, under the bridge rules."""
+    """System instructions first, then the user's messages, under the bridge rules. A conversation
+    with earlier answers (the interview's third turn) is written out turn by turn, since the bridge
+    takes one task text; it has to end with a user message."""
     def text(content):
         return content if isinstance(content, str) else "".join(c.get("text", "") for c in content)
     roles = {m["role"] for m in messages}
-    if roles - {"system", "user"}:
-        raise ValueError("the dsh route takes system and user messages only")
+    if roles - {"system", "user", "assistant"}:
+        raise ValueError("the dsh route takes system, user and assistant messages only")
     parts = [DSH_RULES] + [text(m["content"]) for m in messages if m["role"] == "system"]
-    parts += [text(m["content"]) for m in messages if m["role"] == "user"]
+    talk = [m for m in messages if m["role"] != "system"]
+    if "assistant" not in roles:
+        return "\n\n".join(parts + [text(m["content"]) for m in talk])
+    if not talk or talk[-1]["role"] != "user":
+        raise ValueError("a conversation for the dsh route has to end with a user message")
+    parts += ["%s\n%s" % (DSH_TURNS[m["role"]], text(m["content"])) for m in talk[:-1]]
+    parts.append("%s\n%s" % (DSH_LAST, text(talk[-1]["content"])))
     return "\n\n".join(parts)
 
 
 def dsh_answer(report: dict):
     """Bridge --json report -> (message, usage). A failed run or an empty answer raises."""
     if not report.get("ok"):
-        why = report.get("errors") or report.get("stderrTail") or [report.get("endReason")]
+        why = report.get("errors") or report.get("stderrTail") or [report.get("error") or report.get("endReason")]
         raise RuntimeError("dsh run failed: %s %s" % (report.get("failKind"), "; ".join(map(str, why))[:300]))
     text = report.get("answer") or ""
     if report.get("answerTruncated") and report.get("answerPath"):
@@ -148,12 +216,17 @@ def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
     ref = model[len(DSH_PREFIX):]
     if ref not in DSH_FREE:
         raise SystemExit("%s is not an approved free DSH route (%s)" % (ref, ", ".join(sorted(DSH_FREE))))
+    if ref in EXHAUSTED:
+        raise QuotaExhausted("%s: the plan quota ended earlier in this run; nothing sent" % ref)
     work = CACHE_DIR / "dsh"
     (work / "cwd").mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", dir=work, delete=False) as fh:
         fh.write(dsh_task_text(messages))
     # --no-fallback: when the free route fails the bridge must not switch to a paid fal model.
-    cmd = ["node", str(DSH_TASK), "--model", ref, "--cwd", str(work / "cwd"), "--confirm", "--no-fallback",
+    # --bare (R-BARE-EXECUTOR): no installed skills and no AGENTS.md / CLAUDE.md in the agent's context.
+    # Without it the agent loaded the installed humanizer-ru by itself: 61 of 63 runs of the plain
+    # request on 2026-11-05 were the skill, not the plain request.
+    cmd = ["node", str(DSH_TASK), "--model", ref, "--cwd", str(work / "cwd"), "--confirm", "--no-fallback", "--bare",
            "--max-cost", "1", "--max-chars", "100000", "--json", "--task-file", fh.name]
     if effort:
         cmd += ["--effort", effort]
@@ -170,6 +243,10 @@ def _dsh_chat(model: str, messages: list, effort, tag: str, retries: int = 3):
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
                 # The free routes restart now and then ("Server is restarting; please retry shortly").
                 last = exc
+                if QUOTA_RX.search(str(exc)):
+                    EXHAUSTED.add(ref)
+                    print("[M-EVAL-LIB][BLOCK_DSH] %s %s: plan quota ended, route closed for this run" % (tag, ref))
+                    raise QuotaExhausted("%s: plan quota ended: %s" % (ref, str(exc)[:200])) from exc
                 print("[M-EVAL-LIB][BLOCK_DSH] %s %s attempt %d failed: %s" % (tag, ref, attempt + 1, str(exc)[:200]))
                 time.sleep(30 * (attempt + 1))
                 continue

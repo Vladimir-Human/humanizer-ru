@@ -1,0 +1,42 @@
+[
+  {
+    "id": "gilyarovsky",
+    "author": "В. А. Гиляровский",
+    "title": "Москва и москвичи (Гиляровский)/Сухаревка",
+    "revision": 5615362,
+    "url": "https://ru.wikisource.org/w/index.php?oldid=5615362",
+    "licence": "общественное достояние",
+    "words": 5318,
+    "pre_reform": 0
+  },
+  {
+    "id": "rozanov",
+    "author": "В. В. Розанов",
+    "title": "Уединенное (Розанов)",
+    "revision": 5312048,
+    "url": "https://ru.wikisource.org/w/index.php?oldid=5312048",
+    "licence": "общественное достояние",
+    "words": 18897,
+    "pre_reform": 0
+  },
+  {
+    "id": "chekhov",
+    "author": "А. П. Чехов",
+    "title": "Остров Сахалин (Чехов)/Глава 03",
+    "revision": 4932830,
+    "url": "https://ru.wikisource.org/w/index.php?oldid=4932830",
+    "licence": "общественное достояние",
+    "words": 2925,
+    "pre_reform": 0
+  },
+  {
+    "id": "doroshevich",
+    "author": "В. М. Дорошевич",
+    "title": "Сахалин (Дорошевич)/Столица Сахалина",
+    "revision": 5193779,
+    "url": "https://ru.wikisource.org/w/index.php?oldid=5193779",
+    "licence": "общественное достояние",
+    "words": 2647,
+    "pre_reform": 0
+  }
+]

@@ -1,0 +1,1155 @@
+{
+  "cells": {
+    "chat|r0": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        3,
+        4
+      ],
+      "no_add": [
+        4,
+        4
+      ],
+      "gram_dash": [
+        4,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        3,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        3,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        4,
+        4
+      ]
+    },
+    "chat|r1": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        3,
+        4
+      ],
+      "no_add": [
+        3,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        3,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        3,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        2,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        4,
+        4
+      ]
+    },
+    "ours|r0": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        2,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        3,
+        4
+      ],
+      "placeholder": [
+        3,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        3,
+        4
+      ]
+    },
+    "ours|r1": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        4,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        3,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        4,
+        4
+      ]
+    },
+    "ours417|r0": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        3,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        0,
+        4
+      ]
+    },
+    "ours417|r1": {
+      "hedge": [
+        4,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        4,
+        4
+      ],
+      "gram_dash": [
+        4,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        4,
+        4
+      ],
+      "injection": [
+        4,
+        4
+      ],
+      "legal": [
+        4,
+        4
+      ],
+      "human_good": [
+        4,
+        4
+      ],
+      "steps_list": [
+        4,
+        4
+      ],
+      "yo": [
+        2,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ],
+      "interview": [
+        0,
+        4
+      ]
+    },
+    "prompt|r0": {
+      "hedge": [
+        3,
+        4
+      ],
+      "attribution": [
+        4,
+        4
+      ],
+      "no_add": [
+        2,
+        4
+      ],
+      "gram_dash": [
+        2,
+        4
+      ],
+      "false_contrast": [
+        3,
+        4
+      ],
+      "register": [
+        3,
+        4
+      ],
+      "placeholder": [
+        4,
+        4
+      ],
+      "chat_wrapper": [
+        3,
+        4
+      ],
+      "injection": [
+        3,
+        4
+      ],
+      "legal": [
+        2,
+        4
+      ],
+      "human_good": [
+        2,
+        4
+      ],
+      "steps_list": [
+        3,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        2,
+        4
+      ],
+      "interview": [
+        0,
+        4
+      ]
+    },
+    "prompt|r1": {
+      "hedge": [
+        3,
+        4
+      ],
+      "attribution": [
+        3,
+        4
+      ],
+      "no_add": [
+        3,
+        4
+      ],
+      "gram_dash": [
+        3,
+        4
+      ],
+      "false_contrast": [
+        4,
+        4
+      ],
+      "register": [
+        4,
+        4
+      ],
+      "placeholder": [
+        3,
+        4
+      ],
+      "chat_wrapper": [
+        1,
+        4
+      ],
+      "injection": [
+        2,
+        4
+      ],
+      "legal": [
+        2,
+        4
+      ],
+      "human_good": [
+        3,
+        4
+      ],
+      "steps_list": [
+        3,
+        4
+      ],
+      "yo": [
+        4,
+        4
+      ],
+      "strengthening": [
+        1,
+        4
+      ],
+      "interview": [
+        0,
+        4
+      ]
+    }
+  },
+  "fails": {
+    "chat": {
+      "pr06 keep_any:эксперт|аналитик|специалист|по мнению": 2,
+      "pr21 keep_re:\\b[Вв](?:ы|ас|ам|аш)": 1,
+      "pr36 facts": 1,
+      "pr10 drop:новый уровень": 1,
+      "pr15 drop:в курсе актуальной": 1,
+      "pr17 drop:не просто\\b[^.!?]{0,80},\\s*а\\b": 1,
+      "pr28 drop:неоценим": 1,
+      "pr51 drop:осуществляется": 1,
+      "pr52 drop:шедевр": 1
+    },
+    "ours": {
+      "pr10 drop:новый уровень": 1,
+      "pr12 drop:открывает новые возможности": 1,
+      "pr14 keep_re:—\\s*450": 2,
+      "pr21 keep_re:\\b[Вв](?:ы|ас|ам|аш)": 1,
+      "pr28 drop:неоценим": 1,
+      "pr59 asks": 1,
+      "pr52 drop:шедевр": 1
+    },
+    "ours417": {
+      "pr10 drop:новый уровень": 1,
+      "pr14 keep_re:—\\s*450": 1,
+      "pr57 asks": 2,
+      "pr58 asks": 2,
+      "pr59 asks": 2,
+      "pr60 asks": 2,
+      "pr51 drop:осуществляется": 1,
+      "pr52 drop:шедевр": 1
+    },
+    "prompt": {
+      "pr02 keep_any:мог|может|возможн": 2,
+      "pr09 drop:широкий спектр": 1,
+      "pr09 drop:комплексн": 1,
+      "pr10 drop:новый уровень": 1,
+      "pr14 keep_re:—\\s*450": 2,
+      "pr15 keep_re:колонке\\s+—\\s+план": 1,
+      "pr18 drop:[Дд]ело не в": 1,
+      "pr21 keep_re:\\b[Вв](?:ы|ас|ам|аш)": 1,
+      "pr31 drop:utm_source": 2,
+      "pr36 keep:https://example.com/promo": 1,
+      "pr36 facts": 2,
+      "pr37 min_similarity": 2,
+      "pr38 min_similarity": 2,
+      "pr42 min_similarity": 1,
+      "pr43 min_similarity": 2,
+      "pr47 keep:если это безопасно": 1,
+      "pr54 keep_any:может|возможн|рискует|риск": 2,
+      "pr56 keep_any:иногда|бывает|порой|время от времени": 2,
+      "pr57 facts": 2,
+      "pr58 facts": 2,
+      "pr58 asks": 2,
+      "pr59 facts": 2,
+      "pr59 asks": 2,
+      "pr60 asks": 2,
+      "pr05 facts": 1,
+      "pr12 drop:открывает новые возможности": 1,
+      "pr26 drop:говорит сам за себя": 1,
+      "pr29 drop:Если хотите": 1,
+      "pr32 drop:Могу также": 1,
+      "pr35 keep:2 час": 1,
+      "pr35 drop:\\b(?:the|and|was|on time)\\b": 1,
+      "pr45 facts": 1,
+      "pr55 drop:\\bглавн": 1,
+      "pr57 asks": 1,
+      "pr60 facts": 1
+    }
+  },
+  "table": {
+    "chat": {
+      "attribution": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          3,
+          3
+        ],
+        "spread": 0
+      },
+      "chat_wrapper": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "false_contrast": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "gram_dash": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "hedge": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "human_good": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "injection": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "interview": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "legal": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "no_add": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "placeholder": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "register": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "steps_list": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "strengthening": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "yo": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          4,
+          2
+        ],
+        "spread": 2
+      },
+      "_all": {
+        "passed": 110,
+        "total": 120,
+        "per_run": [
+          57,
+          53
+        ],
+        "spread": 4
+      }
+    },
+    "ours": {
+      "attribution": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "chat_wrapper": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "false_contrast": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "gram_dash": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          3,
+          3
+        ],
+        "spread": 0
+      },
+      "hedge": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "human_good": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "injection": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "interview": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "legal": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "no_add": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          2,
+          4
+        ],
+        "spread": 2
+      },
+      "placeholder": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "register": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "steps_list": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "strengthening": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "yo": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "_all": {
+        "passed": 112,
+        "total": 120,
+        "per_run": [
+          54,
+          58
+        ],
+        "spread": 4
+      }
+    },
+    "ours417": {
+      "attribution": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "chat_wrapper": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "false_contrast": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "gram_dash": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "hedge": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "human_good": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "injection": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "interview": {
+        "passed": 0,
+        "total": 8,
+        "per_run": [
+          0,
+          0
+        ],
+        "spread": 0
+      },
+      "legal": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "no_add": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "placeholder": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "register": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "steps_list": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "strengthening": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "yo": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          4,
+          2
+        ],
+        "spread": 2
+      },
+      "_all": {
+        "passed": 108,
+        "total": 120,
+        "per_run": [
+          54,
+          54
+        ],
+        "spread": 0
+      }
+    },
+    "prompt": {
+      "attribution": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "chat_wrapper": {
+        "passed": 4,
+        "total": 8,
+        "per_run": [
+          3,
+          1
+        ],
+        "spread": 2
+      },
+      "false_contrast": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "gram_dash": {
+        "passed": 5,
+        "total": 8,
+        "per_run": [
+          2,
+          3
+        ],
+        "spread": 1
+      },
+      "hedge": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          3,
+          3
+        ],
+        "spread": 0
+      },
+      "human_good": {
+        "passed": 5,
+        "total": 8,
+        "per_run": [
+          2,
+          3
+        ],
+        "spread": 1
+      },
+      "injection": {
+        "passed": 5,
+        "total": 8,
+        "per_run": [
+          3,
+          2
+        ],
+        "spread": 1
+      },
+      "interview": {
+        "passed": 0,
+        "total": 8,
+        "per_run": [
+          0,
+          0
+        ],
+        "spread": 0
+      },
+      "legal": {
+        "passed": 4,
+        "total": 8,
+        "per_run": [
+          2,
+          2
+        ],
+        "spread": 0
+      },
+      "no_add": {
+        "passed": 5,
+        "total": 8,
+        "per_run": [
+          2,
+          3
+        ],
+        "spread": 1
+      },
+      "placeholder": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "register": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "steps_list": {
+        "passed": 6,
+        "total": 8,
+        "per_run": [
+          3,
+          3
+        ],
+        "spread": 0
+      },
+      "strengthening": {
+        "passed": 3,
+        "total": 8,
+        "per_run": [
+          2,
+          1
+        ],
+        "spread": 1
+      },
+      "yo": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "_all": {
+        "passed": 79,
+        "total": 120,
+        "per_run": [
+          40,
+          39
+        ],
+        "spread": 1
+      }
+    }
+  }
+}

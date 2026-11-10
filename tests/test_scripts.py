@@ -426,6 +426,24 @@ class CheckFactsTest(unittest.TestCase):
         self.assertEqual(r["counts"]["quote"], 0)
         self.assertEqual(r["errors"], [])
 
+    def test_source_from_stdin_is_read_as_utf8_whatever_the_console(self):
+        # 4.2.0: on Windows sys.stdin decodes with the console code page (cp1251); two identical
+        # UTF-8 texts with the source piped in gave four false errors. cp1251 imitates that console.
+        import os
+        tmp = ROOT / "tests" / "_tmp_cf"
+        tmp.mkdir(exist_ok=True)
+        try:
+            text = "Анна получила 30 000 рублей 12 марта по словам бухгалтера."
+            (tmp / "same.txt").write_text(text, encoding="utf-8")
+            env = dict(os.environ, PYTHONIOENCODING="cp1251")
+            env.pop("PYTHONUTF8", None)
+            res = subprocess.run([sys.executable, str(SCRIPTS / "check_facts.py"), "-", str(tmp / "same.txt")],
+                                 input=text.encode("utf-8"), capture_output=True, env=env)
+            self.assertEqual(res.returncode, 0, res.stdout.decode("cp1251", "replace"))
+        finally:
+            for p in tmp.glob("*"):
+                p.unlink()
+
     def test_cli_exit_codes(self):
         tmp = ROOT / "tests" / "_tmp_cf"
         tmp.mkdir(exist_ok=True)
@@ -446,6 +464,23 @@ class CheckFactsTest(unittest.TestCase):
             tmp.rmdir()
 
 
+    def test_list_markers_are_structure_not_facts(self):
+        # 4.2.0: examples.md #4 turns prose into steps; the markers were read as added numbers
+        # (98 such errors over 1596 old eval edits).
+        prose = ("Проверьте, что с покупки прошло не более 14 дней. Сохраните чек. "
+                 "Товары со скидкой более 50% возврату не подлежат.")
+        steps = ("1. Проверьте, что с покупки прошло не больше 14 дней.\n2) Сохраните чек.\n\n"
+                 "Товары со скидкой больше 50% вернуть нельзя.")
+        self.assertEqual(cf.compare(prose, steps)["errors"], [])
+        self.assertEqual(cf.compare(steps, prose)["errors"], [])
+        for marker in ("## 3. Раздел\n\nТекст.", "> 4. Пункт.", "- 5. Пункт.", "   6) Пункт.",
+                       "**7. Пункт**", "**8.** Пункт.", "9. Пункт.", "\ufeff1. Пункт."):
+            self.assertEqual(cf.compare(marker, "Текст без номера.")["errors"], [], marker)
+        # A number inside an item is still a fact, and a number that is not a marker too.
+        self.assertIn("lost", kinds(cf.compare("1. Возьмите 3 пакета.", "1. Возьмите пакеты.")))
+        self.assertIn("lost", kinds(cf.compare("Осталось 3. Потом ещё.", "Осталось немного. Потом ещё.")))
+        self.assertIn("lost", kinds(cf.compare("Мест:\n120. Это много.", "Мест много.")))
+
     # 4.1.4: defects found by a property run over the eval texts and by two model bug hunts.
     def errs(self, a, b):
         return {(e["kind"], e["what"]) for e in cf.compare(a, b)["errors"]}
@@ -454,6 +489,19 @@ class CheckFactsTest(unittest.TestCase):
         self.assertIn(("lost", "число"), self.errs("Версия 2.1.3 вышла.", "Версия 2.1.4 вышла."))
         self.assertIn(("lost", "дата"), self.errs("Встреча в среду.", "Встреча в четверг."))
         self.assertEqual(self.errs("Рабочая среда готова.", "Окружение готово."), set())
+        # Frontier arm 09.11 (f30): «пн–пт» spelled out as «с понедельника по пятницу» was two added dates.
+        self.assertEqual(self.errs("Работаем пн–пт с 9:00.", "Работаем с понедельника по пятницу с 9:00."), set())
+        self.assertEqual(self.errs("Сб-Вс: выходной.", "В субботу и воскресенье выходной."), set())
+        self.assertIn(("lost", "дата"), self.errs("Работаем пн–пт.", "Работаем с понедельника по четверг."))
+        self.assertEqual(self.errs("Ср. выше.", "Сравните выше."), set())  # «ср.» alone is «сравни»
+        # M3 09.11 (f01 ours): «15 или 16 ноября» read 15 as a new number.
+        self.assertEqual(self.errs("Завтрак только 14, 15 и 16 ноября.", "Приходите 14, 15 или 16 ноября."), set())
+        self.assertIn(("lost", "дата"), self.errs("Приходите 15 или 16 ноября.", "Приходите 16 ноября."))
+        # check_scripts --against main 10.11 (final2 chukovsky n20): «в 2 раза дешевле» → «вдвое дешевле»
+        # was a lost 2 once list numbers stopped hiding it.
+        self.assertEqual(self.errs("Парафин в 2 раза дешевле.", "Парафин вдвое дешевле."), set())
+        self.assertEqual(self.errs("Цена выросла втрое.", "Цена выросла в три раза."), set())
+        self.assertIn(("lost", "число"), self.errs("Гостей вдвое больше.", "Гостей больше."))
         self.assertIn(("lost", "код"), self.errs("Код: `npm run build`", "Код: `npm run dev`"))
         r = cf.compare("Запуск: `make`", "Запуск: make")
         self.assertEqual(r["errors"], [])
@@ -509,6 +557,27 @@ class CheckFactsTest(unittest.TestCase):
     def test_report_agrees_in_gender(self):
         text = cf.render(cf.compare("Звоните: +7 999 123-45-67.", "Звоните нам."))
         self.assertIn("потерян телефон", text)
+
+    def test_receipt_line_is_the_scripts_own(self):
+        # R-RECEIPT, M4 2026-11-09: agents retold the report and gave other numbers in 3 of 9 lines, so
+        # the script writes the notes line itself; it never says «на месте» while an error is left.
+        src = "Анна, скидка 20% до 30 ноября, звоните +7 999 123-45-67."
+        self.assertEqual(cf.receipt(cf.compare(src, src)),
+                         "Сверка скриптом: 1 число, 1 дата, 1 имя или название, 1 телефон на месте.")
+        lost = cf.compare(src, "Анна, скидка до 30 ноября, звоните +7 999 123-45-67.")
+        self.assertEqual(cf.receipt(lost), "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя или название, "
+                                           "1 телефон; в правке нет: 20%.")
+        added = cf.compare(src, src.replace("20%", "25%"))
+        self.assertEqual(cf.receipt(added), "")
+        self.assertIn("Строки для заметок нет", cf.receipt_hint(added))
+        self.assertIn("Строка для заметок: Сверка скриптом:", cf.receipt_hint(cf.compare(src, src)))
+        self.assertEqual(cf.receipt(cf.compare("Хорошо.", "Хорошо.")), "Сверка скриптом: чисел, дат и имён в тексте нет.")
+        forms = ("число", "числа", "чисел")
+        self.assertEqual([cf.plural(n, forms) for n in (1, 2, 5, 11, 12, 14, 21, 22, 25, 101, 111, 112)],
+                         ["число", "числа", "чисел", "чисел", "чисел", "чисел", "число", "числа", "чисел",
+                          "число", "чисел", "чисел"])
+        for text in ("Анна, 5 мая.", "Числа 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21."):
+            self.assertTrue(cf.receipt(cf.compare(text, text)).endswith("на месте."), text)
 
     # 4.1.5: findings of the cross-review of 4.1.4 (GPT-6.1 Sol, Gemini 4 Argon), each rerun first.
     def test_ip_addresses_and_versions_are_whole_tokens(self):

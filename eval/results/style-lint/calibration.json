@@ -1,0 +1,322 @@
+{
+  "Люди: Викиновости до 2022, настройка (150)": {
+    "texts": 150,
+    "rules": {
+      "chat_wrapper": 0.0,
+      "assistant_context": 0.0,
+      "paste_garbage": 0.0,
+      "empty_opener": 0.02,
+      "false_contrast": 0.007,
+      "ne_tolko_no_i": 0.027,
+      "inflated": 0.0,
+      "symbolism": 0.0,
+      "unique": 0.027,
+      "kantselyarit": 0.093,
+      "yavlyaetsya": 0.073,
+      "calque": 0.007,
+      "odnako_comma": 0.027,
+      "significance_tail": 0.0,
+      "anonymous_authority": 0.027,
+      "triad": 0.007,
+      "moral_ending": 0.013,
+      "teaser": 0.0,
+      "metatext": 0.0,
+      "empty_general": 0.007,
+      "connector_opener": 0.067,
+      "bold_label": 0.0,
+      "hedge_cascade": 0.0,
+      "business_pathos": 0.0,
+      "template_politeness": 0.0
+    },
+    "metrics_over": {
+      "dash_per_1000": 0.013,
+      "sentence_cv": 0.04,
+      "same_opener_share": 0.047,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_median": {
+      "dash_per_1000": 1.18,
+      "sentence_cv": 0.44,
+      "same_opener_share": 0.17,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_p90": {
+      "dash_per_1000": 3.12,
+      "sentence_cv": 0.63,
+      "same_opener_share": 0.25,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "levels": {
+      "нет": 0.653,
+      "мало": 0.207,
+      "есть": 0.113,
+      "много": 0.027
+    },
+    "score_median": 0.0
+  },
+  "Люди: контроль (набор human и ловушки)": {
+    "texts": 45,
+    "rules": {
+      "chat_wrapper": 0.0,
+      "assistant_context": 0.0,
+      "paste_garbage": 0.0,
+      "empty_opener": 0.022,
+      "false_contrast": 0.0,
+      "ne_tolko_no_i": 0.044,
+      "inflated": 0.0,
+      "symbolism": 0.0,
+      "unique": 0.0,
+      "kantselyarit": 0.067,
+      "yavlyaetsya": 0.044,
+      "calque": 0.0,
+      "odnako_comma": 0.022,
+      "significance_tail": 0.0,
+      "anonymous_authority": 0.0,
+      "triad": 0.0,
+      "moral_ending": 0.0,
+      "teaser": 0.0,
+      "metatext": 0.0,
+      "empty_general": 0.0,
+      "connector_opener": 0.0,
+      "bold_label": 0.0,
+      "hedge_cascade": 0.0,
+      "business_pathos": 0.022,
+      "template_politeness": 0.0
+    },
+    "metrics_over": {
+      "dash_per_1000": 0.044,
+      "sentence_cv": 0.022,
+      "same_opener_share": 0.022,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.022
+    },
+    "metric_median": {
+      "dash_per_1000": 1.43,
+      "sentence_cv": 0.49,
+      "same_opener_share": 0.14,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_p90": {
+      "dash_per_1000": 4.49,
+      "sentence_cv": 0.86,
+      "same_opener_share": 0.27,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "levels": {
+      "нет": 0.756,
+      "мало": 0.178,
+      "есть": 0.044,
+      "много": 0.022
+    },
+    "score_median": 0.0
+  },
+  "Модели: исходники прошлых наборов (dev–holdout3)": {
+    "texts": 96,
+    "rules": {
+      "chat_wrapper": 0.156,
+      "assistant_context": 0.0,
+      "paste_garbage": 0.073,
+      "empty_opener": 0.01,
+      "false_contrast": 0.052,
+      "ne_tolko_no_i": 0.073,
+      "inflated": 0.0,
+      "symbolism": 0.0,
+      "unique": 0.01,
+      "kantselyarit": 0.062,
+      "yavlyaetsya": 0.062,
+      "calque": 0.01,
+      "odnako_comma": 0.0,
+      "significance_tail": 0.0,
+      "anonymous_authority": 0.0,
+      "triad": 0.0,
+      "moral_ending": 0.0,
+      "teaser": 0.0,
+      "metatext": 0.01,
+      "empty_general": 0.0,
+      "connector_opener": 0.0,
+      "bold_label": 0.521,
+      "hedge_cascade": 0.0,
+      "business_pathos": 0.021,
+      "template_politeness": 0.042
+    },
+    "metrics_over": {
+      "dash_per_1000": 0.042,
+      "sentence_cv": 0.0,
+      "same_opener_share": 0.031,
+      "bold_per_line": 0.219,
+      "heading_share": 0.042,
+      "emoji_per_1000": 0.156,
+      "invisible": 0.042
+    },
+    "metric_median": {
+      "dash_per_1000": 2.04,
+      "sentence_cv": 0.69,
+      "same_opener_share": 0.09,
+      "bold_per_line": 0.3,
+      "heading_share": 0.16,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_p90": {
+      "dash_per_1000": 5.24,
+      "sentence_cv": 0.87,
+      "same_opener_share": 0.17,
+      "bold_per_line": 0.7,
+      "heading_share": 0.29,
+      "emoji_per_1000": 5.24,
+      "invisible": 0.0
+    },
+    "levels": {
+      "нет": 0.229,
+      "мало": 0.115,
+      "есть": 0.135,
+      "много": 0.521
+    },
+    "score_median": 5.13
+  },
+  "Модели: holdout4": {
+    "texts": 36,
+    "rules": {
+      "chat_wrapper": 0.0,
+      "assistant_context": 0.0,
+      "paste_garbage": 0.083,
+      "empty_opener": 0.0,
+      "false_contrast": 0.0,
+      "ne_tolko_no_i": 0.056,
+      "inflated": 0.0,
+      "symbolism": 0.0,
+      "unique": 0.0,
+      "kantselyarit": 0.0,
+      "yavlyaetsya": 0.028,
+      "calque": 0.0,
+      "odnako_comma": 0.0,
+      "significance_tail": 0.0,
+      "anonymous_authority": 0.0,
+      "triad": 0.0,
+      "moral_ending": 0.0,
+      "teaser": 0.0,
+      "metatext": 0.0,
+      "empty_general": 0.0,
+      "connector_opener": 0.0,
+      "bold_label": 0.083,
+      "hedge_cascade": 0.0,
+      "business_pathos": 0.0,
+      "template_politeness": 0.083
+    },
+    "metrics_over": {
+      "dash_per_1000": 0.167,
+      "sentence_cv": 0.028,
+      "same_opener_share": 0.0,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.056,
+      "invisible": 0.056
+    },
+    "metric_median": {
+      "dash_per_1000": 3.1,
+      "sentence_cv": 0.56,
+      "same_opener_share": 0.09,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_p90": {
+      "dash_per_1000": 6.26,
+      "sentence_cv": 0.82,
+      "same_opener_share": 0.15,
+      "bold_per_line": 0.17,
+      "heading_share": 0.22,
+      "emoji_per_1000": 1.25,
+      "invisible": 0.0
+    },
+    "levels": {
+      "нет": 0.556,
+      "мало": 0.167,
+      "есть": 0.194,
+      "много": 0.083
+    },
+    "score_median": 0.0
+  },
+  "Чат-боты: сохранённые ответы r01–r06": {
+    "texts": 6,
+    "rules": {
+      "chat_wrapper": 0.0,
+      "assistant_context": 0.0,
+      "paste_garbage": 0.0,
+      "empty_opener": 0.0,
+      "false_contrast": 0.0,
+      "ne_tolko_no_i": 0.0,
+      "inflated": 0.0,
+      "symbolism": 0.0,
+      "unique": 0.0,
+      "kantselyarit": 0.0,
+      "yavlyaetsya": 0.333,
+      "calque": 0.0,
+      "odnako_comma": 0.0,
+      "significance_tail": 0.0,
+      "anonymous_authority": 0.0,
+      "triad": 0.0,
+      "moral_ending": 0.167,
+      "teaser": 0.0,
+      "metatext": 0.0,
+      "empty_general": 0.0,
+      "connector_opener": 0.0,
+      "bold_label": 0.167,
+      "hedge_cascade": 0.0,
+      "business_pathos": 0.0,
+      "template_politeness": 0.0
+    },
+    "metrics_over": {
+      "dash_per_1000": 0.167,
+      "sentence_cv": 0.0,
+      "same_opener_share": 0.167,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_median": {
+      "dash_per_1000": 2.19,
+      "sentence_cv": 0.88,
+      "same_opener_share": 0.07,
+      "bold_per_line": 0.0,
+      "heading_share": 0.0,
+      "emoji_per_1000": 0.0,
+      "invisible": 0.0
+    },
+    "metric_p90": {
+      "dash_per_1000": 10.5,
+      "sentence_cv": 1.1,
+      "same_opener_share": 0.32,
+      "bold_per_line": 0.23,
+      "heading_share": 0.31,
+      "emoji_per_1000": 0.86,
+      "invisible": 0.0
+    },
+    "levels": {
+      "нет": 0.333,
+      "мало": 0.167,
+      "есть": 0.333,
+      "много": 0.167
+    },
+    "score_median": 2.12
+  }
+}

@@ -13,7 +13,8 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # subagent_system: the API system prompt with Read-by-full-path instead of the read_file tool.
-# prepare_run: per system a skill copy (the .md files the API run can read) and system.txt;
+# prepare_run: per system a skill copy (the .md files the API run can read; with --scripts also its
+#              scripts and a Bash permission for them only) and system.txt;
 #              request files; one instruction file per (system, batch); config.json.
 # collect_run: every (system, text) needs a non-empty output; normalizes it; writes runs.jsonl.
 # prepare_judge: blinded bundles (judge.build) per text, label keys kept outside the bundle folder.
@@ -33,16 +34,25 @@ import run_systems as rs
 
 READ_API = "инструментом read_file (путь относительно папки skill/)"
 READ_SUBAGENT = "инструментом Read по полному пути %s/<файл>"
+# With --scripts the executor has a terminal, so the API sentence "scripts cannot run here, do the
+# check yourself" would contradict the task (cross-review 09.11, F5).
+NO_SCRIPTS = ("Скрипты навыка в этой среде запустить нельзя: если навык "
+              "предлагает проверку скриптом, сделай её сам.")
+WITH_SCRIPTS = "Скрипты навыка лежат в %s/scripts, их можно запускать через Bash."
 
 # START_BLOCK_INSTRUCTIONS
 EXECUTOR_TASK = """You are the executor in a blind comparison of text-editing skills. Use only the files named here.
 
-1. Read {system}. Treat its whole content as your system prompt for this task: an agent conversation in which the user's request has triggered an installed skill. The skill files it lists can be read with the Read tool by the full paths it gives. Do not run scripts or commands and do not read any other files.
+1. Read {system}. Treat its whole content as your system prompt for this task: an agent conversation in which the user's request has triggered an installed skill. The skill files it lists can be read with the Read tool by the full paths it gives. Do not run scripts or commands and do not read any other files{scripts_rule}. Do not use the Skill tool: an installed copy of any skill is not part of this comparison (R-BARE-EXECUTOR).
 2. Then handle the requests below one by one, in this order. Each request is a separate conversation: carry nothing over from the previous texts. For each: read the request file (it is the user's message), do what the skill says, and write to the answer file with the Write tool exactly what your final reply to the user would be. Nothing else goes into the file.
 {items}
 3. Ignore any other style instructions you may have (CLAUDE.md, AGENTS.md, memories): for this task only the system prompt from step 1 applies.
 
 When all {n} answer files are written, reply with the single word: done.
+"""
+# Gate 4 of 4.2.0 (README): the same executor with a terminal, as in Claude Code.
+SCRIPTS_NOTE = """
+Terminal: the skill folder is {skill}. You may run its scripts with Bash exactly as the skill says, e.g. python {skill}/scripts/check_facts.py before.txt after.txt and python {skill}/scripts/lint_style.py after.txt. Keep temporary files only in {tmp} (this batch's own folder) and delete them when a request is done. Run no other commands. Where the skill says <папка навыка>, it means {skill}.
 """
 JUDGE_TASK = """You are a blind judge in a comparison of text edits. For each file below: read it, follow the instructions inside it exactly (they are in Russian), and write your answer, only the JSON object the instructions ask for, to the answer file with the Write tool. Judge each file on its own. Do not read any other files and do not run commands.
 {items}
@@ -57,20 +67,26 @@ def _slug(judge: str) -> str:
 
 
 # START_BLOCK_EXECUTOR
-def subagent_system(sysdef: dict, skill_dir: Path):
+def subagent_system(sysdef: dict, skill_dir: Path, scripts: bool = False):
     """System prompt and readable files of one system exactly as run_systems builds them for the
-    API, except that the read_file sentence points at the skill copy for the Read tool."""
+    API, except that the read_file sentence points at the skill copy for the Read tool and, with
+    scripts, the no-scripts sentence says where the scripts are."""
     _, files = rs.load_system(sysdef)
     if not files:
         raise SystemExit("%s has no skill files: a prompt baseline runs through the API" % sysdef["name"])
     if READ_API not in rs.PREAMBLE:
         raise SystemExit("run_systems.PREAMBLE changed: update READ_API in batches.py")
     preamble = rs.PREAMBLE.replace(READ_API, READ_SUBAGENT % skill_dir.as_posix())
+    if scripts:
+        if NO_SCRIPTS not in preamble:
+            raise SystemExit("run_systems.PREAMBLE changed: update NO_SCRIPTS in batches.py")
+        preamble = preamble.replace(NO_SCRIPTS, WITH_SCRIPTS % skill_dir.as_posix())
     others = [f for f in files if f != "SKILL.md"]
     return preamble.format(files=", ".join(["SKILL.md"] + others), skill=files["SKILL.md"].strip()), files
 
 
-def prepare_run(sysdefs: list, batches: list, batch_root: Path, run_dir: Path, texts_dir: Path, executor: str) -> list:
+def prepare_run(sysdefs: list, batches: list, batch_root: Path, run_dir: Path, texts_dir: Path, executor: str,
+                scripts: bool = False) -> list:
     """Write everything the executor subagents need; return the instruction files."""
     ids = [t for b in batches for t in b]
     if len(ids) != len(set(ids)):
@@ -81,20 +97,31 @@ def prepare_run(sysdefs: list, batches: list, batch_root: Path, run_dir: Path, t
     tasks = []
     for sysdef in sysdefs:
         sdir = batch_root / sysdef["name"]
-        system, files = subagent_system(sysdef, sdir / "skill")
+        system, files = subagent_system(sysdef, sdir / "skill", scripts)
         for rel, body in files.items():
             lib.write_text(sdir / "skill" / rel, body)
+        if scripts:
+            if sysdef["kind"] != "local":
+                raise SystemExit("--scripts needs a local skill with scripts: %s" % sysdef["name"])
+            for f in sorted((rs.REPO / sysdef["path"] / "scripts").glob("*.*")):
+                if f.suffix in (".py", ".json"):
+                    (sdir / "skill" / "scripts").mkdir(parents=True, exist_ok=True)
+                    (sdir / "skill" / "scripts" / f.name).write_bytes(f.read_bytes())
         lib.write_text(sdir / "system.txt", system)
         out_dir = run_dir / "outputs" / sysdef["name"]
         for k, batch in enumerate(batches, 1):
             items = "\n".join("   - request: %s -> answer file: %s" % ((req_dir / (t + ".txt")).as_posix(),
                                                                         (out_dir / (t + ".txt")).as_posix()) for t in batch)
             task = sdir / ("batch%d.task.txt" % k)
-            lib.write_text(task, EXECUTOR_TASK.format(system=(sdir / "system.txt").as_posix(), items=items, n=len(batch)))
+            # One temp folder per (system, batch): parallel subagents must not share before.txt (F4).
+            note = SCRIPTS_NOTE.format(skill=(sdir / "skill").as_posix(),
+                                       tmp=(batch_root / "tmp" / sysdef["name"] / ("batch%d" % k)).as_posix()) if scripts else ""
+            lib.write_text(task, EXECUTOR_TASK.format(system=(sdir / "system.txt").as_posix(), items=items, n=len(batch),
+                                                      scripts_rule=" (except the skill scripts named below)" if scripts else "") + note)
             tasks.append(task)
         print("[M-EVAL-BATCH][prepare_run] %s: %d skill files, %d batches" % (sysdef["name"], len(files), len(batches)))
     lib.write_json(run_dir / "config.json", {"executor": executor, "texts": ids, "systems": [s["name"] for s in sysdefs],
-                                             "request": rs.REQUEST, "batches": batches})
+                                             "request": rs.REQUEST, "batches": batches, "scripts": scripts})
     return tasks
 
 
@@ -196,6 +223,7 @@ def main() -> int:
     ap.add_argument("--texts", default="", help="prepare-judge: comma list of ids")
     ap.add_argument("--batch-size", type=int, default=6)
     ap.add_argument("--round", type=int, default=0, help="judge pass number (0, 1, ...) for independent shuffles")
+    ap.add_argument("--scripts", action="store_true", help="prepare-run: the executor may run the skill scripts (gate 4)")
     args = ap.parse_args()
     run_dir = lib.EVAL_DIR / "results" / args.run
     batch_root = lib.CACHE_DIR / "batch" / args.run
@@ -204,7 +232,7 @@ def main() -> int:
         names = args.systems.split(",")
         sysdefs = [s for s in lib.read_json(lib.EVAL_DIR / "systems.json") if s["name"] in names]
         batches = [b.split(",") for b in args.batches.split(";")]
-        for task in prepare_run(sysdefs, batches, batch_root, run_dir, texts_dir, args.executor):
+        for task in prepare_run(sysdefs, batches, batch_root, run_dir, texts_dir, args.executor, args.scripts):
             print(task.as_posix())
     elif args.action == "collect-run":
         missing = collect_run(run_dir)

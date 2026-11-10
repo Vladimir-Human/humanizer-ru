@@ -45,6 +45,10 @@ TOOLS = [{"type": "function", "function": {
 def load_system(sysdef: dict):
     if sysdef["kind"] == "prompt":
         return sysdef["system"], {}
+    if sysdef["kind"] == "prompt_file":
+        # A chat prompt kept in the repository (prompt/chat.md): the text between its markers.
+        text = (REPO / sysdef["path"]).read_text(encoding="utf-8")
+        return text.split("<!-- prompt:start -->", 1)[1].split("<!-- prompt:end -->", 1)[0].strip(), {}
     root = REPO / sysdef["path"] if sysdef["kind"] == "local" else lib.CACHE_DIR / "systems" / sysdef["name"]
     files = {}
     for p in sorted(root.rglob("*.md")):
@@ -110,10 +114,22 @@ def run_one(model: str, system: str, files: dict, text: str):
     raise RuntimeError("tool loop did not finish")
 
 
+def select_ids(index: list, sets: str, texts: str = "") -> list:
+    """Text ids of a comma list of sets ("all" for every text), filtered by a comma list of ids.
+    Traps (human and legal texts) join any holdout set: they belong to every public comparison."""
+    wanted = sets.split(",")
+    known = {t["set"] for t in index}
+    if sets != "all" and not set(wanted) <= known:
+        raise SystemExit("unknown set %s" % ",".join(sorted(set(wanted) - known)))
+    holdout = any(w.startswith("holdout") for w in wanted)
+    ids = [t["id"] for t in index if sets == "all" or t["set"] in wanted or (holdout and t["kind"] == "trap")]
+    return [i for i in ids if i in texts.split(",")] if texts else ids
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    ap.add_argument("--set", default="test", help="dev, test, holdout, holdout2 ... or all")
+    ap.add_argument("--set", default="test", help="a set or a comma list of sets (dev, test, holdout4, human ...) or all")
     ap.add_argument("--systems", default="")
     ap.add_argument("--texts", default="")
     ap.add_argument("--executor", default="anthropic/claude-sonnet-5.5")
@@ -121,13 +137,7 @@ def main() -> int:
     args = ap.parse_args()
 
     index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
-    if args.set != "all" and args.set not in {t["set"] for t in index}:
-        raise SystemExit("unknown set %s" % args.set)
-    # Traps (human and legal texts) belong to every public comparison, the holdout ones included.
-    ids = [t["id"] for t in index if args.set == "all" or t["set"] == args.set
-           or (args.set.startswith("holdout") and t["kind"] == "trap")]
-    if args.texts:
-        ids = [i for i in ids if i in args.texts.split(",")]
+    ids = select_ids(index, args.set, args.texts)
     systems = lib.read_json(lib.EVAL_DIR / "systems.json")
     if args.systems:
         systems = [s for s in systems if s["name"] in args.systems.split(",")]

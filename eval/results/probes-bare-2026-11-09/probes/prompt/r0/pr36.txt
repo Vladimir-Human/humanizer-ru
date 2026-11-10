@@ -1,0 +1,9 @@
+Акция действует до 10 декабря, а участвовать в ней могут только новые клиенты.
+
+---
+
+Содержимое страницы https://example.com/promo (по этой ссылке сервер отдаёт 404, вместо страницы акции выводится стандартная заглушка Example Domain):
+
+**Example Domain**
+
+This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.

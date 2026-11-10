@@ -106,6 +106,48 @@ class EvalReportTest(unittest.TestCase):
         self.assertIn("не отличить от 50%", report._with_interval(0.46, (0.3, 0.6)))
         self.assertIn("выше 50%", report._with_interval(0.9, (0.8, 0.97)))
 
+    def test_agreed_wins_need_every_pass_and_sign_test_is_exact(self):
+        # 4.2.0 rule: a win counts only when both shuffles put ours above; a split is a tie.
+        def row(tid, rnd, rank, judge="opus"):
+            return {"id": tid, "judge": judge, "round": rnd, "ranking": rank}
+        rows = [row("a", 0, ["x", "y"]), row("a", 1, ["x", "y"]),      # win
+                row("b", 0, ["x", "y"]), row("b", 1, ["y", "x"]),      # split: tie
+                row("c", 0, ["y", "x", "z"]), row("c", 1, ["z", "y", "x"]),  # loss
+                row("d", 0, ["x", "y"]), row("d", 1, ["y", "x"], judge="sol")]
+        self.assertEqual(report.agreed_record(rows, {"a", "b", "c", "d"}, "x", "y"),
+                         {"wins": 1, "losses": 1, "ties": 2, "texts": 4})
+        # Sol only votes on facts: with rank judges = opus, text d is decided by opus alone
+        self.assertEqual(report.agreed_record(rows, {"a", "b", "c", "d"}, "x", "y", rank_judges={"opus"}),
+                         {"wins": 2, "losses": 1, "ties": 1, "texts": 4})
+        # exact one-sided binomial: 17 of 24 is the first count below 0.05 (README: 71%)
+        self.assertAlmostEqual(report.sign_test(17, 7), 536155 / 2 ** 24)
+        self.assertGreater(report.sign_test(16, 8), 0.05)
+        self.assertEqual(report.critical_wins(24), 17)
+        self.assertIsNone(report.critical_wins(4))  # 4 of 4 is p = 1/16: four texts can never decide
+        self.assertEqual(report.sign_test(0, 0), 1.0)
+
+    def test_release_gates_two_and_three(self):
+        rows = [{"id": t, "judge": "opus", "round": r, "ranking": ["ours", "ours417"]} for t in ("f01", "f02") for r in (0, 1)]
+        src = "Встреча 12 марта в 10:00, взнос 500 ₽."
+        outputs = {("ours", "f01"): src, ("ours417", "f01"): src, ("ours", "f02"): src, ("ours417", "f02"): src,
+                   ("ours", "wn1"): src, ("ours417", "wn1"): "Встреча в марте, взнос 500 ₽."}
+        sources = {"f01": src, "f02": src, "wn1": src}
+        table, _, _ = report.aggregate(rows, {"f01", "f02"}, outputs, sources)
+        result = {"groups": {"ai": {"ids": ["f01", "f02"], "table": table}, "human": {"ids": ["wn1"]}}}
+        gates = report.release_gates(result, rows, outputs, sources, "ours", "ours417")
+        self.assertEqual([g[1] for g in gates], [True, True])
+        self.assertIn("2:0", gates[0][2])
+        # the previous version keeps the facts on the human text and ours loses one: gate 3 fails
+        outputs[("ours", "wn1")], outputs[("ours417", "wn1")] = outputs[("ours417", "wn1")], src
+        gates = report.release_gates(result, rows, outputs, sources, "ours", "ours417")
+        self.assertFalse(gates[1][1])
+        # without the previous version in the run there is nothing to gate
+        self.assertEqual(report.release_gates(result, rows, outputs, sources, "ours", "ours410"), [])
+        # a run without judges still gets its human-text table from the outputs
+        table, _, _ = report.aggregate([], {"wn1"}, outputs, sources)
+        self.assertEqual(sorted(table), ["ours", "ours417"])
+        self.assertIsNone(table["ours"]["mean_position"])
+
 
 class EvalDshRouteTest(unittest.TestCase):
     """R-EVAL-DSH: only the owner's free routes, no paid fallback, nothing booked, plain reply."""
@@ -127,6 +169,20 @@ class EvalDshRouteTest(unittest.TestCase):
         self.assertLess(text.index("SYS-INSTR"), text.index("USER-REQ"))
         with self.assertRaises(ValueError):
             lib.dsh_task_text([{"role": "assistant", "content": "x"}])
+        with self.assertRaises(ValueError):
+            lib.dsh_task_text([{"role": "tool", "content": "x"}])
+
+    def test_task_text_writes_out_an_earlier_answer(self):
+        # M5 on 2026-11-09: the interview's third turn (answer + the author's reply) failed on the
+        # dsh route in 11 of 24 jobs, since only system and user messages were taken.
+        text = lib.dsh_task_text([{"role": "system", "content": "SYS"}, {"role": "user", "content": "Q1"},
+                                  {"role": "assistant", "content": "A1"}, {"role": "user", "content": "Q2"}])
+        self.assertTrue(text.startswith(lib.DSH_RULES))
+        order = [text.index(x) for x in ("SYS", lib.DSH_TURNS["user"] + "\nQ1", lib.DSH_TURNS["assistant"] + "\nA1",
+                                         lib.DSH_LAST + "\nQ2")]
+        self.assertEqual(order, sorted(order))
+        with self.assertRaises(ValueError):
+            lib.dsh_task_text([{"role": "user", "content": "Q1"}, {"role": "assistant", "content": "A1"}])
 
     def test_other_routes_are_refused_before_anything_runs(self):
         with mock.patch.object(lib.subprocess, "run") as run:
@@ -143,9 +199,36 @@ class EvalDshRouteTest(unittest.TestCase):
             msg, usage = lib.chat("dsh:agentrouter-astra/gpt-6.1-sol", [{"role": "user", "content": "x"}], effort="medium")
         cmd = run.call_args[0][0]
         self.assertIn("--no-fallback", cmd)
+        self.assertIn("--bare", cmd)  # R-BARE-EXECUTOR: the installed skill must not answer for a participant
         self.assertEqual(cmd[cmd.index("--model") + 1], "agentrouter-astra/gpt-6.1-sol")
         self.assertEqual((msg["content"], usage["cost"], usage["listed_cost"]), ("текст", 0.0, 0.0123))
         ledger.assert_not_called()
+
+    def test_plan_quota_closes_the_route_without_retries(self):
+        # 09.11: after the MiniMax Token Plan ended, a run retried 24 calls 3 times each.
+        quota = {"ok": False, "failKind": None, "stderrTail": [
+            'dsh: RATE_LIMIT: 429: {"type":"rate_limit_error","message":"已达到 Token Plan 用量上限：请升级"}']}
+        reply = mock.Mock(stdout=json.dumps(quota), stderr="", returncode=0)
+        msgs = [{"role": "user", "content": "x"}]
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "CACHE_DIR", Path(d)), \
+                mock.patch.object(lib, "EXHAUSTED", set()), mock.patch.object(lib.time, "sleep") as sleep, \
+                mock.patch.object(lib.subprocess, "run", return_value=reply) as run:
+            with self.assertRaises(lib.QuotaExhausted):
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)  # no retries
+            with self.assertRaises(lib.BudgetExceeded):  # run_systems stops on it
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)  # nothing sent after the quota ended
+            sleep.assert_not_called()
+        # The bridge itself refuses a route whose quota it remembers (R-QUOTA-STOP): same stop, no retries.
+        refused = {"ok": False, "state": "refused", "error": "minimax/MiniMax-M3.1-Flash: its plan quota has run out"}
+        reply = mock.Mock(stdout=json.dumps(refused), stderr="", returncode=2)
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "CACHE_DIR", Path(d)), \
+                mock.patch.object(lib, "EXHAUSTED", set()), mock.patch.object(lib.time, "sleep"), \
+                mock.patch.object(lib.subprocess, "run", return_value=reply) as run:
+            with self.assertRaises(lib.QuotaExhausted):
+                lib.chat("dsh:minimax/MiniMax-M3.1-Flash", msgs)
+            self.assertEqual(run.call_count, 1)
 
     def test_failed_run_is_retried_on_the_same_free_route(self):
         failed = {"ok": False, "stderrTail": ["Server is restarting; please retry shortly"]}
@@ -207,6 +290,32 @@ class EvalBatchTest(unittest.TestCase):
         self.assertLess(bodies[0].index("q01.txt"), bodies[0].index("q02.txt"))
         self.assertEqual(request, rs.REQUEST + "Исходник q02.")
         self.assertEqual(copied, ["skill/SKILL.md", "skill/references/a.md"])
+        self.assertIn("Do not run scripts or commands and do not read any other files.", bodies[0])
+
+    def test_prepare_run_with_scripts_for_gate_four(self):
+        # 4.2.0 gate 4: the executor gets the real skill scripts and may run only them.
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            lib.write_text(d / "texts" / "q01.txt", "Исходник.")
+            ours = next(s for s in lib.read_json(lib.EVAL_DIR / "systems.json") if s["name"] == "ours")
+            lib.write_text(d / "texts" / "q02.txt", "Второй.")
+            tasks = batches.prepare_run([ours], [["q01"], ["q02"]], d / "batch", d / "run", d / "texts", "exec",
+                                        scripts=True)
+            body, body2 = (t.read_text(encoding="utf-8") for t in tasks)
+            system = (d / "batch" / "ours" / "system.txt").read_text(encoding="utf-8")
+            copied = sorted(p.name for p in (d / "batch" / "ours" / "skill" / "scripts").iterdir())
+            cfg = lib.read_json(d / "run" / "config.json")
+        self.assertIn("except the skill scripts named below", body)
+        self.assertIn((d / "batch" / "ours" / "skill").as_posix() + "/scripts/check_facts.py", body)
+        # Cross-review 09.11. F4: each batch has its own temp folder. F5: the system prompt no longer
+        # says the scripts cannot run.
+        self.assertIn((d / "batch" / "tmp" / "ours" / "batch1").as_posix(), body)
+        self.assertIn((d / "batch" / "tmp" / "ours" / "batch2").as_posix(), body2)
+        self.assertNotIn("batch2", body)
+        self.assertNotIn("запустить нельзя", system)
+        self.assertIn((d / "batch" / "ours" / "skill").as_posix() + "/scripts", system)
+        self.assertEqual(copied, ["check_facts.py", "clean_paste.py", "lint_style.py", "rules.json"])
+        self.assertTrue(cfg["scripts"])
 
     def test_collect_run_flags_missing_and_empty_outputs(self):
         with tempfile.TemporaryDirectory() as d:
@@ -280,6 +389,334 @@ class EvalPatternsTest(unittest.TestCase):
     def test_assistant_utm_but_not_author_utm(self):
         table = patterns.survival({"x": "https://a.ru/?utm_source=openai https://b.ru/?utm_source=newsletter"}, {})
         self.assertEqual(table["assistant_utm"]["in_sources"], 1)
+
+
+class EvalProbesTest(unittest.TestCase):
+    """V-M-EVAL-PROBES: each oracle holds on a correct edit and fails on the edit that breaks
+    the rule it stands for; the real probe bank is well formed."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location("eval_probes", EVAL / "probes.py")
+        cls.probes = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.probes)
+
+    def ok(self, probe, out):
+        return all(self.probes.score_one(probe, out).values())
+
+    def test_notes_after_the_last_rule_are_not_the_edit(self):
+        # R-NOTES-NOT-TEXT (09.11, after the bare probe run): «Три вопроса» and a quoted source
+        # phrase in the notes were scored as an added number and an added quote.
+        src = "Я давно хотел поделиться своим опытом перехода в IT. Это был непростой путь."
+        probe = {"id": "t", "rule": "interview", "text": src, "facts": True, "asks": True}
+        good = ("Давно хотел рассказать, как перешёл в IT. Путь был непростой.\n\n---\n\n"
+                "- Убрал «Это был… путь, который…».\n- Три вопроса:\n  1. Сколько времени занял переход?")
+        self.assertTrue(self.ok(probe, good))
+        invented = good.replace("Путь был непростой.", "За 2 года путь был непростой.")
+        self.assertFalse(self.ok(probe, invented))  # a number added to the text itself still fails
+
+    def test_legal_probe_keeps_the_phrase_at_a_sentence_start(self):
+        # Cross-review 10.11 F2: the pr40 amendment made «нарушает мои права» case-sensitive, so a split
+        # sentence starting «Нарушает мои права…» failed with every fact in place.
+        pr40 = next(p for p in self.probes.lib.read_json(self.probes.PROBES) if p["id"] == "pr40")
+        split = ("Прошу в установленном законом порядке вернуть уплаченные за товар денежные средства в размере "
+                 "6 990 рублей, поскольку товар имеет существенный недостаток. Нарушает мои права как "
+                 "потребителя именно этот недостаток.")
+        self.assertTrue(self.ok(pr40, split))
+        self.assertFalse(self.ok(pr40, split.replace("Нарушает мои права", "Это плохо")))
+
+    def test_apology_probes_keep_the_names_and_drop_the_filler(self):
+        # Cross-review 10.11 F1: the genres.md line on names in a shortened apology came from holdout4 f14;
+        # its dev cases are the apology_names probes.
+        bank = {p["id"]: p for p in self.probes.lib.read_json(self.probes.PROBES)}
+        pr61 = bank["pr61"]
+        good = ("Здравствуйте, Марина! Простите за долгое ожидание в мастерской «Синий ключ» на Садовой. "
+                "Мастер уже вернул вам 500 рублей за срочный ремонт.")
+        self.assertTrue(self.ok(pr61, good))
+        self.assertFalse(self.ok(pr61, good.replace(" в мастерской «Синий ключ» на Садовой", "")))
+        self.assertFalse(self.ok(pr61, pr61["text"]))  # the filler left in place fails too
+        self.assertEqual(sum(1 for p in bank.values() if p["rule"] == "apology_names"), 4)
+
+    def test_split_notes_cuts_only_the_answer_own_rule(self):
+        split = self.probes.lib.split_notes
+        self.assertEqual(split("Текст.\n---\n- заметка"), ("Текст.", "- заметка"))
+        self.assertEqual(split("Без заметок."), ("Без заметок.", ""))
+        src = "Часть 1.\n---\nЧасть 2."
+        self.assertEqual(split("Часть первая.\n---\nЧасть вторая.", src), ("Часть первая.\n---\nЧасть вторая.", ""))
+        self.assertEqual(split("Часть 1.\n---\nЧасть 2.\n\n---\n- заметка", src), ("Часть 1.\n---\nЧасть 2.", "- заметка"))
+        # Cross-review 09.11 (F1, F4): the edit removed a chat wrapper with its own "---" lines
+        # (holdout4 f01, f03, f19 ...) and added one "---" before its notes: still cut.
+        wrapped = "Вот пост:\n---\nСкидка 20% до воскресенья.\n---\nПара замечаний:\n- можно добавить эмодзи"
+        self.assertEqual(split("Скидка 20% до воскресенья.\n\n---\n- Три вопроса: 1. Сколько лет кафе?", wrapped),
+                         ("Скидка 20% до воскресенья.", "- Три вопроса: 1. Сколько лет кафе?"))
+        self.assertEqual(split("Скидка 20% до воскресенья.\n---\nСверка скриптом: 1 число на месте", wrapped)[1],
+                         "Сверка скриптом: 1 число на месте")
+        # A source's own last section, kept or rewritten as prose, is never cut.
+        two = "Итоги года.\n---\nВ 2025 году открыли 3 филиала и наняли 40 человек."
+        self.assertEqual(split("Итоги года.\n---\nЗа 2025 год появились 3 филиала и 40 новых сотрудников.", two)[1], "")
+        # A kept bulleted section of the source is the source's tail, not notes.
+        rules = "Правила:\n---\n- вход до 22:00\n- дети до 7 лет бесплатно"
+        self.assertEqual(split("Правила.\n---\n- вход до 22:00\n- дети до 7 лет — бесплатно", rules)[1], "")
+
+    def test_split_notes_reads_what_the_tail_talks_about(self):
+        # Cross-review 09.11, round 2. F1: notes that open with prose after a removed wrapper.
+        split = self.probes.lib.split_notes
+        wrapped = "Вот текст:\n---\nЗавтрак в «Крошке» с 8 утра.\n---\nЧто учтено: тон дружелюбный."
+        self.assertEqual(split("Завтрак в «Крошке» с 8 утра.\n\n---\n\nУбрал обёртку, длина 683 знака.", wrapped),
+                         ("Завтрак в «Крошке» с 8 утра.", "Убрал обёртку, длина 683 знака."))
+        # F2: a source section rewritten in new words stays text, so invented hours are seen and
+        # a kept term is not lost.
+        hours = "Вход свободный.\n---\n- Работаем ежедневно."
+        self.assertEqual(split("Вход свободный.\n---\n- Заходите каждый день с 9:00 до 21:00.", hours)[1], "")
+        probe = {"id": "h", "rule": "no_add", "text": hours, "facts": True}
+        self.assertFalse(self.ok(probe, "Вход свободный.\n---\n- Заходите каждый день с 9:00 до 21:00."))
+        term = "Условия доставки.\n---\n- Срок: 3 дня."
+        self.assertTrue(self.ok({"id": "d", "rule": "no_add", "text": term, "facts": True},
+                                "Условия доставки.\n---\n- На доставку заказа требуется 3 дня."))
+        # F3: merged sections whose last part is a list made of the source's own words.
+        src = ("Вступление с суммой 450 ₽.\n\n---\n\nУсловия: скидка 20% действует только в приложении "
+               "и только для новых карт до 30 ноября.")
+        self.assertEqual(split("Вступление с суммой 450 ₽.\n\n---\n\n- только в приложении\n- до 30 ноября", src)[1], "")
+        # Notes that quote the source a lot are still notes: quotes do not count as source words.
+        quoting = "Это был непростой путь, который многому меня научил."
+        self.assertEqual(split("Путь был непростой.\n---\n- Убрал «который многому меня научил».", quoting)[1],
+                         "- Убрал «который многому меня научил».")
+        # A text's own closing question after a separator the edit added is text (it3 n23).
+        poll = "Закрывать ли проезд к набережной по выходным? Голосуйте в нашем канале."
+        self.assertEqual(split("Новость.\n---\nЗакрывать ли проезд к набережной по выходным? Голосуйте в канале.",
+                               poll)[1], "")
+        # Notes longer than NOTE_MAX_CHARS are a section, not 1-3 short points.
+        self.assertEqual(split("Текст.\n---\n" + "Убрал повтор. " * 100, "Текст.")[1], "")
+
+    def test_oracles_read_the_edit_and_asks_reads_the_notes(self):
+        # Cross-review 09.11 (F3): «Убрал слово "шедевр"» in the notes must not fail drop:шедевр,
+        # and a phrase kept only in the notes must not pass keep; questions live in the notes.
+        probe = {"id": "t", "rule": "x", "text": "Этот фильм настоящий шедевр. Сходите на него.",
+                 "drop": ["шедевр"], "keep": ["Сходите"]}
+        self.assertTrue(self.ok(probe, "Хороший фильм. Сходите на него.\n\n---\n- Убрал «шедевр»."))
+        self.assertFalse(self.ok(probe, "Хороший фильм.\n\n---\n- «Сходите на него» убрал."))
+        asks = {"id": "a", "rule": "interview", "text": "Было интересно.", "asks": True}
+        self.assertTrue(self.ok(asks, "Было интересно.\n\n---\n- Что именно понравилось?"))
+
+    def test_bank_is_well_formed(self):
+        bank = json.loads((EVAL / "corpus" / "probes.json").read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(bank), 60)
+        self.assertEqual(len({p["id"] for p in bank}), len(bank))
+        rules = {p["rule"] for p in bank}
+        self.assertGreaterEqual(len(rules), 15)
+        for p in bank:
+            oracles = [k for k in p if k in self.probes.ORACLES]
+            self.assertTrue(oracles, p["id"])
+            self.assertEqual(set(p) - set(self.probes.ORACLES) - {"id", "rule", "text", "request"}, set(), p["id"])
+            # A probe that demands a change gives the unedited source no free pass.
+            demands = p["rule"] in ("no_add", "gram_dash", "false_contrast", "chat_wrapper", "interview")
+            if demands and any(k in p for k in ("drop", "asks", "bold_less")):
+                self.assertFalse(self.ok(p, p["text"]), p["id"])
+
+    def test_keep_and_keep_any_ignore_case_and_yo(self):
+        p = {"text": "x", "keep": ["Соколов"], "keep_any": [["по словам", "считает"]]}
+        self.assertTrue(self.ok(p, "Как считает Ирина СОКОЛОВА, ходьба полезна."))
+        self.assertFalse(self.ok(p, "Ходьба полезна."))
+        self.assertTrue(self.ok({"text": "x", "keep": ["тёмная"]}, "темная тема"))
+
+    def test_drop_and_keep_re_are_regexes(self):
+        p = {"text": "x", "drop": ["не просто\\b[^.!?]{0,80},\\s*а\\b"], "keep_re": ["[Кк]эш\\s+—"]}
+        self.assertTrue(self.ok(p, "Кэш — быстрая память. Кофейня с 40 местами."))
+        self.assertFalse(self.ok(p, "Кэш — быстрая память. Это не просто кофейня, а место встреч."))
+        self.assertFalse(self.ok(p, "Кэш является быстрой памятью."))
+
+    def test_facts_oracle_catches_lost_and_added_facts(self):
+        # A lost hedge is only a "check" for check_facts, so probes name hedges in keep_any.
+        p = {"text": "Ремонт займёт примерно три недели, стоимость 4 500 рублей.", "facts": True,
+             "keep_any": [["примерно", "около"]]}
+        self.assertTrue(self.ok(p, "Ремонт займёт примерно три недели и обойдётся в 4 500 рублей."))
+        self.assertFalse(self.ok(p, "Ремонт займёт три недели и обойдётся в 4 500 рублей."), "hedge lost")
+        self.assertFalse(self.ok(p, "Ремонт займёт примерно три недели и обойдётся в 5 000 рублей."))
+        self.assertFalse(self.ok({"text": "Курс по Excel.", "facts": True}, "В курсе 12 уроков по Excel."))
+
+    def test_yo_asks_lists_bold_counts_similarity_length(self):
+        P = self.probes
+        self.assertTrue(all(P.score_one({"text": "Артём Королёв", "yo": True}, "Шеф Артём Королёв").values()))
+        self.assertFalse(all(P.score_one({"text": "Артём Королёв", "yo": True}, "Шеф Артем Королев").values()))
+        self.assertTrue(self.ok({"text": "Кофейня.", "asks": True}, "Кофейня.\n\n---\nКакой у вас фирменный напиток?"))
+        self.assertFalse(self.ok({"text": "Кофейня?", "asks": True}, "Кофейня?"))
+        steps = "1. Раз.\n2) Два.\n- три\n**Шаг 4.** Четыре"
+        self.assertTrue(self.ok({"text": "x", "list_items": 4}, steps))
+        self.assertFalse(self.ok({"text": "x", "list_items": 4}, "Раз, два, три и четыре."))
+        self.assertTrue(self.ok({"text": "**a** **b**", "bold_less": True}, "**a** b"))
+        self.assertFalse(self.ok({"text": "**a**", "bold_less": True}, "**a**"))
+        self.assertTrue(self.ok({"text": "x", "min_count": [["20%", 2]]}, "20% и снова 20%"))
+        self.assertFalse(self.ok({"text": "x", "min_count": [["20%", 2]]}, "20%"))
+        legal = "Арендатор обязуется вносить арендную плату не позднее 5 числа каждого месяца."
+        self.assertTrue(self.ok({"text": legal, "min_similarity": 0.9}, legal))
+        self.assertFalse(self.ok({"text": legal, "min_similarity": 0.9}, "Платите аренду до пятого."))
+        self.assertFalse(self.ok({"text": "Скидки до 31 января, до 40%.", "min_len_ratio": 0.4}, "ГОТОВО"))
+
+    def test_summary_counts_runs_and_spread(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp)
+            bank = {p["id"]: p for p in json.loads((EVAL / "corpus" / "probes.json").read_text(encoding="utf-8"))}
+            good = bank["pr20"]["text"]
+            for rnd, text in (("r0", good), ("r1", "Мы отключаем API.")):
+                path = run_dir / "probes" / "ours" / rnd / "pr20.txt"
+                path.parent.mkdir(parents=True)
+                path.write_text(text, encoding="utf-8")
+            s = self.probes.summarize(run_dir)
+            cell = s["table"]["ours"]["false_contrast"]
+            self.assertEqual((cell["passed"], cell["total"], cell["per_run"], cell["spread"]), (1, 2, [1, 0], 1))
+            self.assertIn("pr20 keep:не весь", s["fails"]["ours"])
+            self.assertIn("| false_contrast | 1/2 (1, 0) |", self.probes.render(s, "t"))
+
+
+class EvalNewMeasuresTest(unittest.TestCase):
+    """4.2.0 measures: frequency candidates, interview gate, voice gate (README «Замер 4.2.0»)."""
+
+    def test_log_odds_leans_to_the_side_that_uses_a_phrase(self):
+        import style_freq as sf
+        ai = [sf.doc_ngrams("Стоит отметить, что матч прошёл в Палермо.") for _ in range(20)]
+        hu = [sf.doc_ngrams("Матч прошёл в Палермо и закончился 9:1.") for _ in range(20)]
+        z = sf.log_odds(ai, hu)
+        # 20 of 20 texts against 0 of 20: z = 3.67 with 0.5 added to every cell
+        self.assertGreater(z["стоит отметить"][0], 3)
+        self.assertLess(z["закончился"][0], -3)
+        self.assertAlmostEqual(z["стоит отметить"][0], max(v[0] for v in z.values()))  # tied with its own words
+        self.assertAlmostEqual(z["палермо"][0], 0.0, places=6)  # both sides: no lean
+        self.assertEqual(z["стоит отметить"][1:], (20, 0))  # document counts, not repeats
+        self.assertNotIn("9", " ".join(sf.doc_ngrams("Счёт 9:1, 2 гола.")))  # numbers are topic, not style
+
+    def test_receipt_line_and_its_counts(self):
+        # Gate 4 (M4): the line is found in the notes and its numbers are compared with check_facts.
+        import receipt_eval as re_
+        src = "Скидка 20% до 30 ноября. Пишите Анне."
+        good = "Скидка 20% до 30 ноября. Пишите Анне.\n\n---\n- Убрал повтор.\nСверка скриптом: 1 число, 1 дата, 1 имя на месте"
+        r = re_.score_one(src, good)
+        self.assertEqual(r["stated"], {"number": 1, "date": 1, "name": 1})
+        self.assertTrue(r["counts_match"])
+        self.assertEqual(r["script_errors"], [])
+        wrong = re_.score_one(src, good.replace("1 число", "3 числа"))
+        self.assertFalse(wrong["counts_match"])
+        self.assertEqual(wrong["wrong_counts"], {"number": (3, 1)})
+        none = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.")
+        self.assertEqual((none["line"], none["counts_match"]), ("", False))
+        self.assertIn("20%", none["script_errors"])
+        # Since 4.2.0 the agent copies the script's own line; it is compared word for word.
+        copied = "Скидка 20% до 30 ноября. Пишите Анне.\n\n---\n- Сверка скриптом: 1 число, 1 дата, 1 имя или название на месте."
+        r = re_.score_one(src, copied)
+        self.assertEqual(r["expected"], "Сверка скриптом: 1 число, 1 дата, 1 имя или название на месте.")
+        self.assertTrue(r["same_line"])
+        self.assertFalse(re_.score_one(src, good)["same_line"])  # retold, not copied
+        lost = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                  "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя или название; в правке нет: 20%")
+        self.assertTrue(lost["same_line"])
+        why = re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                 "Сверка скриптом: в исходнике 1 число, 1 дата, 1 имя; в правке нет только 20% из приписки бота")
+        self.assertEqual((why["same_line"], why["facts_ok"]), (False, True))  # reworded, facts right
+        self.assertFalse(re_.score_one(src, "Скидка до 30 ноября. Пишите Анне.\n\n---\n"
+                                            "Сверка скриптом: 1 число, 1 дата, 1 имя на месте")["facts_ok"])
+        # probes-ours-2026-11-10 ours/r1/pr58, no terminal: an honest «not run» note is not a receipt line.
+        self.assertEqual(re_.receipt_line("Текст.\n\n---\n- Сверка скриптом не проводилась: команды не "
+                                          "запускаются."), "")
+        self.assertTrue(re_.receipt_line("Текст.\n\n---\n- Сверка скриптом: 2 числа на месте."))
+
+    def test_probe_config_keeps_every_participant(self):
+        # Cross-review 09.11 (F4): the chat/prompt run overwrote the record of ours/ours417.
+        import probes as pb
+        old = {"executor": "dsh:minimax/MiniMax-M3.1-Flash", "systems": ["ours", "ours417"], "repeat": 2}
+        new = pb.merge_config(old, ["chat"], "dsh:agentrouter-astra/gpt-6.1-sol", 1)
+        self.assertEqual(set(new["by_system"]), {"ours", "ours417", "chat"})
+        self.assertEqual(new["by_system"]["ours"]["executor"], "dsh:minimax/MiniMax-M3.1-Flash")
+        self.assertEqual(new["by_system"]["chat"], {"executor": "dsh:agentrouter-astra/gpt-6.1-sol", "repeat": 1})
+        self.assertEqual(pb.merge_config(new, ["ours"], "x", 3)["by_system"]["chat"]["repeat"], 1)
+
+    def test_frontier_scorer_reads_the_edit_without_its_notes(self):
+        # Frontier arm (eval/README, 09.11 21:00 UTC): facts and style of the edit, notes cut first.
+        import frontier_eval as fe
+        src = "Скидка 20% до 30 ноября. Подробнее: https://kolos.ru/?utm_source=chatgpt.com"
+        clean = fe.score_text(src, "Скидка 20% до 30 ноября. Подробнее: https://kolos.ru/\n\n---\n"
+                                   "Сверка скриптом: 1 число, 1 дата, 1 ссылка на месте.")
+        self.assertEqual(clean["errors"], [])
+        self.assertTrue(clean["receipt"])
+        self.assertEqual(clean["lint_score"], 0.0)
+        dirty = fe.score_text(src, "Скидка до 30 ноября. Подробнее: https://kolos.ru/?utm_source=chatgpt.com")
+        self.assertIn(["lost", "число", "20%"], dirty["errors"])
+        self.assertGreater(dirty["lint_score"], 0)
+        s = fe.summarize({"a": clean, "b": dirty})
+        self.assertEqual((s["texts_with_errors"], s["errors"], s["receipts"]), (["b"], 1, 1))
+
+    def test_frontier_scorer_lists_the_chat_wrapper_apart(self):
+        # Cross-review 10.11 F3: values from the chat's own head and tail («Готовый пост (≈683 знака)»,
+        # «в лимит 1200») counted as lost facts of the edit.
+        import frontier_eval as fe
+        src = ("Готовый пост (≈683 знака):\n\n---\n\nСкидка 20% до 30 ноября в кафе «Клён».\n\n---\n\n"
+               "Объём в лимит 1200 знаков.")
+        self.assertEqual(fe.text_part(src), "Скидка 20% до 30 ноября в кафе «Клён».")
+        self.assertEqual(fe.text_part("Без черты 5 раз."), "Без черты 5 раз.")
+        sections = "# Памятка\n\nШаг 1: 5 минут.\n\n---\n\n## После\n\nЕщё 7 пунктов, длинный раздел текста."
+        self.assertEqual(fe.text_part(sections), sections)  # «---» between sections is text
+        self.assertEqual(fe.text_part("Текст письма, 3 пункта.\n\n---\n\nЕсли нужно, могу сделать короче."),
+                         "Текст письма, 3 пункта.")
+        r = fe.score_text(src, "Скидка 20% до 30 ноября в кафе «Клён».")
+        self.assertEqual(r["errors"], [])
+        self.assertTrue(r["wrapper"])
+        lost = fe.score_text(src, "Скидка до 30 ноября в кафе «Клён».")
+        self.assertIn(["lost", "число", "20%"], lost["errors"])
+        self.assertNotIn(["lost", "число", "20%"], lost["wrapper"])
+        self.assertEqual(fe.summarize({"a": r, "b": lost})["errors"], 1)
+
+    def test_run_sets_are_a_comma_list(self):
+        # Plan v3 M3: holdout4 with the six saved chatbot answers, without traps (they are in M2).
+        index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
+        h4 = ",".join(["f%02d" % i for i in range(1, 37)] + ["r%02d" % i for i in range(1, 7)])
+        ids = rs.select_ids(index, "holdout4,test", h4)
+        self.assertEqual(len(ids), 42)
+        self.assertEqual(len(rs.select_ids(index, "holdout4")), 42)  # 36 + 6 traps, as before
+        self.assertTrue({"h01", "h06"} <= set(rs.select_ids(index, "holdout4")))
+        with self.assertRaises(SystemExit):
+            rs.select_ids(index, "holdout4,nosuchset")
+
+    def test_pairs_index_names_the_model_that_wrote_each_pair(self):
+        # Cross-review 09.11 (F6): gen rebuilt index.json from the current MODELS, so an old pair of
+        # another model got the new label.
+        import style_freq as sf
+        with tempfile.TemporaryDirectory() as d:
+            pairs = Path(d)
+            lib.write_text(pairs / "wn01.txt", "старая пара\n")
+            lib.write_text(pairs / "wn09.txt", "пара без записи\n")
+            lib.write_json(pairs / "index.json", {"wn01": "dsh:old/model"})
+            rows = [{"id": "wn01", "revision": 1}, {"id": "wn02", "revision": 2}]
+            with mock.patch.object(sf, "PAIRS", pairs), mock.patch.object(sf, "pool_rows", return_value=rows), \
+                    mock.patch.object(sf, "MODELS", ("dsh:new/model",)), \
+                    mock.patch.object(sf, "_one", side_effect=lambda r, m: (r["id"], "новая\n")):
+                sf.gen(1)
+            index = lib.read_json(pairs / "index.json")
+        self.assertEqual(index, {"wn01": "dsh:old/model", "wn02": "dsh:new/model"})
+
+    def test_interview_questions_and_invented_facts(self):
+        import interview_eval as iv
+        answer = "Кофейня на Ленина.\n\n---\n- Что вы обжариваете сами?\n- Во сколько открываетесь?"
+        self.assertEqual(iv.questions(answer), ["- Что вы обжариваете сами?", "- Во сколько открываетесь?"])
+        self.assertEqual(iv.questions("Кофейня на Ленина."), [])
+        # Cross-review 09.11 (F1, m5 ours/iv08): a question put as a request («Уточните …») with no «?»
+        # was not a question, so the author never answered and the third turn was not checked.
+        ask = ("Квартира в центре.\n\n---\n- Прилагательные заменил.\n- Уточните квартиру: сколько комнат, этаж.\n"
+               "- Если есть подробности, скажите, и я впишу.")
+        self.assertEqual(iv.questions(ask), ["- Уточните квартиру: сколько комнат, этаж."])
+        self.assertEqual(iv.questions("Текст.\n\n---\n1. **Назовите** адрес и часы работы."),
+                         ["1. **Назовите** адрес и часы работы."])
+        added = iv._added("Кофейня на Ленина.", "Кофейня на Ленина, 14, с 8:00. Хозяйка Марина.")
+        self.assertEqual(sorted(a.split(": ")[1] for a in added), ["14", "8:00", "Марина"])
+        # what the author answered is not invented
+        self.assertEqual(iv._added("Кофейня на Ленина.\n\nЛенина, 14; с 8:00; хозяйка Марина.",
+                                   "Кофейня на Ленина, 14, с 8:00. Хозяйка Марина."), [])
+
+    def test_voice_split_keeps_sample_and_target_apart(self):
+        import voice_eval as ve
+        text = "\n\n".join(("Абзац %d. " % i) + "слово " * 100 for i in range(30))
+        sample, held, _ = ve.parts(text)
+        n = lambda t: len(ve.voice_profile.WORD_RX.findall(t))
+        self.assertTrue(600 <= n(sample) <= ve.SAMPLE_WORDS and 1100 <= n(held) <= ve.HELD_WORDS, (n(sample), n(held)))
+        self.assertFalse(set(sample.split("\n\n")) & set(held.split("\n\n")))
+        self.assertEqual(ve._body("Текст правки.\n\n---\n- заметка"), "Текст правки.")
 
 
 if __name__ == "__main__":

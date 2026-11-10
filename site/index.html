@@ -50,7 +50,7 @@ a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
 <main>
   <header style="display:flex;flex-direction:column;gap:0.7rem">
     <h1>humanizer-ru</h1>
-    <p class="lead">Навык для Claude Code, Codex, Cursor и Claude.ai. Правит русский текст после нейросети: убирает канцелярит, штампы и оформление «как у ChatGPT» и следит, чтобы цифры, даты, имена и оговорки остались прежними.</p>
+    <p class="lead">Навык для Claude Code, Codex, Cursor, Gemini CLI и Claude.ai. Правит русский текст после нейросети: убирает канцелярит, штампы и оформление «как у ChatGPT» и следит, чтобы цифры, даты, имена и оговорки остались прежними.</p>
     <p class="soft">MIT · <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md">English</a></p>
   </header>
 
@@ -87,7 +87,16 @@ a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
     <p>Claude Code плагином:</p>
     <pre>/plugin marketplace add Vladimir-Human/humanizer-ru
 /plugin install humanizer-ru@humanizer-ru</pre>
+    <p>Gemini CLI:</p>
+    <pre>gemini extensions install https://github.com/Vladimir-Human/humanizer-ru</pre>
     <p>Claude.ai: архив <code>humanizer-ru-skill.zip</code> из <a href="https://github.com/Vladimir-Human/humanizer-ru/releases/latest">последнего релиза</a>, загрузить в Settings → Capabilities → Skills.</p>
+  </section>
+
+  <section>
+    <h2>Без установки</h2>
+    <p><a href="check/">Проверка стиля в браузере</a>: вставьте текст и посмотрите, какие приёмы машинного стиля в нём есть и где. Текст никуда не отправляется, страница работает без сети. Она оценивает стиль, а не авторство: живой текст тоже может набрать баллы.</p>
+    <p><a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">Промпт</a>: сжатая версия навыка для модели, которая не умеет подключать навыки (системная подсказка, инструкции проекта).</p>
+    <p><a href="sverka/">Сверка фактов в браузере</a>: вставьте исходник и правку любой модели, и страница сверит их так же, как <code>check_facts.py</code>. Потерянные, перепутанные и новые числа, даты и имена видны сразу; тексты никуда не отправляются.</p>
   </section>
 
   <section>

@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: Build the comparison corpus: generate fresh Russian AI texts from briefs with
-#          different models, add saved real chatbot answers and human/legal "trap" texts.
+#          different models, add saved real chatbot answers, human/legal "trap" texts and the
+#          human controls (set "human": v3 human texts and pre-2022 Wikinews articles).
 # SCOPE: writes eval/corpus/texts/<id>.txt and eval/corpus/index.json; idempotent
 #        (existing texts are kept unless --force).
 # DEPENDS: eval/lib.py (chat, ledger); --legacy DIR with research/raw and
 #          research/validation/human from tag v3.36.4 (git archive).
-# LINKS: M-EVAL-CORPUS; DF-EVAL.
+# LINKS: M-EVAL-CORPUS; DF-EVAL; R-HUMAN-CONTROLS.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # REAL / TRAPS: fixed lists of saved texts with origin and licence notes.
+# HUMAN_V3_SKIP / human_wikinews: the 4.2.0 human controls (v3 human texts, 20 seeded Wikinews).
 # PROBES: hand-written targeted texts kept in corpus/texts (never judged, see README final4).
 # strip_header: drop "Вопрос:/Ответ ...:" preamble from saved chatbot answers.
 # inject: add chat paste artifacts (utm tail, contentReference, zero-width spaces).
@@ -20,6 +22,7 @@
 from __future__ import annotations
 
 import argparse
+import random
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -48,6 +51,20 @@ TRAPS = [
     ("h05", "research/validation/human/10-wikinews.txt", "Викиновости (CC BY 2.5)", "новость"),
     ("h06", "research/validation/human/08-constitution.txt", "Конституция РФ, ст. 2 (официальный документ)", "закон"),
 ]
+# Set "human" (4.2.0 controls, README): the v3 human texts that are not traps, except
+# 11-it-notation, which was written inside the project (v3 README), plus 20 ru.wikinews articles as
+# they stood on 2021-12-31, drawn with a fixed seed from corpus/human/index.json. The other
+# Wikinews texts stay out of the eval and feed the frequency side of the style rules.
+HUMAN_V3_SKIP = {"11-it-notation.txt"}
+HUMAN_WIKINEWS, HUMAN_SEED = 20, 20211231
+
+
+def human_wikinews(rows: list) -> list:
+    """The 20 control articles: a seeded sample of the index sorted by revision, so reruns agree."""
+    pool = sorted(rows, key=lambda r: r["revision"])
+    return sorted(random.Random(HUMAN_SEED).sample(pool, HUMAN_WIKINEWS), key=lambda r: r["revision"])
+
+
 # Targeted texts for the new rules of a candidate, written by hand before its run and never
 # shown to judges: patterns.py and check_facts.py read the outputs (README, final4).
 PROBES = [
@@ -144,6 +161,19 @@ def main() -> int:
             text = strip_header(lib.read_text(src)) if kind == "real" else lib.read_text(src).strip() + "\n"
             lib.write_text(TEXTS / (tid + ".txt"), text)
             index.append({"id": tid, "set": "test", "kind": kind, "genre": genre, "origin": origin})
+    trap_files = {Path(rel).name for _, rel, _, _ in TRAPS}
+    for src in sorted((legacy / "research/validation/human").glob("*.txt")):
+        if src.name in trap_files or src.name in HUMAN_V3_SKIP:
+            continue
+        tid = "v" + src.name[:2]
+        lib.write_text(TEXTS / (tid + ".txt"), lib.read_text(src).strip() + "\n")
+        index.append({"id": tid, "set": "human", "kind": "human", "genre": "человеческий текст",
+                      "origin": "research/validation/human/%s (v3.36.4, Викитека или официальный текст)" % src.name})
+    wiki = lib.read_json(CORPUS / "human" / "index.json")
+    for r in human_wikinews(wiki):
+        lib.write_text(TEXTS / (r["id"] + ".txt"), lib.read_text(CORPUS / "human" / (r["id"] + ".txt")))
+        index.append({"id": r["id"], "set": "human", "kind": "human", "genre": "новость",
+                      "origin": "Викиновости, «%s», редакция %s, %s (%s)" % (r["title"], r["date"], r["url"], r["licence"])})
     for tid, genre, origin in PROBES:
         if (TEXTS / (tid + ".txt")).exists():
             index.append({"id": tid, "set": "probe", "kind": "probe", "genre": genre, "origin": origin})

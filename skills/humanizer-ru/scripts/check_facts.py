@@ -45,6 +45,7 @@
 #          quotes block matches quoted words in order; bindings block pairs numbers with names
 #          (clause by clause when a sentence names several people).
 # render: human-readable Russian report.
+# receipt: the «Сверка скриптом: …» notes line the skill copies word for word; receipt_hint frames it.
 # main: CLI `check_facts.py before.txt after.txt [--json]`; exit 0 clean, 1 errors, 2 bad input.
 # END_MODULE_MAP
 """Сверка фактов до и после правки.
@@ -53,6 +54,7 @@
     python check_facts.py до.txt после.txt --json   # то же в JSON
     python check_facts.py - после.txt               # исходник из stdin
 
+В конце отчёта — готовая строка для заметок «Сверка скриптом: …».
 Код выхода: 0 — ошибок нет, 1 — есть ошибки, 2 — файл не читается.
 """
 from __future__ import annotations
@@ -118,6 +120,8 @@ WORD_NUM = {
     "семидесяти": 70, "восемьдесят": 80, "восьмидесяти": 80, "девяносто": 90, "девяноста": 90,
     "четыреста": 400, "пятьсот": 500, "шестьсот": 600, "семьсот": 700, "восемьсот": 800,
     "девятьсот": 900,
+    # «вдвое дешевле» is «в 2 раза дешевле» (final2 chukovsky n20 was a false «lost 2»).
+    "вдвое": 2, "втрое": 3, "вчетверо": 4, "впятеро": 5, "вдесятеро": 10,
 }
 # "один" counts only inside a compound number: "двадцать один", "сто одну".
 ONE_FORMS = ("один", "одна", "одно", "одну", "одного", "одной", "одному", "одним", "одном")
@@ -186,6 +190,11 @@ WEEKDAY_RX = re.compile(r"(?<![а-яё])(понедельник|вторник|�
                         r"сред(?=у|ам)|сред(?=а[ \t]*[,:]))[а-яё]*", re.I)
 WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, "четверг": 4, "пятниц": 5, "суббот": 6,
                "воскресень": 7}
+# A schedule range of two-letter forms («пн–пт», «Сб-Вс»): alone «ср.» is «сравни», «вс» and «пт» are
+# too short to trust, so only two of them joined by a dash count (frontier arm 2026-11-09, f30).
+WEEKDAY_ABBR = {"пн": 1, "вт": 2, "ср": 3, "чт": 4, "пт": 5, "сб": 6, "вс": 7}
+WEEKDAY_RANGE_RX = re.compile(r"(?<![а-яё])(пн|вт|ср|чт|пт|сб|вс)\.?[ \t\u00a0]*[-–—][ \t\u00a0]*"
+                              r"(пн|вт|ср|чт|пт|сб|вс)\.?(?![а-яё])", re.I)
 HEDGES = ("около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
           "не менее", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
           "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
@@ -445,7 +454,7 @@ def extract(text: str, edited: bool = False) -> Facts:
             facts.items.append(Fact("number", m.group(1), m.group(), sent_of(m.start()), m.start()))
             taken.append((m.start(), m.end()))
     # Day and month stand on one line: "Вариант 3\n\nНоябрь — ..." is not the 3rd of November.
-    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
+    date_rx = re.compile(r"\b(\d{1,2})(?:[ \t ]*(?:[–—-]|,|или|и|по|до)[ \t ]*(\d{1,2}))?[ \t ]+(%s)(?:[ \t ]+(\d{4}))?" % MONTHS, re.I)
     for m in date_rx.finditer(text):
         month = MONTH_STEM.get(m.group(3).lower()[:3], 0)
         for day in filter(None, (m.group(1), m.group(2))):
@@ -476,6 +485,10 @@ def extract(text: str, edited: bool = False) -> Facts:
     for m in WEEKDAY_RX.finditer(text):
         day = WEEKDAY_NUM[_norm(m.group(1).lower())]
         facts.items.append(Fact("date", "день недели %d" % day, m.group(), sent_of(m.start()), m.start()))
+    for m in WEEKDAY_RANGE_RX.finditer(text):
+        for g in (1, 2):
+            facts.items.append(Fact("date", "день недели %d" % WEEKDAY_ABBR[m.group(g).lower()], m.group(g),
+                                    sent_of(m.start(g)), m.start(g)))
     # A month without a day ("в марте 2026") is a date fact of its own; see MONTHS_DIFF.
     for m in MONTH_ANY_RX.finditer(text):
         # A month is written in lower case; in the middle of a sentence "Марту", "Августа" are names.
@@ -489,7 +502,14 @@ def extract(text: str, edited: bool = False) -> Facts:
 
     # START_BLOCK_NUMBERS
     # Counters in headings ("Вариант 1", "Шаг 2") are structure, not facts.
-    for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава)\s+(\d+)", text):
+    for m in re.finditer(r"(?i)(?:вариант|шаг|этап|пункт|раздел|часть|глава|блок)\s+(\d+)", text):
+        taken.append((m.start(1), m.end(1)))
+    # So are list markers at a line start ("1. Возьмите чек", "2) …", "## 3. Раздел", "> 4. …",
+    # "**5. Заголовок**"): turning steps into a numbered list or back is a legitimate edit (4.2.0:
+    # 98 false errors over 1596 old edits, 10 of them ours). A number inside the item stays a fact.
+    sp = "[ \\t\\u00a0\\u202f]"
+    for m in re.finditer(r"(?m)^[ \t\u00a0\u202f\ufeff]*(?:>%s*)*(?:#{1,6}%s+)?(?:[-*+]%s+)?(?:\*\*|__|\*|_)?"
+                         r"(\d{1,2})[.)](?=[ \t\u00a0\u202f*_])" % (sp, sp, sp), text):
         taken.append((m.start(1), m.end(1)))
     num_rx = re.compile(r"(?<![\w.,])[+\-−]?\d+(?:[%s]\d{3})*(?:[.,]\d+)?(?![\w])" % SEP)
     for m in num_rx.finditer(text):
@@ -1255,12 +1275,14 @@ def _dedupe(items: List[Dict]) -> List[Dict]:
     return out
 
 
-KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перестановка",
+KIND_RU = {"lost": "потеряно", "added": "появилось", "unit": "изменилась", "swap": "перепутано",
            "inverted": "перевёрнуто",
            "fewer": "реже", "hedge": "потеряна", "negation": "проверь"}
 # The verb agrees with the noun: «потеряна цитата», «потерян телефон», «потеряно число».
-KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута"}
-KIND_MASC = {"потеряно": "потерян", "появилось": "появился", "перевёрнуто": "перевёрнут"}
+KIND_FEM = {"потеряно": "потеряна", "появилось": "появилась", "перевёрнуто": "перевёрнута",
+               "перепутано": "перепутана"}
+KIND_MASC = {"потеряно": "потерян", "появилось": "появился", "перевёрнуто": "перевёрнут",
+                "перепутано": "перепутан"}
 MASC_WHAT = {"телефон", "код"}
 
 
@@ -1288,9 +1310,57 @@ def render(result: Dict) -> str:
     return "\n".join(lines)
 
 
+# START_BLOCK_RECEIPT
+# The notes line the skill copies word for word (SKILL.md step 6, R-RECEIPT): written by the script,
+# so its numbers are the script's. M4 on 2026-11-09: agents that retold the report in their own words
+# gave other numbers in 3 of 9 lines («8 чисел, телефон» for 9 numbers and 1 phone).
+RECEIPT_FORMS = (  # counts key, forms for 1 / 2-4 / 5 and more
+    ("number", ("число", "числа", "чисел")),
+    ("date", ("дата", "даты", "дат")),
+    ("name", ("имя или название", "имени и названия", "имён и названий")),
+    ("url", ("ссылка", "ссылки", "ссылок")),
+    ("phone", ("телефон", "телефона", "телефонов")),
+    ("quote", ("цитата", "цитаты", "цитат")),
+    ("negation", ("отрицание", "отрицания", "отрицаний")),
+)
+
+
+def plural(n: int, forms: Tuple[str, str, str]) -> str:
+    if n % 10 == 1 and n % 100 != 11:
+        return forms[0]
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return forms[1]
+    return forms[2]
+
+
+def receipt(result: Dict) -> str:
+    """«Сверка скриптом: …» for the notes; "" while there are errors other than lost facts."""
+    c = result["counts"]
+    have = ", ".join("%d %s" % (c[k], plural(c[k], forms)) for k, forms in RECEIPT_FORMS if c.get(k))
+    if not result["errors"]:
+        return "Сверка скриптом: " + ("%s на месте." % have if have else "чисел, дат и имён в тексте нет.")
+    if all(e["kind"] == "lost" for e in result["errors"]):
+        return "Сверка скриптом: в исходнике %s; в правке нет: %s." % (
+            have or "фактов нет", ", ".join(e["detail"] for e in result["errors"]))
+    return ""
+
+
+def receipt_hint(result: Dict) -> str:
+    line = receipt(result)
+    if not result["errors"]:
+        return "Строка для заметок: " + line
+    if line:
+        return ("Если пропавшее убрано намеренно (служебные слова чат-бота), строка для заметок: %s\n"
+                "Иначе верни факты и запусти сверку снова." % line)
+    return "Строки для заметок нет: исправь ошибки и запусти сверку снова."
+# END_BLOCK_RECEIPT
+
+
 def _read(path: str) -> str:
     if path == "-":
-        return sys.stdin.read()
+        # Bytes, not sys.stdin: on Windows it decodes with the console code page (cp1251), and two
+        # identical UTF-8 texts with the source piped in gave four false errors (found 2026-11-09).
+        return sys.stdin.buffer.read().decode("utf-8-sig")
     with open(path, encoding="utf-8-sig") as fh:
         return fh.read()
 
@@ -1308,7 +1378,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Не могу прочитать файл: %s" % exc, file=sys.stderr)
         return 2
     result = compare(before, after)
-    print(json.dumps(result, ensure_ascii=False, indent=2) if as_json else render(result))
+    print(json.dumps(result, ensure_ascii=False, indent=2) if as_json else
+          render(result) + "\n\n" + receipt_hint(result))
     return 1 if result["errors"] else 0
 
 
