@@ -1,0 +1,145 @@
+{
+  "cells": {
+    "chat|r0": {
+      "apology_names": [
+        4,
+        4
+      ]
+    },
+    "chat|r1": {
+      "apology_names": [
+        3,
+        4
+      ]
+    },
+    "ours|r0": {
+      "apology_names": [
+        4,
+        4
+      ]
+    },
+    "ours|r1": {
+      "apology_names": [
+        4,
+        4
+      ]
+    },
+    "ours417|r0": {
+      "apology_names": [
+        4,
+        4
+      ]
+    },
+    "ours417|r1": {
+      "apology_names": [
+        3,
+        4
+      ]
+    },
+    "prompt|r0": {
+      "apology_names": [
+        3,
+        4
+      ]
+    },
+    "prompt|r1": {
+      "apology_names": [
+        4,
+        4
+      ]
+    }
+  },
+  "fails": {
+    "chat": {
+      "pr63 drop:(?i)помогает нам становиться лучше": 1
+    },
+    "ours417": {
+      "pr63 drop:(?i)помогает нам становиться лучше": 1
+    },
+    "prompt": {
+      "pr64 facts": 1
+    }
+  },
+  "table": {
+    "chat": {
+      "apology_names": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "_all": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      }
+    },
+    "ours": {
+      "apology_names": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "_all": {
+        "passed": 8,
+        "total": 8,
+        "per_run": [
+          4,
+          4
+        ],
+        "spread": 0
+      }
+    },
+    "ours417": {
+      "apology_names": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "_all": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          4,
+          3
+        ],
+        "spread": 1
+      }
+    },
+    "prompt": {
+      "apology_names": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      },
+      "_all": {
+        "passed": 7,
+        "total": 8,
+        "per_run": [
+          3,
+          4
+        ],
+        "spread": 1
+      }
+    }
+  }
+}

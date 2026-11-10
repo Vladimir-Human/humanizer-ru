@@ -1,0 +1,218 @@
+{
+  "cells": {
+    "ours|r0": {
+      "register": [
+        3,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours|r1": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours|r2": {
+      "register": [
+        3,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours|r3": {
+      "register": [
+        3,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours|r4": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours|r5": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r0": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r1": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r2": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r3": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r4": {
+      "register": [
+        4,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    },
+    "ours417|r5": {
+      "register": [
+        3,
+        4
+      ],
+      "strengthening": [
+        4,
+        4
+      ]
+    }
+  },
+  "fails": {
+    "ours": {
+      "pr22 keep_re:\\b(?:ты|тебя|тебе|тво\\w*|хотел|приходи|успей|запишись|не упусти)\\b": 1,
+      "pr21 keep_re:\\b[Вв](?:ы|ас|ам|аш)": 2
+    },
+    "ours417": {
+      "pr23 keep:Кравец": 1,
+      "pr23 facts": 1
+    }
+  },
+  "table": {
+    "ours": {
+      "register": {
+        "passed": 21,
+        "total": 24,
+        "per_run": [
+          3,
+          4,
+          3,
+          3,
+          4,
+          4
+        ],
+        "spread": 1
+      },
+      "strengthening": {
+        "passed": 24,
+        "total": 24,
+        "per_run": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "_all": {
+        "passed": 45,
+        "total": 48,
+        "per_run": [
+          7,
+          8,
+          7,
+          7,
+          8,
+          8
+        ],
+        "spread": 1
+      }
+    },
+    "ours417": {
+      "register": {
+        "passed": 23,
+        "total": 24,
+        "per_run": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          3
+        ],
+        "spread": 1
+      },
+      "strengthening": {
+        "passed": 24,
+        "total": 24,
+        "per_run": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "spread": 0
+      },
+      "_all": {
+        "passed": 47,
+        "total": 48,
+        "per_run": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          7
+        ],
+        "spread": 1
+      }
+    }
+  }
+}
