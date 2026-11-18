@@ -22,51 +22,91 @@
 :root {
   color-scheme: light dark;
   --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
-  --pencil: #2346a8; --wash: #e6ecfa; --strike: #b3312c;
+  --pencil: #2346a8; --wash: #e6ecfa; --wash-row: rgba(35, 70, 168, 0.09); --strike: #b3312c;
+  --scroll-shadow: rgba(27, 34, 48, 0.13);
   --display: "PT Serif", Georgia, "Times New Roman", serif;
   --body: "PT Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: Consolas, "SFMono-Regular", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root { --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0;
-          --rule: #2c3442; --pencil: #8fa9f2; --wash: #1f2a44; --strike: #f08a83; }
+          --rule: #2c3442; --pencil: #8fa9f2; --wash: #1f2a44; --wash-row: rgba(143, 169, 242, 0.13); --strike: #f08a83;
+          --scroll-shadow: rgba(0, 0, 0, 0.5); }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body); padding: 0 16px; }
-main { max-width: 46rem; margin: 2.5rem auto 3rem; display: flex; flex-direction: column; gap: 2.2rem; }
+main { max-width: 46rem; margin: 2rem auto 3rem; display: flex; flex-direction: column; gap: 2.2rem; }
 h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
-h1 { font-size: 2.2rem; } h2 { font-size: 1.45rem; } h3 { font-size: 1.12rem; margin-top: 0.35rem; }
-p { margin: 0; max-width: 65ch; }
+h1 { font-size: clamp(1.75rem, 4.5vw, 2.25rem); letter-spacing: -0.01em; line-height: 1.18; }
+h2 { font-size: clamp(1.3rem, 3.2vw, 1.45rem); }
+h3 { font-size: 1.12rem; margin-top: 0.35rem; }
+p { margin: 0; max-width: 65ch; overflow-wrap: anywhere; }
 ul { margin: 0; padding-left: 1.25rem; max-width: 65ch; display: flex; flex-direction: column; gap: 0.45rem; }
+li { overflow-wrap: anywhere; }
 section { display: flex; flex-direction: column; gap: 0.8rem; }
-.lead { font-size: 1.15rem; }
+.lead { font-size: 1.12rem; }
 .soft { color: var(--soft); font-size: 0.9rem; }
-.tools { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.top-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-top: 0.15rem; }
+.top-nav a, .top-nav .nav-meta {
+  display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0.35rem 0.72rem;
+  border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet);
+  font-size: 0.9rem; line-height: 1.25; text-decoration: none; white-space: nowrap;
+}
+.top-nav a.nav-primary { border-color: var(--pencil); font-weight: 600; }
+.top-nav a:hover { background: var(--wash); border-color: var(--pencil); }
+.top-nav .nav-meta { color: var(--soft); background: transparent; border: 0; padding-inline: 0.25rem; }
+.tools, .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.card { min-width: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .card .tag { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--soft); }
 .card.after { border-color: var(--pencil); }
 .card.after .tag { color: var(--pencil); }
-pre { margin: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.8rem 1rem; overflow-x: auto; font: 0.9rem/1.5 var(--mono); }
+pre { margin: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.8rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch; font: 0.9rem/1.5 var(--mono); }
 code { font-family: var(--mono); font-size: 0.9em; }
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--rule); border-radius: 4px; background-color: var(--sheet);
+  background-image:
+    linear-gradient(to right, var(--sheet) 25%, transparent),
+    linear-gradient(to left, var(--sheet) 25%, transparent),
+    linear-gradient(to right, var(--scroll-shadow), transparent),
+    linear-gradient(to left, var(--scroll-shadow), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 24px 100%, 24px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.45; }
-th, td { text-align: left; padding: 0.42rem 0.55rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th, td { text-align: left; padding: 0.45rem 0.55rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
 th { color: var(--soft); font-weight: 600; }
 th.n, td.n { text-align: right; }
 td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-tr.us td { background: var(--wash); font-weight: 600; }
-a { color: var(--pencil); }
-a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
-@media (max-width: 640px) { .pair, .tools { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
+tr.us td { background: var(--wash-row); font-weight: 600; }
+a { color: var(--pencil); text-underline-offset: 0.18em; }
+a:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+@media (max-width: 45rem) {
+  main { margin: 1.4rem auto 2.5rem; gap: 1.85rem; }
+  .lead { font-size: 1.05rem; }
+  .top-nav a, .top-nav .nav-meta { min-height: 2.75rem; padding: 0.45rem 0.78rem; }
+  .pair, .tools { grid-template-columns: minmax(0, 1fr); }
+  pre { font-size: 0.82rem; padding: 0.7rem 0.85rem; }
+}
 </style>
 </head>
 <body>
 <main>
-  <header style="display:flex;flex-direction:column;gap:0.7rem">
+  <header style="display:flex;flex-direction:column;gap:0.75rem">
     <h1>humanizer-ru</h1>
     <p class="lead">Превращает казённый и гладкий русский текст после нейросети в живой и естественный, проверяет, чтобы при правке не пропали и не перепутались числа, суммы, даты, имена, цитаты и ссылки вроде <code>[14, с. 52]</code>, и снижает риск срабатывания «Антиплагиата» и ИИ-детекторов, убирая невидимые символы и буквы-двойники.</p>
-    <p class="soft">MIT · <a href="check/">Проверка стиля</a> · <a href="sverka/">Сверка фактов</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">Промпт для чата</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md">English</a> · <a href="llms.txt">llms.txt</a></p>
+    <nav class="top-nav" aria-label="Навигация">
+      <a class="nav-primary" href="check/">Проверка стиля</a>
+      <a class="nav-primary" href="sverka/">Сверка фактов</a>
+      <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">Промпт для чата</a>
+      <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a>
+      <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md">English</a>
+      <a href="llms.txt">llms.txt</a>
+      <span class="nav-meta">MIT</span>
+    </nav>
   </header>
 
   <section>

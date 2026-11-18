@@ -42,6 +42,7 @@ END_MODULE_MAP
       color-scheme: light dark;
       --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
       --pencil: #2346a8; --wash: #e6ecfa; --bad: #a3261d; --bad-wash: #fbeceb; --ok: #1f6b3a; --ok-wash: #e8f5ec;
+      --display: 'PT Serif', Georgia, 'Times New Roman', serif;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -50,40 +51,55 @@ END_MODULE_MAP
       }
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'PT Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1rem; line-height: 1.55; }
-    .page { max-width: 46rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
-    a { color: var(--pencil); }
-    .back-link { display: inline-block; margin-bottom: 1rem; font-size: .95rem; }
-    .eyebrow { margin: 0; color: var(--soft); font-size: .85rem; letter-spacing: .04em; text-transform: uppercase; }
-    h1 { margin: .25rem 0 .5rem; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.2; }
-    .lead { margin: 0 0 .5rem; }
-    .privacy-note { margin: 0; color: var(--soft); font-size: .95rem; }
-    .step { margin-top: 1.5rem; padding: 1rem; background: var(--sheet); border: 1px solid var(--rule); border-radius: .5rem; }
-    .step h2 { display: flex; gap: .6rem; align-items: baseline; margin: 0 0 .5rem; font-size: 1.15rem; }
-    .num { color: var(--pencil); font-variant-numeric: tabular-nums; font-size: .95rem; }
-    .step p { margin: .35rem 0; }
-    label { display: block; margin: .9rem 0 .3rem; font-weight: 600; }
+    .page { max-width: 46rem; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+    a { color: var(--pencil); text-decoration-thickness: 1px; text-underline-offset: .2em; }
+    a:hover { text-decoration-thickness: 2px; }
+    .back-link { display: inline-flex; align-items: center; min-height: 2.75rem; padding-block: .45rem; font-size: .95rem; }
+    header { margin: 1rem 0 1.5rem; }
+    .eyebrow { margin: 0 0 .65rem; color: var(--pencil); font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-family: var(--display); font-size: clamp(1.75rem, 4.5vw, 2.25rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.18; text-wrap: balance; }
+    .lead { max-width: 42rem; margin: .9rem 0 0; color: var(--soft); line-height: 1.6; }
+    .privacy-note { margin: .85rem 0 0; padding-left: .7rem; border-left: 2px solid var(--pencil); color: var(--pencil); font-size: .9rem; }
+    .step { margin-top: 1.5rem; padding: 1.25rem; background: var(--sheet); border: 1px solid var(--rule); border-top: 3px solid var(--pencil); border-radius: 4px; }
+    .step h2 { display: flex; gap: .7rem; align-items: baseline; margin: 0 0 .5rem; font-size: 1.15rem; line-height: 1.35; }
+    .num { flex: 0 0 auto; color: var(--pencil); font-variant-numeric: tabular-nums; font-size: .8rem; font-weight: 400; }
+    .step p { margin: .35rem 0; overflow-wrap: anywhere; }
+    label { display: block; margin: .9rem 0 .35rem; font-weight: 600; }
     .hint { color: var(--soft); font-size: .9rem; font-weight: 400; }
-    textarea { width: 100%; min-height: 9rem; padding: .7rem; border: 1px solid var(--rule); border-radius: .4rem; background: var(--paper); color: var(--ink); font: inherit; resize: vertical; }
+    textarea { display: block; width: 100%; min-height: 9rem; padding: .8rem .95rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); color: var(--ink); font: inherit; font-size: 1rem; line-height: 1.6; resize: vertical; caret-color: var(--pencil); }
+    textarea::placeholder { color: var(--soft); opacity: 1; }
     textarea[aria-invalid="true"] { border-color: var(--bad); }
-    button { cursor: pointer; padding: .6rem 1.1rem; border: 1px solid var(--pencil); border-radius: .4rem; background: var(--pencil); color: var(--sheet); font: inherit; font-weight: 600; }
-    button.quiet { background: transparent; color: var(--pencil); }
-    button:disabled { opacity: .55; cursor: default; }
-    :focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
-    .row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: .8rem; }
-    .status { margin: 0; color: var(--soft); font-size: .92rem; }
-    .status.is-error { color: var(--bad); }
-    details { margin-top: .6rem; }
-    details pre { max-height: 18rem; overflow: auto; padding: .7rem; background: var(--paper); border: 1px solid var(--rule); border-radius: .4rem; white-space: pre-wrap; font-size: .85rem; }
-    .verdict { margin: .2rem 0 .6rem; padding: .7rem .9rem; border-radius: .4rem; font-weight: 600; }
+    button { cursor: pointer; min-height: 2.75rem; padding: .55rem 1.15rem; border: 1px solid var(--pencil); border-radius: 4px; background: var(--pencil); color: var(--sheet); font: inherit; font-weight: 700; line-height: 1.35; }
+    button.quiet { background: transparent; color: var(--pencil); font-weight: 600; }
+    button:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); }
+    button.quiet:hover:not(:disabled) { background: var(--wash); border-color: var(--pencil); }
+    button:disabled { border-color: var(--rule); background: var(--wash); color: var(--soft); cursor: not-allowed; }
+    :focus-visible { outline: 3px solid var(--pencil); outline-offset: 3px; }
+    .row { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; margin-top: .85rem; }
+    .status { margin: 0; color: var(--soft); font-size: .9rem; overflow-wrap: anywhere; }
+    .status.is-error { color: var(--bad); font-weight: 600; }
+    details { margin-top: .45rem; }
+    summary { padding: .65rem 0; cursor: pointer; color: var(--pencil); font-weight: 600; user-select: none; }
+    details pre { margin: .25rem 0 0; max-height: 18rem; overflow: auto; -webkit-overflow-scrolling: touch; padding: .75rem .85rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; line-height: 1.5; }
+    .verdict { margin: .2rem 0 .6rem; padding: .75rem .95rem; border-radius: 4px; font-weight: 600; }
     .verdict.bad { background: var(--bad-wash); color: var(--bad); }
     .verdict.ok { background: var(--ok-wash); color: var(--ok); }
-    .result h3 { margin: 1rem 0 .3rem; font-size: 1rem; }
-    .result ul { margin: .2rem 0; padding-left: 1.2rem; }
-    .result li { margin: .25rem 0; overflow-wrap: anywhere; }
+    .result h3 { margin: 1rem 0 .35rem; font-size: 1rem; }
+    .result ul { margin: .25rem 0; padding-left: 1.25rem; }
+    .result li { margin: .35rem 0; line-height: 1.5; overflow-wrap: anywhere; }
     .result .errors li { color: var(--bad); }
     .note { color: var(--soft); font-size: .92rem; }
-    .footer-note { margin-top: 1.5rem; color: var(--soft); font-size: .9rem; }
+    .footer-note { margin-top: 1.5rem; color: var(--soft); font-size: .85rem; }
+    @media (max-width: 36rem) {
+      .page { padding: .85rem 1rem 2.5rem; }
+      header { margin: .75rem 0 1.25rem; }
+      .step { padding: 1rem; margin-top: 1.25rem; }
+      textarea { min-height: 8.5rem; padding: .75rem .85rem; }
+      .row { flex-direction: column; align-items: stretch; }
+      .row button { width: 100%; }
+    }
     /* END_BLOCK_CSS */
   </style>
   <script src="../check/facts.js" defer referrerpolicy="no-referrer"></script>
