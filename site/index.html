@@ -3,56 +3,81 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>humanizer-ru</title>
-<meta name="description" content="Навык для Claude Code, Codex, Cursor и Claude.ai: правит русский текст после нейросети и сверяет цифры, даты и имена. Слепое сравнение с другими навыками.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&family=Golos+Text:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>humanizer-ru — живая редактура русского ИИ-текста и сверка фактов</title>
+<meta name="description" content="Навык для Claude Code, Codex, Cursor, Gemini CLI и Claude.ai: правит русский текст после нейросети, сверяет факты и снижает риск срабатывания ИИ-детекторов и отметки «Подозрительный документ». Работает в браузере без сети.">
+<meta property="og:title" content="humanizer-ru">
+<meta property="og:description" content="Редактура русского ИИ-текста без потери цифр, дат, ссылок и оговорок. Проверка стиля, чистка омоглифов и сверка фактов прямо в браузере.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/">
+<link rel="icon" href="data:,">
 <style>
 :root {
+  color-scheme: light dark;
   --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
   --pencil: #2346a8; --wash: #e6ecfa; --strike: #b3312c;
-  --display: "Literata", "PT Serif", Georgia, serif;
-  --body: "Golos Text", "PT Sans", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+  --display: "PT Serif", Georgia, "Times New Roman", serif;
+  --body: "PT Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: Consolas, "SFMono-Regular", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark; --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0;
+  :root { --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0;
           --rule: #2c3442; --pencil: #8fa9f2; --wash: #1f2a44; --strike: #f08a83; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body); padding: 0 16px; }
 main { max-width: 46rem; margin: 2.5rem auto 3rem; display: flex; flex-direction: column; gap: 2.2rem; }
-h1, h2 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
-h1 { font-size: 2.2rem; } h2 { font-size: 1.45rem; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 2.2rem; } h2 { font-size: 1.45rem; } h3 { font-size: 1.12rem; margin-top: 0.35rem; }
 p { margin: 0; max-width: 65ch; }
+ul { margin: 0; padding-left: 1.25rem; max-width: 65ch; display: flex; flex-direction: column; gap: 0.45rem; }
 section { display: flex; flex-direction: column; gap: 0.8rem; }
 .lead { font-size: 1.15rem; }
 .soft { color: var(--soft); font-size: 0.9rem; }
+.tools { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .card .tag { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--soft); }
 .card.after { border-color: var(--pencil); }
 .card.after .tag { color: var(--pencil); }
 pre { margin: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.8rem 1rem; overflow-x: auto; font: 0.9rem/1.5 var(--mono); }
+code { font-family: var(--mono); font-size: 0.9em; }
 .table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: 0.92rem; }
-th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); }
+table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.48rem 0.6rem; border-bottom: 1px solid var(--rule); }
 th { color: var(--soft); font-weight: 600; }
-td.n { font-family: var(--mono); text-align: right; }
-tr.us td { background: var(--wash); }
+th.n, td.n { font-family: var(--mono); text-align: right; white-space: nowrap; }
+th.n { font-family: var(--body); }
+tr.us td { background: var(--wash); font-weight: 600; }
 a { color: var(--pencil); }
 a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
-@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
+@media (max-width: 640px) { .pair, .tools { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
 </style>
 </head>
 <body>
 <main>
   <header style="display:flex;flex-direction:column;gap:0.7rem">
     <h1>humanizer-ru</h1>
-    <p class="lead">Навык для Claude Code, Codex, Cursor, Gemini CLI и Claude.ai. Правит русский текст после нейросети: убирает канцелярит, штампы и оформление «как у ChatGPT» и следит, чтобы цифры, даты, имена и оговорки остались прежними.</p>
-    <p class="soft">MIT · <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md">English</a></p>
+    <p class="lead">Навык для Claude Code, Codex, Cursor, Gemini CLI и Claude.ai: превращает казённый русский текст после нейросети в живой и естественный, сверяет числа, валюты, даты, цитаты, ссылки <code>[14, с. 52]</code> и привязки сумм через <code>check_facts.py</code> и снижает риск срабатывания «Антиплагиата» и ИИ-детекторов, убирая омоглифы и скрытые водяные знаки.</p>
+    <p class="soft">MIT · <a href="check/">Проверка стиля</a> · <a href="sverka/">Сверка фактов</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">Промпт для чата</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru">GitHub</a> · <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md">English</a></p>
   </header>
+
+  <section>
+    <h2>Без установки — прямо в браузере</h2>
+    <div class="tools">
+      <div class="card after">
+        <span class="tag">Шаг 1 · Стиль и техгигиена</span>
+        <p><a href="check/"><strong>Проверка стиля (/check/)</strong></a>: подсвечивает штампы, монотонный ритм, цепочки на «-ение/-ость», невидимые символы и латинские или греческие буквы-двойники внутри русских слов. В один клик очищает мусор вставки и омоглифы.</p>
+      </div>
+      <div class="card after">
+        <span class="tag">Шаг 2 · Факты и промпт</span>
+        <p><a href="sverka/"><strong>Сверка фактов (/sverka/)</strong></a>: готовый <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">промпт для любого чат-бота</a> и построчная сверка текста до и после — числа, валюты, даты, имена, цитаты, ссылки и оговорки.</p>
+      </div>
+    </div>
+    <p class="soft">Обе страницы работают офлайн без внешних запросов: текст не покидает вкладку браузера. Оценка относится к стилю и техническим следам, а не доказывает авторство.</p>
+  </section>
 
   <section>
     <h2>Было и стало</h2>
@@ -89,31 +114,55 @@ a:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
 /plugin install humanizer-ru@humanizer-ru</pre>
     <p>Gemini CLI:</p>
     <pre>gemini extensions install https://github.com/Vladimir-Human/humanizer-ru</pre>
-    <p>Claude.ai: архив <code>humanizer-ru-skill.zip</code> из <a href="https://github.com/Vladimir-Human/humanizer-ru/releases/latest">последнего релиза</a>, загрузить в Settings → Capabilities → Skills.</p>
+    <p>Cursor (локальный плагин) и Claude.ai (архив <code>humanizer-ru-skill.zip</code> из <a href="https://github.com/Vladimir-Human/humanizer-ru/releases/latest">последнего релиза</a> → Settings → Capabilities → Skills) — подробнее в <a href="https://github.com/Vladimir-Human/humanizer-ru#установка">README</a>.</p>
   </section>
 
   <section>
-    <h2>Без установки</h2>
-    <p><a href="check/">Проверка стиля в браузере</a>: вставьте текст и посмотрите, какие приёмы машинного стиля в нём есть и где. Текст никуда не отправляется, страница работает без сети. Она оценивает стиль, а не авторство: живой текст тоже может набрать баллы.</p>
-    <p><a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">Промпт</a>: сжатая версия навыка для модели, которая не умеет подключать навыки (системная подсказка, инструкции проекта).</p>
-    <p><a href="sverka/">Сверка фактов в браузере</a>: вставьте исходник и правку любой модели, и страница сверит их так же, как <code>check_facts.py</code>. Потерянные, перепутанные и новые числа, даты и имена видны сразу; тексты никуда не отправляются.</p>
+    <h2>Детекторы ИИ и «Антиплагиат»</h2>
+    <p>Технические «обходчики» — подмена русских букв латинскими и греческими омоглифами, невидимые символы, ложные пробелы <code>U+2800</code> и словарные синонимайзеры — не меняют синтаксис для нейросетевых классификаторов и сразу зажигают в «Антиплагиате» красную метку «Подозрительный документ». Коммерческие автогуманизаторы при этом регулярно искажают цифры и цитаты. Навык работает иначе:</p>
+    <ul>
+      <li>вычищает невидимые символы, ложные пробелы, метки вставки из чата и латинские и греческие буквы-двойники внутри русских слов через <code>clean_paste.py</code> и кнопку на странице <a href="check/">/check/</a>;</li>
+      <li>перестраивает конструкцию фразы: заменяет цепочки отглагольных существительных личными глаголами, чередует длину предложений и абзацев, снимает рамочную воду во введении и выводах;</li>
+      <li>бережно сохраняет в дипломах, курсовых и статьях научный регистр, термины, цитаты в кавычках, ссылки <code>[14, с. 52]</code>, сноски, числа и оговорки под контролем <code>check_facts.py</code> и <a href="sverka/">/sverka/</a>.</li>
+    </ul>
+    <p class="soft">Честная граница: структурная правка и чистка технических следов снижают вероятность отметки в «Антиплагиате», GigaCheck, Text.ru и GPTZero, но стопроцентной гарантии не даёт ни один инструмент — итог зависит от модели детектора, длины отрывка и сухости жанра.</p>
   </section>
 
   <section>
-    <h2>Сравнение вслепую, октябрь 2026</h2>
-    <p>Последний замер, 4.1.1: 24 свежих ИИ-текста одиннадцати моделей, которых навык не видел, и шесть человеческих текстов-ловушек. Каждый навык применяла одна модель, Claude Sonnet 5.5; перемешанные варианты ранжировали Gemini 4 Argon, Kimi K3 и Muse Spark 1.3 по вопросу «что бы вы отправили с наименьшей доработкой». У каждого судьи один голос, ошибка смысла засчитана, если её отметили двое из трёх. Пороги записаны до того, как появились тексты.</p>
+    <h2>Слепое сравнение и детерминированные замеры</h2>
+    <h3>Замер 4.3.0 (ноябрь 2026)</h3>
+    <p>Слепое сравнение с терминалом на 12 свежих ИИ-текстах и 2 ловушках (исполнитель Claude Sonnet 4.6; судьи Claude Opus 4.6 Thinking, Gemini 4 Argon High и OpenAI GPT-6.2 Astra Thinking по два перемешивания — 84 оценки) плюс 64 детерминированные пробы по всем 16 правилам инструкции:</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Участник</th><th>Звёзды на 05.11.2026</th><th>Среднее место из 5</th><th>Наш выше</th><th>Тексты с ошибкой смысла из 24</th></tr></thead>
+        <thead><tr><th>Участник</th><th class="n">Место (3 судьи)</th><th class="n">1-е места из 72</th><th class="n">Потери фактов</th><th class="n">Балл стиля (до: 8,83)</th><th class="n">64 пробы правил</th></tr></thead>
         <tbody>
-          <tr class="us"><td>humanizer-ru 4.1.1</td><td class="n">140</td><td class="n">2.38</td><td class="n">—</td><td class="n">2</td></tr>
-          <tr><td>ilyautov/humanizer-ru</td><td class="n">521</td><td class="n">3.10</td><td class="n">65%</td><td class="n">2</td></tr>
-          <tr><td>ormeilu/avoid-ai-writing-russian</td><td class="n">27</td><td class="n">3.18</td><td class="n">69%</td><td class="n">9</td></tr>
-          <tr><td>просьба одной строкой</td><td class="n">—</td><td class="n">3.74</td><td class="n">77%</td><td class="n">8</td></tr>
+          <tr class="us"><td>humanizer-ru 4.3.0</td><td class="n">2,22</td><td class="n">29</td><td class="n">0</td><td class="n">1,22 (−86%)</td><td class="n">124 / 128 (96,9%)</td></tr>
+          <tr><td>ilyautov/humanizer-ru</td><td class="n">2,26</td><td class="n">21</td><td class="n">1</td><td class="n">4,31</td><td class="n">48 / 64 (75,0%)</td></tr>
+          <tr><td>humanizer-ru 4.2.1</td><td class="n">2,40</td><td class="n">20</td><td class="n">2</td><td class="n">3,61</td><td class="n">117 / 128 (91,4%)</td></tr>
+          <tr><td>просьба одной строкой</td><td class="n">3,11</td><td class="n">2</td><td class="n">1</td><td class="n">3,50</td><td class="n">87 / 128 (68,0%)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="soft">Пятым участником был новый вариант нашей инструкции из трёх циклов настройки: прошлую он не обогнал (49% сравнений), поэтому в 4.1.1 его нет. Gemini и Kimi ставят humanizer-ru выше обоих соперников, Muse Spark — выше avoid-ai-writing-russian и вровень с ilyautov. В замере 4.1.0 из восьми участников blader/humanizer был седьмым, stop-slop и no-ai-slop не прошли отбор. Судьи — модели, живых редакторов среди них не было. Все тексты, ответы и оценки: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval">eval/</a>.</p>
+    <ul>
+      <li>Версия 4.3.0 выше простой просьбы в 64% сравнений, выше 4.2.1 в 60% и выше <code>ilyautov</code> в 54%. На обеих ловушках — 1-е место и 0 ошибок; квитанция «Сверка скриптом: …» выведена в 12 ответах из 12 и совпала со скриптом в 10 из 12.</li>
+      <li>Сжатый промпт для чата прошёл 110 проб из 128 и 8/8 на проверках prompt-injection. На 39 живых текстах и 6 ловушках все ловушки пройдены без ошибок при сходстве 0,98 (сноски Герцена сохранены), а на 45 текстах ошибка сверки осталась только в одном против четырёх у 4.2.0 и шести у 4.1.7.</li>
+      <li>На 24 коротких текстах в два исполнителя (<code>leap-style</code>, 144 ответа) простая просьба добавляет 8–18% длинных тире и оставляет реплики чат-бота, тогда как навык снимает 79–90% балла машинных признаков с нулём потерь фактов.</li>
+    </ul>
+
+    <h3>Замер 4.1.1 (24 ИИ-текста и 6 ловушек)</h3>
+    <p>Исполнитель — Claude Sonnet 5.5; перемешанные варианты вслепую ранжировали Gemini 4 Argon, Kimi K3 и Muse Spark 1.3. Число звёзд обновлено на 17.11.2026.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Участник</th><th class="n">Звёзды на 17.11.2026</th><th class="n">Среднее место из 5</th><th class="n">Наш выше (95% ДИ)</th><th class="n">Ошибки смысла из 24</th></tr></thead>
+        <tbody>
+          <tr class="us"><td>humanizer-ru 4.1.1</td><td class="n">152</td><td class="n">2,38</td><td class="n">—</td><td class="n">2</td></tr>
+          <tr><td>ilyautov/humanizer-ru</td><td class="n">581</td><td class="n">3,10</td><td class="n">65% (52–78%)</td><td class="n">2</td></tr>
+          <tr><td>ormeilu/avoid-ai-writing-russian</td><td class="n">42</td><td class="n">3,18</td><td class="n">69% (58–81%)</td><td class="n">9</td></tr>
+          <tr><td>просьба одной строкой</td><td class="n">—</td><td class="n">3,74</td><td class="n">77% (67–85%)</td><td class="n">8</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="soft">Все тексты, ответы, скрипты замеров и протоколы: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval">eval/</a>.</p>
   </section>
 </main>
 </body>

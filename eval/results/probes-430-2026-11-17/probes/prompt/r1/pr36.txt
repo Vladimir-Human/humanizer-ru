@@ -1,0 +1,10 @@
+**Готовый текст:**
+
+Акция действует до 10 декабря и доступна только новым клиентам.
+
+**По ссылке:** https://example.com/promo отдаёт 404 — промо-страницы там нет. По факту вернулась только заглушка example.com целиком:
+
+> Example Domain
+> This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.
+
+Текста акции, условий или контактов на этой странице не содержится. Если пришлёте рабочую ссылку — вставлю содержимое сразу.

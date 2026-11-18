@@ -1,0 +1,48 @@
+{
+  "executor": "anthropic/claude-sonnet-4.6 (Antigravity subagent with terminal)",
+  "set": "holdout5",
+  "texts": [
+    "h5_01",
+    "h5_02",
+    "h5_03",
+    "h5_04",
+    "h5_05",
+    "h5_06",
+    "h5_07",
+    "h5_08",
+    "h5_09",
+    "h5_10",
+    "h5_11",
+    "h5_12",
+    "h5_t1",
+    "h5_t2"
+  ],
+  "systems": [
+    "ours",
+    "ours421",
+    "ilyautov",
+    "prompt"
+  ],
+  "request": "Очеловечь этот текст.\n\n",
+  "batches": [
+    [
+      "h5_01",
+      "h5_02",
+      "h5_03",
+      "h5_04",
+      "h5_05",
+      "h5_06",
+      "h5_07"
+    ],
+    [
+      "h5_08",
+      "h5_09",
+      "h5_10",
+      "h5_11",
+      "h5_12",
+      "h5_t1",
+      "h5_t2"
+    ]
+  ],
+  "scripts": true
+}

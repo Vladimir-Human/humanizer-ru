@@ -1,0 +1,135 @@
+{
+  "pairs": 150,
+  "min_docs": 8,
+  "min_z": 3.0,
+  "ai_leaning": [
+    {
+      "seq": "именно",
+      "z": 4.23,
+      "ai_texts": 34,
+      "human_texts": 6,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 34
+      }
+    },
+    {
+      "seq": "остается",
+      "z": 4.04,
+      "ai_texts": 32,
+      "human_texts": 6,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 32
+      }
+    },
+    {
+      "seq": "а",
+      "z": 4.01,
+      "ai_texts": 100,
+      "human_texts": 65,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 100
+      }
+    },
+    {
+      "seq": "неоднократно",
+      "z": 3.48,
+      "ai_texts": 24,
+      "human_texts": 1,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 24
+      }
+    },
+    {
+      "seq": "этом",
+      "z": 3.39,
+      "ai_texts": 73,
+      "human_texts": 44,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 73
+      }
+    },
+    {
+      "seq": "часть",
+      "z": 3.35,
+      "ai_texts": 24,
+      "human_texts": 5,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 24
+      }
+    },
+    {
+      "seq": "напомним что",
+      "z": 3.26,
+      "ai_texts": 26,
+      "human_texts": 7,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 26
+      }
+    },
+    {
+      "seq": "об этом",
+      "z": 3.08,
+      "ai_texts": 52,
+      "human_texts": 28,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 52
+      }
+    },
+    {
+      "seq": "итогам",
+      "z": 3.07,
+      "ai_texts": 23,
+      "human_texts": 6,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 23
+      }
+    }
+  ],
+  "human_leaning": [
+    {
+      "seq": "сказал",
+      "z": -3.94,
+      "ai_texts": 3,
+      "human_texts": 28,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 3
+      }
+    },
+    {
+      "seq": "он",
+      "z": -3.94,
+      "ai_texts": 29,
+      "human_texts": 61,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 29
+      }
+    },
+    {
+      "seq": "передает",
+      "z": -3.91,
+      "ai_texts": 7,
+      "human_texts": 32,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 7
+      }
+    },
+    {
+      "seq": "года",
+      "z": -3.42,
+      "ai_texts": 28,
+      "human_texts": 55,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 28
+      }
+    },
+    {
+      "seq": "мы",
+      "z": -3.19,
+      "ai_texts": 6,
+      "human_texts": 24,
+      "by_model": {
+        "MiniMax-M3.1-Flash": 6
+      }
+    }
+  ]
+}

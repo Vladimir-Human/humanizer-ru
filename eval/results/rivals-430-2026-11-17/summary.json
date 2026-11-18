@@ -1,0 +1,694 @@
+{
+  "leap_style": {
+    "source": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 2.51,
+      "share_gt0_pct": 54.2,
+      "mean_dash_per_1000": 4.89,
+      "median_sentence_cv": 0.65,
+      "median_nom_to_verb": 0.834,
+      "fake_receipts": 0
+    },
+    "minimax/ours": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.53,
+      "share_gt0_pct": 33.3,
+      "mean_dash_per_1000": 3.63,
+      "median_sentence_cv": 0.7,
+      "median_nom_to_verb": 0.584,
+      "fake_receipts": 0
+    },
+    "minimax/chat": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.39,
+      "share_gt0_pct": 29.2,
+      "mean_dash_per_1000": 4.72,
+      "median_sentence_cv": 0.852,
+      "median_nom_to_verb": 0.667,
+      "fake_receipts": 0
+    },
+    "minimax/prompt": {
+      "n": 24,
+      "fact_err_texts": 1,
+      "fact_err_lines": 4,
+      "fact_errors_detail": {
+        "s14": [
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "1 296 рублей"
+          },
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "1 200 рублей"
+          },
+          {
+            "kind": "lost",
+            "what": "дата",
+            "detail": "5 февраля"
+          },
+          {
+            "kind": "lost",
+            "what": "дата",
+            "detail": "25 ноября"
+          }
+        ]
+      },
+      "mean_score": 1.07,
+      "share_gt0_pct": 45.8,
+      "mean_dash_per_1000": 5.76,
+      "median_sentence_cv": 0.662,
+      "median_nom_to_verb": 0.5,
+      "fake_receipts": 0
+    },
+    "minimax/avoidai_ru_210": {
+      "n": 24,
+      "fact_err_texts": 1,
+      "fact_err_lines": 1,
+      "fact_errors_detail": {
+        "s03": [
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "1 года"
+          }
+        ]
+      },
+      "mean_score": 0.58,
+      "share_gt0_pct": 29.2,
+      "mean_dash_per_1000": 3.64,
+      "median_sentence_cv": 0.586,
+      "median_nom_to_verb": 0.416,
+      "fake_receipts": 0
+    },
+    "minimax/ilyautov_nov26": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.04,
+      "share_gt0_pct": 4.2,
+      "mean_dash_per_1000": 0.11,
+      "median_sentence_cv": 0.772,
+      "median_nom_to_verb": 0.667,
+      "fake_receipts": 0
+    },
+    "sol/ours": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.26,
+      "share_gt0_pct": 16.7,
+      "mean_dash_per_1000": 2.73,
+      "median_sentence_cv": 0.793,
+      "median_nom_to_verb": 0.667,
+      "fake_receipts": 0
+    },
+    "sol/chat": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.04,
+      "share_gt0_pct": 4.2,
+      "mean_dash_per_1000": 2.49,
+      "median_sentence_cv": 0.867,
+      "median_nom_to_verb": 0.667,
+      "fake_receipts": 0
+    },
+    "sol/prompt": {
+      "n": 24,
+      "fact_err_texts": 1,
+      "fact_err_lines": 1,
+      "fact_errors_detail": {
+        "s24": [
+          {
+            "kind": "added",
+            "what": "число",
+            "detail": "две"
+          }
+        ]
+      },
+      "mean_score": 1.25,
+      "share_gt0_pct": 50.0,
+      "mean_dash_per_1000": 5.29,
+      "median_sentence_cv": 0.698,
+      "median_nom_to_verb": 0.416,
+      "fake_receipts": 0
+    },
+    "sol/avoidai_ru_210": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.67,
+      "share_gt0_pct": 37.5,
+      "mean_dash_per_1000": 4.32,
+      "median_sentence_cv": 0.867,
+      "median_nom_to_verb": 0.667,
+      "fake_receipts": 0
+    },
+    "sol/ilyautov_nov26": {
+      "n": 24,
+      "fact_err_texts": 0,
+      "fact_err_lines": 0,
+      "fact_errors_detail": {},
+      "mean_score": 0.42,
+      "share_gt0_pct": 12.5,
+      "mean_dash_per_1000": 0.33,
+      "median_sentence_cv": 0.856,
+      "median_nom_to_verb": 0.5,
+      "fake_receipts": 0
+    }
+  },
+  "rivals_probes": {
+    "cells": {
+      "avoidai_ru_210|r0": {
+        "hedge": [
+          3,
+          4
+        ],
+        "attribution": [
+          3,
+          4
+        ],
+        "no_add": [
+          3,
+          4
+        ],
+        "gram_dash": [
+          3,
+          4
+        ],
+        "false_contrast": [
+          3,
+          4
+        ],
+        "register": [
+          4,
+          4
+        ],
+        "placeholder": [
+          4,
+          4
+        ],
+        "chat_wrapper": [
+          2,
+          4
+        ],
+        "injection": [
+          3,
+          4
+        ],
+        "legal": [
+          4,
+          4
+        ],
+        "human_good": [
+          4,
+          4
+        ],
+        "steps_list": [
+          3,
+          4
+        ],
+        "yo": [
+          4,
+          4
+        ],
+        "strengthening": [
+          3,
+          4
+        ],
+        "interview": [
+          0,
+          4
+        ],
+        "apology_names": [
+          3,
+          4
+        ]
+      },
+      "ilyautov_nov26|r0": {
+        "hedge": [
+          4,
+          4
+        ],
+        "attribution": [
+          3,
+          4
+        ],
+        "no_add": [
+          3,
+          4
+        ],
+        "gram_dash": [
+          0,
+          4
+        ],
+        "false_contrast": [
+          3,
+          4
+        ],
+        "register": [
+          4,
+          4
+        ],
+        "placeholder": [
+          3,
+          4
+        ],
+        "chat_wrapper": [
+          4,
+          4
+        ],
+        "injection": [
+          4,
+          4
+        ],
+        "legal": [
+          4,
+          4
+        ],
+        "human_good": [
+          4,
+          4
+        ],
+        "steps_list": [
+          4,
+          4
+        ],
+        "yo": [
+          3,
+          4
+        ],
+        "strengthening": [
+          3,
+          4
+        ],
+        "interview": [
+          0,
+          4
+        ],
+        "apology_names": [
+          2,
+          4
+        ]
+      }
+    },
+    "fails": {
+      "avoidai_ru_210": {
+        "pr02 keep_any:мог|может|возможн": 1,
+        "pr06 keep_any:эксперт|аналитик|специалист|по мнению": 1,
+        "pr09 drop:комплексн": 1,
+        "pr14 keep_re:—\\s*450": 1,
+        "pr20 keep:не весь": 1,
+        "pr20 facts": 1,
+        "pr29 keep:15%": 1,
+        "pr30 drop:Совет:": 1,
+        "pr33 keep:40%": 1,
+        "pr48 min_count:20%": 1,
+        "pr55 drop:\\bглавн": 1,
+        "pr57 facts": 1,
+        "pr57 asks": 1,
+        "pr58 facts": 1,
+        "pr58 asks": 1,
+        "pr59 facts": 1,
+        "pr59 asks": 1,
+        "pr60 facts": 1,
+        "pr60 asks": 1,
+        "pr61 drop:(?i)мнение очень важно": 1
+      },
+      "ilyautov_nov26": {
+        "pr06 keep_any:эксперт|аналитик|специалист|по мнению": 1,
+        "pr09 drop:широкий спектр": 1,
+        "pr13 keep_re:[Кк]эш\\s+—": 1,
+        "pr14 keep_re:—\\s*450": 1,
+        "pr14 keep_re:—\\s*250": 1,
+        "pr15 keep_re:колонке\\s+—\\s+план": 1,
+        "pr16 keep_re:Москва\\s+—\\s+столица": 1,
+        "pr18 drop:[Дд]ело не в": 1,
+        "pr28 drop:неоценим": 1,
+        "pr51 drop:осуществляется": 1,
+        "pr54 keep_any:может|возможн|рискует|риск": 1,
+        "pr57 asks": 1,
+        "pr58 asks": 1,
+        "pr59 asks": 1,
+        "pr60 asks": 1,
+        "pr63 drop:(?i)помогает нам становиться лучше": 1,
+        "pr64 drop:(?i)для нас бесценно": 1
+      }
+    },
+    "table": {
+      "avoidai_ru_210": {
+        "apology_names": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "attribution": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "chat_wrapper": {
+          "passed": 2,
+          "total": 4,
+          "per_run": [
+            2
+          ],
+          "spread": 0
+        },
+        "false_contrast": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "gram_dash": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "hedge": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "human_good": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "injection": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "interview": {
+          "passed": 0,
+          "total": 4,
+          "per_run": [
+            0
+          ],
+          "spread": 0
+        },
+        "legal": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "no_add": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "placeholder": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "register": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "steps_list": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "strengthening": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "yo": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "_all": {
+          "passed": 49,
+          "total": 64,
+          "per_run": [
+            49
+          ],
+          "spread": 0
+        }
+      },
+      "ilyautov_nov26": {
+        "apology_names": {
+          "passed": 2,
+          "total": 4,
+          "per_run": [
+            2
+          ],
+          "spread": 0
+        },
+        "attribution": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "chat_wrapper": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "false_contrast": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "gram_dash": {
+          "passed": 0,
+          "total": 4,
+          "per_run": [
+            0
+          ],
+          "spread": 0
+        },
+        "hedge": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "human_good": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "injection": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "interview": {
+          "passed": 0,
+          "total": 4,
+          "per_run": [
+            0
+          ],
+          "spread": 0
+        },
+        "legal": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "no_add": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "placeholder": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "register": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "steps_list": {
+          "passed": 4,
+          "total": 4,
+          "per_run": [
+            4
+          ],
+          "spread": 0
+        },
+        "strengthening": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "yo": {
+          "passed": 3,
+          "total": 4,
+          "per_run": [
+            3
+          ],
+          "spread": 0
+        },
+        "_all": {
+          "passed": 48,
+          "total": 64,
+          "per_run": [
+            48
+          ],
+          "spread": 0
+        }
+      }
+    }
+  },
+  "traps": {
+    "avoidai_ru_210": {
+      "n": 6,
+      "mean_similarity": 0.811,
+      "err_texts": 0,
+      "err_total": 0,
+      "errors": {}
+    },
+    "ilyautov_nov26": {
+      "n": 6,
+      "mean_similarity": 0.994,
+      "err_texts": 0,
+      "err_total": 0,
+      "errors": {}
+    },
+    "ours": {
+      "n": 6,
+      "mean_similarity": 0.975,
+      "err_texts": 0,
+      "err_total": 0,
+      "errors": {}
+    },
+    "ours417": {
+      "n": 6,
+      "mean_similarity": 0.912,
+      "err_texts": 0,
+      "err_total": 0,
+      "errors": {}
+    },
+    "ours420": {
+      "n": 6,
+      "mean_similarity": 0.921,
+      "err_texts": 1,
+      "err_total": 3,
+      "errors": {
+        "h03": [
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "23"
+          },
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "27"
+          },
+          {
+            "kind": "lost",
+            "what": "число",
+            "detail": "24"
+          }
+        ]
+      }
+    },
+    "prompt": {
+      "n": 6,
+      "mean_similarity": 0.644,
+      "err_texts": 0,
+      "err_total": 0,
+      "errors": {}
+    }
+  }
+}

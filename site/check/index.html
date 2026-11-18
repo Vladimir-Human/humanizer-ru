@@ -1,15 +1,20 @@
 <!doctype html>
 <!--
 START_MODULE_CONTRACT
-PURPOSE: A Russian, browser-only style check presented as editorial notes.
-SCOPE: Static form and report UI; never send or persist the entered text.
-DEPENDS: ./engine.js (window.RuSlop); one fetch of ./rules.json.
-LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+PURPOSE: A Russian, browser-only style and technical-hygiene check presented as editorial notes,
+         with inline safe-DOM highlighting, one-click chat-garbage/homoglyph cleanup, and a
+         local sessionStorage bridge to ../sverka/.
+SCOPE: Static form and report UI; never sends or persists the entered text over the network
+       (only same-origin ./engine.js, ./rules.json, and optional one-shot tab sessionStorage).
+DEPENDS: ./engine.js (window.RuSlop: loadRules, lint, annotate, cleanPaste, LEVEL_TEXT);
+         one same-origin fetch of ./rules.json.
+LINKS: M-SITE-CHECK; R-LINT-STYLE; R-DETECTOR-RISK; R-PASTE; V-M-SITE-CHECK.
 END_MODULE_CONTRACT
 START_MODULE_MAP
-HTML: Title, privacy note, accessible text form, status and result live region.
-CSS: Responsive notebook layout, required light/dark palette and visible focus.
-UI: initialize loads rules once; submitCheck runs lint; renderReport builds safe DOM.
+HTML: Masthead, privacy note, accessible text form with check/clean/sverka actions, result region.
+CSS: Responsive notebook layout, light/dark palette, inline span highlight badges, visible focus.
+UI: initialize loads rules once (and auto-checks incoming humanizer_check); submitCheck runs lint;
+    cleanInput runs RuSlop.cleanPaste; toSverka hands off humanizer_source; renderReport builds safe DOM.
 END_MODULE_MAP
 -->
 <html lang="ru">
@@ -22,7 +27,7 @@ END_MODULE_MAP
   <link rel="icon" href="data:,">
   <style>
     /* START_BLOCK_CSS
-       LINKS: M-PAGE; R-PAGE.ui.
+       LINKS: M-SITE-CHECK; R-LINT-STYLE; R-DETECTOR-RISK.
     */
     :root {
       color-scheme: light dark;
@@ -33,6 +38,12 @@ END_MODULE_MAP
       --rule: #d9dee8;
       --pencil: #2346a8;
       --wash: #e6ecfa;
+      --hl-phrase-bg: #fff2cc;
+      --hl-phrase-line: #d99b00;
+      --hl-mixed-bg: #fbeceb;
+      --hl-mixed-ink: #a3261d;
+      --hl-inv-bg: #f3e8ff;
+      --hl-inv-ink: #6b21a8;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -44,6 +55,12 @@ END_MODULE_MAP
         --rule: #2c3442;
         --pencil: #8fa9f2;
         --wash: #1f2a44;
+        --hl-phrase-bg: #3b3113;
+        --hl-phrase-line: #e5b53b;
+        --hl-mixed-bg: #3a1f1f;
+        --hl-mixed-ink: #f0928a;
+        --hl-inv-bg: #311f47;
+        --hl-inv-ink: #d8b4fe;
       }
     }
 
@@ -168,23 +185,34 @@ END_MODULE_MAP
     textarea::placeholder { color: var(--soft); opacity: 1; }
     textarea[aria-invalid="true"] { border-color: var(--pencil); }
 
-    .form-bottom {
+    .form-actions {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 1rem;
+      gap: 0.65rem;
       margin-top: 1rem;
     }
 
-    .check-button {
+    .check-button,
+    .quiet-button {
       flex: 0 0 auto;
-      min-height: 2.75rem;
-      padding: 0.55rem 1.35rem;
+      min-height: 2.65rem;
+      padding: 0.5rem 1.15rem;
       border: 1px solid var(--pencil);
       border-radius: 2px;
-      background: var(--pencil);
-      color: var(--sheet);
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .check-button {
+      background: var(--pencil);
+      color: var(--sheet);
+    }
+
+    .quiet-button {
+      background: transparent;
+      color: var(--pencil);
+      font-weight: 600;
     }
 
     .check-button:hover:not(:disabled) {
@@ -192,7 +220,12 @@ END_MODULE_MAP
       border-color: var(--ink);
     }
 
-    .check-button:disabled {
+    .quiet-button:hover:not(:disabled) {
+      background: var(--wash);
+    }
+
+    .check-button:disabled,
+    .quiet-button:disabled {
       border-color: var(--rule);
       background: var(--wash);
       color: var(--soft);
@@ -200,7 +233,7 @@ END_MODULE_MAP
     }
 
     .status {
-      margin: 0;
+      margin: 0.75rem 0 0;
       color: var(--soft);
       font-size: 0.9rem;
       overflow-wrap: anywhere;
@@ -264,6 +297,67 @@ END_MODULE_MAP
       padding-bottom: 0.55rem;
       border-bottom: 1px solid var(--rule);
       font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .hl-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.75rem 0 0;
+      font-size: 0.82rem;
+    }
+
+    .hl-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .annotated-text {
+      margin-top: 0.75rem;
+      max-height: 22rem;
+      overflow: auto;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      background: var(--sheet);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.65;
+    }
+
+    mark.hl {
+      color: inherit;
+      padding: 0.05rem 0.2rem;
+      border-radius: 2px;
+    }
+
+    .hl-phrase,
+    .hl-badge.hl-phrase {
+      background: var(--hl-phrase-bg);
+      border-bottom: 2px solid var(--hl-phrase-line);
+    }
+
+    .hl-mixed,
+    .hl-badge.hl-mixed {
+      background: var(--hl-mixed-bg);
+      color: var(--hl-mixed-ink);
+      border-bottom: 2px solid var(--hl-mixed-ink);
+    }
+
+    .hl-lat {
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .hl-invisible,
+    .hl-badge.hl-invisible {
+      background: var(--hl-inv-bg);
+      color: var(--hl-inv-ink);
+      font-family: Consolas, 'SFMono-Regular', ui-monospace, monospace;
+      font-size: 0.85em;
       font-weight: 700;
     }
 
@@ -338,15 +432,15 @@ END_MODULE_MAP
     .footer-note {
       margin: 1.5rem 0 0;
       color: var(--soft);
-      font-size: 0.8rem;
+      font-size: 0.85rem;
     }
 
     @media (max-width: 34rem) {
       .page { padding: 1rem 1rem 2rem; }
       .masthead { margin-top: 1.5rem; }
       .editor { padding: 1rem; }
-      .form-bottom { align-items: stretch; flex-direction: column; gap: 0.75rem; }
-      .check-button { width: 100%; }
+      .form-actions { flex-direction: column; align-items: stretch; }
+      .check-button, .quiet-button { width: 100%; }
       .summary { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
       .stats { justify-content: start; gap: 2rem; }
       .finding-heading { grid-template-columns: 2.25rem minmax(0, 1fr); }
@@ -359,15 +453,15 @@ END_MODULE_MAP
 </head>
 <body>
   <!-- START_BLOCK_HTML
-       LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+       LINKS: M-SITE-CHECK; R-LINT-STYLE; R-DETECTOR-RISK; R-PASTE.
   -->
   <main class="page">
-    <a class="back-link" href="../">← Назад</a>
+    <a class="back-link" href="../">← humanizer-ru</a>
     <header class="masthead">
       <p class="eyebrow">RuSlop · заметки на полях</p>
       <h1>Проверка стиля</h1>
-      <p class="purpose-note">Это оценка стиля, а не авторства: так пишут и люди, когда торопятся. Признаки — места, на которые стоит посмотреть.</p>
-      <p id="privacy-note" class="privacy-note">Текст не покидает браузер.</p>
+      <p class="purpose-note">Это оценка стиля и технических следов, а не доказательство авторства: так пишут и люди, когда торопятся, а невидимые символы и латинские или греческие буквы-двойники внутри русских слов вызывают в «Антиплагиате» отметку «Подозрительный документ».</p>
+      <p id="privacy-note" class="privacy-note">Текст не покидает браузер: проверка и очистка работают без сети.</p>
     </header>
 
     <form id="check-form" class="editor" autocomplete="off" novalidate>
@@ -375,40 +469,54 @@ END_MODULE_MAP
         <span class="section-index" aria-hidden="true">01</span>
         Текст для проверки
       </label>
-      <p id="text-help" class="field-help">Поиск фраз пропускает цитаты и блоки кода.</p>
-      <textarea id="text-input" rows="12" required spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="text-help privacy-note form-status" placeholder="Вставьте сюда текст, который хотите проверить."></textarea>
-      <div class="form-bottom">
+      <p id="text-help" class="field-help">Поиск фраз пропускает цитаты и блоки кода. Промпт для правки в вашем чат-боте — в <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">prompt/chat.md</a> и на странице <a href="../sverka/">сверки фактов</a>.</p>
+      <textarea id="text-input" rows="12" required spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="text-help privacy-note form-status" placeholder="Вставьте сюда текст, который хотите проверить или очистить от мусора чата."></textarea>
+      <div class="form-actions">
         <button id="check-button" class="check-button" type="submit" disabled>Проверить</button>
-        <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем правила…</p>
+        <button id="clean-button" class="quiet-button" type="button" disabled>Очистить мусор чата и омоглифы</button>
+        <button id="to-sverka" class="quiet-button" type="button">Сверить факты после правки →</button>
       </div>
+      <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем правила…</p>
       <noscript><p class="noscript-note">Для проверки нужен JavaScript. Без него текст никуда не отправляется.</p></noscript>
     </form>
 
     <section id="results" class="results" aria-label="Результат проверки" aria-live="polite" aria-atomic="true"></section>
-    <p class="footer-note">Признак — не ошибка. Оставляйте то, что нужно тексту.</p>
+    <p class="footer-note">Признак — не ошибка: оставляйте то, что нужно жанру и смыслу. Редактура и чистка технических следов снижают вероятность отметки детектора, но не дают гарантий обхода.</p>
   </main>
   <!-- END_BLOCK_HTML -->
 
   <script>
     // START_BLOCK_UI
-    // LINKS: M-PAGE; R-PAGE.private; R-PAGE.ui.
+    // LINKS: M-SITE-CHECK; R-LINT-STYLE; R-DETECTOR-RISK; R-PASTE.
     (() => {
       "use strict";
 
       const form = document.getElementById("check-form");
       const textInput = document.getElementById("text-input");
       const checkButton = document.getElementById("check-button");
+      const cleanButton = document.getElementById("clean-button");
+      const toSverkaButton = document.getElementById("to-sverka");
       const status = document.getElementById("form-status");
       const results = document.getElementById("results");
       const numbers = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 3 });
       const scores = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+      const CLEAN_LABELS = {
+        homoglyph: "омоглифы в словах",
+        invisible: "невидимые символы",
+        utm: "метки utm_source",
+        contentReference: "contentReference",
+        oaicite: "oaicite",
+        "source-token": "ссылки 【†】",
+        cite: "метки [cite]"
+      };
       let rules = null;
       let loadFailed = false;
       let hasReport = false;
+      let pendingAutoCheck = false;
 
       function element(tag, className, text) {
         const node = document.createElement(tag);
-        node.className = className;
+        if (className) node.className = className;
         if (text !== undefined) node.textContent = String(text);
         return node;
       }
@@ -436,6 +544,78 @@ END_MODULE_MAP
         return heading;
       }
 
+      function buildExamplesList(items) {
+        const list = element("ul", "examples");
+        for (const example of items) {
+          const row = element("li", "example");
+          row.append(
+            element("span", "example-line", "стр. " + example.line),
+            element("span", "example-text", "«" + example.text + "»")
+          );
+          list.append(row);
+        }
+        return list;
+      }
+
+      // START_CONTRACT: appendAnnotatedText
+      // PURPOSE: Highlight phrase hits, mixed-script subwords and invisible characters inline.
+      // INPUTS: sourceText (string), parent (DocumentFragment | Element).
+      // OUTPUTS: Safe DOM nodes appended to parent; zero HTML parsing (textContent / createTextNode only).
+      // END_CONTRACT: appendAnnotatedText
+      function appendAnnotatedText(sourceText, parent) {
+        if (typeof window.RuSlop.annotate !== "function") return;
+        const section = element("section", "report-section");
+        section.append(element("h3", "report-section-title", "Разметка в тексте"));
+        const spans = window.RuSlop.annotate(sourceText, rules);
+        const phraseCount = spans.filter(s => s.kind === "phrase").length;
+        const mixedCount = spans.filter(s => s.kind === "mixed").length;
+        const invCount = spans.filter(s => s.kind === "invisible").length;
+
+        if (!spans.length) {
+          section.append(element("p", "empty-note", "Подсвечивать в тексте нечего: фразовых штампов, смешанных букв и невидимых символов не найдено."));
+        } else {
+          const legend = element("div", "hl-legend");
+          if (phraseCount) legend.append(element("span", "hl-badge hl-phrase", "Фразы: " + numbers.format(phraseCount)));
+          if (mixedCount) legend.append(element("span", "hl-badge hl-mixed", "Смешение кириллицы с латиницей/греческим: " + numbers.format(mixedCount)));
+          if (invCount) legend.append(element("span", "hl-badge hl-invisible", "Невидимые символы: " + numbers.format(invCount)));
+          section.append(legend);
+        }
+
+        const norm = sourceText.normalize("NFC").replace(/\r\n/g, "\n");
+        const box = element("div", "annotated-text");
+        box.id = "annotated-text";
+        let cursor = 0;
+        for (const sp of spans) {
+          if (sp.start > cursor) {
+            box.append(document.createTextNode(norm.slice(cursor, sp.start)));
+          }
+          const slice = norm.slice(sp.start, sp.end);
+          const mark = element("mark", "hl hl-" + sp.kind);
+          mark.dataset.kind = sp.kind;
+          mark.title = "#" + sp.sign + " " + sp.name + (sp.code ? " (" + sp.code + ")" : "");
+          if (sp.kind === "invisible") {
+            mark.textContent = "[" + (sp.code || "ZW") + "]";
+          } else if (sp.kind === "mixed") {
+            for (const unit of (slice.match(/.[\u0301\u0306\u0308]*/gu) || [])) {
+              if (!/^[0-9А-Яа-яЁё]/u.test(unit)) {
+                mark.append(element("span", "hl-lat", unit));
+              } else {
+                mark.append(document.createTextNode(unit));
+              }
+            }
+          } else {
+            mark.textContent = slice;
+          }
+          box.append(mark);
+          cursor = sp.end;
+        }
+        if (cursor < norm.length) {
+          box.append(document.createTextNode(norm.slice(cursor)));
+        }
+        section.append(box);
+        parent.append(section);
+      }
+
       function appendHits(report, parent) {
         const section = element("section", "report-section");
         section.append(element("h3", "report-section-title", "Фразы"));
@@ -449,16 +629,7 @@ END_MODULE_MAP
             const heading = findingHeading(hit.sign, hit.name);
             heading.append(element("span", "finding-count", "Совпадений: " + numbers.format(hit.count)));
             const body = element("div", "finding-body");
-            const examples = element("ul", "examples");
-            for (const example of hit.examples) {
-              const row = element("li", "example");
-              row.append(
-                element("span", "example-line", "стр. " + example.line),
-                element("span", "example-text", "«" + example.text + "»")
-              );
-              examples.append(row);
-            }
-            body.append(examples, element("p", "finding-hint", hit.hint));
+            body.append(buildExamplesList(hit.examples), element("p", "finding-hint", hit.hint));
             item.append(heading, body);
             list.append(item);
           }
@@ -480,9 +651,12 @@ END_MODULE_MAP
           const item = element("li", "finding");
           const body = element("div", "finding-body");
           body.append(
-            element("p", "metric-value", "Значение: " + numbers.format(metric.value) + " · граница: " + numbers.format(metric.limit)),
-            element("p", "finding-hint", metric.hint)
+            element("p", "metric-value", "Значение: " + numbers.format(metric.value) + " · граница: " + numbers.format(metric.limit))
           );
+          if (Array.isArray(metric.examples) && metric.examples.length) {
+            body.append(buildExamplesList(metric.examples));
+          }
+          body.append(element("p", "finding-hint", metric.hint));
           if (metric.scored === false) body.append(element("p", "finding-hint", "Для сведения: в балл не входит."));
           item.append(findingHeading(metric.sign, metric.name), body);
           list.append(item);
@@ -492,12 +666,12 @@ END_MODULE_MAP
       }
 
       // START_CONTRACT: renderReport
-      // PURPOSE: Show level, score, words, sorted hits and strictly over-limit metrics.
-      // INPUTS: A report from RuSlop.lint and RuSlop.LEVEL_TEXT.
+      // PURPOSE: Show level, score, words, safe inline highlights, sorted hits and over-limit metrics.
+      // INPUTS: report from RuSlop.lint, sourceText from textarea.
       // OUTPUTS: A complete report in the persistent result live region.
-      // SIDE_EFFECTS: Replace result DOM; every report string is assigned via textContent.
+      // SIDE_EFFECTS: Replace result DOM; every report/input string is assigned via textContent or createTextNode.
       // END_CONTRACT: renderReport
-      function renderReport(report) {
+      function renderReport(report, sourceText) {
         const level = window.RuSlop.LEVEL_TEXT[report.level];
         if (typeof level !== "string" || !Number.isFinite(report.score) || !Number.isSafeInteger(report.words)) {
           throw new Error("Invalid report summary");
@@ -518,10 +692,27 @@ END_MODULE_MAP
         }
         summary.append(assessment, stats);
         content.append(heading, summary);
+        appendAnnotatedText(sourceText, content);
         appendHits(report, content);
         appendMetrics(report, content);
         results.replaceChildren(content);
         hasReport = true;
+      }
+
+      function runCheckWithMessage(doneMessage) {
+        textInput.removeAttribute("aria-invalid");
+        checkButton.disabled = true;
+        setStatus("Проверяем текст…");
+        try {
+          renderReport(window.RuSlop.lint(textInput.value, rules), textInput.value);
+          setStatus(doneMessage);
+        } catch {
+          clearReport();
+          setStatus("Не удалось проверить текст. Он остался в поле; можно попробовать ещё раз.", true);
+          console.error("[M-SITE-CHECK][BLOCK_UI] local check failed");
+        } finally {
+          checkButton.disabled = false;
+        }
       }
 
       function submitCheck(event) {
@@ -537,22 +728,71 @@ END_MODULE_MAP
           textInput.focus();
           return;
         }
+        runCheckWithMessage("Проверка завершена. Результат ниже.");
+      }
+
+      function cleanInput() {
+        const engine = window.RuSlop;
+        if (!engine || typeof engine.cleanPaste !== "function") {
+          setStatus("Очистка недоступна. Обновите страницу.", true);
+          return;
+        }
+        if (textInput.value.length === 0) {
+          textInput.setAttribute("aria-invalid", "true");
+          setStatus("Сначала вставьте текст для очистки.", true);
+          textInput.focus();
+          return;
+        }
         textInput.removeAttribute("aria-invalid");
-        checkButton.disabled = true;
-        setStatus("Проверяем текст…");
-        try {
-          renderReport(window.RuSlop.lint(textInput.value, rules));
-          setStatus("Проверка завершена. Результат ниже.");
-        } catch {
+        const cleaned = engine.cleanPaste(textInput.value);
+        const entries = Object.entries(cleaned.counts);
+        if (!entries.length) {
+          if (rules && textInput.value.length > 0 && !hasReport) {
+            runCheckWithMessage("Мусора чата и омоглифов не найдено. Текст проверен.");
+          } else {
+            setStatus("Мусора чата, невидимых символов и омоглифов не найдено.");
+          }
+          return;
+        }
+        textInput.value = cleaned.text;
+        const summary = entries
+          .map(([k, n]) => (CLEAN_LABELS[k] || k) + " — " + numbers.format(n))
+          .join(", ");
+        if (rules && textInput.value.length > 0) {
+          runCheckWithMessage("Очищено: " + summary + ". Результат обновлён.");
+        } else {
           clearReport();
-          setStatus("Не удалось проверить текст. Он остался в поле; можно попробовать ещё раз.", true);
-          console.error("[M-PAGE][BLOCK_UI] local check failed");
-        } finally {
-          checkButton.disabled = false;
+          setStatus("Очищено: " + summary + ".");
         }
       }
 
+      function toSverka() {
+        const raw = textInput.value;
+        if (raw.trim()) {
+          try {
+            sessionStorage.setItem("humanizer_source", raw);
+          } catch {
+            setStatus("Хранилище вкладки недоступно (превышен лимит или режим приватности). Скопируйте текст вручную и откройте «Сверку фактов».", true);
+            return;
+          }
+        }
+        window.location.href = "../sverka/";
+      }
+
       async function initialize() {
+        try {
+          const saved = sessionStorage.getItem("humanizer_check");
+          if (saved && !textInput.value.trim()) {
+            textInput.value = saved;
+            sessionStorage.removeItem("humanizer_check");
+            pendingAutoCheck = true;
+          }
+        } catch {}
+
+        if (window.RuSlop && typeof window.RuSlop.cleanPaste === "function") {
+          cleanButton.disabled = false;
+        }
+
         try {
           const response = await fetch("./rules.json", {
             credentials: "omit",
@@ -569,17 +809,25 @@ END_MODULE_MAP
           rules = engine.loadRules(data);
           if (!rules || typeof rules !== "object") throw new Error("Rules unavailable");
           checkButton.disabled = false;
-          setStatus("Правила готовы. Можно проверять.");
-          console.info("[M-PAGE][BLOCK_UI] rules ready");
+          cleanButton.disabled = typeof engine.cleanPaste !== "function";
+          console.info("[M-SITE-CHECK][BLOCK_UI] rules ready");
+          if (pendingAutoCheck && textInput.value.length > 0) {
+            pendingAutoCheck = false;
+            runCheckWithMessage("Правка перенесена со страницы сверки и проверена.");
+          } else {
+            setStatus("Правила готовы. Можно проверять.");
+          }
         } catch {
           loadFailed = true;
           checkButton.disabled = true;
           setStatus("Не удалось загрузить проверку. Обновите страницу. Текст остаётся в браузере.", true);
-          console.error("[M-PAGE][BLOCK_UI] rules unavailable");
+          console.error("[M-SITE-CHECK][BLOCK_UI] rules unavailable");
         }
       }
 
       form.addEventListener("submit", submitCheck);
+      cleanButton.addEventListener("click", cleanInput);
+      toSverkaButton.addEventListener("click", toSverka);
       textInput.addEventListener("input", () => {
         textInput.removeAttribute("aria-invalid");
         if (hasReport) {
