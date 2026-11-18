@@ -23,8 +23,19 @@ END_MODULE_MAP
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
-  <title>Проверка стиля</title>
+  <title>Проверка стиля русского текста — humanizer-ru</title>
+  <meta name="description" content="Офлайн-проверка русского текста в браузере: находит штампы нейросети, однообразный ритм, невидимые символы и буквы-двойники и очищает следы вставки из чата. Текст не покидает браузер.">
+  <link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/check/">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="LLMs.txt">
+  <meta property="og:title" content="Проверка стиля русского текста — humanizer-ru">
+  <meta property="og:description" content="Подсветка штампов ИИ, однообразного ритма, невидимых символов и букв-двойников с очисткой в один клик. Работает в браузере без сети.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="humanizer-ru">
+  <meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/check/">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="data:,">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Проверка стиля — humanizer-ru","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"license":"https://opensource.org/licenses/MIT","url":"https://vladimir-human.github.io/humanizer-ru/check/","isPartOf":{"@type":"WebSite","name":"humanizer-ru","url":"https://vladimir-human.github.io/humanizer-ru/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Офлайн-проверка русского текста в браузере: поиск штампов нейросети, однообразного ритма, невидимых символов и букв-двойников с очисткой в один клик."}</script>
   <style>
     /* START_BLOCK_CSS
        LINKS: M-SITE-CHECK; R-LINT-STYLE; R-DETECTOR-RISK.
@@ -458,9 +469,9 @@ END_MODULE_MAP
   <main class="page">
     <a class="back-link" href="../">← humanizer-ru</a>
     <header class="masthead">
-      <p class="eyebrow">RuSlop · заметки на полях</p>
+      <p class="eyebrow">humanizer-ru · проверка текста</p>
       <h1>Проверка стиля</h1>
-      <p class="purpose-note">Это оценка стиля и технических следов, а не доказательство авторства: так пишут и люди, когда торопятся, а невидимые символы и латинские или греческие буквы-двойники внутри русских слов вызывают в «Антиплагиате» отметку «Подозрительный документ».</p>
+      <p class="purpose-note">Это оценка стиля и технических следов, а не доказательство авторства: так пишут и люди, когда торопятся, а невидимые символы и латинские или греческие буквы-двойники внутри русских слов (омоглифы) вызывают в «Антиплагиате» отметку «Подозрительный документ».</p>
       <p id="privacy-note" class="privacy-note">Текст не покидает браузер: проверка и очистка работают без сети.</p>
     </header>
 
@@ -469,11 +480,11 @@ END_MODULE_MAP
         <span class="section-index" aria-hidden="true">01</span>
         Текст для проверки
       </label>
-      <p id="text-help" class="field-help">Поиск фраз пропускает цитаты и блоки кода. Промпт для правки в вашем чат-боте — в <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">prompt/chat.md</a> и на странице <a href="../sverka/">сверки фактов</a>.</p>
+      <p id="text-help" class="field-help">Поиск фраз пропускает цитаты и блоки кода. Готовая инструкция (промпт) для правки в вашем чат-боте — в <a href="https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md">prompt/chat.md</a> и на странице <a href="../sverka/">сверки фактов</a>.</p>
       <textarea id="text-input" rows="12" required spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="text-help privacy-note form-status" placeholder="Вставьте сюда текст, который хотите проверить или очистить от мусора чата."></textarea>
       <div class="form-actions">
         <button id="check-button" class="check-button" type="submit" disabled>Проверить</button>
-        <button id="clean-button" class="quiet-button" type="button" disabled>Очистить мусор чата и омоглифы</button>
+        <button id="clean-button" class="quiet-button" type="button" disabled>Очистить мусор чата и буквы-двойники</button>
         <button id="to-sverka" class="quiet-button" type="button">Сверить факты после правки →</button>
       </div>
       <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем правила…</p>
@@ -501,7 +512,7 @@ END_MODULE_MAP
       const numbers = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 3 });
       const scores = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
       const CLEAN_LABELS = {
-        homoglyph: "омоглифы в словах",
+        homoglyph: "буквы-двойники (омоглифы)",
         invisible: "невидимые символы",
         utm: "метки utm_source",
         contentReference: "contentReference",
@@ -748,9 +759,9 @@ END_MODULE_MAP
         const entries = Object.entries(cleaned.counts);
         if (!entries.length) {
           if (rules && textInput.value.length > 0 && !hasReport) {
-            runCheckWithMessage("Мусора чата и омоглифов не найдено. Текст проверен.");
+            runCheckWithMessage("Мусора чата и букв-двойников не найдено. Текст проверен.");
           } else {
-            setStatus("Мусора чата, невидимых символов и омоглифов не найдено.");
+            setStatus("Мусора чата, невидимых символов и букв-двойников не найдено.");
           }
           return;
         }

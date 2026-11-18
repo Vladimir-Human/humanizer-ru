@@ -1,0 +1,37 @@
+# humanizer-ru
+
+> Редактура русского текста после нейросети, сверка фактов и чистка следов вставки из чата (MIT, Python 3.8+ stdlib и офлайн-инструменты в браузере). Снижает вероятность срабатывания ИИ-детекторов и отметки «Подозрительный документ» в «Антиплагиате» с проверкой сохранности фактов и без гарантий обхода. Не выносит вердиктов об авторстве.
+> Russian AI-text editing skill, deterministic fact checker, and offline browser tools (`0` external requests). Lowers AI-detector and Antiplagiat trigger probability with deterministic fact checking and without promising 100% bypass; never judges authorship.
+
+## Без установки (офлайн в браузере и промпт для чата)
+
+- [Обзор проекта / Project home](https://vladimir-human.github.io/humanizer-ru/): описание, пример «было → стало» и сводка замеров 4.3.0 (`0` внешних сетевых запросов).
+- [Проверка стиля и скрытых символов / Style & hidden-character check](https://vladimir-human.github.io/humanizer-ru/check/): подсвечивает штампы, однообразный ритм, цепочки на «-ение/-ость», невидимые символы и латинские или греческие буквы-двойники внутри русских слов (омоглифы); отдельные кнопки убирают следы чата и буквы-двойники (`RuSlop.cleanPaste`) и передают текст на сверку фактов. После загрузки делает `0` сетевых запросов, текст не покидает вкладку.
+- [Сверка фактов до и после / Fact check](https://vladimir-human.github.io/humanizer-ru/sverka/): сравнивает исходник и правку любой модели локально в браузере по правилам `check_facts.py` (числа, валюты, даты, имена, цитаты, ссылки `[14, с. 52]`, отрицания, оговорки и кому какая сумма относится; `0` внешних запросов).
+- [Готовый промпт для чата (TXT)](https://vladimir-human.github.io/humanizer-ru/sverka/prompt.txt): сжатая инструкция (до 4000 знаков) для GigaChat, Алисы, DeepSeek, ChatGPT и Claude (текст, вставленный в выбранный вами веб-чат, обрабатывается провайдером этого чата как обычное сообщение).
+- [Промпт для чата в репозитории (Markdown)](https://github.com/Vladimir-Human/humanizer-ru/blob/main/prompt/chat.md): поддерживаемый исходник `prompt/chat.md`.
+
+## Установка в ИИ-агенты (Agent Skills & Plugins, v4.3.0)
+
+- Универсальная установка ([Agent Skills](https://agentskills.io) — Claude Code, Codex, Cursor, Gemini CLI): `npx skills add Vladimir-Human/humanizer-ru`
+- Claude Code (плагин с автообновлением): `/plugin marketplace add Vladimir-Human/humanizer-ru` и затем `/plugin install humanizer-ru@humanizer-ru` (в официальном каталоге плагинов Claude пакет носит имя `humanizer-russian`, сам навык везде `humanizer-ru`).
+- Gemini CLI: `gemini extensions install https://github.com/Vladimir-Human/humanizer-ru`
+- Cursor (локальный плагин): `git clone https://github.com/Vladimir-Human/humanizer-ru ~/.cursor/plugins/local/humanizer-ru`
+- [Claude.ai (ZIP-архив релиза)](https://github.com/Vladimir-Human/humanizer-ru/releases/latest): загрузите `humanizer-ru-skill.zip` целиком (не распаковывая) в `Settings → Capabilities → Skills`.
+- Вручную: скопируйте папку `skills/humanizer-ru` в `~/.claude/skills/` или `~/.agents/skills/`.
+- Важно: `pip install humanizer-ru` ставит архивный сервер версии 3 (`legacy-v3`), а не навык версии 4. В версии 4 нет серверов MCP, фоновых хуков и сетевых запросов.
+
+## Локальные CLI-скрипты (Python 3.8+ stdlib, 0 dependencies)
+
+- `python skills/humanizer-ru/scripts/check_facts.py before.txt after.txt` — детерминированная сверка чисел, валют, дат, имён, ссылок, цитат, отрицаний, оговорок и перепутанных сумм; печатает итоговую строку «Сверка скриптом: …».
+- `python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place` — удаляет метки чата (`contentReference`, `citeturn`, `utm_source` ассистентов), невидимые символы, пустой Брайль `U+2800` и чинит латинские/греческие буквы-двойники внутри русских слов (сохраняет копию `.bak`).
+- `python skills/humanizer-ru/scripts/lint_style.py text.txt` (или `--json`) — ищет штампы и считает метрики ритма, отглагольных цепочек и технической чистоты по единой базе `rules.json`.
+
+## Документация, замеры и честные границы
+
+- [README на русском](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.md): полное руководство, режимы («очеловечь», разбор без правки, точечная правка, подготовка ВКР/статьи, правка файлов) и таблицы замеров.
+- [English README](https://github.com/Vladimir-Human/humanizer-ru/blob/main/README.en.md): full documentation, benchmarks, and detector-risk methodology in English.
+- [Инструкция навыка SKILL.md](https://github.com/Vladimir-Human/humanizer-ru/blob/main/skills/humanizer-ru/SKILL.md): правила редактуры, таблица из 19 признаков машинного текста и защита фактов.
+- [Памятка по ИИ-детекторам и «Антиплагиату»](https://github.com/Vladimir-Human/humanizer-ru/blob/main/skills/humanizer-ru/references/detectors.md): как работают 4 модуля «Антиплагиата», почему буквенные подмены и синонимайзеры вызывают отметку «Подозрительный документ», и почему ни один инструмент не даёт 100%-й гарантии обхода.
+- [Правила по жанрам](https://github.com/Vladimir-Human/humanizer-ru/blob/main/skills/humanizer-ru/references/genres.md): посты, карточки товаров, вакансии, деловые письма, дипломы (ВКР) и научные статьи.
+- [Слепые сравнения и протоколы eval/](https://github.com/Vladimir-Human/humanizer-ru/tree/main/eval): в замере 4.3.0 (ноябрь 2026, 12 ИИ-текстов + 2 ловушки, 3 судьи разных лабораторий × 2 перемешивания) навык занял 1-е среднее место (`2,22` из 4, `29` первых мест из `72`, `0` потерь фактов самого текста по `check_facts.py`, снижение балла штампов на `86%`; замечания большинства судей к полноте формулировок — в `3` текстах из `12` при строгом пороге `≤ 1`; на 64 пробах правил — по `62 / 64` в каждом из 2 прогонов, `124 / 128` без потерь фактов).
