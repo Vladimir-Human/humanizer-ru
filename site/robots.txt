@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vladimir-human.github.io/humanizer-ru/sitemap.xml

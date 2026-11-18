@@ -23,8 +23,19 @@ END_MODULE_MAP
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'">
-  <title>Сверка фактов после правки</title>
+  <title>Сверка фактов после правки текста — humanizer-ru</title>
+  <meta name="description" content="Офлайн-сверка исходного текста и ответа чат-бота в браузере: проверяет, не пропали ли и не перепутались ли числа, суммы, даты, имена, цитаты, ссылки и оговорки.">
+  <link rel="canonical" href="https://vladimir-human.github.io/humanizer-ru/sverka/">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="LLMs.txt">
+  <meta property="og:title" content="Сверка фактов после правки — humanizer-ru">
+  <meta property="og:description" content="Готовый промпт для любого чат-бота и проверка в браузере: остались ли на месте числа, даты, имена, ссылки и оговорки. Без отправки текста в сеть.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="humanizer-ru">
+  <meta property="og:url" content="https://vladimir-human.github.io/humanizer-ru/sverka/">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="data:,">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Сверка фактов после правки — humanizer-ru","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","inLanguage":"ru","isAccessibleForFree":true,"license":"https://opensource.org/licenses/MIT","url":"https://vladimir-human.github.io/humanizer-ru/sverka/","isPartOf":{"@type":"WebSite","name":"humanizer-ru","url":"https://vladimir-human.github.io/humanizer-ru/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Офлайн-сравнение исходного текста и правки чат-бота в браузере: числа, валюты, даты, имена, цитаты, ссылки, отрицания и оговорки."}</script>
   <style>
     /* START_BLOCK_CSS */
     :root {
@@ -91,7 +102,7 @@ END_MODULE_MAP
 
     <section class="step" aria-labelledby="step1">
       <h2 id="step1"><span class="num" aria-hidden="true">01</span>Промпт для чат-бота</h2>
-      <p>Скопируйте промпт в начало нового чата в GigaChat, Алисе, DeepSeek или ChatGPT и пришлите свой текст. Промпт велит не трогать факты и спросить вас, если подробностей не хватает.</p>
+      <p>Скопируйте готовую инструкцию (промпт) в начало нового чата в GigaChat, Алисе, DeepSeek, ChatGPT или Claude и пришлите свой текст: промпт велит не трогать факты и спросить вас, если подробностей не хватает. Если правка уже готова, пропустите шаг 01 и сразу вставьте тексты до и после.</p>
       <div class="row">
         <button id="copy-prompt" class="quiet" type="button" disabled>Скопировать промпт</button>
         <p id="prompt-status" class="status" role="status" aria-live="polite">Загружаем промпт…</p>
@@ -204,7 +215,7 @@ END_MODULE_MAP
               : "Ошибок не найдено" + (present.length ? ": " + present.join(", ") + " на месте." : ".")));
         if (present.length && bad) body.append(el("p", "note", "В исходнике: " + present.join(", ") + "."));
         for (const [title, items, cls] of [["Ошибки", lines.errors, "errors"], ["Проверьте глазами", lines.checks, "checks"],
-                                           ["Убрано вместе со служебными строками чат-бота (не ошибка, но проверь, что это не текст автора)", lines.service, "service"]]) {
+                                           ["Убрано вместе со служебными строками чат-бота (не ошибка, но проверьте, что это не текст автора)", lines.service, "service"]]) {
           if (!items.length) continue;
           body.append(el("h3", "", title));
           const ul = el("ul", cls);
