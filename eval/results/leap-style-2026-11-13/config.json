@@ -1,0 +1,40 @@
+{
+  "purpose": "diagnostic: style + fact delta of the skill over a plain prompt on fresh texts",
+  "executors": [
+    "dsh:minimax/MiniMax-M3.1-Flash",
+    "dsh:agentrouter-astra/gpt-6.1-sol"
+  ],
+  "systems": [
+    "ours",
+    "prompt",
+    "chat"
+  ],
+  "texts": [
+    "s01",
+    "s02",
+    "s03",
+    "s04",
+    "s05",
+    "s06",
+    "s07",
+    "s08",
+    "s09",
+    "s10",
+    "s11",
+    "s12",
+    "s13",
+    "s14",
+    "s15",
+    "s16",
+    "s17",
+    "s18",
+    "s19",
+    "s20",
+    "s21",
+    "s22",
+    "s23",
+    "s24"
+  ],
+  "request": "Очеловечь этот текст. В ответе дай только готовый текст, без пояснений и комментариев.\n\n",
+  "note": "fresh briefs by the agent, texts by free routes --bare; not a public claim"
+}

@@ -57,10 +57,44 @@ class SiteNotesTest(unittest.TestCase):
 @unittest.skipUnless(NODE, "node is missing")
 class SiteFactsTest(unittest.TestCase):
     def test_facts_js_gives_the_same_report_as_check_facts(self):
-        # All 1456 hand-made cases of test_scripts.py and every 15th saved eval answer; the full set
-        # (about 2700 pairs, 0 mismatches on 2026-11-09) is `python scripts/check_site_facts.py`.
+        # All hand-made and generated cases of test_scripts.py and every 15th saved eval answer; the full set
+        # (about 4700 pairs, 0 mismatches) is `python scripts/check_site_facts.py`.
         import check_site_facts as csf
         self.assertEqual(csf.main(["--every", "15", "--show", "3"]), 0)
+
+    def test_facts_js_wave3_item_swaps_and_100kb_bounds(self):
+        js_code = """
+        const Facts = require(process.argv[1]);
+        const t0 = performance.now();
+        const swap = Facts.compare("На выбор два тарифа: Базовый — 500 ₽ и Про — 900 ₽.", "На выбор два тарифа: Базовый — 900 ₽ и Про — 500 ₽.");
+        const reord = Facts.compare("На выбор два тарифа: Базовый — 500 ₽ и Про — 900 ₽.", "На выбор два тарифа: Про — 900 ₽ и Базовый — 500 ₽.");
+        const big = "1, ".repeat(30000) + "1";
+        const bigRes = Facts.compare(big, big);
+        const sAnd = "Анна 1" + " и Анна 1".repeat(5000) + " и Борис и Вера 2";
+        const sAndRes = Facts.compare(sAnd, sAnd);
+        const sComma = Array.from({length: 2000}, (_, i) => `товар${i} ${10 + i}`).join(", ");
+        const sCommaRes = Facts.compare(sComma, sComma);
+        const sSlot0 = "чай 5, " + Array.from({length: 1200}, (_, i) => `кофе сорта${i} ${10 + i}`).join(", ");
+        const sSlot0Res = Facts.compare(sSlot0, sSlot0);
+        const unclosed = "```python\\n'" + "\\\\'".repeat(35000) + "\\n```";
+        const unclosedRes = Facts.compare(unclosed, unclosed);
+        const unclosedDbl = "```python\\n\\\"" + "\\\\\\\"".repeat(35000) + "\\n```";
+        const unclosedDblRes = Facts.compare(unclosedDbl, unclosedDbl);
+        const dt = (performance.now() - t0) / 1000;
+        process.stdout.write(JSON.stringify({
+            swap: swap.errors, reord: reord.errors,
+            bigErrs: bigRes.errors.length + sAndRes.errors.length + sCommaRes.errors.length + sSlot0Res.errors.length + unclosedRes.errors.length + unclosedDblRes.errors.length,
+            dt
+        }));
+        """
+        res = subprocess.run([NODE, "-e", js_code, str(ROOT / "site" / "check" / "facts.js")],
+                             capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        got = json.loads(res.stdout)
+        self.assertEqual([e["kind"] for e in got["swap"]], ["swap", "swap"])
+        self.assertEqual(got["reord"], [])
+        self.assertEqual(got["bigErrs"], 0)
+        self.assertLess(got["dt"], 2.0)
 
 
 if __name__ == "__main__":

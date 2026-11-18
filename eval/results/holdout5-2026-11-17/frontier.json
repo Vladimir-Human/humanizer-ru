@@ -1,0 +1,507 @@
+{
+  "source_lint_mean": 8.83,
+  "source_lint_scores": {
+    "h5_01": 8.33,
+    "h5_02": 11.0,
+    "h5_03": 13.67,
+    "h5_04": 3.33,
+    "h5_05": 3.33,
+    "h5_06": 3.33,
+    "h5_07": 12.67,
+    "h5_08": 7.67,
+    "h5_09": 20.0,
+    "h5_10": 3.33,
+    "h5_11": 14.33,
+    "h5_12": 5.0
+  },
+  "systems": {
+    "ours": {
+      "summary": {
+        "texts": 12,
+        "texts_with_errors": [
+          "h5_02",
+          "h5_08"
+        ],
+        "errors": 3,
+        "wrapper": 0,
+        "lint_mean": 1.22,
+        "receipts": 12
+      },
+      "rows": {
+        "h5_01": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 1.67,
+          "lint_level": "мало",
+          "receipt": "Сверка скриптом: 13 чисел, 1 отрицание на месте."
+        },
+        "h5_02": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Ozon"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "Markdown"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 15 чисел, 3 имени и названия, 4 отрицания на месте."
+        },
+        "h5_03": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 8.67,
+          "lint_level": "много",
+          "receipt": "Сверка скриптом: 8 чисел, 5 дат, 6 имён и названий, 1 ссылка, 1 цитата на месте."
+        },
+        "h5_04": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 11 чисел, 1 дата, 16 имён и названий, 3 цитаты, 1 отрицание на месте."
+        },
+        "h5_05": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 8 чисел, 4 даты, 6 имён и названий, 2 цитаты, 2 отрицания на месте."
+        },
+        "h5_06": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 16 чисел, 1 дата, 3 имени и названия, 2 цитаты на месте."
+        },
+        "h5_07": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 3.33,
+          "lint_level": "есть",
+          "receipt": "Сверка скриптом: 7 чисел, 5 имён и названий, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_08": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Хабра"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "- Сверка скриптом: в исходнике 11 чисел, 3 имени и названия, 1 цитата, 1 отрицание; в правке нет: Хабра."
+        },
+        "h5_09": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "- Сверка скриптом: 18 чисел, 1 дата, 14 имён и названий, 2 цитаты, 2 отрицания на месте."
+        },
+        "h5_10": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 9 чисел, 2 даты, 8 имён и названий, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_11": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 1.0,
+          "lint_level": "мало",
+          "receipt": "- Сверка скриптом: 17 чисел, 1 имя или название, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_12": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 11 чисел, 1 дата, 4 имени и названия, 1 цитата, 4 отрицания на месте."
+        }
+      }
+    },
+    "ours421": {
+      "summary": {
+        "texts": 12,
+        "texts_with_errors": [
+          "h5_02",
+          "h5_08",
+          "h5_09"
+        ],
+        "errors": 6,
+        "wrapper": 0,
+        "lint_mean": 3.61,
+        "receipts": 12
+      },
+      "rows": {
+        "h5_01": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 13 чисел, 1 отрицание на месте."
+        },
+        "h5_02": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Ozon"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "Markdown"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 6.67,
+          "lint_level": "много",
+          "receipt": "Сверка скриптом: 7 чисел, 1 имя или название, 3 отрицания на месте."
+        },
+        "h5_03": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 8.67,
+          "lint_level": "много",
+          "receipt": "Сверка скриптом: 8 чисел, 5 дат, 6 имён и названий, 1 ссылка, 1 цитата на месте."
+        },
+        "h5_04": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 11 чисел, 1 дата, 16 имён и названий, 3 цитаты, 1 отрицание на месте."
+        },
+        "h5_05": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 8 чисел, 4 даты, 6 имён и названий, 2 цитаты, 2 отрицания на месте."
+        },
+        "h5_06": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 16 чисел, 1 дата, 3 имени и названия, 2 цитаты на месте."
+        },
+        "h5_07": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 3.33,
+          "lint_level": "есть",
+          "receipt": "Сверка скриптом: 7 чисел, 5 имён и названий, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_08": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Хабра"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "СкладКонтур"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "Новосибирске"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 1.0,
+          "lint_level": "мало",
+          "receipt": "Сверка скриптом: 11 чисел, 1 отрицание на месте."
+        },
+        "h5_09": {
+          "errors": [
+            [
+              "lost",
+              "число",
+              "2 с"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 13.33,
+          "lint_level": "много",
+          "receipt": "Сверка скриптом: 11 чисел, 1 дата, 11 имён и названий, 2 цитаты, 2 отрицания на месте."
+        },
+        "h5_10": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": "Сверка скриптом: 9 чисел, 2 даты, 8 имён и названий, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_11": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 8.67,
+          "lint_level": "много",
+          "receipt": "Сверка скриптом: 17 чисел, 1 имя или название, 1 цитата, 1 отрицание на месте."
+        },
+        "h5_12": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 1.67,
+          "lint_level": "мало",
+          "receipt": "Сверка скриптом: 11 чисел, 1 дата, 4 имени и названия, 1 цитата, 4 отрицания на месте."
+        }
+      }
+    },
+    "ilyautov": {
+      "summary": {
+        "texts": 12,
+        "texts_with_errors": [
+          "h5_02",
+          "h5_08"
+        ],
+        "errors": 3,
+        "wrapper": 0,
+        "lint_mean": 4.31,
+        "receipts": 0
+      },
+      "rows": {
+        "h5_01": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 1.67,
+          "lint_level": "мало",
+          "receipt": ""
+        },
+        "h5_02": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Ozon"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 7.67,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_03": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 13.67,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_04": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_05": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_06": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_07": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 3.33,
+          "lint_level": "есть",
+          "receipt": ""
+        },
+        "h5_08": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Хабра"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "СкладКонтур"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 1.0,
+          "lint_level": "мало",
+          "receipt": ""
+        },
+        "h5_09": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 13.33,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_10": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_11": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 11.0,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_12": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        }
+      }
+    },
+    "prompt": {
+      "summary": {
+        "texts": 12,
+        "texts_with_errors": [
+          "h5_02",
+          "h5_08",
+          "h5_09"
+        ],
+        "errors": 4,
+        "wrapper": 0,
+        "lint_mean": 3.5,
+        "receipts": 0
+      },
+      "rows": {
+        "h5_01": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_02": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Ozon"
+            ],
+            [
+              "lost",
+              "имя или название",
+              "Markdown"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 1.0,
+          "lint_level": "мало",
+          "receipt": ""
+        },
+        "h5_03": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 8.67,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_04": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_05": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_06": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_07": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 3.33,
+          "lint_level": "есть",
+          "receipt": ""
+        },
+        "h5_08": {
+          "errors": [
+            [
+              "lost",
+              "имя или название",
+              "Хабра"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 2.67,
+          "lint_level": "есть",
+          "receipt": ""
+        },
+        "h5_09": {
+          "errors": [
+            [
+              "lost",
+              "число",
+              "2 с"
+            ]
+          ],
+          "wrapper": [],
+          "lint_score": 13.33,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_10": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 0.0,
+          "lint_level": "нет",
+          "receipt": ""
+        },
+        "h5_11": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 12.0,
+          "lint_level": "много",
+          "receipt": ""
+        },
+        "h5_12": {
+          "errors": [],
+          "wrapper": [],
+          "lint_score": 1.0,
+          "lint_level": "мало",
+          "receipt": ""
+        }
+      }
+    }
+  }
+}

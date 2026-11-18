@@ -1,0 +1,112 @@
+[
+  {
+    "id": "h5_01",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "ВКР/научная статья с ГОСТ-ссылкой",
+    "inject": ""
+  },
+  {
+    "id": "h5_02",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "карточка товара маркетплейса с характеристиками",
+    "inject": ""
+  },
+  {
+    "id": "h5_03",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "пост в телеграм-канале с датами/адресом",
+    "inject": "utm"
+  },
+  {
+    "id": "h5_04",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "деловое письмо с суммами в $ и ₽",
+    "inject": ""
+  },
+  {
+    "id": "h5_05",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "ответ на отзыв с названием и извинением",
+    "inject": ""
+  },
+  {
+    "id": "h5_06",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "объявление УК для жильцов",
+    "inject": ""
+  },
+  {
+    "id": "h5_07",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "IT-инструкция с командами/кодом и условием «только если»",
+    "inject": "zwsp"
+  },
+  {
+    "id": "h5_08",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "статья для Хабра/блога",
+    "inject": "contentref"
+  },
+  {
+    "id": "h5_09",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "вакансия с вилкой «от/до вычета»",
+    "inject": ""
+  },
+  {
+    "id": "h5_10",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "пресс-релиз/новость с «Анна получила…, Борис… и Вера…»",
+    "inject": ""
+  },
+  {
+    "id": "h5_11",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gemini-3.8-flash-high",
+    "genre": "меню/прайс с позициями «капучино 250 ₽, латте 300 ₽»",
+    "inject": ""
+  },
+  {
+    "id": "h5_12",
+    "set": "holdout5",
+    "kind": "generated",
+    "model": "gpt-oss-120b-medium",
+    "genre": "аналитическая записка с оговорками «может», «около», «не свыше»",
+    "inject": ""
+  },
+  {
+    "id": "h5_t1",
+    "set": "holdout5",
+    "kind": "trap",
+    "origin": "Оговорка о порядке приёмки и ответственности по договору поставки (юридический текст)",
+    "genre": "закон"
+  },
+  {
+    "id": "h5_t2",
+    "set": "holdout5",
+    "kind": "trap",
+    "origin": "Классическая русская мемуарная проза со сносками (общественное достояние)",
+    "genre": "мемуары"
+  }
+]

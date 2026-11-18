@@ -4,16 +4,17 @@ START_MODULE_CONTRACT
 PURPOSE: Edit in your own chatbot, then check the facts here: copy the prompt, paste the text before
          and the answer after; the page reports lost, invented and swapped facts and gives a ready
          request to fix them. Everything runs in the browser.
-SCOPE: Static page; never sends or stores the entered texts (only same-origin fetch of prompt.txt).
+SCOPE: Static page; never sends the entered texts over the network (only same-origin fetch of prompt.txt
+       and optional one-shot tab sessionStorage handoff with ../check/).
 DEPENDS: ../check/facts.js (window.HumanizerFacts: compare, render, a port of check_facts.py);
          ./notes.js (window.HumanizerNotes.splitNotes, the eval's split_notes); ./prompt.txt
          (the body of prompt/chat.md, kept equal by scripts/check_repo.py).
-LINKS: M-SITE-SVERKA; R-SITE-FACTS; R-NOTES-NOT-TEXT; R-PORTABLE-PROMPT.
+LINKS: M-SITE-SVERKA; R-SITE-FACTS; R-NOTES-NOT-TEXT; R-PORTABLE-PROMPT; R-DETECTOR-RISK.
 END_MODULE_CONTRACT
 START_MODULE_MAP
-HTML: three steps (prompt, two texts, result) and a live result region.
+HTML: three steps (prompt, two texts, result), link to style check, and a live result region.
 CSS: the notebook palette of site/check, light and dark, phone width first.
-UI: copyPrompt, runCheck (splitNotes -> compare -> render), showResult, fixRequest.
+UI: copyPrompt, runCheck (splitNotes -> compare -> render), showResult, fixRequest, toStyleCheck.
 END_MODULE_MAP
 -->
 <html lang="ru">
@@ -109,6 +110,7 @@ END_MODULE_MAP
       <textarea id="after" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note" placeholder="Вставьте ответ чат-бота."></textarea>
       <div class="row">
         <button id="check-button" type="submit" disabled>Сверить</button>
+        <button id="to-check" class="quiet" type="button">Проверить стиль правки →</button>
         <p id="form-status" class="status" role="status" aria-live="polite" aria-atomic="true">Загружаем сверку…</p>
       </div>
       <noscript><p class="note">Для сверки нужен JavaScript. Без него тексты никуда не отправляются.</p></noscript>
@@ -266,7 +268,27 @@ END_MODULE_MAP
       });
       $("copy-prompt").addEventListener("click", () => copy(prompt, $("prompt-status"), "Промпт скопирован. Вставьте его в начало нового чата."));
       $("copy-fix").addEventListener("click", () => copy(fix, fixStatus, "Скопировано. Вставьте это в тот же чат."));
+      $("to-check").addEventListener("click", () => {
+        const raw = after.value.trim();
+        if (raw) {
+          const edit = window.HumanizerNotes ? window.HumanizerNotes.splitNotes(after.value, before.value)[0] : raw;
+          try {
+            sessionStorage.setItem("humanizer_check", edit || raw);
+          } catch {
+            setStatus(status, "Хранилище вкладки недоступно (превышен лимит или режим приватности). Скопируйте правку вручную и откройте «Проверку стиля».", true);
+            return;
+          }
+        }
+        window.location.href = "../check/";
+      });
       document.addEventListener("DOMContentLoaded", () => {
+        try {
+          const saved = sessionStorage.getItem("humanizer_source");
+          if (saved && !before.value.trim()) {
+            before.value = saved;
+            sessionStorage.removeItem("humanizer_source");
+          }
+        } catch {}
         const ready = window.HumanizerFacts && window.HumanizerNotes;
         checkButton.disabled = !ready;
         setStatus(status, ready ? "Можно сверять." : "Сверка не загрузилась. Обновите страницу.", !ready);
