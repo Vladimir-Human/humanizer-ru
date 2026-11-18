@@ -103,14 +103,17 @@ Blind terminal comparison on 12 fresh AI texts and 2 human/legal traps (a contra
 footnoted classic prose that should not be rewritten). Executor: Claude Sonnet 4.6; three flagship
 judges from separate labs — Claude Opus 4.6 Thinking, Gemini 4 Argon High and OpenAI GPT-6.2 Astra
 Thinking — with two independent shuffles per judge (72 passes on the 12 AI texts and 12 passes on
-the 2 traps, 84 passes total). Alongside it, 64 deterministic probes test all 16 instruction rules.
+the 2 traps, 84 passes total). Alongside it, 64 deterministic probes test all 16 instruction rules
+(two passes, 128 checks; one 64-probe pass for `ilyautov`). Lower is better for mean rank (of 4),
+fact losses (`check_facts.py`) and style score (8.83 before editing); "one-line prompt" is a
+single-sentence request with no skill loaded.
 
-| Participant | Mean rank of 4 (lower is better; 3 judges) | 1st places of 72 | Fact losses in text (`check_facts`) | Style score (raw: `8.83`) | 64 rule probes (mean per run) |
-|---|---|---|---|---|---|
-| **humanizer-ru 4.3.0** | **2.22** (#1) | **29** | **0** | **1.22** (−86%) | **62 / 64** (96.9%; 124 / 128 across 2 passes) |
-| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 2.26 | 21 | 1 | 4.31 | 48 / 64 (75.0%; 1 pass) |
-| humanizer-ru 4.2.1 | 2.40 | 20 | 2 | 3.61 | 58.5 / 64 (91.4%; 117 / 128 across 2 passes) |
-| one-line prompt | 3.11 | 2 | 1 | 3.50 | 43.5 / 64 (68.0%; 87 / 128 across 2 passes) |
+| Participant | Rank | 1st places | Fact losses | Style score | Rule probes |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **humanizer-ru 4.3.0** | **2.22** | **29 / 72** | **0** | **1.22** (−86%) | **96.9%** (124/128) |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 2.26 | 21 / 72 | 1 | 4.31 | 75.0% (48/64) |
+| humanizer-ru 4.2.1 | 2.40 | 20 / 72 | 2 | 3.61 | 91.4% (117/128) |
+| one-line prompt | 3.11 | 2 / 72 | 1 | 3.50 | 68.0% (87/128) |
 
 - Blind ranking and meaning preservation. Version 4.3.0 ranks above the one-line prompt in 64% of
   comparisons (95% CI 44–81%; texts where every judge pass unanimously ranked ours higher: 4 vs 1),
@@ -173,11 +176,11 @@ rule probes and restraint on human prose. Full log: [eval/README.md](eval/README
 
 Blind run 4.1.1 evaluated 24 unseen AI texts from eleven models and 6 human traps with Claude
 Sonnet 5.5 as executor and Gemini 4 Argon, Kimi K3 and Muse Spark 1.3 as judges (the 5th ranked
-participant was an internal tuning candidate at mean rank 2.61). Star counts below are updated as of
-2026-11-17.
+participant was an internal tuning candidate at mean rank 2.61). Repository stars are shown as of
+2026-11-17; lower is better for mean rank (of 5) and texts with a meaning error.
 
-| Participant | Stars on 2026-11-17 | Mean rank of 5 (lower is better) | Ours ranked higher (95% CI) | Texts with a meaning error, of 24 |
-|---|---|---|---|---|
+| Participant | Stars | Rank | Ours higher (95% CI) | Errors of 24 |
+| :--- | ---: | ---: | ---: | ---: |
 | **humanizer-ru 4.1.1** | 152 | **2.38** | — | 2 |
 | [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 581 | 3.10 | 65% (52–78%) | 2 |
 | [avoid-ai-writing-russian](https://github.com/ormeilu/avoid-ai-writing-russian) | 42 | 3.18 | 69% (58–81%) | 9 |
