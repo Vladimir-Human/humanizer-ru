@@ -49,6 +49,7 @@ END_MODULE_MAP
       --rule: #d9dee8;
       --pencil: #2346a8;
       --wash: #e6ecfa;
+      --display: 'PT Serif', Georgia, 'Times New Roman', serif;
       --hl-phrase-bg: #fff2cc;
       --hl-phrase-line: #d99b00;
       --hl-mixed-bg: #fbeceb;
@@ -92,7 +93,7 @@ END_MODULE_MAP
     .page {
       max-width: 46rem;
       margin-inline: auto;
-      padding: 1.5rem 1.25rem 3rem;
+      padding: 1.25rem 1.25rem 3rem;
     }
 
     a {
@@ -105,19 +106,21 @@ END_MODULE_MAP
 
     :focus-visible {
       outline: 3px solid var(--pencil);
-      outline-offset: 4px;
+      outline-offset: 3px;
     }
 
     .back-link {
-      display: inline-block;
-      padding-block: 0.3rem;
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding-block: 0.45rem;
       font-size: 0.95rem;
     }
 
-    .masthead { margin: 2rem 0 1.65rem; }
+    .masthead { margin: 1rem 0 1.5rem; }
 
     .eyebrow {
-      margin: 0 0 0.7rem;
+      margin: 0 0 0.65rem;
       color: var(--pencil);
       font-size: 0.75rem;
       font-weight: 700;
@@ -127,15 +130,17 @@ END_MODULE_MAP
 
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 6vw, 3rem);
-      font-weight: 700;
-      letter-spacing: -0.035em;
-      line-height: 1.12;
+      font-family: var(--display);
+      font-size: clamp(1.75rem, 4.5vw, 2.25rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.18;
+      text-wrap: balance;
     }
 
     .purpose-note {
       max-width: 42rem;
-      margin: 1rem 0 0;
+      margin: 0.9rem 0 0;
       color: var(--soft);
       line-height: 1.6;
     }
@@ -152,6 +157,7 @@ END_MODULE_MAP
       padding: 1.25rem;
       border: 1px solid var(--rule);
       border-top: 3px solid var(--pencil);
+      border-radius: 4px;
       background: var(--sheet);
     }
 
@@ -182,14 +188,15 @@ END_MODULE_MAP
     textarea {
       display: block;
       width: 100%;
-      min-height: 15rem;
-      padding: 0.9rem 1rem;
+      min-height: 14rem;
+      padding: 0.85rem 1rem;
       resize: vertical;
       border: 1px solid var(--rule);
-      border-radius: 2px;
+      border-radius: 4px;
       background: var(--sheet);
       color: var(--ink);
-      line-height: 1.65;
+      font-size: 1rem;
+      line-height: 1.6;
       caret-color: var(--pencil);
     }
 
@@ -207,11 +214,12 @@ END_MODULE_MAP
     .check-button,
     .quiet-button {
       flex: 0 0 auto;
-      min-height: 2.65rem;
-      padding: 0.5rem 1.15rem;
+      min-height: 2.75rem;
+      padding: 0.55rem 1.15rem;
       border: 1px solid var(--pencil);
-      border-radius: 2px;
+      border-radius: 4px;
       font-weight: 700;
+      line-height: 1.35;
       cursor: pointer;
     }
 
@@ -321,8 +329,9 @@ END_MODULE_MAP
 
     .hl-badge {
       display: inline-block;
-      padding: 0.15rem 0.5rem;
-      border-radius: 2px;
+      padding: 0.2rem 0.55rem;
+      border-radius: 3px;
+      line-height: 1.35;
       font-variant-numeric: tabular-nums;
     }
 
@@ -330,9 +339,10 @@ END_MODULE_MAP
       margin-top: 0.75rem;
       max-height: 22rem;
       overflow: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 0.9rem 1rem;
       border: 1px solid var(--rule);
-      border-radius: 2px;
+      border-radius: 4px;
       background: var(--sheet);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -446,17 +456,20 @@ END_MODULE_MAP
       font-size: 0.85rem;
     }
 
-    @media (max-width: 34rem) {
-      .page { padding: 1rem 1rem 2rem; }
-      .masthead { margin-top: 1.5rem; }
+    @media (max-width: 36rem) {
+      .page { padding: 0.85rem 1rem 2.5rem; }
+      .masthead { margin: 0.75rem 0 1.25rem; }
       .editor { padding: 1rem; }
+      textarea { min-height: 11rem; padding: 0.75rem 0.85rem; }
       .form-actions { flex-direction: column; align-items: stretch; }
       .check-button, .quiet-button { width: 100%; }
-      .summary { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+      .summary { grid-template-columns: minmax(0, 1fr); gap: 0.9rem; padding: 1rem; }
       .stats { justify-content: start; gap: 2rem; }
-      .finding-heading { grid-template-columns: 2.25rem minmax(0, 1fr); }
+      .annotated-text { padding: 0.75rem 0.85rem; }
+      .finding-heading { grid-template-columns: auto minmax(0, 1fr); column-gap: 0.55rem; row-gap: 0.15rem; }
       .finding-count { grid-column: 2; }
-      .finding-body { margin-left: 2.75rem; }
+      .finding-body { margin-left: 0; margin-top: 0.55rem; }
+      .example { grid-template-columns: 3.1rem minmax(0, 1fr); gap: 0.45rem; }
     }
     /* END_BLOCK_CSS */
   </style>

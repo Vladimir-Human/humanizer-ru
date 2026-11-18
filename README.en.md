@@ -15,7 +15,7 @@ Three ways to use it:
 - In AI coding agents (Claude Code, Codex, Cursor, Gemini CLI): install with one command below; for
   Claude.ai (`.zip` upload) and other clients, see [all install options](#install).
 
-[Русский](README.md) · [Site](https://vladimir-human.github.io/humanizer-ru/) · [Benchmarks](#comparison-with-other-skills) · [AI detectors & Antiplagiat](#ai-detectors-and-antiplagiat) · [llms.txt](https://vladimir-human.github.io/humanizer-ru/llms.txt)
+[Русский](README.md) · [Site](https://vladimir-human.github.io/humanizer-ru/) · [Benchmarks](#comparison-with-other-skills) · [AI detectors & Antiplagiat](#ai-detectors-and-antiplagiat) · [llms.txt](https://vladimir-human.github.io/humanizer-ru/llms.txt)
 
 ```bash
 npx skills add Vladimir-Human/humanizer-ru
@@ -108,12 +108,12 @@ the 2 traps, 84 passes total). Alongside it, 64 deterministic probes test all 16
 fact losses (`check_facts.py`) and style score (8.83 before editing); "one-line prompt" is a
 single-sentence request with no skill loaded.
 
-| Participant | Rank | 1st places | Fact losses | Style score | Rule probes |
+| Participant | Rank | 1st places | Fact losses | Style score | Rule probes |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| **humanizer-ru 4.3.0** | **2.22** | **29 / 72** | **0** | **1.22** (−86%) | **96.9%** (124/128) |
-| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 2.26 | 21 / 72 | 1 | 4.31 | 75.0% (48/64) |
-| humanizer-ru 4.2.1 | 2.40 | 20 / 72 | 2 | 3.61 | 91.4% (117/128) |
-| one-line prompt | 3.11 | 2 / 72 | 1 | 3.50 | 68.0% (87/128) |
+| **humanizer-ru 4.3.0** | **2.22** | **29 / 72** | **0** | **1.22** (−86%) | **96.9%** (124/128) |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 2.26 | 21 / 72 | 1 | 4.31 | 75.0% (48/64) |
+| humanizer-ru 4.2.1 | 2.40 | 20 / 72 | 2 | 3.61 | 91.4% (117/128) |
+| one-line prompt | 3.11 | 2 / 72 | 1 | 3.50 | 68.0% (87/128) |
 
 - Blind ranking and meaning preservation. Version 4.3.0 ranks above the one-line prompt in 64% of
   comparisons (95% CI 44–81%; texts where every judge pass unanimously ranked ours higher: 4 vs 1),
@@ -179,12 +179,12 @@ Sonnet 5.5 as executor and Gemini 4 Argon, Kimi K3 and Muse Spark 1.3 as judges 
 participant was an internal tuning candidate at mean rank 2.61). Repository stars are shown as of
 2026-11-17; lower is better for mean rank (of 5) and texts with a meaning error.
 
-| Participant | Stars | Rank | Ours higher (95% CI) | Errors of 24 |
+| Participant | Stars | Rank | Ours higher (95% CI) | Errors of 24 |
 | :--- | ---: | ---: | ---: | ---: |
 | **humanizer-ru 4.1.1** | 152 | **2.38** | — | 2 |
-| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 581 | 3.10 | 65% (52–78%) | 2 |
-| [avoid-ai-writing-russian](https://github.com/ormeilu/avoid-ai-writing-russian) | 42 | 3.18 | 69% (58–81%) | 9 |
-| one-line prompt | — | 3.74 | 77% (67–85%) | 8 |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 581 | 3.10 | 65% (52–78%) | 2 |
+| [avoid-ai-writing-russian](https://github.com/ormeilu/avoid-ai-writing-russian) | 42 | 3.18 | 69% (58–81%) | 9 |
+| one-line prompt | — | 3.74 | 77% (67–85%) | 8 |
 
 All three leads clear 50% under paired text resampling (bootstrap in `report.py`). The skill left
 all 6 traps intact while the one-line prompt damaged 3. In the follow-up 12-text benchmark (`final4`,
