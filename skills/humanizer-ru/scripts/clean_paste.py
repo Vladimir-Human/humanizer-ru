@@ -2,61 +2,82 @@
 # -*- coding: utf-8 -*-
 # START_MODULE_CONTRACT
 # PURPOSE: Remove chat-interface leftovers and mixed-script homoglyph spoofing from pasted text:
-#          citation tokens (contentReference, 【N†source】, [cite: N], bare citeturn leaks), the
-#          utm_source tail a chat assistant adds to links (chatgpt.com, openai, perplexity.ai,
-#          claude.ai, deepseek, gemini.google.com, grok.com, copilot.com; also behind &amp;, **
-#          or an invisible character), invisible/watermark characters (incl. Variation Selectors
-#          outside emoji and Unicode Tags outside subdivision flags), and Latin/Greek lookalikes
-#          mixed into Cyrillic words (incl. NFD й/ё). Text, links, e-mails, the author's own utm
-#          tags, emoji, `inline code`, code-like ``` blocks, hyphenated compounds (IT-отдел) and
-#          line endings (CRLF) stay intact.
+#          citation tokens (contentReference, 【N†source】, [cite: N], bare citeturn leaks, Claude
+#          <antml:cite>/<cite index="..."> XML tags keeping inner prose), the utm_source tail a chat
+#          assistant adds to links (chatgpt.com, openai, perplexity.ai, claude.ai, deepseek,
+#          gemini.google.com, grok.com, copilot.com; also behind &amp;, **, ~~ or an invisible
+#          character), invisible/watermark characters (incl. Variation Selectors outside emoji,
+#          Unicode Tags outside subdivision flags, deprecated format U+206A..U+206F, U+FFFC), and
+#          Latin/Greek lookalikes mixed into Cyrillic words (incl. NFC accented á/é/ó/ý/ë and NFD
+#          й/ё). Text, links, e-mails, the author's own utm tags, emoji, inline code spans,
+#          code-like fenced blocks (```/~~~), hyphenated compounds (IT-отдел) and line endings
+#          (CRLF) stay intact.
 # SCOPE: deterministic, stdlib only; style and wording are not touched.
 # DEPENDS: Python 3.8+ standard library.
 # LINKS: M-CLEAN-PASTE; R-PASTE; R-DETECTOR-RISK; DF-SKILL; V-M-CLEAN-PASTE.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # clean: text -> (cleaned text, counts by kind).
-# main: CLI `clean_paste.py file [--in-place]`; prints cleaned text or rewrites the file
-#       (keeps file.bak); report goes to stderr; exit 0 nothing found, 1 cleaned, 2 bad input.
+# main: CLI `clean_paste.py file|- [--in-place] [--no-backup] [--check] [--json] [--exit-zero]
+#       [--encoding ENC]`; prints cleaned text or rewrites the file atomically (keeps file.bak
+#       unless --no-backup); report goes to stderr (or JSON to stdout); exit 0 nothing found (or
+#       --exit-zero), 1 cleaned/found, 2 bad input/write error.
 # END_MODULE_MAP
 """Очистка мусора вставки из чата.
 
     python clean_paste.py текст.txt              # очищенный текст в stdout
-    python clean_paste.py текст.txt --in-place   # правка файла, копия в текст.txt.bak
-    python clean_paste.py -                      # чтение из stdin
+    python clean_paste.py текст.txt --in-place   # атомарная правка файла, копия в текст.txt.bak
+    python clean_paste.py текст.txt --check      # только проверить без вывода текста
+    python clean_paste.py -                      # чтение из stdin (UTF-8)
 
-Код выхода: 0 — мусора нет, 1 — мусор снят, 2 — файл не читается.
+Код выхода: 0 — мусора нет (или задан --exit-zero), 1 — мусор найден/снят, 2 — ошибка ввода/записи.
 """
 from __future__ import annotations
 
-import bisect
+import argparse
+import codecs
+import json
+import os
 import re
 import shutil
 import sys
+import tempfile
 import unicodedata
-from typing import Dict, Tuple
+from pathlib import Path
+from typing import Dict, List, Tuple
 from urllib.parse import unquote, urlsplit, urlunsplit
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 # START_BLOCK_PATTERNS
-_CITETURN_STEP = r"turn\d+(?:search|fetch|file|image|news|video|ref|view)\d+"
+_CITETURN_STEP = (
+    r"turn\d+(?:search|fetch|file|image|news|video|ref|view|"
+    r"product|finance|map|sports|weather|local|code|calc|browser)\d+"
+)
 CITATIONS = [
-    ("contentReference", re.compile(r"[ \t]?:?contentReference\[oaicite:\d+\]\{index=\d+\}")),
+    ("contentReference", re.compile(r"[ \t]?:{0,2}contentReference\[oaicite:\d+\](?:\{index=\d+\})?")),
     ("oaicite", re.compile(
-        r"(?i)[ \t]?(?:\[oaicite:\d+\]|\ue200[^\ue201\n]{0,120}\ue201|\uea01[^\uea02\n]{0,40}\uea02"
+        r"(?i)[ \t]?(?:\[oaicite:\d+\](?:\{index=\d+\})?|\ue200[^\ue201\n]{0,400}\ue201|\uea01[^\uea02\n]{0,40}\uea02"
         r"|(?<![A-Za-z0-9/_.\-=?:&#@])cite" + _CITETURN_STEP + r"(?:" + _CITETURN_STEP + r")*)"
     )),
-    ("source-token", re.compile(r"[ \t]?【\d+(?::\d+)?(?:†[^】\n]{0,80})?】")),
+    ("source-token", re.compile(r"[ \t]?【\d+(?:[:\-–,][ \t]*\d+)*(?:†[^】\n]{0,80})?】")),
     # Gemini opens a cited span with [cite_start] glued to its first word: the space before stays.
     ("cite", re.compile(r"(?i)\[cite_start\]")),
-    ("cite", re.compile(r"(?i)[ \t]?(?:\[cite(?:_end)?(?::\s*[\d,\s]+)?\]|"
-                        r"\[(?:citation|attached_file|web):\d+\]|"
-                        r"\[span_\d+\][\[(](?:start_span|end_span)[\])]|"
-                        r"\[\^\d+\^\])")),
+    ("cite", re.compile(
+        r"(?i)[ \t]?(?:\[cite(?:_end)?(?::[ \t]*[0-9]+(?:[ \t]*[\-–,][ \t]*[0-9]+)*[ \t]*)?\]|"
+        r"\[(?:citation|attached_file|web):[ \t]*[0-9]+(?:[ \t]*[\-–,][ \t]*[0-9]+)*[ \t]*\]|"
+        r"\[span_[0-9]+\][\[(](?:start_span|end_span)[\])]|"
+        r"\[\^[0-9]+\^\])"
+    )),
+    ("cite", re.compile(r"(?i)</?antml:cite(?:[ \t]+[^>\n]{0,200})?>")),
 ]
+CITE_XML_PAIR_RX = re.compile(
+    r"""(?i)<cite[ \t]+index=(?:"[^"\n]{0,120}"|'[^'\n]{0,120}')[ \t]*>((?:(?!</?cite[ \t\r\n>/])[\s\S]){0,4000})</cite>"""
+)
+CITE_XML_OPEN_RX = re.compile(r"""(?i)<cite[ \t]+index=(?:"[^"\n]{0,120}"|'[^'\n]{0,120}')[ \t]*>""")
 
 # Invisible characters that never carry meaning in Russian prose (U+202F and U+2009 stay intact).
 INVISIBLE = {
@@ -66,7 +87,10 @@ INVISIBLE = {
     0x2068: "bidi", 0x2069: "bidi", 0x180E: "mongolian vowel separator",
     0x034F: "combining grapheme joiner", 0x061C: "arabic letter mark",
     0x2061: "invisible math", 0x2062: "invisible math", 0x2063: "invisible math", 0x2064: "invisible math",
+    0x206A: "deprecated format", 0x206B: "deprecated format", 0x206C: "deprecated format",
+    0x206D: "deprecated format", 0x206E: "deprecated format", 0x206F: "deprecated format",
     0xFFF9: "interlinear annotation", 0xFFFA: "interlinear annotation", 0xFFFB: "interlinear annotation",
+    0xFFFC: "object replacement",
     0xE200: "pua cite", 0xE201: "pua cite", 0xE202: "pua cite", 0xE203: "pua cite", 0xE204: "pua cite",
     0xEA01: "pua cite", 0xEA02: "pua cite",
 }
@@ -84,10 +108,14 @@ URL_RX = (r"(?:[Hh][Tt][Tt][Pp][Ss]?://|[Ww][Ww][Ww]\.)"
           r"(?:\([^\s<>«»\"'()\]`%s]*\)|[^\s<>«»\"')\]`%s])+" % (_ZW, _ZW))
 EMAIL_RX = (r"(?<![A-Za-zА-Яа-яЁё0-9._%+-])"
             r"[A-Za-zА-Яа-яЁё0-9._%+-]+@[A-Za-zА-Яа-яЁё0-9.-]+\.[A-Za-zА-Яа-яЁё]{2,}")
+LAT_EXT = "\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f\u1e00-\u1eff\ua7dc"
 HOMOGLYPHS = {
     "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х", "y": "у",
     "A": "А", "B": "В", "C": "С", "E": "Е", "H": "Н", "K": "К", "M": "М",
     "O": "О", "P": "Р", "T": "Т", "X": "Х", "Y": "У",
+    "á": "а\u0301", "é": "е\u0301", "ó": "о\u0301", "ý": "у\u0301",
+    "Á": "А\u0301", "É": "Е\u0301", "Ó": "О\u0301", "Ý": "У\u0301",
+    "ë": "ё", "Ë": "Ё",
     "α": "а", "ε": "е", "ο": "о", "ρ": "р", "χ": "х", "κ": "к",
     "Α": "А", "Β": "В", "Γ": "Г", "Ε": "Е", "Η": "Н", "Κ": "К", "Μ": "М",
     "Ο": "О", "Π": "П", "Ρ": "Р", "Τ": "Т", "Υ": "У", "Φ": "Ф", "Χ": "Х",
@@ -95,11 +123,13 @@ HOMOGLYPHS = {
 HOMOGLYPH_TRANS = str.maketrans(HOMOGLYPHS)
 _HOMO_LOOK = "".join(HOMOGLYPHS)
 _HOMO_ALL = "А-Яа-яЁё\u0301\u0306\u0308" + _HOMO_LOOK
-_WORD_CHARS = r"A-Za-z\u0370-\u03ffА-Яа-яЁё\u0301\u0306\u0308"
+_WORD_CHARS = "A-Za-z" + LAT_EXT + r"\u0370-\u03ffА-Яа-яЁё\u0301\u0306\u0308"
 HOMO_WORD_RX = (r"(?<![%s])(?=[%s]*[А-Яа-яЁё])(?=[%s]*[%s])[%s]+(?![%s])"
                 % (_WORD_CHARS, _HOMO_ALL, _HOMO_ALL, _HOMO_LOOK, _HOMO_ALL, _WORD_CHARS))
 MD_TARGET_RX = r"(?<=\])\([ \t]*(?:<[^>\n]+>|(?:\([^\s()]*\)|[^\s()])+)"
-PROSE_HOMO_RX = re.compile(r"`[^`\n]+`|" + URL_RX + "|" + EMAIL_RX + "|" + MD_TARGET_RX + "|(" + HOMO_WORD_RX + ")")
+PROSE_HOMO_RX = re.compile(URL_RX + "|" + EMAIL_RX + "|" + MD_TARGET_RX + "|(" + HOMO_WORD_RX + ")")
+_FENCE_HEAD_RX = re.compile(r"^[ ]{0,3}(?:`{3,}|~{3,})")
+_PROSE_FENCE_TAGS = frozenset({"", "markdown", "md", "text", "txt", "plain", "plaintext"})
 _REGEX_PREV = frozenset("=(,:;!&|?+-~*{[\n\r")
 _REGEX_KW = frozenset(("return", "typeof", "void", "delete", "throw", "case", "in", "of", "yield", "await"))
 _REGEX_FLAGS = frozenset("dgimsuvy")
@@ -165,7 +195,7 @@ def _strip_invisibles_chunk(chunk: str, prev_ch: str, next_ch: str) -> Tuple[str
                 next_kept_pos += 1
         return chunk[next_kept_pos] if next_kept_pos < len(chunk) else next_ch
 
-    out = []
+    out: List[str] = []
     removed = 0
     in_flag = False
     for i, ch in enumerate(chunk):
@@ -175,10 +205,13 @@ def _strip_invisibles_chunk(chunk: str, prev_ch: str, next_ch: str) -> Tuple[str
             if cp == 0xE007F:
                 in_flag = False
             continue
-        in_flag = cp in (0x1F3F4, 0x1F3F3)
+        left_c = out[-1] if out else prev_ch
+        if cp in (0x1F3F4, 0x1F3F3):
+            in_flag = True
+        elif not (in_flag and cp == 0xFE0F and left_c and ord(left_c) in (0x1F3F4, 0x1F3F3)):
+            in_flag = False
         if cp in SPACE_SPOOFERS:
             removed += 1
-            left_c = out[-1] if out else prev_ch
             if left_c and left_c not in _WS:
                 right_c = _next_kept(i + 1)
                 if right_c and right_c not in _WS:
@@ -189,10 +222,9 @@ def _strip_invisibles_chunk(chunk: str, prev_ch: str, next_ch: str) -> Tuple[str
             removed += 1
             continue
         if cp == 0xFE0F:
-            left_c = out[-1] if out else prev_ch
             right_c = _next_kept(i + 1)
             if ((left_c and _is_emoji(left_c))
-                    or (left_c in "0123456789#*" and right_c == "\u20e3")):
+                    or (bool(left_c) and left_c in "0123456789#*" and right_c == "\u20e3")):
                 out.append(ch)
                 continue
             removed += 1
@@ -214,6 +246,156 @@ def _strip_invisibles_chunk(chunk: str, prev_ch: str, next_ch: str) -> Tuple[str
             continue
         out.append(ch)
     return "".join(out), removed
+
+
+def _is_code_fence(info: str, fbody: str) -> bool:
+    """True when fence body is <30% Cyrillic (info string never inflates Latin count);
+    explicit code language tags also protect short snippets whose Cyrillic sits inside literals."""
+    letters = re.findall(r"[A-Za-zА-Яа-яЁё]", fbody)
+    if sum(1 for x in letters if x > "z") < 0.3 * max(1, len(letters)):
+        return True
+    parts = info.strip().split(None, 1)
+    tag = parts[0].lower() if parts else ""
+    if tag in _PROSE_FENCE_TAGS:
+        return False
+    lits = _code_literal_spans(fbody, False)
+    if not lits:
+        return False
+    outside = []
+    pos = 0
+    for ls, le in lits:
+        outside.append(fbody[pos:ls])
+        pos = le
+    outside.append(fbody[pos:])
+    out_letters = re.findall(r"[A-Za-zА-Яа-яЁё]", "".join(outside))
+    return bool(out_letters) and sum(1 for x in out_letters if x > "z") < 0.3 * len(out_letters)
+
+
+def _code_fence_spans(text: str) -> List[Tuple[int, int]]:
+    """Linear O(N) fenced code scanner (0-3 spaces, >=3 ` or ~, matching closer, body-only <30% Cyrillic)."""
+    cand = []
+    n = len(text)
+    pos = 0
+    while pos < n:
+        nl = text.find("\n", pos)
+        line_end = n if nl < 0 else nl
+        content_end = line_end - 1 if line_end > pos and text[line_end - 1] == "\r" else line_end
+        i = pos
+        sp = 0
+        while i < content_end and text[i] == " " and sp < 4:
+            i += 1
+            sp += 1
+        if sp <= 3 and i < content_end and text[i] in ("`", "~"):
+            ch = text[i]
+            j = i
+            while j < content_end and text[j] == ch:
+                j += 1
+            flen = j - i
+            if flen >= 3:
+                rest = text[j:content_end]
+                is_closer = all(c in (" ", "\t") for c in rest)
+                if is_closer or ch == "~" or "`" not in rest:
+                    cand.append((pos, line_end, ch, flen, is_closer, rest))
+        if nl < 0:
+            break
+        pos = nl + 1
+    if len(cand) < 2:
+        return []
+    m = len(cand)
+    max_bt = [0] * (m + 1)
+    max_ti = [0] * (m + 1)
+    for idx in range(m - 1, -1, -1):
+        _, _, ch, flen, is_closer, _ = cand[idx]
+        max_bt[idx] = max(max_bt[idx + 1], flen if (is_closer and ch == "`") else 0)
+        max_ti[idx] = max(max_ti[idx + 1], flen if (is_closer and ch == "~") else 0)
+    spans: List[Tuple[int, int]] = []
+    idx = 0
+    while idx < m:
+        open_start, _, ch, flen, _, open_info = cand[idx]
+        mc = max_bt if ch == "`" else max_ti
+        if mc[idx + 1] < flen:
+            idx += 1
+            continue
+        j = idx + 1
+        while j < m:
+            _, close_end, c2, flen2, is_closer2, _ = cand[j]
+            if is_closer2 and c2 == ch and flen2 >= flen:
+                block = text[open_start:close_end]
+                nl_b = block.find("\n")
+                last_nl_b = block.rfind("\n")
+                fbody = block[nl_b + 1:last_nl_b] if 0 <= nl_b < last_nl_b else ""
+                if _is_code_fence(open_info, fbody):
+                    spans.append((open_start, close_end))
+                idx = j + 1
+                break
+            j += 1
+        else:
+            idx += 1
+    return spans
+
+
+def _inline_code_spans(text: str, excluded: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """Linear O(N) single-line multi-backtick inline code matcher outside excluded fence spans."""
+    spans: List[Tuple[int, int]] = []
+    n = len(text)
+    ex_i = 0
+    ex_n = len(excluded)
+    pos = 0
+    while pos < n:
+        while ex_i < ex_n and excluded[ex_i][1] <= pos:
+            ex_i += 1
+        if ex_i < ex_n and excluded[ex_i][0] <= pos:
+            pos = excluded[ex_i][1]
+            continue
+        nl = text.find("\n", pos)
+        line_end = n if nl < 0 else nl
+        seg_end = min(line_end, excluded[ex_i][0]) if ex_i < ex_n else line_end
+        if "`" in text[pos:seg_end]:
+            runs: List[Tuple[int, int, bool]] = []
+            by_len: Dict[int, List[int]] = {}
+            i = pos
+            while i < seg_end:
+                if text[i] == "`":
+                    s = i
+                    bs = 0
+                    b = s - 1
+                    while b >= pos and text[b] == "\\":
+                        bs += 1
+                        b -= 1
+                    while i < seg_end and text[i] == "`":
+                        i += 1
+                    rlen = i - s
+                    ridx = len(runs)
+                    runs.append((s, rlen, (bs & 1) == 1))
+                    by_len.setdefault(rlen, []).append(ridx)
+                else:
+                    i += 1
+            ptr: Dict[int, int] = {}
+            r = 0
+            while r < len(runs):
+                s, rlen, esc = runs[r]
+                if esc:
+                    r += 1
+                    continue
+                lst = by_len[rlen]
+                p = ptr.get(rlen, 0)
+                while p < len(lst) and lst[p] <= r:
+                    p += 1
+                ptr[rlen] = p
+                if p < len(lst):
+                    cr = lst[p]
+                    cs, clen, _ = runs[cr]
+                    spans.append((s, cs + clen))
+                    r = cr + 1
+                else:
+                    r += 1
+        if seg_end < line_end:
+            pos = seg_end
+        elif nl < 0:
+            break
+        else:
+            pos = nl + 1
+    return spans
 
 
 def _is_ident_char(c: str) -> bool:
@@ -359,18 +541,25 @@ def _code_literal_spans(body: str, allow_backtick: bool) -> List[Tuple[int, int]
 
 def _strip_code_invisibles(code: str) -> Tuple[str, int]:
     """Strip paste invisibles outside string, template and regex literals inside code."""
-    if code.startswith("```"):
+    if "\n" in code and _FENCE_HEAD_RX.match(code):
         nl = code.find("\n")
         last_nl = code.rfind("\n")
         if 0 <= nl < last_nl:
             head, body, tail, allow_bt = code[:nl + 1], code[nl + 1:last_nl], code[last_nl:], True
         else:
             head, body, tail, allow_bt = "", code, "", False
-    elif len(code) >= 2 and code[0] == "`" and code[-1] == "`":
-        head, body, tail, allow_bt = "`", code[1:-1], "`", False
+    elif code and code[0] == "`":
+        k = 0
+        while k < len(code) and code[k] == "`":
+            k += 1
+        if len(code) >= 2 * k and code.endswith("`" * k):
+            head, body, tail, allow_bt = code[:k], code[k:-k], code[-k:], k >= 2
+        else:
+            head, body, tail, allow_bt = "", code, "", False
     else:
         head, body, tail, allow_bt = "", code, "", False
-    sub_parts, pos = [], 0
+    sub_parts: List[str] = []
+    pos = 0
     for s, e in _code_literal_spans(body, allow_bt):
         sub_parts += [body[pos:s], body[s:e]]
         pos = e
@@ -408,8 +597,8 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
 
         def fix_url(m: re.Match) -> str:
             url = m.group(0)
-            # Sentence punctuation and Markdown emphasis after the link: **https://a.ru**
-            tail = url[len(url.rstrip(".,;:!?…*_")):]
+            # Sentence punctuation and Markdown emphasis/strikethrough after the link: **https://a.ru**, ~~https://a.ru~~
+            tail = url[len(url.rstrip(".,;:!?…*_~")):]
             new, n = strip_utm(url[:len(url) - len(tail)])
             bump("utm", n)
             return new + tail
@@ -422,22 +611,13 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
             return unicodedata.normalize("NFC", word.translate(HOMOGLYPH_TRANS))
 
         # Code is copied as is: citations, links, homoglyphs and quoted string literals inside
-        # `inline code` and code-like (<30% Cyrillic) ``` blocks stay untouched, while paste
-        # invisibles in unquoted code tokens are stripped. A ``` block of Russian prose is cleaned.
-        fences = []
-        # A file is read as is (CRLF kept), so the closing fence may end in \r.
-        for m in re.finditer(r"^```[^\n]*\n.*?^```[ \t]*\r?$", cur, re.S | re.M):
-            letters = re.findall(r"[A-Za-zА-Яа-яЁё]", m.group())
-            if sum(1 for x in letters if x > "z") < 0.3 * max(1, len(letters)):
-                fences.append((m.start(), m.end()))
-        fence_starts = [s for s, _ in fences]
-        spans = list(fences)
-        for m in re.finditer(r"`[^`\n]+`", cur):
-            idx = bisect.bisect_right(fence_starts, m.start()) - 1
-            if idx < 0 or m.start() >= fences[idx][1]:
-                spans.append((m.start(), m.end()))
-        parts, pos = [], 0
-        for s, e in sorted(spans):
+        # inline code spans and code-like (<30% Cyrillic) fenced blocks stay untouched, while paste
+        # invisibles in unquoted code tokens are stripped. A fenced block of Russian prose is cleaned.
+        fences = _code_fence_spans(cur)
+        spans = sorted(fences + _inline_code_spans(cur, fences))
+        parts: List[str] = []
+        pos = 0
+        for s, e in spans:
             parts += [cur[pos:s], cur[s:e]]
             pos = e
         parts.append(cur[pos:])
@@ -452,15 +632,21 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
             next_ch = parts[i + 1][0] if i + 1 < len(parts) and parts[i + 1] else ""
             for _ in range(4):
                 step = 0
-                while True:
+                for _ in range(4):
                     c_step = 0
                     for kind, rx in CITATIONS:
                         chunk, n = rx.subn("", chunk)
                         bump(kind, n)
                         c_step += n
+                    chunk, n_xml = CITE_XML_PAIR_RX.subn(r"\1", chunk)
+                    bump("cite", n_xml)
+                    c_step += n_xml
                     step += c_step
                     if not c_step:
                         break
+                chunk, n_open = CITE_XML_OPEN_RX.subn("", chunk)
+                bump("cite", n_open)
+                step += n_open
                 # A zero-width character glued after a link ends it, so the utm tail before it is seen
                 # on the first pass; if invisibles split a citation or utm_source, the next pass catches it.
                 before_url = chunk
@@ -472,7 +658,7 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
                 if not step and not inv_n:
                     break
             # Fold mixed-script Latin/Greek homoglyphs inside Russian words after invisible characters are
-            # gone, so "c\u200bиcт\u00adeмa" and NFD "cиcтeмoи\u0306" repair in one pass.
+            # gone, so "c\u200bиcт\u00adeмa", NFC "бéлый" and NFD "cиcтeмoи\u0306" repair in one pass.
             parts[i] = PROSE_HOMO_RX.sub(fix_homo, chunk)
         return "".join(parts), step_counts
 
@@ -482,44 +668,106 @@ def clean(text: str) -> Tuple[str, Dict[str, int]]:
             break
         for k, v in step_counts.items():
             counts[k] = counts.get(k, 0) + v
-        if "`" not in text:
+        if "`" not in text and "~" not in text:
             break
     return text, counts
 
 
-def main(argv=None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
-    in_place = "--in-place" in args
-    args = [a for a in args if a != "--in-place"]
-    if len(args) != 1 or args[0] in ("-h", "--help"):
-        print(__doc__)
-        return 2
-    path = args[0]
-    # Line endings are kept as they are: removing one invisible character must not turn a
-    # Windows file (CRLF) into LF or write CR CR LF to the console.
-    for stream in (sys.stdin, sys.stdout):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(newline="")
+def _atomic_write_text(target: Path, content: str, encoding: str) -> None:
+    tmp_path = None
     try:
-        if path == "-":
-            src = sys.stdin.read()
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding=encoding, newline="", dir=str(target.parent),
+            prefix="." + target.name + ".", suffix=".tmp", delete=False,
+        ) as fh:
+            tmp_path = Path(fh.name)
+            fh.write(content)
+        shutil.copymode(str(target), str(tmp_path))
+        os.replace(str(tmp_path), str(target))
+        tmp_path = None
+    finally:
+        if tmp_path is not None:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(
+        description="Очистка мусора вставки из чата и букв-двойников (омоглифов).",
+        epilog="Код выхода: 0 — мусора нет (или --exit-zero); 1 — мусор найден/снят; 2 — ошибка.",
+    )
+    ap.add_argument("file", help="файл с текстом или - для чтения из stdin")
+    ap.add_argument("--in-place", action="store_true", help="атомарно перезаписать файл (резервная копия .bak)")
+    ap.add_argument("--no-backup", action="store_true", help="при --in-place не создавать файл .bak")
+    ap.add_argument("--check", action="store_true", help="только проверить, ничего не менять и не выводить текст")
+    ap.add_argument("--json", action="store_true", help="вывести сводку в JSON в stdout")
+    ap.add_argument("--exit-zero", action="store_true", help="возвращать код 0 даже если мусор найден/снят")
+    ap.add_argument("--encoding", default="utf-8", help="кодировка ввода/вывода файла (по умолчанию utf-8)")
+    args = ap.parse_args(argv)
+    if args.file == "-" and args.in_place:
+        print("Нельзя использовать --in-place со stdin (-).", file=sys.stderr)
+        return 2
+    if args.in_place and args.check:
+        print("Нельзя сочетать --in-place и --check.", file=sys.stderr)
+        return 2
+    try:
+        codecs.lookup(args.encoding)
+    except LookupError as exc:
+        print("Неизвестная кодировка: %s" % exc, file=sys.stderr)
+        return 2
+    try:
+        if args.file == "-":
+            buf = getattr(sys.stdin, "buffer", None)
+            src = buf.read().decode(args.encoding) if buf is not None else sys.stdin.read()
         else:
-            with open(path, encoding="utf-8", newline="") as fh:
+            target = Path(args.file)
+            if args.in_place and target.is_symlink():
+                print("Отказ: --in-place не перезаписывает символические ссылки: %s" % args.file, file=sys.stderr)
+                return 2
+            with open(target, encoding=args.encoding, newline="") as fh:
                 src = fh.read()
-    except (OSError, UnicodeDecodeError) as exc:
+    except UnicodeDecodeError as exc:
+        print("Не могу прочитать файл (%s; ожидается UTF-8, укажите --encoding для другой кодировки)." % exc,
+              file=sys.stderr)
+        return 2
+    except (OSError, ValueError) as exc:
         print("Не могу прочитать файл: %s" % exc, file=sys.stderr)
         return 2
     cleaned, counts = clean(src)
-    if in_place and path != "-":
+    if args.in_place:
         if counts:
-            shutil.copyfile(path, path + ".bak")
-            with open(path, "w", encoding="utf-8", newline="") as fh:
-                fh.write(cleaned)
-    else:
+            target = Path(args.file)
+            try:
+                if target.is_symlink():
+                    print("Отказ: --in-place не перезаписывает символические ссылки: %s" % args.file, file=sys.stderr)
+                    return 2
+                if not args.no_backup:
+                    bak = Path(args.file + ".bak")
+                    if bak.is_symlink():
+                        print("Отказ: резервная копия .bak — символическая ссылка: %s" % bak, file=sys.stderr)
+                        return 2
+                    shutil.copyfile(str(target), str(bak))
+                _atomic_write_text(target, cleaned, args.encoding)
+            except (OSError, ValueError) as exc:
+                print("Не могу записать файл: %s" % exc, file=sys.stderr)
+                return 2
+    elif not args.check and not args.json:
+        # Line endings are kept as they are: removing one invisible character must not turn a
+        # Windows file (CRLF) into LF or write CR CR LF to the console.
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(newline="")
         sys.stdout.write(cleaned)
-    report = ", ".join("%s: %d" % kv for kv in sorted(counts.items())) or "мусора вставки нет"
-    print("Очистка вставки: " + report, file=sys.stderr)
-    return 1 if counts else 0
+    if args.json:
+        payload = {"file": args.file, "changed": bool(counts), "counts": counts}
+        if not args.in_place and not args.check:
+            payload["text"] = cleaned
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        report = ", ".join("%s: %d" % kv for kv in sorted(counts.items())) or "мусора вставки нет"
+        print("Очистка вставки: " + report, file=sys.stderr)
+    return 0 if (args.exit_zero or not counts) else 1
 
 
 if __name__ == "__main__":

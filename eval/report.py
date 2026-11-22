@@ -27,6 +27,7 @@ import importlib.util
 import json
 import math
 import random
+import re
 import sys
 from collections import Counter, defaultdict
 
@@ -91,9 +92,21 @@ def aggregate(rows, ids, outputs, sources, rank_judges=None):
                     wins[(a, b)][judge].append(1)
                     wins[(b, a)][judge].append(0)
         for s, c in (r.get("candidates") or {}).items():
-            if ranks and isinstance(c.get("send_as_is"), (int, float)):
-                send[s][judge].append(float(c["send_as_is"]))
-            errs = [e for e in (c.get("fact_errors") or []) if str(e).strip() and str(e).strip().lower() not in ("нет", "-", "—")]
+            if not isinstance(c, dict):
+                continue
+            sval = c.get("send_as_is")
+            if ranks and isinstance(sval, (int, float)) and not isinstance(sval, bool):
+                send[s][judge].append(float(sval))
+            raw_fe = c.get("fact_errors")
+            if isinstance(raw_fe, str):
+                fe_items = [raw_fe]
+            elif isinstance(raw_fe, list):
+                fe_items = raw_fe
+            else:
+                fe_items = []
+            errs = [e for e in fe_items
+                    if not isinstance(e, bool) and e is not None
+                    and str(e).strip() and str(e).strip().lower() not in ("нет", "none", "null", "-", "—")]
             fact_votes[(s, r["id"])][judge][1] += 1
             if errs:
                 fact_votes[(s, r["id"])][judge][0] += 1
@@ -110,6 +123,7 @@ def aggregate(rows, ids, outputs, sources, rank_judges=None):
     for s in systems:
         flags = {tid: fact_flag(fact_votes[(s, tid)]) for tid in ids if (s, tid) in fact_votes}
         mean_pos, mean_send = _equal_weight(pos[s]), _equal_weight(send[s])
+        have = [t for t in ids if (s, t) in outputs]
         table[s] = {
             "mean_position": round(mean_pos, 2) if mean_pos is not None else None,
             "first_places": first[s],
@@ -119,7 +133,10 @@ def aggregate(rows, ids, outputs, sources, rank_judges=None):
             "texts_flagged_by_any_judge": sorted(t for t, (_, anyj) in flags.items() if anyj),
             "script_errors": {tid: e for (ss, tid), e in script.items() if ss == s and e},
             "similarity": round(sum(difflib.SequenceMatcher(None, sources[t], outputs[(s, t)]).ratio()
-                                    for t in ids if (s, t) in outputs) / max(1, sum(1 for t in ids if (s, t) in outputs)), 3),
+                                    for t in have) / max(1, len(have)), 3),
+            "text_similarity": round(sum(difflib.SequenceMatcher(
+                None, sources[t], lib.split_notes(outputs[(s, t)], sources[t])[0]).ratio()
+                for t in have) / max(1, len(have)), 3),
         }
     pair = {"%s>%s" % k: round(_equal_weight(v), 3) for k, v in wins.items() if _equal_weight(v) is not None}
     notes = {"%s|%s" % k: v for k, v in fact_notes.items()}
@@ -246,7 +263,12 @@ def release_gates(result, rows, outputs, sources, ours, prev, rank_judges=None) 
     return gates
 
 
-def main() -> int:
+def _out_slug(judges: str) -> str:
+    parts = [re.sub(r"[^\w.-]+", "-", j.split("/")[-1]).strip("-") for j in judges.split(",") if j.strip()]
+    return "summary-" + "-".join(p or "judge" for p in parts)
+
+
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
     ap.add_argument("--ours", default="ours")
@@ -256,16 +278,16 @@ def main() -> int:
     ap.add_argument("--judges", default="", help="only passes of these judges (comma list of model ids)")
     ap.add_argument("--rank-judges", default="", help="places and shares from these judges only; all judges vote on facts")
     ap.add_argument("--out", default="summary", help="file name without extension for .md and .json")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     rank_judges = set(args.rank_judges.split(",")) if args.rank_judges else None
     if args.judges and args.out == "summary":
         # A one-judge view must never overwrite the run's main summary.
-        args.out = "summary-" + "-".join(j.split("/")[-1] for j in args.judges.split(","))
+        args.out = _out_slug(args.judges)
     run_dir = lib.EVAL_DIR / "results" / args.run
     index = {t["id"]: t for t in lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")}
     # A run of the human set has no judges: similarity and the fact script are its measures.
     jpath = run_dir / args.judgments
-    rows = [json.loads(l) for l in jpath.read_text(encoding="utf-8").splitlines() if l.strip()] if jpath.exists() else []
+    rows = [json.loads(l) for l in jpath.read_text(encoding="utf-8-sig").splitlines() if l.strip()] if jpath.exists() else []
     errors = [r for r in rows if not r.get("ranking")]
     rows = [r for r in rows if r.get("ranking")]
     if args.judges:
@@ -273,16 +295,20 @@ def main() -> int:
         errors = [r for r in errors if r["judge"] in keep]
         rows = [r for r in rows if r["judge"] in keep]
     outputs, sources = {}, {}
-    for d in (run_dir / "outputs").iterdir():
-        for f in d.glob("*.txt"):
-            outputs[(d.name, f.stem)] = lib.read_text(f)
+    out_root = run_dir / "outputs"
+    if out_root.is_dir():
+        for d in out_root.iterdir():
+            if not d.is_dir():
+                continue
+            for f in d.glob("*.txt"):
+                outputs[(d.name, f.stem)] = lib.read_text(f)
     all_ids = sorted({r["id"] for r in rows} if rows else {t for (_, t) in outputs if t in index})
     for tid in all_ids:
         sources[tid] = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (tid + ".txt"))
     groups = {
-        "ai": [t for t in all_ids if index[t]["kind"] in ("generated", "real")],
-        "trap": [t for t in all_ids if index[t]["kind"] == "trap"],
-        "human": [t for t in all_ids if index[t]["kind"] == "human"],
+        "ai": [t for t in all_ids if index.get(t, {}).get("kind") in ("generated", "real")],
+        "trap": [t for t in all_ids if index.get(t, {}).get("kind") == "trap"],
+        "human": [t for t in all_ids if index.get(t, {}).get("kind") == "human"],
     }
     # Coverage: every text of the run must have the same number of valid judge passes,
     # otherwise the thresholds are reported as unverified instead of passed.
@@ -290,8 +316,16 @@ def main() -> int:
     # Probes are hand-written checks of a candidate's new rules and are never judged (README, final4).
     expected = [t for t in (cfg.get("texts") or all_ids) if index.get(t, {}).get("kind") != "probe"]
     passes = Counter(r["id"] for r in rows)
-    full = max(passes.values()) if passes else 0
-    gaps = sorted(t for t in expected if passes.get(t, 0) < full)
+    if rows:
+        full = max(passes.values())
+        gaps = sorted(t for t in expected if passes.get(t, 0) < full)
+    elif errors:
+        # All judge calls failed: every expected text has a coverage gap.
+        full = 1
+        gaps = sorted(expected)
+    else:
+        full = 0
+        gaps = []
     result = {"run": args.run, "judge_errors": len(errors), "groups": {}, "coverage_gaps": gaps}
     md = ["# Итоги сравнения: %s" % args.run, ""]
     if gaps:
@@ -360,7 +394,8 @@ def main() -> int:
         errs = {s: len(v["texts_with_fact_errors"]) for s, v in ai["table"].items()}
         others = [s for s in ai["table"] if s not in (args.ours, args.prev)]
         competitors = [s for s in others if s not in (args.baseline, "old_v3")]
-        best = max(competitors, key=lambda s: -ai["table"][s]["mean_position"]) if competitors else None
+        ranked_comp = [s for s in competitors if ai["table"][s]["mean_position"] is not None]
+        best = min(ranked_comp, key=lambda s: ai["table"][s]["mean_position"]) if ranked_comp else None
         careful = min(others, key=lambda s: errs[s]) if others else None
         n_err = errs[args.ours]
         # Rule set 2 (fixed on 15.10.2026 before the holdout2 texts existed): one error text
@@ -391,8 +426,11 @@ def main() -> int:
                            "%s, %d" % (text, n_err)))
         if tr and args.ours in tr["table"]:
             tt = tr["table"][args.ours]
+            n_traps = len(tr["ids"])
+            need_traps = n_traps if n_traps < 6 else (n_traps * 5 + 5) // 6
             ok_traps = sum(1 for tid in tr["ids"] if tid not in tt["texts_with_fact_errors"])
-            checks.append(("Ловушки: без ошибок смысла хотя бы 5 из 6", ok_traps >= 5, "%d из %d" % (ok_traps, len(tr["ids"]))))
+            checks.append(("Ловушки: без ошибок смысла хотя бы %d из %d" % (need_traps, n_traps),
+                           ok_traps >= need_traps, "%d из %d" % (ok_traps, n_traps)))
         else:
             # A run without traps must not look as if the trap threshold had passed.
             checks.append(("Ловушки: без ошибок смысла хотя бы 5 из 6", None, "ловушек в прогоне нет"))
@@ -409,7 +447,20 @@ def main() -> int:
             md.append("| %s | %s | %s |" % (name, "не проверено" if gaps else ("выполнено" if ok else "не выполнено"), val))
         md.append("")
         result["release_gates"] = [{"name": n, "ok": (None if gaps else ok), "value": v} for n, ok, v in gates]
-    md.append("Расходы на API за все прогоны: $%.2f." % lib.ledger().data["total"])
+    run_cost = sum(float(r.get("cost") or 0.0) for r in rows + errors)
+    runs_log = run_dir / "runs.jsonl"
+    if runs_log.exists():
+        for ln in runs_log.read_text(encoding="utf-8-sig").splitlines():
+            if ln.strip():
+                try:
+                    run_cost += float(json.loads(ln).get("cost") or 0.0)
+                except ValueError:
+                    pass
+    total_spend = lib.ledger().data["total"]
+    if run_cost == 0.0:
+        md.append("Расходы на API в этом прогоне: $0.00 (накопительно по всем прогонам: $%.2f)." % total_spend)
+    else:
+        md.append("Расходы на API в этом прогоне: $%.2f (накопительно по всем прогонам: $%.2f)." % (run_cost, total_spend))
     lib.write_text(run_dir / (args.out + ".md"), "\n".join(md) + "\n")
     lib.write_json(run_dir / (args.out + ".json"), result)
     print("\n".join(md))

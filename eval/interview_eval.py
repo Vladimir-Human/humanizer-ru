@@ -7,11 +7,12 @@
 # SCOPE: `run` writes eval/results/<run>/interview/<system>/<id>.json (three turns); `score` writes
 #        interview.md and interview.json there. Free DSH routes only.
 # DEPENDS: evallib, run_systems (load_system, inline_system), skills/humanizer-ru/scripts/check_facts.py.
-# LINKS: M-EVAL-INTERVIEW; R-INTERVIEW; V-M-EVAL-INTERVIEW.
+# LINKS: M-EVAL-INTERVIEW; R-INTERVIEW; V-M-EVAL-NEW-MEASURES; V-M-EVAL-INTERVIEW-ASK.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
-# questions: question lines of an answer (after its last '---', else the whole answer): a «?» or a line
+# questions: question lines of an answer's notes (after its last '---'): a «?» or a line
 #            that opens with a request to the author («Уточните …», «Назовите …»).
+# merge_config: interview/config.json keeps who answered for each system across runs.
 # run: turn 1 (edit + questions), turn 2 (author answers from the sheet), turn 3 (rewrite).
 # score: asked (turn 1 has a question to the author), invented (a number, date or name in turn 1
 #        or turn 3 that is in neither the text nor the author's answers), per system.
@@ -41,9 +42,9 @@ sys.modules["check_facts"] = check_facts
 _spec.loader.exec_module(check_facts)
 
 
-def _split(answer: str) -> tuple:
+def _split(answer: str, source: str = "") -> tuple:
     """(edited text, notes): notes are what follows the last line '---' (evallib.split_notes)."""
-    return lib.split_notes(answer)
+    return lib.split_notes(answer, source)
 
 
 # A question put as a request (m5 ours/iv08: «Уточните квартиру: сколько комнат, этаж…»). Only at the
@@ -52,9 +53,39 @@ ASK_RX = re.compile(r"^[\s\-*•\d.)]*(?:\*\*)?(?:уточните|назови�
                     r"опишите|укажите|пришлите|ответьте)(?![а-яё])", re.I)
 
 
-def questions(answer: str) -> list:
-    body, notes = _split(answer)
-    return [ln.strip() for ln in (notes or body).split("\n") if "?" in ln or ASK_RX.match(ln)]
+def _notes_tail(answer: str, source: str = "") -> str:
+    """Return notes from split_notes, or a short non-source tail after '---' opening with ASK_RX."""
+    _, notes = _split(answer, source)
+    if notes:
+        return notes
+    norm = (answer or "").replace("\r\n", "\n")
+    lines = norm.rstrip().split("\n")
+    rules = [i for i, ln in enumerate(lines) if ln.strip() == "---"]
+    if not rules:
+        return ""
+    tail = "\n".join(lines[rules[-1] + 1:]).strip()
+    if not tail or len(tail) > lib.NOTE_MAX_CHARS:
+        return ""
+    bare = lib.NOTE_QUOTE_RX.sub(" ", tail)
+    stems = lib._stems(bare)
+    if stems and len(stems & lib._stems(source)) / len(stems) >= 0.5:
+        return ""
+    return tail if any(ASK_RX.match(ln) for ln in tail.split("\n")) else ""
+
+
+def questions(answer: str, source: str = "") -> list:
+    notes = _notes_tail(answer, source)
+    if not notes:
+        return []
+    return [ln.strip() for ln in notes.split("\n") if "?" in ln or ASK_RX.match(ln)]
+
+
+def merge_config(cfg: dict, systems: list, executor: str, author: str) -> dict:
+    """{"by_system": {name: {executor, author}}}; preserves earlier systems across runs."""
+    per = dict(cfg.get("by_system") or {s: {"executor": cfg.get("executor"), "author": cfg.get("author")}
+                                        for s in cfg.get("systems", [])})
+    per.update({s: {"executor": executor, "author": author} for s in systems})
+    return {"by_system": per}
 
 
 def run(run_name: str, systems: list, executor: str, author: str, workers: int) -> int:
@@ -72,7 +103,7 @@ def run(run_name: str, systems: list, executor: str, author: str, workers: int) 
                 jobs.append((path, system, c, None))
             else:  # a saved first turn that asks in a way the old count missed: finish turns 2 and 3
                 rec = lib.read_json(path)
-                if not rec["turn3"] and questions(rec["turn1"]):
+                if not rec["turn3"] and questions(rec["turn1"], c["text"]):
                     jobs.append((path, system, c, rec))
 
     def one(job):
@@ -85,7 +116,7 @@ def run(run_name: str, systems: list, executor: str, author: str, workers: int) 
                 raise RuntimeError("empty turn 1")
             rec = {"id": c["id"], "turn1": turn1, "questions": [], "answers": "", "turn3": ""}
         turn1 = rec["turn1"]
-        rec["questions"] = questions(turn1)
+        rec["questions"] = questions(turn1, c["text"])
         if rec["questions"]:
             m2, _ = lib.chat(author, [{"role": "user", "content": AUTHOR.format(
                 sheet="\n".join("- " + s for s in c["sheet"]), text=c["text"], answer=turn1)}], max_tokens=3000, tag="interview")
@@ -102,10 +133,14 @@ def run(run_name: str, systems: list, executor: str, author: str, workers: int) 
         for fut in as_completed(futures):
             try:
                 fut.result()
+            except lib.BudgetExceeded:
+                raise
             except Exception as exc:
                 failed += 1
                 print("[M-EVAL-INTERVIEW][run] failed %s: %s" % (futures[fut], str(exc)[:200]))
-    lib.write_json(out_dir / "config.json", {"executor": executor, "author": author, "systems": systems})
+    cfg_path = out_dir / "config.json"
+    lib.write_json(cfg_path, merge_config(lib.read_json(cfg_path) if cfg_path.exists() else {},
+                                          systems, executor, author))
     print("[M-EVAL-INTERVIEW][run] jobs=%d failed=%d" % (len(jobs), failed))
     return 1 if failed else 0
 
@@ -118,6 +153,9 @@ def _added(source: str, text: str) -> list:
 
 def score(run_name: str) -> int:
     out_dir = lib.EVAL_DIR / "results" / run_name / "interview"
+    if not out_dir.is_dir():
+        print("Нет папки интервью: %s" % out_dir, file=sys.stderr)
+        return 1
     cases = {c["id"]: c for c in lib.read_json(CASES)}
     table, details = {}, {}
     for sdir in sorted(d for d in out_dir.iterdir() if d.is_dir()):
@@ -126,12 +164,14 @@ def score(run_name: str) -> int:
         for f in sorted(sdir.glob("*.json")):
             rec = lib.read_json(f)
             c = cases[rec["id"]]
-            body1, _ = _split(rec["turn1"])
+            body1, _ = _split(rec["turn1"], c["text"])
             add1 = _added(c["text"], body1)
-            add3 = _added(c["text"] + "\n\n" + rec["answers"], _split(rec["turn3"])[0]) if rec["turn3"] else []
-            asked += bool(questions(rec["turn1"]))
+            turn3_src = c["text"] + "\n\n" + rec["answers"]
+            add3 = _added(turn3_src, _split(rec["turn3"], turn3_src)[0]) if rec["turn3"] else []
+            qs = questions(rec["turn1"], c["text"])
+            asked += bool(qs)
             invented += bool(add1 or add3)
-            rows.append({"id": rec["id"], "questions": len(questions(rec["turn1"])), "added_turn1": add1,
+            rows.append({"id": rec["id"], "questions": len(qs), "added_turn1": add1,
                          "added_turn3": add3})
         table[sdir.name] = {"cases": len(rows), "asked": asked, "invented": invented}
         details[sdir.name] = rows

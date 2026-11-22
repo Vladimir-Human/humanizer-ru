@@ -10,6 +10,7 @@ import itertools
 import random
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -438,9 +439,8 @@ class CheckFactsTest(unittest.TestCase):
         # 4.2.0: on Windows sys.stdin decodes with the console code page (cp1251); two identical
         # UTF-8 texts with the source piped in gave four false errors. cp1251 imitates that console.
         import os
-        tmp = ROOT / "tests" / "_tmp_cf"
-        tmp.mkdir(exist_ok=True)
-        try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
             text = "Анна получила 30 000 рублей 12 марта по словам бухгалтера."
             (tmp / "same.txt").write_text(text, encoding="utf-8")
             env = dict(os.environ, PYTHONIOENCODING="cp1251")
@@ -448,14 +448,10 @@ class CheckFactsTest(unittest.TestCase):
             res = subprocess.run([sys.executable, str(SCRIPTS / "check_facts.py"), "-", str(tmp / "same.txt")],
                                  input=text.encode("utf-8"), capture_output=True, env=env)
             self.assertEqual(res.returncode, 0, res.stdout.decode("cp1251", "replace"))
-        finally:
-            for p in tmp.glob("*"):
-                p.unlink()
 
     def test_cli_exit_codes(self):
-        tmp = ROOT / "tests" / "_tmp_cf"
-        tmp.mkdir(exist_ok=True)
-        try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
             (tmp / "a.txt").write_text("Цена 240 рублей.", encoding="utf-8")
             (tmp / "b.txt").write_text("Цена 260 рублей.", encoding="utf-8")
             run = lambda x, y: subprocess.run([sys.executable, str(SCRIPTS / "check_facts.py"), str(x), str(y)],
@@ -466,10 +462,6 @@ class CheckFactsTest(unittest.TestCase):
             (tmp / "q1.txt").write_text("Сообщение: «готов к запуску».", encoding="utf-8")
             (tmp / "q2.txt").write_text("Сообщение: «уже запущен».", encoding="utf-8")
             self.assertEqual(run(tmp / "q1.txt", tmp / "q2.txt"), 1)
-        finally:
-            for p in tmp.glob("*"):
-                p.unlink()
-            tmp.rmdir()
 
 
     def test_list_markers_are_structure_not_facts(self):
@@ -1261,17 +1253,11 @@ class CleanPasteTest(unittest.TestCase):
         self.assertEqual(cp.clean(code), (code, {}))
 
     def test_in_place_keeps_windows_line_endings(self):
-        tmp = ROOT / "tests" / "_tmp_cp"
-        tmp.mkdir(exist_ok=True)
-        try:
-            f = tmp / "a.txt"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            f = Path(tmp_dir) / "a.txt"
             f.write_bytes("Текст\u200b\r\nВторая\r\n".encode("utf-8"))
             subprocess.run([sys.executable, str(SCRIPTS / "clean_paste.py"), str(f), "--in-place"], capture_output=True)
             self.assertEqual(f.read_bytes(), "Текст\r\nВторая\r\n".encode("utf-8"))
-        finally:
-            for p in tmp.glob("*"):
-                p.unlink()
-            tmp.rmdir()
 
     def test_content_reference(self):
         text, counts = cp.clean("Рост заявок :contentReference[oaicite:3]{index=3}. Дальше.")

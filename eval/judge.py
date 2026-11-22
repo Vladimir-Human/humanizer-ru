@@ -5,12 +5,12 @@
 #          than the executor. Candidates are shuffled per (text, judge, round) and labelled A, B, ...
 #          The judge also lists fact errors, AI traces and language errors per candidate.
 # SCOPE: reads eval/results/<run>/outputs; appends eval/results/<run>/judgments.jsonl; resumable.
-# DEPENDS: evallib (chat, ledger).
-# LINKS: M-EVAL-JUDGE; DF-EVAL.
+# DEPENDS: evallib (chat, ledger, split_notes).
+# LINKS: M-EVAL-JUDGE; DF-EVAL; R-NOTES-NOT-TEXT.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # PROMPT: judge instructions (Russian), answer format JSON.
-# build: shuffled candidate block and the label->system key.
+# build: shuffled candidate block (post-'---' editor notes stripped via split_notes) and label->system key.
 # parse: tolerant JSON extraction from the judge answer.
 # to_row: answer -> judgments row (labels mapped back); also used for subagent judges.
 # main: CLI --run --judges (model=N for N passes; "dsh:" models via the free DSH routes) --rounds --texts.
@@ -48,31 +48,77 @@ PROMPT = """Пользователь попросил «очеловечить»
 {candidates}"""
 
 
-def build(tid: str, outputs: dict, judge: str, rnd: int):
+def build(tid: str, outputs: dict, judge: str, rnd: int, source: str = ""):
     names = sorted(outputs)
     rng = random.Random("%s|%s|%d" % (tid, judge, rnd))
     rng.shuffle(names)
     labels = string.ascii_uppercase[:len(names)]
     key = dict(zip(labels, names))
-    block = "\n\n".join('<вариант id="%s">\n%s\n</вариант>' % (lab, outputs[name].strip()) for lab, name in key.items())
+    # R-NOTES-NOT-TEXT: strip legitimate post-'---' editor notes / 'Сверка скриптом:' before blind judging,
+    # keeping source '---' sections (via source) and leaving body-leaked lines without '---' intact.
+    block = "\n\n".join(
+        '<вариант id="%s">\n%s\n</вариант>' % (lab, lib.split_notes(outputs[name], source)[0].strip())
+        for lab, name in key.items()
+    )
     return block, key
 
 
-def parse(text: str):
-    m = re.search(r"\{.*\}", text or "", re.S)
-    if not m:
-        return None
-    raw = m.group()
+def _try_repair(raw: str):
     # Kimi K3 sometimes closes a candidate before its score: {"A": {"language_errors": []}, "send_as_is": 8}.
     moved = re.sub(r"\]\s*\}\s*,\s*(\"send_as_is\")", r"], \1", raw)
     # Depending on how the answer ends, "candidates" is then either closed or still open.
     closed = re.sub(r"\}\s*,\s*(\"ranking\")", r"}}, \1", moved, count=1) if moved != raw else raw
     for attempt in (raw, re.sub(r",\s*([}\]])", r"\1", raw), moved, closed):
         try:
-            return json.loads(attempt)
+            obj = json.loads(attempt)
+            if isinstance(obj, dict):
+                return obj
         except json.JSONDecodeError:
             continue
     return None
+
+
+def parse(text: str):
+    src = text or ""
+    # 1. Try JSONDecoder.raw_decode at every '{' so multiple brace blocks never merge greedily.
+    dec = json.JSONDecoder()
+    first_dict = None
+    pos = 0
+    while True:
+        idx = src.find("{", pos)
+        if idx < 0:
+            break
+        try:
+            obj, end = dec.raw_decode(src, idx)
+        except json.JSONDecodeError:
+            pos = idx + 1
+            continue
+        if isinstance(obj, dict):
+            if "ranking" in obj:
+                return obj
+            if first_dict is None:
+                first_dict = obj
+        pos = end
+    # 2. Check fenced ```json blocks and per-brace spans with trailing-comma / Kimi brace repairs.
+    candidates = [m.group(1) for m in re.finditer(r"```(?:json)?\s*(\{.*?\})\s*```", src, re.S | re.I)]
+    starts = [m.start() for m in re.finditer(r"\{", src)]
+    ends = [m.end() for m in re.finditer(r"\}", src)]
+    if starts and ends:
+        for s in starts:
+            for e in reversed(ends):
+                if e > s:
+                    chunk = src[s:e]
+                    if '"ranking"' in chunk:
+                        candidates.append(chunk)
+                        break
+    for raw in candidates:
+        obj = _try_repair(raw)
+        if obj is not None:
+            if "ranking" in obj:
+                return obj
+            if first_dict is None:
+                first_dict = obj
+    return first_dict
 
 
 def to_row(tid: str, judge: str, rnd: int, key: dict, content) -> dict:
@@ -117,7 +163,9 @@ def main() -> int:
     log = run_dir / args.out
     done = set()
     if log.exists():
-        for line in log.read_text(encoding="utf-8").splitlines():
+        for line in log.read_text(encoding="utf-8-sig").splitlines():
+            if not line.strip():
+                continue
             row = json.loads(line)
             if row.get("ranking"):
                 # The candidate set is part of the identity: a pass with other systems is not reused.
@@ -138,7 +186,7 @@ def main() -> int:
 
     def work(job):
         tid, judge, rnd, source, outputs = job
-        block, key = build(tid, outputs, judge, rnd)
+        block, key = build(tid, outputs, judge, rnd, source=source)
         prompt = PROMPT.format(n=len(key), source=source.strip(), candidates=block)
         row = {"id": tid, "judge": judge, "round": rnd, "key": key}
         try:

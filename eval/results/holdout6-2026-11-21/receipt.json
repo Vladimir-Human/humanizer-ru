@@ -1,0 +1,230 @@
+{
+  "h6_01": {
+    "line": "Сверка скриптом: в исходнике 7 чисел, 2 даты, 7 имён и названий, 2 телефона, 2 цитаты; в правке нет: 1250.",
+    "in_body": false,
+    "expected": "Сверка скриптом: в исходнике 7 чисел, 2 даты, 7 имён и названий, 2 телефона, 2 цитаты; в правке нет: 1250.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 7,
+      "date": 2,
+      "name": 7,
+      "phone": 2,
+      "quote": 2
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": [
+      "1250"
+    ]
+  },
+  "h6_02": {
+    "line": "Сверка скриптом: 7 чисел, 33 имени и названия, 7 цитат, 2 отрицания на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 7 чисел, 33 имени и названия, 7 цитат, 2 отрицания на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 7,
+      "name": 33,
+      "quote": 7,
+      "negation": 2
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_03": {
+    "line": "Сверка скриптом: 9 чисел, 2 даты, 4 имени и названия, 1 ссылка, 3 отрицания на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 9 чисел, 2 даты, 4 имени и названия, 1 ссылка, 3 отрицания на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 9,
+      "date": 2,
+      "name": 4,
+      "url": 1,
+      "negation": 3
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_04": {
+    "line": "Сверка скриптом: 10 чисел, 2 имени и названия, 3 цитаты, 6 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1500, 6.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 10 чисел, 2 имени и названия, 3 цитаты, 6 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1500, 6.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 10,
+      "name": 2,
+      "quote": 3,
+      "negation": 6
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_05": {
+    "line": "Сверка скриптом: 8 чисел, 4 имени и названия, 1 отрицание на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 8 чисел, 4 имени и названия, 1 отрицание на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 8,
+      "name": 4,
+      "negation": 1
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_06": {
+    "line": "Сверка скриптом: 6 чисел, 5 имён и названий, 1 ссылка, 3 цитаты, 4 отрицания на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 5 имён и названий, 1 ссылка, 3 цитаты, 4 отрицания на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 6,
+      "name": 5,
+      "url": 1,
+      "quote": 3,
+      "negation": 4
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_07": {
+    "line": "Сверка скриптом: 11 чисел, 3 даты, 2 имени и названия, 5 цитат, 5 отрицаний на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 11 чисел, 3 даты, 2 имени и названия, 5 цитат, 5 отрицаний на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 11,
+      "date": 3,
+      "name": 2,
+      "quote": 5,
+      "negation": 5
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_08": {
+    "line": "Сверка скриптом: 3 числа, 2 даты, 3 имени и названия, 3 цитаты, 8 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1180.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 3 числа, 2 даты, 3 имени и названия, 3 цитаты, 8 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1180.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 3,
+      "date": 2,
+      "name": 3,
+      "quote": 3,
+      "negation": 8
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_09": {
+    "line": "Сверка скриптом: 5 чисел, 8 имён и названий, 3 цитаты на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 5 чисел, 8 имён и названий, 3 цитаты на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 5,
+      "name": 8,
+      "quote": 3
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_10": {
+    "line": "Сверка скриптом: 24 числа, 1 имя или название, 3 цитаты, 10 отрицаний на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 24 числа, 1 имя или название, 3 цитаты, 10 отрицаний на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 24,
+      "name": 1,
+      "quote": 3,
+      "negation": 10
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_11": {
+    "line": "Сверка скриптом: 8 чисел, 4 имени и названия, 2 цитаты, 1 отрицание на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 8 чисел, 4 имени и названия, 2 цитаты, 1 отрицание на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 8,
+      "name": 4,
+      "quote": 2,
+      "negation": 1
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_12": {
+    "line": "Сверка скриптом: 6 чисел, 2 даты, 9 имён и названий, 1 цитата, 2 отрицания на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 2 даты, 9 имён и названий, 1 цитата, 2 отрицания на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 6,
+      "date": 2,
+      "name": 9,
+      "quote": 1,
+      "negation": 2
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_13": {
+    "line": "Сверка скриптом: 3 числа, 8 имён и названий, 4 отрицания на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 3 числа, 8 имён и названий, 4 отрицания на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 3,
+      "name": 8,
+      "negation": 4
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h6_14": {
+    "line": "Сверка скриптом: 15 чисел, 30 имён и названий, 5 цитат на месте.",
+    "in_body": false,
+    "expected": "Сверка скриптом: 15 чисел, 30 имён и названий, 5 цитат на месте.",
+    "same_line": true,
+    "facts_ok": true,
+    "stated": {
+      "number": 15,
+      "name": 30,
+      "quote": 5
+    },
+    "counts_match": true,
+    "wrong_counts": {},
+    "script_errors": []
+  }
+}

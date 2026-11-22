@@ -32,10 +32,24 @@
         "заглушк|плейсхолдер|текст|абзац|заголов|сня[лв]|штамп|канцел|изменен|изменил)", "iu");
     const WORD_RX = /[A-Za-zА-Яа-яЁё]{4,}/gu;
     // Python str.strip() whitespace (engine.js): unlike trim() it keeps U+FEFF.
-    const PY_SPACE = "\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
-    const STRIP_RX = new RegExp("^[" + PY_SPACE + "]+|[" + PY_SPACE + "]+$", "gu");
-    const RSTRIP_RX = new RegExp("[" + PY_SPACE + "]+$", "u");
-    const strip = text => text.replace(STRIP_RX, "");
+    // Two-pointer scan avoids O(N^2) backtracking on long whitespace runs.
+    const PY_SPACE_SET = new Set([
+        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x85, 0xa0, 0x1680,
+        0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200a,
+        0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+    ]);
+    function strip(text) {
+        let a = 0;
+        let b = text.length;
+        while (a < b && PY_SPACE_SET.has(text.charCodeAt(a))) a += 1;
+        while (b > a && PY_SPACE_SET.has(text.charCodeAt(b - 1))) b -= 1;
+        return a === 0 && b === text.length ? text : text.slice(a, b);
+    }
+    function rstrip(text) {
+        let b = text.length;
+        while (b > 0 && PY_SPACE_SET.has(text.charCodeAt(b - 1))) b -= 1;
+        return b === text.length ? text : text.slice(0, b);
+    }
 
     function stems(text) {
         const out = new Set();
@@ -46,10 +60,12 @@
     }
 
     function splitNotes(answer, source) {
-        const lines = answer.replace(RSTRIP_RX, "").split("\n");
+        const rawAnswer = String(answer ?? "").replace(/\r\n/g, "\n");
+        const rawSource = String(source ?? "");
+        const lines = rstrip(rawAnswer).split("\n");
         let last = -1;
         lines.forEach((line, i) => { if (strip(line) === "---") last = i; });
-        if (last < 0) return [strip(answer), ""];
+        if (last < 0) return [strip(rawAnswer), ""];
         const text = strip(lines.slice(0, last).join("\n"));
         const notes = strip(lines.slice(last + 1).join("\n"));
         // Python len() counts code points: an emoji is one character, not two.
@@ -57,13 +73,13 @@
             const bare = notes.replace(QUOTE_RX, " ");
             if (EDIT_RX.test(bare)) {
                 const own = stems(bare);
-                const src = stems(source || "");
+                const src = stems(rawSource);
                 let shared = 0;
                 for (const s of own) if (src.has(s)) shared += 1;
                 if (own.size === 0 || shared / own.size < 0.5) return [text, notes];
             }
         }
-        return [strip(answer), ""];
+        return [strip(rawAnswer), ""];
     }
     // END_BLOCK_SPLIT_NOTES
 

@@ -1,0 +1,708 @@
+{
+  "run": "holdout8-2026-11-21",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "h8_01",
+        "h8_02",
+        "h8_03",
+        "h8_04",
+        "h8_05",
+        "h8_06",
+        "h8_07",
+        "h8_08",
+        "h8_09",
+        "h8_10",
+        "h8_11",
+        "h8_12",
+        "h8_13",
+        "h8_14",
+        "h8_15",
+        "h8_16"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 4.0,
+          "first_places": 0,
+          "passes": 128,
+          "send_as_is": 3.08,
+          "texts_with_fact_errors": [
+            "h8_07",
+            "h8_15"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h8_01",
+            "h8_02",
+            "h8_03",
+            "h8_04",
+            "h8_05",
+            "h8_06",
+            "h8_07",
+            "h8_08",
+            "h8_09",
+            "h8_10",
+            "h8_11",
+            "h8_12",
+            "h8_13",
+            "h8_14",
+            "h8_15",
+            "h8_16"
+          ],
+          "script_errors": {
+            "h8_03": [
+              {
+                "kind": "added",
+                "what": "дата",
+                "detail": "13 и 20 декабря"
+              }
+            ],
+            "h8_04": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "пять"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "три"
+              }
+            ],
+            "h8_06": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«25 ноября: сбой SMS-уведомлений — заказы доставлены в срок, срок хранения продлён»"
+              }
+            ],
+            "h8_07": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "1"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "3"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "4"
+              }
+            ],
+            "h8_09": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«без обязательств» в правке стоит без отрицания"
+              }
+            ],
+            "h8_10": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«в плане стоимости заимствования»"
+              }
+            ],
+            "h8_11": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "2"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "три"
+              }
+            ],
+            "h8_12": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "шести"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКР"
+              }
+            ],
+            "h8_14": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "четыре"
+              }
+            ],
+            "h8_15": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Google"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Play"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "App"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Store"
+              }
+            ],
+            "h8_16": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "двенадцать"
+              }
+            ]
+          },
+          "similarity": 0.583,
+          "text_similarity": 0.583
+        },
+        "ours": {
+          "mean_position": 2.28,
+          "first_places": 20,
+          "passes": 128,
+          "send_as_is": 7.89,
+          "texts_with_fact_errors": [
+            "h8_05"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h8_05"
+          ],
+          "script_errors": {
+            "h8_03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2026"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "20 декабря"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "понедельник"
+              }
+            ],
+            "h8_06": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«25 ноября: сбой SMS-уведомлений — заказы доставлены в срок, срок хранения продлён»"
+              }
+            ],
+            "h8_07": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "МЧС"
+              }
+            ],
+            "h8_10": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«в плане стоимости заимствования»"
+              }
+            ],
+            "h8_12": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКР"
+              }
+            ]
+          },
+          "similarity": 0.625,
+          "text_similarity": 0.726
+        },
+        "ours430": {
+          "mean_position": 1.69,
+          "first_places": 56,
+          "passes": 128,
+          "send_as_is": 8.52,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h8_03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2026"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "20 декабря"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "понедельник"
+              }
+            ],
+            "h8_06": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«25 ноября: сбой SMS-уведомлений — заказы доставлены в срок, срок хранения продлён»"
+              }
+            ],
+            "h8_07": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "МЧС"
+              }
+            ],
+            "h8_10": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«в плане стоимости заимствования»"
+              }
+            ],
+            "h8_12": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКР"
+              }
+            ]
+          },
+          "similarity": 0.502,
+          "text_similarity": 0.64
+        },
+        "prompt": {
+          "mean_position": 2.03,
+          "first_places": 52,
+          "passes": 128,
+          "send_as_is": 8.02,
+          "texts_with_fact_errors": [
+            "h8_04"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h8_04",
+            "h8_07",
+            "h8_08"
+          ],
+          "script_errors": {
+            "h8_03": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "2026"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "20 декабря"
+              },
+              {
+                "kind": "lost",
+                "what": "дата",
+                "detail": "понедельник"
+              }
+            ],
+            "h8_05": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Требования"
+              }
+            ],
+            "h8_06": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«25 ноября: сбой SMS-уведомлений — заказы доставлены в срок, срок хранения продлён»"
+              }
+            ],
+            "h8_10": [
+              {
+                "kind": "lost",
+                "what": "цитата",
+                "detail": "«в плане стоимости заимствования»"
+              }
+            ],
+            "h8_12": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "ВКР"
+              }
+            ]
+          },
+          "similarity": 0.584,
+          "text_similarity": 0.578
+        }
+      },
+      "pairwise": {
+        "prompt>ours430": 0.422,
+        "ours430>prompt": 0.578,
+        "prompt>ours": 0.547,
+        "ours>prompt": 0.453,
+        "prompt>ilyautov": 1.0,
+        "ilyautov>prompt": 0.0,
+        "ours430>ours": 0.734,
+        "ours>ours430": 0.266,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0
+      },
+      "fact_notes": {
+        "ilyautov|h8_01": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_02": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_03": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_04": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ours|h8_05": [
+          "gemini-4-hydrogen: «свободное владение» усиливает «уверенный»",
+          "gemini-4-hydrogen: «свободное владение» усиливает «уверенный»",
+          "gemini-4-argon: «Уверенный gRPC» усилено до «Свободное владение gRPC»",
+          "gemini-4-argon: «Уверенный gRPC» усилено до «Свободное владение gRPC»",
+          "gemini-4-carbon: «свободное владение» вместо «уверенный» для middle",
+          "gemini-4-carbon: «свободное владение» вместо «уверенный» для middle"
+        ],
+        "ilyautov|h8_05": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_06": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "prompt|h8_07": [
+          "gemini-4-hydrogen: «тянется к конфорке» додумано вместо битого слова; «в комнате» вместо «в помещении»",
+          "gemini-4-hydrogen: «тянется к конфорке» додумано вместо битого слова; «в комнате» вместо «в помещении»",
+          "gemini-4-neon: додуманное «тянется к конфорке» вместо битого слова",
+          "gemini-4-neon: додуманное «тянется к конфорке» вместо битого слова"
+        ],
+        "ilyautov|h8_07": [
+          "gemini-4-hydrogen: удалены симптомы и детали шагов из оригинала; служебная заметка scan.py и список правок",
+          "gemini-4-hydrogen: удалены симптомы и детали шагов из оригинала; служебная заметка scan.py и список правок",
+          "gemini-4-argon: Удалены «ожоги дыхательных путей» и «зеленоватый оттенок кожи»",
+          "gemini-4-argon: Удалены «ожоги дыхательных путей» и «зеленоватый оттенок кожи»",
+          "gemini-4-neon: удалены «ожоги дыхательных путей» и «зеленоватый оттенок» из исходника; убрано «к окну» в шаге 4",
+          "gemini-4-neon: удалены «ожоги дыхательных путей» и «зеленоватый оттенок» из исходника; убрано «к окну» в шаге 4",
+          "gemini-4-carbon: удалены «ожоги дыхательных путей» и оттенок кожи",
+          "gemini-4-carbon: удалены «ожоги дыхательных путей» и оттенок кожи"
+        ],
+        "ilyautov|h8_08": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "prompt|h8_08": [
+          "gemini-4-hydrogen: изменены слова внутри прямой речи; добавлено «новых» к рабочим местам",
+          "gemini-4-hydrogen: изменены слова внутри прямой речи; добавлено «новых» к рабочим местам",
+          "gemini-4-neon: изменена формулировка внутри прямой цитаты",
+          "gemini-4-neon: изменена формулировка внутри прямой цитаты"
+        ],
+        "ilyautov|h8_09": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_10": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_11": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_12": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_13": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-argon: Во втором предложении п. 2 опущено условие «на основании чеков» (осталось только в перечне документов к заявке)",
+          "gemini-4-argon: Во втором предложении п. 2 опущено условие «на основании чеков» (осталось только в перечне документов к заявке)"
+        ],
+        "ilyautov|h8_14": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "ilyautov|h8_15": [
+          "gemini-4-hydrogen: потерян последний абзац про магазины и поддержку",
+          "gemini-4-hydrogen: потерян последний абзац про магазины и поддержку",
+          "gemini-4-argon: Удалён заключительный абзац про установку из Google Play и App Store, автообновление и обращение в поддержку",
+          "gemini-4-argon: Удалён заключительный абзац про установку из Google Play и App Store, автообновление и обращение в поддержку",
+          "gemini-4-neon: удалён последний блок про Google Play, App Store, автоустановку и поддержку",
+          "gemini-4-neon: удалён последний блок про Google Play, App Store, автоустановку и поддержку",
+          "gemini-4-carbon: потерян абзац про Google Play, App Store и автообновление",
+          "gemini-4-carbon: потерян абзац про Google Play, App Store и автообновление"
+        ],
+        "ilyautov|h8_16": [
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py",
+          "gemini-4-hydrogen: лишняя служебная заметка scan.py"
+        ],
+        "prompt|h8_04": [
+          "gemini-4-argon: Точная медианная задержка 95 мс превращена в «доходила до 95 мс»",
+          "gemini-4-argon: Точная медианная задержка 95 мс превращена в «доходила до 95 мс»",
+          "gemini-4-neon: «доходила до 95 мс» искажает медиану",
+          "gemini-4-neon: «доходила до 95 мс» искажает медиану",
+          "gemini-4-carbon: «доходила до 95 мс» вместо медианы 95 мс",
+          "gemini-4-carbon: «доходила до 95 мс» вместо медианы 95 мс"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.15625,
+          0.390625
+        ],
+        "ours>prompt": [
+          0.28125,
+          0.609375
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 16,
+          "losses": 0,
+          "ties": 0,
+          "texts": 16,
+          "p": 0.0
+        },
+        "ours>ours430": {
+          "wins": 0,
+          "losses": 5,
+          "ties": 11,
+          "texts": 16,
+          "p": 1.0
+        },
+        "ours>prompt": {
+          "wins": 2,
+          "losses": 4,
+          "ties": 10,
+          "texts": 16,
+          "p": 0.8906
+        }
+      }
+    },
+    "trap": {
+      "ids": [
+        "h8_17",
+        "h8_18"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 3.5,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 3.88,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h8_17",
+            "h8_18"
+          ],
+          "script_errors": {
+            "h8_18": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "1835"
+              }
+            ]
+          },
+          "similarity": 0.877,
+          "text_similarity": 0.877
+        },
+        "ours": {
+          "mean_position": 1.62,
+          "first_places": 6,
+          "passes": 16,
+          "send_as_is": 10.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.936,
+          "text_similarity": 1.0
+        },
+        "ours430": {
+          "mean_position": 1.38,
+          "first_places": 10,
+          "passes": 16,
+          "send_as_is": 10.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.899,
+          "text_similarity": 1.0
+        },
+        "prompt": {
+          "mean_position": 3.5,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 3.62,
+          "texts_with_fact_errors": [
+            "h8_17"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h8_17",
+            "h8_18"
+          ],
+          "script_errors": {
+            "h8_18": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "1835"
+              }
+            ]
+          },
+          "similarity": 0.635,
+          "text_similarity": 0.634
+        }
+      },
+      "pairwise": {
+        "ours430>ours": 0.625,
+        "ours>ours430": 0.375,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "ours430>prompt": 1.0,
+        "prompt>ours430": 0.0,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0,
+        "ours>prompt": 1.0,
+        "prompt>ours": 0.0,
+        "ilyautov>prompt": 0.5,
+        "prompt>ilyautov": 0.5
+      },
+      "fact_notes": {
+        "ilyautov|h8_17": [
+          "gemini-4-hydrogen: лишнее пояснение и заметка scan.py",
+          "gemini-4-hydrogen: лишнее пояснение и заметка scan.py"
+        ],
+        "prompt|h8_17": [
+          "gemini-4-hydrogen: переписаны точные формулировки норм ГК РФ; сужение смысла «относящиеся к делу» вместо «соответствующие»",
+          "gemini-4-hydrogen: переписаны точные формулировки норм ГК РФ; сужение смысла «относящиеся к делу» вместо «соответствующие»",
+          "gemini-4-argon: Пересказ статей ГК РФ своими словами искажает точные правовые формулировки закона",
+          "gemini-4-argon: Пересказ статей ГК РФ своими словами искажает точные правовые формулировки закона",
+          "gemini-4-neon: вольный пересказ текста закона под номерами статей ГК РФ; смягчение обязательности нормы («нужно выяснить» вместо «должна быть выяснена»)",
+          "gemini-4-neon: вольный пересказ текста закона под номерами статей ГК РФ; смягчение обязательности нормы («нужно выяснить» вместо «должна быть выяснена»)",
+          "gemini-4-carbon: переписаны точные правовые формулировки статей ГК РФ",
+          "gemini-4-carbon: переписаны точные правовые формулировки статей ГК РФ"
+        ],
+        "prompt|h8_18": [
+          "gemini-4-hydrogen: лишнее предисловие чат-бота перед текстом",
+          "gemini-4-hydrogen: лишнее предисловие чат-бота перед текстом"
+        ],
+        "ilyautov|h8_18": [
+          "gemini-4-hydrogen: лишнее пояснение и заметка scan.py",
+          "gemini-4-hydrogen: лишнее пояснение и заметка scan.py"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.125,
+          0.625
+        ],
+        "ours>prompt": [
+          1.0,
+          1.0
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        },
+        "ours>ours430": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 2,
+          "texts": 2,
+          "p": 1.0
+        },
+        "ours>prompt": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        }
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 1 на 16 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (prompt: 1)",
+      "ok": true,
+      "value": "1"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": false,
+      "value": "45% (95%: 28–61%, не отличить от 50%)"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov): не меньше 50%",
+      "ok": true,
+      "value": "100% (95%: 100–100%, выше 50%)"
+    },
+    {
+      "name": "Не хуже прошлой версии (ours430): не меньше 50% и ошибок смысла не больше (0)",
+      "ok": false,
+      "value": "27% (95%: 16–39%, ниже 50%), 1"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 2 из 2",
+      "ok": true,
+      "value": "2 из 2"
+    }
+  ],
+  "release_gates": [
+    {
+      "name": "2. ИИ-тексты: согласных побед над ours430 не меньше поражений, ошибок смысла не больше",
+      "ok": false,
+      "value": "0:5 (ничьих 11); ошибок 1 против 0"
+    },
+    {
+      "name": "3. Человеческие тексты: сходство не ниже, чем у ours430, минус 0,02; ошибок сверки не больше",
+      "ok": true,
+      "value": "сходство 0.936 против 0.899; ошибок сверки 0 против 0 (текстов 2)"
+    }
+  ]
+}

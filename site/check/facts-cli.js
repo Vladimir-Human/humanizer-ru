@@ -3,7 +3,7 @@
  * PURPOSE: Adapt the fact-check engine to JSON-array stdin and stdout.
  * SCOPE: node facts-cli.js < pairs.json; stdout contains only JSON.
  * DEPENDS: Node standard fs module; ./facts.js.
- * LINKS: M-FACTS-CLI; R-SITE-FACTS; V-M-SITE-FACTS (scripts/check_site_facts.py).
+ * LINKS: M-SITE-FACTS; R-SITE-FACTS; V-M-SITE-FACTS.
  * END_MODULE_CONTRACT
  * START_MODULE_MAP
  * Main block: Read text pairs, compare and render each, print one JSON array.

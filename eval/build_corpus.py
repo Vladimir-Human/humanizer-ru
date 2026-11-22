@@ -77,7 +77,7 @@ CHAT_PERSONA = ("You are a regular chat assistant like ChatGPT. Answer the user'
 
 
 def strip_header(text: str) -> str:
-    lines = text.lstrip("﻿").splitlines()
+    lines = text.lstrip("\ufeff").splitlines()
     for i, line in enumerate(lines[:12]):
         if re.match(r"^Ответ\b", line.strip()):
             return "\n".join(lines[i + 1:]).strip() + "\n"
@@ -100,7 +100,7 @@ def inject(text: str, kind: str) -> str:
             if token == " ":
                 count += 1
                 if count % 7 == 0:
-                    out.append("​")
+                    out.append("\u200b")
         return "".join(out)
     return text
 

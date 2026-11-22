@@ -3,7 +3,7 @@
  * PURPOSE: Adapt the RuSlop engine to JSON-array stdin and stdout.
  * SCOPE: node cli.js rules.json < texts.json; stdout contains only JSON.
  * DEPENDS: Node standard fs module; ./engine.js; rules path in argv[2].
- * LINKS: M-CLI; R-CLI.json; R-INPUTS.unchanged.
+ * LINKS: M-SITE-CHECK; R-LINT-STYLE.
  * END_MODULE_CONTRACT
  * START_MODULE_MAP
  * Main block: Read rules and texts, lint each string, print one JSON array.

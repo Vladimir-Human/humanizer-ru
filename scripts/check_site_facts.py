@@ -3,13 +3,15 @@
 # START_MODULE_CONTRACT
 # PURPOSE: The fact check of the checker page (site/check/facts.js) gives the same report as the
 #          skill's check_facts.py: the same compare() result and the same Russian text (R-SITE-FACTS).
+#          Holdout5 (h5_*, holdout5*) prose details are redacted from stdout by default (R-HOLDOUT).
 # SCOPE: pairs = every compare() call made by tests/test_scripts.py (the hand-made edge cases),
 #        probe texts against every saved probe answer, corpus texts against every saved eval
 #        answer; both engines run on all of them; mismatches are printed with the first difference.
 # DEPENDS: node on PATH; site/check/facts-cli.js; skills/humanizer-ru/scripts/check_facts.py.
-# LINKS: M-SITE-FACTS; V-M-SITE-FACTS.
+# LINKS: M-SITE-FACTS; V-M-SITE-FACTS; R-HOLDOUT.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
+# is_holdout5: detect holdout5 / h5_* labels so prose details are redacted (R-HOLDOUT).
 # test_pairs: run tests/test_scripts.py with check_facts.compare wrapped to record its inputs.
 # eval_pairs: (source, answer) of every saved answer whose source is known.
 # first_diff: the path and both values of the first place where two JSON values differ.
@@ -30,9 +32,19 @@ import sys
 import unittest
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+
 ROOT = Path(__file__).resolve().parents[1]
 EVAL = ROOT / "eval"
 CLI = ROOT / "site" / "check" / "facts-cli.js"
+
+
+def is_holdout5(label: str) -> bool:
+    norm = str(label).replace("\\", "/").lower()
+    return any(p.startswith("holdout5") or p.startswith("h5_") for p in norm.split("/"))
 
 
 def test_pairs() -> list:
@@ -89,7 +101,7 @@ def first_diff(a, b, path="$"):
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--every", type=int, default=1, help="only every N-th eval pair (test pairs always)")
     ap.add_argument("--show", type=int, default=5)
     args = ap.parse_args(argv)
@@ -118,10 +130,14 @@ def main(argv=None) -> int:
     if len(got) != len(want):
         bad.append((-1, ("$.length", len(want), len(got))))
     print("Пар: %d (из тестов %d). Расхождений: %d." % (len(pairs), sum(1 for p in pairs if p[0] == "test"), len(bad)))
-    for i, (path, w, g) in bad[:args.show]:
+    h5_bad = [(i, d) for i, d in bad if i >= 0 and is_holdout5(pairs[i][0])]
+    public_bad = [(i, d) for i, d in bad if not (i >= 0 and is_holdout5(pairs[i][0]))]
+    for i, (path, w, g) in public_bad[:args.show]:
         label = pairs[i][0] if i >= 0 else "-"
         print("- #%d %s: %s\n    python: %s\n    js:     %s" % (i, label, path, json.dumps(w, ensure_ascii=False)[:300],
                                                             json.dumps(g, ensure_ascii=False)[:300]))
+    if h5_bad:
+        print("- holdout5 (redacted, R-HOLDOUT): %d расхождений (детали скрыты)" % len(h5_bad))
     return 1 if bad else 0
 
 

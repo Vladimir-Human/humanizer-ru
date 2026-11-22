@@ -1,0 +1,558 @@
+{
+  "ours": {
+    "summary": {
+      "texts": 14,
+      "texts_with_errors": [
+        "h6_01"
+      ],
+      "errors": 1,
+      "wrapper": 3,
+      "lint_mean": 0.3,
+      "receipts": 14
+    },
+    "rows": {
+      "h6_01": {
+        "errors": [
+          [
+            "lost",
+            "число",
+            "1250"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: в исходнике 7 чисел, 2 даты, 7 имён и названий, 2 телефона, 2 цитаты; в правке нет: 1250."
+      },
+      "h6_02": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 7 чисел, 33 имени и названия, 7 цитат, 2 отрицания на месте."
+      },
+      "h6_03": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 9 чисел, 2 даты, 4 имени и названия, 1 ссылка, 3 отрицания на месте."
+      },
+      "h6_04": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1500"
+          ],
+          [
+            "lost",
+            "число",
+            "6"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 10 чисел, 2 имени и названия, 3 цитаты, 6 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1500, 6."
+      },
+      "h6_05": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 1.0,
+        "lint_level": "мало",
+        "receipt": "Сверка скриптом: 8 чисел, 4 имени и названия, 1 отрицание на месте."
+      },
+      "h6_06": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 6 чисел, 5 имён и названий, 1 ссылка, 3 цитаты, 4 отрицания на месте."
+      },
+      "h6_07": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 11 чисел, 3 даты, 2 имени и названия, 5 цитат, 5 отрицаний на месте."
+      },
+      "h6_08": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1180"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 3 числа, 2 даты, 3 имени и названия, 3 цитаты, 8 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1180."
+      },
+      "h6_09": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 5 чисел, 8 имён и названий, 3 цитаты на месте."
+      },
+      "h6_10": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 24 числа, 1 имя или название, 3 цитаты, 10 отрицаний на месте."
+      },
+      "h6_11": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 8 чисел, 4 имени и названия, 2 цитаты, 1 отрицание на месте."
+      },
+      "h6_12": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 6 чисел, 2 даты, 9 имён и названий, 1 цитата, 2 отрицания на месте."
+      },
+      "h6_13": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 3.19,
+        "lint_level": "есть",
+        "receipt": "Сверка скриптом: 3 числа, 8 имён и названий, 4 отрицания на месте."
+      },
+      "h6_14": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 15 чисел, 30 имён и названий, 5 цитат на месте."
+      }
+    }
+  },
+  "ours430": {
+    "summary": {
+      "texts": 14,
+      "texts_with_errors": [
+        "h6_01"
+      ],
+      "errors": 1,
+      "wrapper": 3,
+      "lint_mean": 0.23,
+      "receipts": 14
+    },
+    "rows": {
+      "h6_01": {
+        "errors": [
+          [
+            "lost",
+            "число",
+            "1250"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: в исходнике 7 чисел, 2 даты, 7 имён и названий, 2 телефона, 2 цитаты; в правке нет: 1250."
+      },
+      "h6_02": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 7 чисел, 33 имени и названия, 7 цитат, 2 отрицания на месте."
+      },
+      "h6_03": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 9 чисел, 2 даты, 3 имени и названия, 1 ссылка, 3 отрицания на месте."
+      },
+      "h6_04": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1500"
+          ],
+          [
+            "lost",
+            "число",
+            "6"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 10 чисел, 3 имени и названия, 3 цитаты, 6 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1500, 6."
+      },
+      "h6_05": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 8 чисел, 4 имени и названия, 1 отрицание на месте."
+      },
+      "h6_06": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 6 чисел, 5 имён и названий, 1 ссылка, 3 цитаты, 4 отрицания на месте."
+      },
+      "h6_07": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 11 чисел, 3 даты, 2 имени и названия, 5 цитат, 5 отрицаний на месте."
+      },
+      "h6_08": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1180"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 3 числа, 2 даты, 3 имени и названия, 3 цитаты, 8 отрицаний на месте; вместе со служебными строками чат-бота убрано: 1180."
+      },
+      "h6_09": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 5 чисел, 9 имён и названий, 3 цитаты на месте."
+      },
+      "h6_10": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 24 числа, 1 имя или название, 3 цитаты, 10 отрицаний на месте."
+      },
+      "h6_11": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 8 чисел, 4 имени и названия, 2 цитаты, 1 отрицание на месте."
+      },
+      "h6_12": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 6 чисел, 2 даты, 9 имён и названий, 1 цитата, 2 отрицания на месте."
+      },
+      "h6_13": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 3.19,
+        "lint_level": "есть",
+        "receipt": "Сверка скриптом: 3 числа, 8 имён и названий, 4 отрицания на месте."
+      },
+      "h6_14": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": "Сверка скриптом: 15 чисел, 30 имён и названий, 5 цитат на месте."
+      }
+    }
+  },
+  "ilyautov": {
+    "summary": {
+      "texts": 14,
+      "texts_with_errors": [
+        "h6_01",
+        "h6_05",
+        "h6_11"
+      ],
+      "errors": 3,
+      "wrapper": 2,
+      "lint_mean": 0.73,
+      "receipts": 0
+    },
+    "rows": {
+      "h6_01": {
+        "errors": [
+          [
+            "lost",
+            "число",
+            "1250"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 3.33,
+        "lint_level": "есть",
+        "receipt": ""
+      },
+      "h6_02": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_03": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 3.33,
+        "lint_level": "есть",
+        "receipt": ""
+      },
+      "h6_04": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1500"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_05": {
+        "errors": [
+          [
+            "added",
+            "число",
+            "два"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 1.0,
+        "lint_level": "мало",
+        "receipt": ""
+      },
+      "h6_06": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_07": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_08": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1180"
+          ]
+        ],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_09": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_10": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_11": {
+        "errors": [
+          [
+            "added",
+            "число",
+            "три"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_12": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_13": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 2.5,
+        "lint_level": "есть",
+        "receipt": ""
+      },
+      "h6_14": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      }
+    }
+  },
+  "prompt": {
+    "summary": {
+      "texts": 14,
+      "texts_with_errors": [
+        "h6_01",
+        "h6_05"
+      ],
+      "errors": 2,
+      "wrapper": 3,
+      "lint_mean": 5.55,
+      "receipts": 0
+    },
+    "rows": {
+      "h6_01": {
+        "errors": [
+          [
+            "lost",
+            "число",
+            "1250"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 3.33,
+        "lint_level": "есть",
+        "receipt": ""
+      },
+      "h6_02": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 23.33,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_03": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_04": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1500"
+          ],
+          [
+            "lost",
+            "число",
+            "6"
+          ]
+        ],
+        "lint_score": 1.0,
+        "lint_level": "мало",
+        "receipt": ""
+      },
+      "h6_05": {
+        "errors": [
+          [
+            "added",
+            "число",
+            "два"
+          ]
+        ],
+        "wrapper": [],
+        "lint_score": 1.0,
+        "lint_level": "мало",
+        "receipt": ""
+      },
+      "h6_06": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 8.67,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_07": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 6.67,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_08": {
+        "errors": [],
+        "wrapper": [
+          [
+            "lost",
+            "число",
+            "1180"
+          ]
+        ],
+        "lint_score": 3.33,
+        "lint_level": "есть",
+        "receipt": ""
+      },
+      "h6_09": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_10": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 7.03,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_11": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 10.0,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_12": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 13.33,
+        "lint_level": "много",
+        "receipt": ""
+      },
+      "h6_13": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      },
+      "h6_14": {
+        "errors": [],
+        "wrapper": [],
+        "lint_score": 0.0,
+        "lint_level": "нет",
+        "receipt": ""
+      }
+    }
+  }
+}

@@ -74,10 +74,15 @@ def _service(source: str, edit: str) -> list:
 
 def score_text(source: str, answer: str) -> dict:
     edit = lib.split_notes(answer, source)[0]
-    errors = _errors(text_part(source), edit)
+    body_source = text_part(source)
+    body_res = receipt_eval.check_facts.compare(body_source, edit)
+    errors = [[e["kind"], e["what"], e["detail"]] for e in body_res["errors"]]
+    full_res = body_res if body_source == source else receipt_eval.check_facts.compare(source, edit)
+    full_errors = [[e["kind"], e["what"], e["detail"]] for e in full_res["errors"]]
+    service = [[s["kind"], s["what"], s["detail"]] for s in full_res.get("service", [])]
     rep = lint_style.lint(edit, RULES)
     return {"errors": errors,
-            "wrapper": [e for e in _errors(source, edit) if e not in errors] + _service(source, edit),
+            "wrapper": [e for e in full_errors if e not in errors] + service,
             "lint_score": rep["score"], "lint_level": rep["level"],
             "receipt": receipt_eval.receipt_line(answer)}
 
@@ -103,7 +108,12 @@ def main(argv=None) -> int:
                     "чат-бота (за чертой «---») — в столбце «Снято с обёрткой».", "",
                     "| Участник | Правок | С ошибкой сверки | Ошибок | Снято с обёрткой | Стиль, средний балл | Строка сверки |",
                     "|---|---|---|---|---|---|---|"]
-    for name in args.systems.split(","):
+    systems = [x.strip() for x in args.systems.split(",") if x.strip()]
+    missing_dirs = [name for name in systems if not (run_dir / "outputs" / name).is_dir()]
+    if not systems or missing_dirs:
+        print("Нет папок с ответами для систем: %s" % (", ".join(missing_dirs) or "(пусто)"), file=sys.stderr)
+        return 1
+    for name in systems:
         rows = {}
         for f in sorted((run_dir / "outputs" / name).glob("*.txt")):
             src = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (f.stem + ".txt"))

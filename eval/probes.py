@@ -53,7 +53,32 @@ def check_facts():
 # START_BLOCK_ORACLES
 ORACLES = ("keep", "keep_any", "keep_re", "drop", "facts", "yo", "asks", "list_items", "bold_less",
            "min_count", "min_similarity", "min_len_ratio")
-LIST_RX = re.compile(r"(?m)^[ \t]*(?:\d{1,2}[.)]|[-*•–—](?=[ \t])|\*\*\s*Шаг|Шаг\s+\d)")
+LIST_RX = re.compile(r"(?m)^[ \t]*(?:(?:\*\*)?\d{1,2}[.)](?:\*\*)?|[-*•–—](?=[ \t])|\*\*\s*Шаг|Шаг\s+\d)")
+ASK_RX = re.compile(r"^[\s\-*•\d.)]*(?:\*\*)?(?:уточните|назовите|напишите|подскажите|скажите|расскажите|"
+                    r"опишите|укажите|пришлите|ответьте)(?![а-яё])", re.I)
+# Ambiguous ё/е homographs where the е-form is a different valid Russian word (e.g. всё -> все, слёз -> слез).
+YO_HOMOGRAPHS = frozenset({"все", "слез", "берет", "сел", "мел", "небо", "осел", "ведро"})
+_ADJ_END_RX = re.compile(r"(?:ый|ий|ой|ая|яя|ое|ее|ые|ие|ого|его|ому|ему|ым|им|ом|ем|ую|юю|ых|их|ыми|ими)$", re.I)
+_ADJ_ENDS = "ый|ий|ой|ая|яя|ое|ее|ые|ие|ого|его|ому|ему|ым|им|ом|ем|ую|юю|ых|их|ыми|ими"
+
+
+def _yo_dropped(src: str, out: str) -> bool:
+    """True if a source word written with ё reappears in out with е instead of ё (incl. adjectival
+    inflections like тёплый -> теплым, skipping ambiguous homographs like всё/все)."""
+    words = {w for w in re.findall(r"[А-Яа-яЁё]+", src) if "ё" in w.lower()}
+    for w in words:
+        w_low = w.lower()
+        w_e = w_low.replace("ё", "е")
+        if w_e in YO_HOMOGRAPHS:
+            continue
+        if re.search(r"(?<![А-Яа-яЁё])%s(?![А-Яа-яЁё])" % re.escape(w_e), out, re.I):
+            return True
+        m_adj = _ADJ_END_RX.search(w_low)
+        if m_adj and "ё" in w_low[:m_adj.start()] and m_adj.start() >= 4:
+            stem_e = w_low[:m_adj.start()].replace("ё", "е")
+            if re.search(r"(?<![А-Яа-яЁё])%s(?:%s)(?![А-Яа-яЁё])" % (re.escape(stem_e), _ADJ_ENDS), out, re.I):
+                return True
+    return False
 
 
 def norm(s: str) -> str:
@@ -66,15 +91,15 @@ def norm(s: str) -> str:
 # OUTPUTS: {check name: True if it holds}; a probe passes when all values are True.
 # RULES: keep / keep_any are substrings, case and ё-insensitive; keep_re / drop are regexes
 #        (multiline, as written); facts = check_facts finds no error and no added fact; yo = no
-#        word written with ё in the source appears with е; asks = more question marks than the
-#        source (the editor asked the author); list_items = at least N lines start a list item.
+#        word written with ё in the source appears with е; asks = notes after --- contain a «?» or
+#        a request to the author; list_items = at least N lines start a list item.
 #        Every oracle reads the edited text without the notes to the author (evallib.split_notes,
-#        R-NOTES-NOT-TEXT) except asks, which reads the whole answer: the questions are the notes.
+#        R-NOTES-NOT-TEXT) except asks, which reads the notes section.
 # SIDE_EFFECTS: none.
 # END_CONTRACT: score_one
 def score_one(probe: dict, output: str) -> dict:
     src, answer = probe["text"], output or ""
-    out = lib.split_notes(answer, src)[0]  # «Убрал слово "шедевр"» in the notes is not the edit
+    out, notes = lib.split_notes(answer, src)  # «Убрал слово "шедевр"» in the notes is not the edit
     res = {}
     for s in probe.get("keep", []):
         res["keep:%s" % s] = norm(s) in norm(out)
@@ -88,11 +113,20 @@ def score_one(probe: dict, output: str) -> dict:
         r = check_facts().compare(src, out)
         res["facts"] = not r["errors"] and not any(c["kind"] == "added" for c in r["checks"])
     if probe.get("yo"):
-        words = {w for w in re.findall(r"[А-Яа-яЁё]+", src) if "ё" in w.lower()}
-        res["yo"] = not any(re.search(r"(?<![А-Яа-яЁё])%s(?![А-Яа-яЁё])" % re.escape(w.replace("ё", "е").replace("Ё", "Е")),
-                                      out, re.I) for w in words)
+        res["yo"] = not _yo_dropped(src, out)
     if probe.get("asks"):
-        res["asks"] = answer.count("?") > src.count("?")
+        q_block = notes
+        if not q_block:
+            lines = answer.replace("\r\n", "\n").rstrip().split("\n")
+            rules = [i for i, ln in enumerate(lines) if ln.strip() == "---"]
+            if rules:
+                tail = "\n".join(lines[rules[-1] + 1:]).strip()
+                if tail and len(tail) <= lib.NOTE_MAX_CHARS:
+                    stems = lib._stems(lib.NOTE_QUOTE_RX.sub(" ", tail))
+                    if not stems or len(stems & lib._stems(src)) / len(stems) < 0.5:
+                        if any(ASK_RX.match(ln) for ln in tail.splitlines()):
+                            q_block = tail
+        res["asks"] = bool(q_block) and ("?" in q_block or any(ASK_RX.match(ln) for ln in q_block.splitlines()))
     if probe.get("list_items"):
         res["list_items"] = len(LIST_RX.findall(out)) >= probe["list_items"]
     if probe.get("bold_less"):
@@ -140,6 +174,8 @@ def run(run_dir: Path, systems: list, executor: str, repeat: int, workers: int, 
         for fut in as_completed(futures):
             try:
                 fut.result()
+            except lib.BudgetExceeded:
+                raise
             except Exception as exc:  # one failed probe must not lose the others; a rerun resumes
                 failed += 1
                 print("[M-EVAL-PROBES][BLOCK_RUN] failed %s: %s" % (futures[fut][0], str(exc)[:200]))
@@ -183,7 +219,8 @@ def summarize(run_dir: Path) -> dict:
     rules = sorted({r for v in cells.values() for r in v})
     table = {}
     for s in systems:
-        runs = sorted(r for ss, r in cells if ss == s)
+        runs = sorted((r for ss, r in cells if ss == s),
+                      key=lambda r: (0, int(r[1:])) if r.startswith("r") and r[1:].isdigit() else (1, r))
         row = {}
         for rule in rules:
             vals = [cells[(s, r)][rule] for r in runs if rule in cells[(s, r)]]
@@ -202,7 +239,7 @@ def summarize(run_dir: Path) -> dict:
 def render(summary: dict, title: str) -> str:
     table = summary["table"]
     systems = sorted(table)
-    rules = sorted(r for r in next(iter(table.values()), {}) if r != "_all") if table else []
+    rules = sorted({r for row in table.values() for r in row if r != "_all"}) if table else []
     lines = ["# Пробы: %s" % title, "",
              "Доля проб, где выполнены все проверки; в скобках — по прогонам.", "",
              "| Правило | " + " | ".join(systems) + " |", "|---|" + "---|" * len(systems)]

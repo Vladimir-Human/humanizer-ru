@@ -1,13 +1,15 @@
 {
+  "$schema": "https://cursor.com/schemas/cursor-plugin/plugin.json",
   "name": "humanizer-ru",
   "displayName": "humanizer-ru",
   "description": "Переписывает русский ИИ-текст так, чтобы он читался как написанный человеком, и сверяет факты до и после. | Rewrites AI-sounding Russian text into natural Russian and checks that facts survived.",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "author": {"name": "Vladimir-Human"},
   "homepage": "https://github.com/Vladimir-Human/humanizer-ru",
   "repository": "https://github.com/Vladimir-Human/humanizer-ru",
   "license": "MIT",
-  "logo": ".claude-plugin/icon.png",
+  "logo": "./.claude-plugin/icon.png",
+  "skills": "./skills/",
   "keywords": ["humanizer", "russian", "writing", "editing", "ai-writing", "канцелярит", "очеловечить"],
   "category": "writing"
 }

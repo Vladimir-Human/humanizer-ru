@@ -120,8 +120,18 @@ def prepare_run(sysdefs: list, batches: list, batch_root: Path, run_dir: Path, t
                                                       scripts_rule=" (except the skill scripts named below)" if scripts else "") + note)
             tasks.append(task)
         print("[M-EVAL-BATCH][prepare_run] %s: %d skill files, %d batches" % (sysdef["name"], len(files), len(batches)))
-    lib.write_json(run_dir / "config.json", {"executor": executor, "texts": ids, "systems": [s["name"] for s in sysdefs],
-                                             "request": rs.REQUEST, "batches": batches, "scripts": scripts})
+    cfg_path = run_dir / "config.json"
+    old_cfg = lib.read_json(cfg_path) if cfg_path.exists() else {}
+    merged_systems = list(old_cfg.get("systems") or [])
+    for s in sysdefs:
+        if s["name"] not in merged_systems:
+            merged_systems.append(s["name"])
+    merged_texts = list(old_cfg.get("texts") or [])
+    for tid in ids:
+        if tid not in merged_texts:
+            merged_texts.append(tid)
+    lib.write_json(cfg_path, {"executor": executor, "texts": merged_texts, "systems": merged_systems,
+                              "request": rs.REQUEST, "batches": batches, "scripts": scripts})
     return tasks
 
 
@@ -159,8 +169,8 @@ def prepare_judge(run_dir: Path, texts_dir: Path, batch_root: Path, judge: str, 
     keys = {}
     for tid in ids:
         outputs = {s: lib.read_text(out_dir / s / (tid + ".txt")) for s in systems}
-        block, key = jg.build(tid, outputs, judge, rnd)
         source = lib.read_text(texts_dir / (tid + ".txt")).strip()
+        block, key = jg.build(tid, outputs, judge, rnd, source=source)
         lib.write_text(jdir / "bundles" / (tid + ".md"), jg.PROMPT.format(n=len(key), source=source, candidates=block))
         keys[tid] = key
     # The label key sits next to the judge folder, not in it: the subagent reads only its bundles.
@@ -185,7 +195,9 @@ def collect_judge(run_dir: Path, batch_root: Path, judge: str, out: str = "judgm
     log = run_dir / out
     done = set()
     if log.exists():
-        for line in log.read_text(encoding="utf-8").splitlines():
+        for line in log.read_text(encoding="utf-8-sig").splitlines():
+            if not line.strip():
+                continue
             row = json.loads(line)
             if row.get("ranking"):
                 done.add((row["id"], row["judge"], row["round"], tuple(sorted(row["key"].values()))))
@@ -229,9 +241,18 @@ def main() -> int:
     batch_root = lib.CACHE_DIR / "batch" / args.run
     texts_dir = lib.EVAL_DIR / "corpus" / "texts"
     if args.action == "prepare-run":
-        names = args.systems.split(",")
-        sysdefs = [s for s in lib.read_json(lib.EVAL_DIR / "systems.json") if s["name"] in names]
-        batches = [b.split(",") for b in args.batches.split(";")]
+        names = [x.strip() for x in args.systems.split(",") if x.strip()]
+        if not names:
+            raise SystemExit("prepare-run требует непустой --systems")
+        all_defs = {s["name"]: s for s in lib.read_json(lib.EVAL_DIR / "systems.json")}
+        unknown = [n for n in names if n not in all_defs]
+        if unknown:
+            raise SystemExit("неизвестные системы в --systems: %s" % ", ".join(unknown))
+        sysdefs = [all_defs[n] for n in names]
+        batches = [[t.strip() for t in b.split(",") if t.strip()] for b in args.batches.split(";") if b.strip()]
+        batches = [b for b in batches if b]
+        if not batches:
+            raise SystemExit("prepare-run требует непустой --batches")
         for task in prepare_run(sysdefs, batches, batch_root, run_dir, texts_dir, args.executor, args.scripts):
             print(task.as_posix())
     elif args.action == "collect-run":
@@ -240,10 +261,14 @@ def main() -> int:
             print("missing:", ", ".join(missing))
             return 1
     elif args.action == "prepare-judge":
-        ids = [t for t in args.texts.split(",") if t] or lib.read_json(run_dir / "config.json")["texts"]
+        if not args.judge.strip():
+            raise SystemExit("prepare-judge требует --judge")
+        ids = [t.strip() for t in args.texts.split(",") if t.strip()] or lib.read_json(run_dir / "config.json")["texts"]
         for task in prepare_judge(run_dir, texts_dir, batch_root, args.judge, ids, args.batch_size, args.round):
             print(task.as_posix())
     else:
+        if not args.judge.strip():
+            raise SystemExit("collect-judge требует --judge")
         res = collect_judge(run_dir, batch_root, args.judge, rnd=args.round)
         return 1 if res["errors"] or res["missing"] else 0
     return 0

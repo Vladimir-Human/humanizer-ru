@@ -90,16 +90,19 @@ def render(table: Dict[str, dict], systems: list, run: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     run_dir = lib.EVAL_DIR / "results" / args.run
     out_root = run_dir / "outputs"
     systems = sorted(p.name for p in out_root.iterdir() if p.is_dir())
-    outputs = {s: {f.stem: lib.read_text(f) for f in sorted((out_root / s).glob("*.txt"))} for s in systems}
-    ids = sorted({tid for outs in outputs.values() for tid in outs})
+    raw_outputs = {s: {f.stem: lib.read_text(f) for f in sorted((out_root / s).glob("*.txt"))} for s in systems}
+    ids = sorted({tid for outs in raw_outputs.values() for tid in outs})
     sources = {tid: lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (tid + ".txt")) for tid in ids}
+    # R-NOTES-NOT-TEXT: strip notes after '---' so quoted patterns in editor notes are not counted as survived/introduced.
+    outputs = {s: {tid: lib.split_notes(text, sources[tid])[0] for tid, text in outs.items()}
+               for s, outs in raw_outputs.items()}
     md = render(survival(sources, outputs), systems, args.run)
     lib.write_text(run_dir / "patterns.md", md)
     print("[M-EVAL-PATTERNS][main] run=%s texts=%d systems=%d -> %s" % (args.run, len(ids), len(systems), run_dir / "patterns.md"))

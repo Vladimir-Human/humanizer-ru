@@ -20,19 +20,26 @@
 # map_links: apply a function to the target of every inline markdown link outside code fences.
 # rewrite_links: a relative link that leaves the tree becomes an absolute link to main on GitHub.
 # rename_plugin: plugin.json text with name and displayName set to DIRECTORY_NAME, every other byte kept.
-# build: write the tree into an empty folder, return the file list.
+# build: write the tree into an empty folder (refusing symlinks/out-of-tree paths), return the file list.
 # verify: list of problems for a built tree (files that should not be there or are missing, CRLF,
-#         binaries, links that lead nowhere, a plugin.json that differs from the repository's by more
-#         than the name, the icon named in another file, the directory's limits).
-# main: CLI; exit 0 when the tree is built and clean, 1 with problems printed.
+#         binaries, secret/network API strings, inline/HTML/reference links that lead nowhere,
+#         a plugin.json that differs from the repository's by more than the name, the icon named
+#         in another file, the directory's limits).
+# main: CLI `build_directory.py <out>`; --help exits 0, clean exits 0, problems exit 1.
 # END_MODULE_MAP
 from __future__ import annotations
 
+import argparse
 import json
 import posixpath
 import re
 import sys
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ".claude-plugin/plugin.json"
@@ -43,14 +50,18 @@ DIRECTORY_NAME = "humanizer-russian"  # plugin name and displayName in the tree,
 LINK_REF = "main"
 MAX_FILES = 512  # the portal screens the first 512 files by path
 MAX_BYTES = 256 * 1024  # and reads a file that is not an image only up to this size
+SKIP_SUFFIXES = frozenset({".pyc", ".bak", ".swp"})
+SKIP_NAMES = frozenset({".DS_Store", "Thumbs.db"})
 LINK = re.compile(r"(\]\()([^)\s]+)((?:\s+\"[^\"]*\")?\))")
+HTML_LINK = re.compile(r'<(?:a|img)\b[^>]*?\b(?:href|src)=["\']([^"\']+)["\']', re.I)
+REF_LINK = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?")
 OUTSIDE = re.compile(r"(?:[a-z][a-z0-9+.-]*:|#|/)", re.I)  # https:, mailto:, #anchor, /from-root
+FORBIDDEN_STRINGS = re.compile(r"\b(?:FAL_KEY|API_KEY|os\.environ|urllib\.request|subprocess|socket)\b")
 
 
 # START_BLOCK_LINKS
-# The one regex covers inline links `[text](target "title")` and images. The READMEs use no
-# reference-style or HTML links; a form this scanner does not see is neither rewritten nor checked,
-# so teach it here before using one in a README.
+# Inline links `[text](target "title")` and images are rewritten by map_links; verify() additionally
+# scans HTML `<a>`/`<img>` and reference-style `[label]: target` links so no broken link slips past.
 def map_links(text: str, fn) -> str:
     out, fenced = [], False
     for line in text.split("\n"):
@@ -60,6 +71,22 @@ def map_links(text: str, fn) -> str:
             line = LINK.sub(lambda m: m.group(1) + fn(m.group(2)) + m.group(3), line)
         out.append(line)
     return "\n".join(out)
+
+
+def _scan_extra_md_links(text: str, fn) -> None:
+    """Scan HTML <a href>/<img> and reference-style [label]: target links outside code fences."""
+    fenced = False
+    for line in text.split("\n"):
+        if re.match(r"\s{0,3}(```|~~~)", line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        for m in HTML_LINK.finditer(line):
+            fn(m.group(1))
+        rm = REF_LINK.match(line)
+        if rm:
+            fn(rm.group(1))
 
 
 def _resolve(rel: str, target: str) -> str:
@@ -85,6 +112,15 @@ def rewrite_links(text: str, rel: str, root: Path, base: str, names) -> str:
 
 
 # START_BLOCK_BUILD
+def _check_safe_src(path: Path, root: Path) -> None:
+    if path.is_symlink():
+        raise SystemExit("символическая ссылка запрещена в дереве каталога: %s" % path)
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        raise SystemExit("файл выходит за пределы репозитория: %s" % path)
+
+
 def rename_plugin(text: str) -> str:
     """plugin.json for the directory: name and displayName replaced, every other byte kept."""
     for key in ("name", "displayName"):
@@ -98,8 +134,14 @@ def rename_plugin(text: str) -> str:
 def listing(root: Path) -> list:
     names: list = list(FILES)
     for p in sorted((root / SKILL).rglob("*")):
-        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc":
-            names.append(p.relative_to(root).as_posix())
+        if p.is_symlink():
+            raise SystemExit("символическая ссылка запрещена в дереве каталога: %s" % p)
+        if not p.is_file():
+            continue
+        if "__pycache__" in p.parts or p.suffix in SKIP_SUFFIXES or p.name in SKIP_NAMES:
+            continue
+        _check_safe_src(p, root)
+        names.append(p.relative_to(root).as_posix())
     return sorted(names)
 
 
@@ -110,9 +152,13 @@ def build(out: Path, root: Path = ROOT) -> list:
     base = re.sub(r"(\.git)?/*$", "", json.loads((root / MANIFEST).read_text(encoding="utf-8"))["repository"])
     keep = set(names)
     for rel in names:
-        if not (root / rel).is_file():
+        src = root / rel
+        if src.is_symlink():
+            raise SystemExit("символическая ссылка запрещена в дереве каталога: %s" % rel)
+        if not src.is_file():
             raise SystemExit("нет файла %s" % rel)
-        data = (root / rel).read_bytes()
+        _check_safe_src(src, root)
+        data = src.read_bytes()
         if rel in DOCS:
             data = rewrite_links(data.decode("utf-8"), rel, root, base, keep).encode("utf-8")
         elif rel == MANIFEST:
@@ -127,7 +173,13 @@ def build(out: Path, root: Path = ROOT) -> list:
 # START_BLOCK_VERIFY
 def verify(out: Path, root: Path = ROOT) -> list:
     problems = []
-    found = sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file())
+    found = []
+    for p in sorted(out.rglob("*")):
+        if p.is_symlink():
+            problems.append("%s: символическая ссылка запрещена" % p.relative_to(out).as_posix())
+            continue
+        if p.is_file():
+            found.append(p.relative_to(out).as_posix())
     want = listing(root)
     for rel in sorted(set(found) - set(want)):
         problems.append("%s: лишний файл, его нет в списке плагина" % rel)
@@ -177,17 +229,24 @@ def verify(out: Path, root: Path = ROOT) -> list:
         # the portal holds the listing for any file that names an image it cannot read as code
         if icon and rel != MANIFEST and posixpath.basename(icon).encode() in raw:
             problems.append("%s: называет файл иконки %s, каталог за это придерживает плагин" % (rel, icon))
+        text = raw.decode("utf-8", "replace")
+        bad_tok = FORBIDDEN_STRINGS.search(text)
+        if bad_tok:
+            problems.append("%s: содержит запрещённую строку %s (секрет или сетевой/процессный API)" % (rel, bad_tok.group(0)))
         if rel.endswith(".md"):
-            map_links(raw.decode("utf-8", "replace"), look(rel))
+            checker = look(rel)
+            map_links(text, checker)
+            _scan_extra_md_links(text, checker)
     return problems
 # END_BLOCK_VERIFY
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("Использование: python scripts/build_directory.py <пустая папка для дерева>")
-        return 2
-    out = Path(sys.argv[1])
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(
+        description="Собрать дерево плагина для каталога Anthropic (ветка directory) в пустую папку.")
+    ap.add_argument("out", help="Путь к пустой папке для собранного дерева")
+    args = ap.parse_args(argv)
+    out = Path(args.out)
     names = build(out)
     problems = verify(out)
     print("%s: %d файлов, %d байт" % (out, len(names), sum((out / n).stat().st_size for n in names)))
