@@ -38,11 +38,12 @@ BUDGET_USD = float(os.environ.get("EVAL_BUDGET_USD", "15"))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 def read_text(path) -> str:
-    return Path(path).read_text(encoding="utf-8")
+    return Path(path).read_text(encoding="utf-8-sig")
 
 
 def write_text(path, text: str) -> None:
@@ -87,6 +88,7 @@ def _stems(text: str) -> set:
 
 
 def split_notes(answer: str, source: str = "") -> tuple:
+    answer = (answer or "").replace("\r\n", "\n")
     lines = answer.rstrip().split("\n")
     rules = [i for i, ln in enumerate(lines) if ln.strip() == "---"]
     if not rules:
@@ -135,29 +137,44 @@ class Ledger:
 
     def check(self) -> None:
         with self.lock:
+            if LEDGER.exists():
+                self.data = read_json(LEDGER)
             total = self.data["total"]
         if total >= self.cap:
             raise BudgetExceeded("budget cap $%.2f reached (spent $%.4f)" % (self.cap, total))
 
     def add(self, tag: str, cost: float) -> None:
         with self.lock:
+            LEDGER.parent.mkdir(parents=True, exist_ok=True)
             if LEDGER.exists():
                 self.data = read_json(LEDGER)
             self.data["total"] = round(self.data["total"] + cost, 6)
             self.data["by_tag"][tag] = round(self.data["by_tag"].get(tag, 0.0) + cost, 6)
-            tmp = LEDGER.with_suffix(".tmp")
-            write_json(tmp, self.data)
-            os.replace(tmp, LEDGER)
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    "w", encoding="utf-8", newline="\n", dir=LEDGER.parent,
+                    prefix=".spend-", suffix=".tmp", delete=False
+                ) as fh:
+                    tmp_path = Path(fh.name)
+                    fh.write(json.dumps(self.data, ensure_ascii=False, indent=2) + "\n")
+                os.replace(tmp_path, LEDGER)
+                tmp_path = None
+            finally:
+                if tmp_path is not None and tmp_path.exists():
+                    tmp_path.unlink()
 
 
 _LEDGER = None
+_LEDGER_LOCK = threading.Lock()
 
 
 def ledger() -> Ledger:
     global _LEDGER
-    if _LEDGER is None:
-        _LEDGER = Ledger()
-    return _LEDGER
+    with _LEDGER_LOCK:
+        if _LEDGER is None:
+            _LEDGER = Ledger()
+        return _LEDGER
 
 
 # START_BLOCK_DSH
@@ -165,7 +182,20 @@ def ledger() -> Ledger:
 # still prices them at list rates: that number is kept in usage["listed_cost"], the ledger books 0.
 # Any other bridge route could be paid, so it is refused before anything runs.
 DSH_PREFIX = "dsh:"
-DSH_TASK = Path.home() / ".claude" / "skills" / "dsh-bridge" / "dsh-task.mjs"
+
+
+def _default_dsh_task() -> Path:
+    env = os.environ.get("DSH_TASK")
+    if env:
+        return Path(env)
+    for base in (Path.home() / ".claude" / "skills", Path.home() / ".gemini" / "config" / "skills"):
+        cand = base / "dsh-bridge" / "dsh-task.mjs"
+        if cand.exists():
+            return cand
+    return Path.home() / ".claude" / "skills" / "dsh-bridge" / "dsh-task.mjs"
+
+
+DSH_TASK = _default_dsh_task()
 DSH_FREE = frozenset({"agentrouter-astra/gpt-6.1-sol", "minimax/MiniMax-M3.1-Flash"})
 # The DSH agent is a coding agent with file tools; the eval needs a plain reply.
 DSH_RULES = ("Answer in your reply only: do not create, read or change files and do not run commands. "

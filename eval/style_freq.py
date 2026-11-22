@@ -11,7 +11,7 @@
 #        eval/results/style-freq/candidates.md and .json. A candidate enters rules.json only
 #        after an eye check (the table is evidence, not a rule list).
 # DEPENDS: evallib (chat over the free DSH route, IO); build_corpus.human_wikinews (controls).
-# LINKS: M-EVAL-STYLE-FREQ; R-RULES-EVIDENCE; V-M-EVAL-STYLE-FREQ.
+# LINKS: M-EVAL-STYLE-FREQ; R-RULES-EVIDENCE; V-M-EVAL-NEW-MEASURES.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # pair_prompt: the request for the AI side (headline, lead, length).
@@ -28,6 +28,7 @@ import math
 import re
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 import evallib as lib
 from build_corpus import CHAT_PERSONA, human_wikinews
@@ -87,6 +88,8 @@ def gen(workers: int) -> int:
         for fut in as_completed(futures):
             try:
                 tid, out = fut.result()
+            except lib.BudgetExceeded:
+                raise
             except Exception as exc:
                 failed.append(futures[fut])
                 print("[M-EVAL-STYLE-FREQ][gen] failed %s %s" % (futures[fut], repr(exc)[:200]))
@@ -146,7 +149,7 @@ def log_odds(ai_docs: list, human_docs: list, a: float = 0.5) -> dict:
     return out
 
 
-def rank(min_docs: int, min_z: float, top: int) -> int:
+def rank(min_docs: int, min_z: float, top: int, out_dir: Path = OUT, dry_run: bool = False) -> int:
     pairs = lib.read_json(PAIRS / "index.json")
     ids = sorted(pairs)
     ai = [doc_ngrams(lib.read_text(PAIRS / (i + ".txt"))) for i in ids]
@@ -161,9 +164,6 @@ def rank(min_docs: int, min_z: float, top: int) -> int:
 
     lean_ai = sorted((row(w, s) for w, s in scores.items() if s[0] >= min_z and s[1] >= min_docs), key=lambda r: -r["z"])[:top]
     lean_hu = sorted((row(w, s) for w, s in scores.items() if s[0] <= -min_z and s[2] >= min_docs), key=lambda r: r["z"])[:top]
-    OUT.mkdir(parents=True, exist_ok=True)
-    lib.write_json(OUT / "candidates.json", {"pairs": len(ids), "min_docs": min_docs, "min_z": min_z,
-                                             "ai_leaning": lean_ai, "human_leaning": lean_hu})
     md = ["# Частотное сравнение: %d пар «человек — модель» на одну тему" % len(ids), "",
           "Человек: статьи Викиновостей в редакции до 31.12.2021. Модель: новость по тому же заголовку и "
           "первому абзацу (MiniMax M3.1 Flash, исполнитель без установленных навыков). Счёт по текстам: сколько текстов "
@@ -175,12 +175,17 @@ def rank(min_docs: int, min_z: float, top: int) -> int:
         md += ["| %s | %.1f | %d | %d | %s |" % (r["seq"], r["z"], r["ai_texts"], r["human_texts"],
                                                  ", ".join("%s %d" % kv for kv in r["by_model"].items())) for r in rows]
         md.append("")
-    lib.write_text(OUT / "candidates.md", "\n".join(md))
+    if not dry_run:
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        lib.write_json(out_dir / "candidates.json", {"pairs": len(ids), "min_docs": min_docs, "min_z": min_z,
+                                                     "ai_leaning": lean_ai, "human_leaning": lean_hu})
+        lib.write_text(out_dir / "candidates.md", "\n".join(md))
     print("[M-EVAL-STYLE-FREQ][rank] pairs=%d ai_leaning=%d human_leaning=%d" % (len(ids), len(lean_ai), len(lean_hu)))
     return 0
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     g = sub.add_parser("gen")
@@ -189,8 +194,12 @@ def main() -> int:
     r.add_argument("--min-docs", type=int, default=8)
     r.add_argument("--min-z", type=float, default=3.0)
     r.add_argument("--top", type=int, default=150)
-    args = ap.parse_args()
-    return gen(args.workers) if args.cmd == "gen" else rank(args.min_docs, args.min_z, args.top)
+    r.add_argument("--out", default=str(OUT), help="Output directory for candidates.json and candidates.md")
+    r.add_argument("--dry-run", action="store_true", help="Compute ranking without writing files")
+    args = ap.parse_args(argv)
+    if args.cmd == "gen":
+        return gen(args.workers)
+    return rank(args.min_docs, args.min_z, args.top, Path(args.out), args.dry_run)
 
 
 if __name__ == "__main__":

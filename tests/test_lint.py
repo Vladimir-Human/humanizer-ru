@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -161,6 +162,59 @@ class PhraseRulesTest(unittest.TestCase):
         rep = lint_style.lint("Первая строка.\n\nВажно отметить, что это вторая.", _rules())
         self.assertEqual(rep["hits"][0]["examples"], [{"text": "Важно отметить", "line": 3}])
 
+    def test_wave2_rules_precision_recall_and_line_numbers(self):
+        rules = _rules()
+        # Quoted speech: nested guillemets, „…“, nested straight quotes, and straight-quote inch/separation guards.
+        self.assertEqual(ids("Он сказал: «Автор писал: «да» и мы рады объявить об этом»."), {})
+        self.assertEqual(ids("Он сказал: „Важно отметить, что это работает“."), {})
+        self.assertEqual(ids('Он сказал: "Эксперимент в условиях "сухой" иммерсии (в данном эксперименте это важно)".'), {})
+        self.assertIn("empty_opener", ids('Он сказал "да", важно отметить, что она сказала "нет".'))
+        self.assertIn("empty_opener", ids('"да","нет" — важно отметить.'))
+        self.assertIn("empty_opener", ids('Монитор 27" стоит дорого, важно отметить, что экран 32" лучше.'))
+        # Inline code & URL masking before phrases (while paste_garbage still catches assistant UTM in URLs).
+        self.assertEqual(ids("Убери `[cite: 1]` и `?utm_source=chatgpt.com` из текста."), {})
+        self.assertEqual(ids("См. https://example.com/уникальный-товар и [ссылка](https://example.com/уникальный-товар)."), {})
+        self.assertIn("unique", ids("См. [Уникальный товар](https://example.com/page)."))
+        # utm_source right boundary: author utm_source=openai_newsletter is clean; assistant openai is caught.
+        self.assertEqual(ids("https://a.ru/?utm_source=openai_newsletter и https://a.ru/?utm_source=openai.ru"), {})
+        self.assertIn("paste_garbage", ids("https://a.ru/?utm_source=openai."))
+        # Evidence-backed rule precision & recall expansions.
+        self.assertNotIn("cleft_imenno", ids("Мы не знали, почему именно он ушёл и что именно они решили."))
+        self.assertNotIn("cleft_imenno", ids("Мы встретились. Именно здесь стоит музей."))
+        self.assertNotIn("kantselyarit", ids("После данного мне совета и данного слова всё решилось."))
+        self.assertNotIn("triad", ids("Купили молоко, масло и мясо. Общество, государство и правительство. Медицинского, аграрного и экономического."))
+        self.assertIn("news_stamp", ids("Позиция остаётся неизменной, об этом неоднократно писали."))
+        self.assertIn("media_metatext", ids("Напомним, что регистрация открыта до пятницы."))
+        self.assertIn("assistant_context", ids("Из предоставленных материалов следует вывод; как языковая модель, не могу проверить, у меня нет доступа к базе."))
+        self.assertIn("symbolism", ids("Этот шаг стал ярким напоминанием и поворотной точкой; город могут похвастаться богатым наследием."))
+        self.assertIn("teaser", ids("**Результат?** Выручка выросла. В чём подвох? Разбираемся в деталях."))
+        self.assertIn("hedge_cascade", ids("В ряде случаев это способен решить алгоритм; возможно, он может помочь."))
+        self.assertIn("chat_wrapper", ids("Если у тебя остались вопросы, пиши.\n[Рассуждения - блок]\n[Ответ]\nИсточник"))
+        self.assertIn("empty_opener", ids("Давай разберём основные шаги."))
+        # Trailing punctuation no longer leaks via \S* in metatext / inflated / etc.
+        mt_rep = lint_style.lint("Ниже перечислены.", rules)
+        self.assertEqual(mt_rep["hits"][0]["examples"][0]["text"], "Ниже перечислены")
+        # Exact line numbers for bold_label and odnako_comma (no off-by-one N-1).
+        rep_ln = lint_style.lint("Строка 1.\n1. **Питьевая дисциплина.** Мы пили воду.\n**Тема: запуск проекта**\nЦена выросла.\nОднако, спрос не упал.", rules)
+        by_id = {h["id"]: h["examples"] for h in rep_ln["hits"]}
+        self.assertEqual(by_id["bold_label"], [
+            {"text": "1. **Питьевая дисциплина.**", "line": 2},
+            {"text": "**Тема: запуск проекта**", "line": 3},
+        ])
+        self.assertEqual(by_id["odnako_comma"], [{"text": "Однако,", "line": 5}])
+        # 2025-2026 paste_garbage tokens (::contentReference, ranges, Claude XML, 2026 citeturn).
+        for leak in (
+            "Факт::contentReference[oaicite:0]{index=0}",
+            "Факт [oaicite:1]{index=1}",
+            "Факт [cite: 1-3] и [cite: 1, 2-4] и [citation: 1] и [web: 2] и [attached_file: 1]",
+            "Факт 【1, 2†source】",
+            "Факт citeturn0product1 и citeturn0finance0 и citeturn0browser2",
+            "Факт <antml:cite index=\"1-1\">текст</antml:cite>",
+            "Факт <cite index=\"1-1\">текст</cite>",
+        ):
+            self.assertIn("paste_garbage", ids(leak), leak)
+        self.assertNotIn("paste_garbage", ids("Книга <cite>Война и мир</cite>."))
+
 
 class MetricsTest(unittest.TestCase):
     def metric(self, text, key):
@@ -265,6 +319,45 @@ class MetricsTest(unittest.TestCase):
         self.assertNotIn("код не проверяется", json.dumps(rep, ensure_ascii=False))
         self.assertIn("Это оценка стиля, а не авторства", lint_style.render(rep))
 
+    def test_wave2_metrics_syntax_invisibles_and_render_bounds(self):
+        rules = _rules()
+        # ZWNJ, stray ZWJ, deprecated format U+206A..206F, U+FFFC, flag+FE0F+tags, leading keycap.
+        self.assertEqual(self.metric("а\u200cктуальность и а\u200dб и \u206a\ufffc и \ufe0f\u20e3", "invisible")["value"], 5.0)
+        self.assertEqual(self.metric("🏳️\U000e0067\U000e0062\U000e007f и 🏳️\u200d🌈 и 1\ufe0f\u20e3", "invisible")["value"], 0.0)
+        # Invisible characters inside string/template/regex literals of code fences & inline code are skipped,
+        # while prose fences (body >=30% Cyrillic, ignoring info string like markdown) still flag invisibles.
+        self.assertEqual(self.metric("```python\ns = 'a\u2062b'\n```\nКод `x = 'a\u2062b'` и ``s = `a\u2062b` ``.", "invisible")["value"], 0.0)
+        self.assertEqual(self.metric("```markdown\ns = 'а\u2062б'\n```", "invisible")["value"], 1.0)
+        self.assertEqual(self.metric("```python\nx = a\u200bb\n```\nКод `y = c\u200bd`.", "invisible")["value"], 2.0)
+        # Multi-backtick / escaped inline code & balanced-parens Markdown links / HTML anchors.
+        self.assertEqual(self.metric("Код ``fn `cиcтeмa` `` и [ссылка](/docs/report_(v1)_cиcтeмa).", "mixed_script")["value"], 0.0)
+        self.assertEqual(self.metric('Напиши \\`cиcтeмa\\` и <a href="https://a.ru">cиcтeмa</a>.', "mixed_script")["value"], 2.0)
+        # Linear 4-backtick / indented / tilde fences stay blanked properly.
+        self.assertEqual(lint_style.lint("````markdown\n```python\nx = 1\n```\nВажно отметить.\n````", rules)["words"], 0)
+        self.assertEqual(lint_style.lint("   ```python\n   Важно отметить\n   ```", rules)["words"], 0)
+        self.assertEqual(lint_style.lint("~~~python\nВажно отметить\n~~~", rules)["words"], 0)
+        # Indented & blockquote list bullets do not trigger dash_per_1000; table sep rows & | boundaries work.
+        bullets = "  - первый пункт\n  - второй пункт\n  - третий пункт\n> - четвёртый пункт\n"
+        self.assertEqual(self.metric(bullets, "dash_per_1000")["value"], 0.0)
+        table = (
+            "| Оценка повышения | эффективности работы |\n"
+            "|---|---|\n"
+            "| Рост ускорения | обслуживания клиентов |\n"
+            + "Обычное предложение для порога в тридцать слов чтобы метрика посчиталась точно " * 3
+        )
+        self.assertEqual(self.metric(table, "nominal_chain")["value"], 0.0)
+        # Pre-1918 & expanded finite verbs in nom_to_verb.
+        pre1918 = (
+            "Онъ былъ въ городѣ, вышелъ изъ дома, пошелъ по улицѣ, могъ видеть свѣтъ и передалъ вѣсть; "
+            "послѣ этого они были въ садѣ, пришли домой, удалось найти решеніе и компанія Германіи и Арменіи "
+            "приняла участіе в новостяхъ."
+        )
+        self.assertFalse(self.metric(pre1918, "nom_to_verb")["over"])
+        # render() prints минимум vs максимум clearly.
+        same = " ".join("Мы делаем отличную работу каждый день." for _ in range(8))
+        self.assertIn("(минимум 0.3)", lint_style.render(lint_style.lint(same, rules)))
+        self.assertIn("(максимум 6)", lint_style.render(lint_style.lint("Мы — команда. Цель — рост. Путь — долгий. Итог — успех.", rules)))
+
 
 class CliTest(unittest.TestCase):
     def run_cli(self, *args, text=None):
@@ -289,12 +382,45 @@ class CliTest(unittest.TestCase):
         self.assertEqual(self.run_cli("-", "--max-score", "1", text="Важно отметить, что всё готово.").returncode, 1)
         self.assertEqual(self.run_cli(str(ROOT / "нет-такого-файла.txt")).returncode, 2)
 
+    def test_cli_hardening_rules_encoding_help_and_bom(self):
+        import contextlib
+        import io
+        import tempfile
+        self.assertEqual(self.run_cli("--help").returncode, 0)
+        self.assertEqual(self.run_cli("-", "--rules", str(ROOT / "нет-правил.json"), text="Привет.").returncode, 2)
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(lint_style.main(["bad\x00path.txt"]), 2)
+        with tempfile.TemporaryDirectory() as td:
+            bad_rules = Path(td) / "bad.json"
+            bad_rules.write_text("{broken", encoding="utf-8")
+            self.assertEqual(self.run_cli("-", "--rules", str(bad_rules), text="Привет.").returncode, 2)
+            cp1251_file = Path(td) / "win.txt"
+            cp1251_file.write_bytes("Важно отметить, что товар готов.".encode("cp1251"))
+            self.assertEqual(self.run_cli(str(cp1251_file)).returncode, 2)
+            ok = self.run_cli(str(cp1251_file), "--encoding", "cp1251", "--json")
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+            self.assertEqual(json.loads(ok.stdout)["hits"][0]["id"], "empty_opener")
+            bom_file = Path(td) / "bom.txt"
+            bom_file.write_bytes(b"\xef\xbb\xbf" + "Привет мир.".encode("utf-8"))
+            bom_rep = json.loads(self.run_cli(str(bom_file), "--json").stdout)
+            self.assertEqual(bom_rep["metrics"]["invisible"]["value"], 1.0)
+            bom_sig = json.loads(self.run_cli(str(bom_file), "--encoding", "utf-8-sig", "--json").stdout)
+            self.assertEqual(bom_sig["metrics"]["invisible"]["value"], 0.0)
+
 
 class JsParityTest(unittest.TestCase):
-    def test_engine_js_gives_the_same_report(self):
+    def _require_node(self):
         node = shutil.which("node")
-        if not node or not (SITE / "cli.js").exists():
-            self.skipTest("node or site/check/cli.js missing")
+        if not node:
+            if os.environ.get("REQUIRE_NODE") == "1":
+                self.fail("REQUIRE_NODE=1 is set but node was not found in PATH")
+            self.skipTest("node missing")
+        return node
+
+    def test_engine_js_gives_the_same_report(self):
+        node = self._require_node()
+        if not (SITE / "cli.js").exists():
+            self.skipTest("site/check/cli.js missing")
         rules = _rules()
         para = "Команда обновила складской учёт за три недели и сократила время сборки заказов вдвое."
         bureaucratic = (
@@ -318,6 +444,14 @@ class JsParityTest(unittest.TestCase):
             "Важно\ufeffотметить. Первая.\ufeffВторая.\x85Третья.\x1eЧетвёртая. Пятая. Шестая. Седьмая. Восьмая.",
             "https://a.ru/\ufeffcиcтeмa\rВажно отметить\u2028Кроме того, тест\u2029## Заголовок\u2028продолжение\nвторая\nтретья\nчетвёртая",
             "İважно отметить и Уникальный " + " ".join(["дом"] * 399),
+            # Wave 2: Turkish İ/ı parity, inner mixed/invisible inside phrase, flags+FE0F, ZWNJ/ZWJ, code literal inv, tables & blockquotes.
+            "[cİte: 1] [cıte: 1] [cİte_start] https://a.ru/?utm_source=openaİ https://a.ru/?utm_source=openaı",
+            "Это не просто cиcтeмa\u200bтест, а решение.",
+            "🏳️\U000e0067\U000e0062\U000e007f и а\u200cб и а\u200dб и \ufe0f\u20e3 и \u206a\ufffc",
+            "😀\n```python\ns = 'a\u2062b'\n```\nКод `x = 'a\u2062b'` и `y = c\u200bd`.",
+            "```markdown\ns = 'а\u2062б'\n```\n```typescript\ncиcтeмa 500 р.\n```",
+            'Он сказал: "Эксперимент "сухой" иммерсии (в данном эксперименте)". Он сказал "да", важно отметить, что она сказала "нет".',
+            "  - пункт 1\n> - пункт 2\n> ## Заголовок\n| А | Б |\n|---|---|\n| В | Г |",
         ]
         corpus_dir = ROOT / "eval" / "corpus" / "texts"
         if corpus_dir.exists():
@@ -363,9 +497,7 @@ class JsParityTest(unittest.TestCase):
                     prev_end = sp["end"]
 
     def test_astral_emoji_fences_and_100kb_redos_budget(self):
-        node = shutil.which("node")
-        if not node:
-            self.skipTest("node missing")
+        node = self._require_node()
         rules = _rules()
         fenced = "```\n🥐🎂\n```\n😀cиcтeмa и важно отметить"
         py_rep = lint_style.lint(fenced, rules)
@@ -386,8 +518,8 @@ class JsParityTest(unittest.TestCase):
         self.assertEqual(out["rep"]["chars"], py_rep["chars"])
         self.assertEqual(out["slices"], ["cиcтeмa", "важно отметить"])
 
-        # Worst-case 100 KB inputs (long non-@ runs, blank-line runs, unclosed [cite: spaces, tag runs) stay < 2s.
-        for probe in ("a" * 100_000, "   \n" * 25_000, "[cite:" + " " * 99_990 + "X", "\U000e0061" * 50_000):
+        # Worst-case 100 KB inputs (long non-@ runs, blank-line runs, unclosed [cite: spaces, tag runs, nested quotes) stay < 2s.
+        for probe in ("a" * 100_000, "   \n" * 25_000, "[cite:" + " " * 99_990 + "X", "\U000e0061" * 50_000, '"' + ' "a"' * 25_000):
             t0 = time.perf_counter()
             lint_style.lint(probe, rules)
             self.assertLess(time.perf_counter() - t0, 2.0)
@@ -396,10 +528,35 @@ class JsParityTest(unittest.TestCase):
         clean_paste.clean(unclosed_code_quote)
         self.assertLess(time.perf_counter() - t0, 2.0)
 
+    def test_annotate_splits_phrase_around_inner_mixed_and_invisible(self):
+        node = self._require_node()
+        sample = "Это не просто cиcтeмa\u200bтест, а решение."
+        js_code = (
+            'const fs = require("node:fs");'
+            'const engine = require(process.argv[1]);'
+            'const rules = engine.loadRules(JSON.parse(fs.readFileSync(process.argv[2], "utf8")));'
+            'const t = JSON.parse(fs.readFileSync(0, "utf8"));'
+            'const spans = engine.annotate(t, rules);'
+            'process.stdout.write(JSON.stringify(spans.map(s => ({...s, slice: t.slice(s.start, s.end)}))));'
+        )
+        res = subprocess.run([node, "-e", js_code, str(SITE / "engine.js"), str(SCRIPTS / "rules.json")],
+                             input=json.dumps(sample), capture_output=True, text=True, encoding="utf-8", timeout=15)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        spans = json.loads(res.stdout)
+        self.assertEqual([(s["kind"], s["id"], s["slice"]) for s in spans], [
+            ("phrase", "false_contrast", "не просто "),
+            ("mixed", "mixed_script", "cиcтeмa"),
+            ("invisible", "invisible", "\u200b"),
+            ("phrase", "false_contrast", "тест, а"),
+        ])
+        self.assertEqual(spans[0]["group"], spans[3]["group"])
+        self.assertEqual(spans[2]["code"], "U+200B")
+        for s in spans:
+            self.assertEqual(s["line"], 1)
+            self.assertTrue(s["hint"])
+
     def test_clean_paste_js_matches_python_byte_for_byte(self):
-        node = shutil.which("node")
-        if not node:
-            self.skipTest("node missing")
+        node = self._require_node()
         samples = [
             "",
             "Чистый русский текст без единого следа: IT-отдел, 160x200, 160х200, См. [14, с. 52] и полета\u202f—\u2009м-ра.",

@@ -1,0 +1,511 @@
+{
+  "h01": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 имя или название на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h02": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 16 имён и названий, 2 цитаты, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h03": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 9 чисел, 7 имён и названий, 2 цитаты, 6 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h04": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 1 имя или название на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h05": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 имя или название на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "h06": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: чисел, дат и имён в тексте нет.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v01": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 имя или название на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v02": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v03": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: чисел, дат и имён в тексте нет.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v04": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: чисел, дат и имён в тексте нет.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v05": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v06": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 2 имени и названия на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v12": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 9 имён и названий, 2 цитаты, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v13": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 12 имён и названий, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v14": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 3 имени и названия, 5 цитат, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v15": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 3 числа, 11 имён и названий, 2 цитаты, 3 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v16": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 11 имён и названий, 3 цитаты, 7 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v17": {
+    "line": "",
+    "in_body": false,
+    "expected": "",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "три",
+      "ноль"
+    ]
+  },
+  "v18": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 2 числа, 8 имён и названий, 1 цитата, 10 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v20": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 4 числа, 1 дата, 7 имён и названий, 6 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v21": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 8 имён и названий, 9 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v22": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 4 имени и названия, 6 отрицаний на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v23": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 4 имени и названия, 1 цитата, 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v25": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 21 число, 4 имени и названия, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "v26": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 4 имени и названия, 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn10430033": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 10 чисел, 2 даты, 15 имён и названий, 7 цитат, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn10473009": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 17 имён и названий, 8 цитат, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn10949256": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 1 дата, 11 имён и названий, 1 цитата, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn11076844": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: в исходнике 6 чисел, 4 имени и названия; в правке нет: три.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "три"
+    ]
+  },
+  "wn11694501": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 5 чисел, 4 имени и названия, 3 цитаты, 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn11803171": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 10 чисел, 29 имён и названий, 7 цитат, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn11824201": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 1 дата, 35 имён и названий, 6 цитат, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn12672170": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 3 числа, 17 имён и названий, 2 цитаты, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn12774697": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 3 числа, 1 дата, 33 имени и названия, 4 цитаты, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn13062817": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 1 число, 8 имён и названий, 1 цитата, 2 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn13067341": {
+    "line": "",
+    "in_body": false,
+    "expected": "",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "2",
+      "105",
+      "30",
+      "178",
+      "210",
+      "222"
+    ]
+  },
+  "wn13426800": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 15 чисел, 1 дата, 27 имён и названий, 2 цитаты, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn13525061": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 5 чисел, 37 имён и названий, 2 цитаты, 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn13905053": {
+    "line": "",
+    "in_body": false,
+    "expected": "",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": [
+      "«не оставалось» в правке стоит без отрицания"
+    ]
+  },
+  "wn14018002": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 12 чисел, 20 имён и названий, 4 цитаты, 4 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn14491361": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 1 дата, 46 имён и названий, 4 цитаты на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn14659951": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 4 числа, 10 имён и названий, 2 цитаты на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn14978971": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 1 дата, 18 имён и названий, 4 цитаты, 3 отрицания на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn7641012": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 6 чисел, 17 имён и названий, 6 цитат на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  },
+  "wn7647134": {
+    "line": "",
+    "in_body": false,
+    "expected": "Сверка скриптом: 18 имён и названий, 2 цитаты, 1 отрицание на месте.",
+    "same_line": false,
+    "facts_ok": false,
+    "stated": {},
+    "counts_match": false,
+    "wrong_counts": {},
+    "script_errors": []
+  }
+}

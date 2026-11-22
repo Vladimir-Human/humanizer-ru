@@ -1,6 +1,7 @@
 [
   {"name": "ours", "title": "humanizer-ru 4 (этот репозиторий)", "kind": "local", "path": "skills/humanizer-ru"},
   {"name": "chat", "title": "humanizer-ru: промпт для чат-ботов (prompt/chat.md)", "kind": "prompt_file", "path": "prompt/chat.md"},
+  {"name": "ours430", "title": "humanizer-ru 4.3.0 (прошлая версия)", "kind": "tag", "ref": "v4.3.0:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "ours410", "title": "humanizer-ru 4.1.0 (прошлая версия)", "kind": "tag", "ref": "v4.1.0:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "ours411", "title": "humanizer-ru 4.1.1 (прошлая версия)", "kind": "tag", "ref": "v4.1.1:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},
   {"name": "ours417", "title": "humanizer-ru 4.1.7 (прошлая версия)", "kind": "tag", "ref": "v4.1.7:skills/humanizer-ru", "paths": ["SKILL.md", "references"]},

@@ -1,12 +1,22 @@
 // START_MODULE_CONTRACT
-// PURPOSE: Retire the legacy-v3 offline service worker (/humanizer-ru/sw.js), purge old CacheStorage
-//          entries (humanizer-ru-*), unregister the worker, and reload open v3 tabs into v4.
+// PURPOSE: Retire the legacy-v3 offline service worker (/humanizer-ru/sw.js), purge only
+//          humanizer-ru CacheStorage entries, navigate legacy v3 tabs into v4 without reloading
+//          active v4 tool routes (/check/, /sverka/), and unregister the worker.
 // SCOPE: Fetched only by browsers that still hold a legacy-v3 service worker registration; v4 pages
 //        do not register a service worker.
 // DEPENDS: Browser ServiceWorkerGlobalScope API.
 // LINKS: M-SITE-CHECK; V-M-SITE-CHECK.
 // END_MODULE_CONTRACT
 "use strict";
+
+function isV4ToolRoute(url) {
+  try {
+    const pathname = new URL(url).pathname;
+    return /(?:^|\/)(?:check|sverka)(?:\/|$)/i.test(pathname);
+  } catch (_) {
+    return false;
+  }
+}
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -20,7 +30,11 @@ self.addEventListener("activate", (event) => {
       } catch (_) {}
       try {
         const keys = await self.caches.keys();
-        await Promise.all(keys.map((key) => self.caches.delete(key)));
+        await Promise.all(
+          keys
+            .filter((key) => key.startsWith("humanizer-ru"))
+            .map((key) => self.caches.delete(key))
+        );
       } catch (_) {}
       let list = [];
       try {
@@ -30,6 +44,7 @@ self.addEventListener("activate", (event) => {
         await self.registration.unregister();
       } catch (_) {}
       for (const client of list) {
+        if (isV4ToolRoute(client.url)) continue;
         try {
           if (typeof client.navigate === "function") {
             await client.navigate(client.url);

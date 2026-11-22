@@ -2,8 +2,9 @@
 <!--
 START_MODULE_CONTRACT
 PURPOSE: Edit in your own chatbot, then check the facts here: copy the prompt, paste the text before
-         and the answer after; the page reports lost, invented and swapped facts and gives a ready
-         request to fix them. Everything runs in the browser.
+         and the answer after; the page reports lost, invented and swapped facts, previews excluded
+         chatbot notes after "---", lets the author copy either the fix request or the clean edit,
+         and bridges to ../check/ with before->after style comparison. Everything runs in the browser.
 SCOPE: Static page; never sends the entered texts over the network (only same-origin fetch of prompt.txt
        and optional one-shot tab sessionStorage handoff with ../check/).
 DEPENDS: ../check/facts.js (window.HumanizerFacts: compare, render, a port of check_facts.py);
@@ -12,9 +13,14 @@ DEPENDS: ../check/facts.js (window.HumanizerFacts: compare, render, a port of ch
 LINKS: M-SITE-SVERKA; R-SITE-FACTS; R-NOTES-NOT-TEXT; R-PORTABLE-PROMPT; R-DETECTOR-RISK.
 END_MODULE_CONTRACT
 START_MODULE_MAP
-HTML: three steps (prompt, two texts, result), link to style check, and a live result region.
-CSS: the notebook palette of site/check, light and dark, phone width first.
-UI: copyPrompt, runCheck (splitNotes -> compare -> render), showResult, fixRequest, toStyleCheck.
+HTML: Top studio nav header landmark, three steps (prompt, two texts with demo trigger, result with
+      fix/clean copy rows), and footer landmark.
+CSS: The notebook palette of site/check, light and dark with semantic --bad/--ok/--warn tokens,
+     >=44px touch targets, phone width first.
+UI: copyPrompt, runCheck (explicit aria-invalid + focus first invalid + splitNotes -> compare -> render),
+    showResult (unhides before populating, identical-text warning, collapsed cut-notes preview),
+    fixRequest (branches cleanly on checks-only), copyClean, insertDemoPair, toStyleCheck (passes
+    humanizer_check + humanizer_before + humanizer_origin).
 END_MODULE_MAP
 -->
 <html lang="ru">
@@ -41,38 +47,53 @@ END_MODULE_MAP
     :root {
       color-scheme: light dark;
       --paper: #f7f8fa; --sheet: #ffffff; --ink: #1b2230; --soft: #4a5468; --rule: #d9dee8;
-      --pencil: #2346a8; --wash: #e6ecfa; --bad: #a3261d; --bad-wash: #fbeceb; --ok: #1f6b3a; --ok-wash: #e8f5ec;
+      --pencil: #2346a8; --wash: #e6ecfa; --bad: #a3261d; --bad-wash: #fbeceb;
+      --ok: #1f6b3a; --ok-wash: #e8f5ec; --warn: #7a4b00; --warn-wash: #fff4d6;
       --display: 'PT Serif', Georgia, 'Times New Roman', serif;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --paper: #12161e; --sheet: #191e28; --ink: #e4e8f0; --soft: #a3adc0; --rule: #2c3442;
-        --pencil: #8fa9f2; --wash: #1f2a44; --bad: #f0928a; --bad-wash: #3a1f1f; --ok: #7fd09a; --ok-wash: #1b3324;
+        --pencil: #8fa9f2; --wash: #1f2a44; --bad: #f0928a; --bad-wash: #3a1f1f;
+        --ok: #7fd09a; --ok-wash: #1b3324; --warn: #f4c66a; --warn-wash: #382c12;
       }
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'PT Sans', 'Segoe UI', system-ui, sans-serif; font-size: 1rem; line-height: 1.55; }
-    .page { max-width: 46rem; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+    .page-header, .page, .page-footer { max-width: 46rem; margin-inline: auto; padding-inline: 1.25rem; }
+    .page-header { padding-top: 1.25rem; padding-bottom: 1.3rem; }
+    .page { padding-bottom: 1.5rem; }
+    .page-footer { padding-bottom: 3rem; }
     a { color: var(--pencil); text-decoration-thickness: 1px; text-underline-offset: .2em; }
     a:hover { text-decoration-thickness: 2px; }
-    .back-link { display: inline-flex; align-items: center; min-height: 2.75rem; padding-block: .45rem; font-size: .95rem; }
-    header { margin: 1rem 0 1.5rem; }
-    .eyebrow { margin: 0 0 .65rem; color: var(--pencil); font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .top-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-bottom: 1.1rem; }
+    .top-nav a {
+      display: inline-flex; align-items: center; min-height: 2.75rem; padding: .45rem .78rem;
+      border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet);
+      font-size: .9rem; line-height: 1.25; text-decoration: none; white-space: nowrap;
+    }
+    .top-nav a[aria-current="page"] { background: var(--wash); border-color: var(--pencil); font-weight: 700; }
+    .top-nav a:hover { background: var(--wash); border-color: var(--pencil); }
+    .eyebrow { margin: 0 0 .55rem; color: var(--pencil); font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
     h1 { margin: 0; font-family: var(--display); font-size: clamp(1.75rem, 4.5vw, 2.25rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.18; text-wrap: balance; }
-    .lead { max-width: 42rem; margin: .9rem 0 0; color: var(--soft); line-height: 1.6; }
-    .privacy-note { margin: .85rem 0 0; padding-left: .7rem; border-left: 2px solid var(--pencil); color: var(--pencil); font-size: .9rem; }
-    .step { margin-top: 1.5rem; padding: 1.25rem; background: var(--sheet); border: 1px solid var(--rule); border-top: 3px solid var(--pencil); border-radius: 4px; }
-    .step h2 { display: flex; gap: .7rem; align-items: baseline; margin: 0 0 .5rem; font-size: 1.15rem; line-height: 1.35; }
+    .lead { max-width: 42rem; margin: .8rem 0 0; color: var(--soft); line-height: 1.6; }
+    .privacy-note { margin: .75rem 0 0; padding-left: .7rem; border-left: 2px solid var(--pencil); color: var(--pencil); font-size: .9rem; }
+    .step { margin-top: 1.35rem; padding: 1.2rem 1.25rem; background: var(--sheet); border: 1px solid var(--rule); border-top: 3px solid var(--pencil); border-radius: 4px; }
+    .step:first-child { margin-top: 0; }
+    .step-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .65rem; }
+    .step h2 { display: flex; gap: .7rem; align-items: baseline; margin: 0 0 .45rem; font-size: 1.15rem; line-height: 1.35; }
+    .step-head h2 { margin-bottom: 0; }
     .num { flex: 0 0 auto; color: var(--pencil); font-variant-numeric: tabular-nums; font-size: .8rem; font-weight: 400; }
     .step p { margin: .35rem 0; overflow-wrap: anywhere; }
-    label { display: block; margin: .9rem 0 .35rem; font-weight: 600; }
+    label { display: block; margin: .85rem 0 .35rem; font-weight: 600; }
     .hint { color: var(--soft); font-size: .9rem; font-weight: 400; }
     textarea { display: block; width: 100%; min-height: 9rem; padding: .8rem .95rem; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); color: var(--ink); font: inherit; font-size: 1rem; line-height: 1.6; resize: vertical; caret-color: var(--pencil); }
     textarea::placeholder { color: var(--soft); opacity: 1; }
     textarea[aria-invalid="true"] { border-color: var(--bad); }
-    button { cursor: pointer; min-height: 2.75rem; padding: .55rem 1.15rem; border: 1px solid var(--pencil); border-radius: 4px; background: var(--pencil); color: var(--sheet); font: inherit; font-weight: 700; line-height: 1.35; }
+    button { cursor: pointer; min-height: 2.75rem; padding: .55rem 1.05rem; border: 1px solid var(--pencil); border-radius: 4px; background: var(--pencil); color: var(--sheet); font: inherit; font-weight: 700; line-height: 1.35; }
     button.quiet { background: transparent; color: var(--pencil); font-weight: 600; }
+    button.compact { padding: .45rem .8rem; font-size: .9rem; }
     button:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); }
     button.quiet:hover:not(:disabled) { background: var(--wash); border-color: var(--pencil); }
     button:disabled { border-color: var(--rule); background: var(--wash); color: var(--soft); cursor: not-allowed; }
@@ -81,21 +102,29 @@ END_MODULE_MAP
     .status { margin: 0; color: var(--soft); font-size: .9rem; overflow-wrap: anywhere; }
     .status.is-error { color: var(--bad); font-weight: 600; }
     details { margin-top: .45rem; }
-    summary { padding: .65rem 0; cursor: pointer; color: var(--pencil); font-weight: 600; user-select: none; }
+    summary { display: flex; align-items: center; min-height: 2.75rem; padding: .45rem 0; cursor: pointer; color: var(--pencil); font-weight: 600; user-select: none; }
     details pre { margin: .25rem 0 0; max-height: 18rem; overflow: auto; -webkit-overflow-scrolling: touch; padding: .75rem .85rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; line-height: 1.5; }
+    .result.is-stale { opacity: .72; transition: opacity 150ms ease; }
+    .stale-note { margin: .45rem 0 .65rem; padding: .5rem .75rem; border-left: 3px solid var(--pencil); background: var(--wash); color: var(--ink); font-size: .88rem; display: none; }
+    .result.is-stale .stale-note { display: block; }
     .verdict { margin: .2rem 0 .6rem; padding: .75rem .95rem; border-radius: 4px; font-weight: 600; }
     .verdict.bad { background: var(--bad-wash); color: var(--bad); }
     .verdict.ok { background: var(--ok-wash); color: var(--ok); }
+    .verdict.warn { background: var(--warn-wash); color: var(--warn); }
     .result h3 { margin: 1rem 0 .35rem; font-size: 1rem; }
     .result ul { margin: .25rem 0; padding-left: 1.25rem; }
     .result li { margin: .35rem 0; line-height: 1.5; overflow-wrap: anywhere; }
     .result .errors li { color: var(--bad); }
     .note { color: var(--soft); font-size: .92rem; }
-    .footer-note { margin-top: 1.5rem; color: var(--soft); font-size: .85rem; }
+    .footer-note { margin: 0; padding-top: 1.2rem; border-top: 1px solid var(--rule); color: var(--soft); font-size: .85rem; }
+    @media (prefers-reduced-motion: reduce) {
+      .result.is-stale { transition: none; }
+    }
     @media (max-width: 36rem) {
-      .page { padding: .85rem 1rem 2.5rem; }
-      header { margin: .75rem 0 1.25rem; }
-      .step { padding: 1rem; margin-top: 1.25rem; }
+      .page-header { padding: .85rem 1rem 1rem; }
+      .page { padding: 0 1rem 1.25rem; }
+      .page-footer { padding: 0 1rem 2.5rem; }
+      .step { padding: .95rem 1rem; margin-top: 1.1rem; }
       textarea { min-height: 8.5rem; padding: .75rem .85rem; }
       .row { flex-direction: column; align-items: stretch; }
       .row button { width: 100%; }
@@ -107,34 +136,41 @@ END_MODULE_MAP
 </head>
 <body>
   <!-- START_BLOCK_HTML -->
-  <main class="page">
-    <a class="back-link" href="../">← humanizer-ru</a>
-    <header>
-      <p class="eyebrow">humanizer-ru · правка в вашем чат-боте</p>
-      <h1>Сверка фактов после правки</h1>
-      <p class="lead">Нейросеть, которая делает текст живее, иногда теряет цифру, меняет суммы местами или убирает «около». Вставьте текст до и после — страница покажет, что пропало, что появилось и что проверить глазами.</p>
-      <p id="privacy-note" class="privacy-note">Тексты не покидают браузер: сверка работает без сети.</p>
-    </header>
+  <header class="page-header">
+    <nav class="top-nav" aria-label="Навигация">
+      <a class="back-link" href="../">Главная</a>
+      <a href="../check/">Проверка стиля</a>
+      <a href="./" aria-current="page">Сверка фактов</a>
+    </nav>
+    <p class="eyebrow">humanizer-ru · правка в вашем чат-боте</p>
+    <h1>Сверка фактов после правки</h1>
+    <p class="lead">Нейросеть, которая делает текст живее, иногда теряет цифру, меняет суммы местами или убирает «около». Вставьте текст до и после — страница покажет, что пропало, что появилось и что проверить глазами.</p>
+    <p id="privacy-note" class="privacy-note">Тексты не покидают браузер: сверка работает без сети.</p>
+  </header>
 
+  <main class="page">
     <section class="step" aria-labelledby="step1">
       <h2 id="step1"><span class="num" aria-hidden="true">01</span>Промпт для чат-бота</h2>
-      <p>Скопируйте готовую инструкцию (промпт) в начало нового чата в GigaChat, Алисе, DeepSeek, ChatGPT или Claude и пришлите свой текст: промпт велит не трогать факты и спросить вас, если подробностей не хватает. Если правка уже готова, пропустите шаг 01 и сразу вставьте тексты до и после.</p>
+      <p>Скопируйте промпт в новый чат (GigaChat, Алиса, DeepSeek, ChatGPT, Claude) и пришлите текст; если правка уже готова, переходите к шагу 02.</p>
       <div class="row">
         <button id="copy-prompt" class="quiet" type="button" disabled>Скопировать промпт</button>
         <p id="prompt-status" class="status" role="status" aria-live="polite">Загружаем промпт…</p>
       </div>
       <details>
         <summary>Показать промпт</summary>
-        <pre id="prompt-text"></pre>
+        <pre id="prompt-text" tabindex="0">Загружаем текст промпта…</pre>
       </details>
     </section>
 
     <form id="facts-form" class="step" autocomplete="off" novalidate aria-labelledby="step2">
-      <h2 id="step2"><span class="num" aria-hidden="true">02</span>Текст до и после</h2>
+      <div class="step-head">
+        <h2 id="step2"><span class="num" aria-hidden="true">02</span>Текст до и после</h2>
+        <button id="demo-pair" class="quiet compact" type="button">Вставить пример</button>
+      </div>
       <label for="before">До правки <span class="hint">— исходный текст</span></label>
-      <textarea id="before" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note" placeholder="Вставьте текст, который отправили на правку."></textarea>
+      <textarea id="before" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note form-status" placeholder="Вставьте текст, который отправили на правку."></textarea>
       <label for="after">После <span class="hint">— ответ чат-бота целиком; заметки после строки «---» в сверку не идут</span></label>
-      <textarea id="after" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note" placeholder="Вставьте ответ чат-бота."></textarea>
+      <textarea id="after" spellcheck="false" autocapitalize="off" aria-describedby="privacy-note form-status" placeholder="Вставьте ответ чат-бота. Отправка — Ctrl+Enter (Cmd+Enter)."></textarea>
       <div class="row">
         <button id="check-button" type="submit" disabled>Сверить</button>
         <button id="to-check" class="quiet" type="button">Проверить стиль правки →</button>
@@ -145,15 +181,22 @@ END_MODULE_MAP
 
     <section id="result" class="step result" aria-labelledby="step3" hidden>
       <h2 id="step3"><span class="num" aria-hidden="true">03</span>Результат</h2>
-      <div id="result-body" aria-live="polite" aria-atomic="true"></div>
+      <p class="stale-note">Текст изменён после последней сверки — нажмите «Сверить» или Ctrl+Enter, чтобы обновить результат.</p>
+      <div id="result-body"></div>
       <div class="row" id="fix-row" hidden>
         <button id="copy-fix" type="button">Скопировать просьбу исправить</button>
         <p id="fix-status" class="status" role="status" aria-live="polite"></p>
       </div>
+      <div class="row" id="clean-row" hidden>
+        <button id="copy-clean" class="quiet" type="button">Скопировать правку</button>
+        <p id="clean-status" class="status" role="status" aria-live="polite"></p>
+      </div>
     </section>
-
-    <p class="footer-note">Сверка ищет числа, даты, время, имена и названия, ссылки, телефоны, цитаты, отрицания, оговорки («около», «может») и кто что получил. Если ошибок нет, это не гарантия смысла: перечитайте условия и связи. Это та же проверка, что <code>check_facts.py</code> в навыке humanizer-ru; код страницы открыт: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/site">site/</a>.</p>
   </main>
+
+  <footer class="page-footer">
+    <p class="footer-note">Сверка ищет числа, даты, время, имена и названия, ссылки, телефоны, цитаты, отрицания, оговорки («около», «может») и кто что получил. Если ошибок нет, это не гарантия смысла: перечитайте условия и связи. Это та же проверка, что <code>check_facts.py</code> в навыке humanizer-ru; код страницы открыт: <a href="https://github.com/Vladimir-Human/humanizer-ru/tree/main/site">site/</a>.</p>
+  </footer>
   <!-- END_BLOCK_HTML -->
 
   <script>
@@ -163,8 +206,18 @@ END_MODULE_MAP
       const $ = id => document.getElementById(id);
       const form = $("facts-form"), before = $("before"), after = $("after"), checkButton = $("check-button");
       const status = $("form-status"), result = $("result"), body = $("result-body");
-      const fixRow = $("fix-row"), fixStatus = $("fix-status");
-      let prompt = "", fix = "";
+      const fixRow = $("fix-row"), copyFixBtn = $("copy-fix"), fixStatus = $("fix-status");
+      const cleanRow = $("clean-row"), copyCleanBtn = $("copy-clean"), cleanStatus = $("clean-status");
+      const demoButton = $("demo-pair");
+      let prompt = "", fix = "", lastCleanEdit = "";
+
+      const DEMO_BEFORE = "С 15 октября тариф Базовый стоит 500 ₽, а Про — 900 ₽. Подключение занимает около 10 минут.";
+      const DEMO_AFTER = [
+        "Тариф Базовый стоит 900 ₽, а Про — 500 ₽. Подключение занимает 10 минут.",
+        "",
+        "---",
+        "Убрал лишние слова, оставил основные условия тарифов."
+      ].join("\n");
 
       function el(tag, className, text) {
         const node = document.createElement(tag);
@@ -178,6 +231,12 @@ END_MODULE_MAP
         node.classList.toggle("is-error", isError);
       }
 
+      function scrollBehavior() {
+        return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth";
+      }
+
       // Russian plural: 1 число, 2 числа, 5 чисел.
       function plural(n, forms) {
         const a = n % 10, b = n % 100;
@@ -186,7 +245,7 @@ END_MODULE_MAP
 
       const COUNTS = [
         ["number", ["число", "числа", "чисел"]], ["date", ["дата", "даты", "дат"]],
-        ["name", ["имя или название", "имени и названия", "имён и названий"]], ["url", ["ссылка", "ссылки", "ссылок"]],
+        ["name", ["имя или название", "имени или названия", "имён или названий"]], ["url", ["ссылка", "ссылки", "ссылок"]],
         ["phone", ["телефон", "телефона", "телефонов"]], ["quote", ["цитата", "цитаты", "цитат"]],
         ["negation", ["отрицание", "отрицания", "отрицаний"]]
       ];
@@ -212,24 +271,39 @@ END_MODULE_MAP
       // END_CONTRACT: fixRequest
       function fixRequest(lines) {
         if (!lines.errors.length && !lines.checks.length) return "";
-        const parts = ["Сверь свою правку с исходным текстом. Ничего больше не меняй, только исправь это:"];
-        for (const e of lines.errors) parts.push("- " + e);
-        if (lines.checks.length) {
-          parts.push("", "И проверь, не изменился ли смысл:");
+        const parts = [];
+        if (lines.errors.length) {
+          parts.push("Сверь свою правку с исходным текстом. Ничего больше не меняй, только исправь это:");
+          for (const e of lines.errors) parts.push("- " + e);
+          if (lines.checks.length) {
+            parts.push("", "И проверь, не изменился ли смысл:");
+            for (const c of lines.checks) parts.push("- " + c);
+          }
+        } else {
+          parts.push("Сверь свою правку с исходным текстом. Ничего лишнего не меняй, только проверь, не изменился ли смысл в этих местах:");
           for (const c of lines.checks) parts.push("- " + c);
         }
         parts.push("", "Верни текст целиком.");
         return parts.join("\n");
       }
 
-      function showResult(res, lines, notesCut) {
+      function showResult(res, lines, cutNotes, cleanEdit, identicalTexts) {
+        // Unhide result before populating to avoid hidden-container timing races.
+        result.hidden = false;
+        result.classList.remove("is-stale");
         body.replaceChildren();
         const present = COUNTS.filter(([k]) => res.counts[k] > 0).map(([k, f]) => plural(res.counts[k], f));
         const bad = lines.errors.length > 0;
-        body.append(el("p", "verdict " + (bad ? "bad" : "ok"),
-          bad ? "Есть ошибки: " + lines.errors.length + ". Верните факты в текст."
-              : "Ошибок не найдено" + (present.length ? ": " + present.join(", ") + " на месте." : ".")));
-        if (present.length && bad) body.append(el("p", "note", "В исходнике: " + present.join(", ") + "."));
+        if (identicalTexts) {
+          body.append(el("p", "verdict warn",
+            "Тексты до и после полностью совпадают — проверьте, не вставили ли вы один и тот же текст в оба поля."));
+          if (present.length) body.append(el("p", "note", "В тексте: " + present.join(", ") + "."));
+        } else {
+          body.append(el("p", "verdict " + (bad ? "bad" : "ok"),
+            bad ? "Есть ошибки: " + lines.errors.length + ". Верните факты в текст."
+                : "Ошибок не найдено" + (present.length ? ": " + present.join(", ") + " на месте." : ".")));
+          if (present.length && bad) body.append(el("p", "note", "В исходнике: " + present.join(", ") + "."));
+        }
         for (const [title, items, cls] of [["Ошибки", lines.errors, "errors"], ["Проверьте глазами", lines.checks, "checks"],
                                            ["Убрано вместе со служебными строками чат-бота (не ошибка, но проверьте, что это не текст автора)", lines.service, "service"]]) {
           if (!items.length) continue;
@@ -238,28 +312,62 @@ END_MODULE_MAP
           for (const item of items) ul.append(el("li", "", item));
           body.append(ul);
         }
-        if (notesCut) body.append(el("p", "note", "Заметки чат-бота после строки «---» в сверку не вошли."));
+        if (cutNotes) {
+          const details = el("details", "cut-notes");
+          details.id = "cut-notes-details";
+          details.append(el("summary", "", "Заметки чат-бота после строки «---» в сверку не вошли (показать)"));
+          const pre = el("pre", "", cutNotes);
+          pre.tabIndex = 0;
+          details.append(pre);
+          body.append(details);
+        }
         fix = fixRequest(lines);
+        lastCleanEdit = cleanEdit;
+        copyFixBtn.textContent = lines.errors.length
+          ? "Скопировать просьбу исправить"
+          : "Скопировать просьбу проверить";
+        copyFixBtn.disabled = !fix;
         fixRow.hidden = !fix;
         fixStatus.textContent = "";
-        result.hidden = false;
+        copyCleanBtn.textContent = cutNotes ? "Скопировать правку без заметок" : "Скопировать правку";
+        copyCleanBtn.disabled = !lastCleanEdit;
+        cleanRow.hidden = !lastCleanEdit;
+        cleanStatus.textContent = "";
       }
 
       function runCheck(event) {
-        event.preventDefault();
+        if (event) event.preventDefault();
         const facts = window.HumanizerFacts, notes = window.HumanizerNotes;
         if (!facts || !notes) { setStatus(status, "Сверка не загрузилась. Обновите страницу.", true); return; }
-        for (const box of [before, after]) box.toggleAttribute("aria-invalid", !box.value.trim());
-        if (!before.value.trim() || !after.value.trim()) {
+        for (const box of [before, after]) {
+          if (!box.value.trim()) box.setAttribute("aria-invalid", "true");
+          else box.removeAttribute("aria-invalid");
+        }
+        const firstBad = !before.value.trim() ? before : !after.value.trim() ? after : null;
+        if (firstBad) {
           setStatus(status, "Вставьте оба текста: до и после правки.", true);
+          firstBad.focus();
           return;
         }
         try {
           const [edit, cut] = notes.splitNotes(after.value, before.value);
+          const identical = before.value.trim() === edit.trim();
           const res = facts.compare(before.value, edit);
-          showResult(res, sections(facts.render(res)), Boolean(cut));
-          setStatus(status, "Готово. Результат ниже.");
-          result.scrollIntoView({ behavior: "smooth", block: "start" });
+          const parsed = sections(facts.render(res));
+          showResult(res, parsed, cut, edit, identical);
+          if (identical) {
+            setStatus(status, "Готово: тексты полностью совпадают. Результат ниже.");
+          } else if (parsed.errors.length) {
+            setStatus(status, "Готово: найдено ошибок — " + parsed.errors.length +
+              (parsed.checks.length ? ", пунктов на проверку глазами — " + parsed.checks.length : "") +
+              ". Результат ниже.");
+          } else if (parsed.checks.length) {
+            setStatus(status, "Готово: ошибок не найдено, есть пунктов на проверку глазами — " +
+              parsed.checks.length + ". Результат ниже.");
+          } else {
+            setStatus(status, "Готово: ошибок не найдено. Результат ниже.");
+          }
+          result.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
         } catch (err) {
           setStatus(status, "Не удалось сверить тексты. Они остались в полях; попробуйте ещё раз.", true);
           console.error("[M-SITE-SVERKA][BLOCK_UI] check failed", err);
@@ -284,41 +392,98 @@ END_MODULE_MAP
           $("copy-prompt").disabled = false;
           setStatus($("prompt-status"), "Промпт готов (" + plural(prompt.length, ["знак", "знака", "знаков"]) + ").");
         } catch {
+          $("prompt-text").textContent = "Не удалось загрузить prompt.txt. Откройте файл prompt/chat.md в репозитории humanizer-ru и скопируйте текст между метками prompt:start и prompt:end.";
           setStatus($("prompt-status"), "Промпт не загрузился. Он есть в репозитории: prompt/chat.md.", true);
         }
       }
 
+      function insertDemoPair() {
+        before.value = DEMO_BEFORE;
+        after.value = DEMO_AFTER;
+        before.removeAttribute("aria-invalid");
+        after.removeAttribute("aria-invalid");
+        if (window.HumanizerFacts && window.HumanizerNotes) {
+          runCheck();
+        } else {
+          setStatus(status, "Пример вставлен. Дождитесь загрузки сверки и нажмите «Сверить».");
+        }
+      }
+
       form.addEventListener("submit", runCheck);
-      for (const box of [before, after]) box.addEventListener("input", () => {
-        box.removeAttribute("aria-invalid");
-        if (!result.hidden) setStatus(status, "Текст изменён. Нажмите «Сверить» ещё раз.");
-      });
+      demoButton.addEventListener("click", insertDemoPair);
+      for (const box of [before, after]) {
+        box.addEventListener("input", () => {
+          box.removeAttribute("aria-invalid");
+          if (!result.hidden) {
+            result.classList.add("is-stale");
+            copyFixBtn.disabled = true;
+            copyCleanBtn.disabled = true;
+            setStatus(status, "Текст изменён. Нажмите «Сверить» ещё раз.");
+          }
+        });
+        box.addEventListener("keydown", (event) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            if (!checkButton.disabled) form.requestSubmit();
+          }
+        });
+      }
       $("copy-prompt").addEventListener("click", () => copy(prompt, $("prompt-status"), "Промпт скопирован. Вставьте его в начало нового чата."));
-      $("copy-fix").addEventListener("click", () => copy(fix, fixStatus, "Скопировано. Вставьте это в тот же чат."));
+      copyFixBtn.addEventListener("click", () => copy(fix, fixStatus, "Скопировано. Вставьте это в тот же чат."));
+      copyCleanBtn.addEventListener("click", () => copy(lastCleanEdit, cleanStatus, "Чистая правка скопирована."));
       $("to-check").addEventListener("click", () => {
         const raw = after.value.trim();
-        if (raw) {
-          const edit = window.HumanizerNotes ? window.HumanizerNotes.splitNotes(after.value, before.value)[0] : raw;
-          try {
+        try {
+          sessionStorage.removeItem("humanizer_check");
+          sessionStorage.removeItem("humanizer_before");
+          sessionStorage.removeItem("humanizer_origin");
+          if (raw) {
+            const edit = window.HumanizerNotes ? window.HumanizerNotes.splitNotes(after.value, before.value)[0] : raw;
             sessionStorage.setItem("humanizer_check", edit || raw);
-          } catch {
-            setStatus(status, "Хранилище вкладки недоступно (превышен лимит или режим приватности). Скопируйте правку вручную и откройте «Проверку стиля».", true);
-            return;
+            sessionStorage.setItem("humanizer_origin", "after");
+            if (before.value.trim()) {
+              sessionStorage.setItem("humanizer_before", before.value);
+            }
           }
+        } catch {
+          setStatus(status, "Хранилище вкладки недоступно (превышен лимит или режим приватности). Скопируйте правку вручную и откройте «Проверку стиля».", true);
+          return;
         }
         window.location.href = "../check/";
       });
       document.addEventListener("DOMContentLoaded", () => {
+        let receivedSource = false;
+        let receivedAfter = false;
         try {
-          const saved = sessionStorage.getItem("humanizer_source");
-          if (saved && !before.value.trim()) {
-            before.value = saved;
-            sessionStorage.removeItem("humanizer_source");
+          const savedSource = sessionStorage.getItem("humanizer_source");
+          const savedAfter = sessionStorage.getItem("humanizer_after");
+          sessionStorage.removeItem("humanizer_source");
+          sessionStorage.removeItem("humanizer_after");
+          if (savedSource && !before.value.trim()) {
+            before.value = savedSource;
+            receivedSource = true;
+          }
+          if (savedAfter && !after.value.trim()) {
+            after.value = savedAfter;
+            receivedAfter = true;
           }
         } catch {}
-        const ready = window.HumanizerFacts && window.HumanizerNotes;
+        const ready = Boolean(window.HumanizerFacts && window.HumanizerNotes);
         checkButton.disabled = !ready;
-        setStatus(status, ready ? "Можно сверять." : "Сверка не загрузилась. Обновите страницу.", !ready);
+        if (!ready) {
+          setStatus(status, "Сверка не загрузилась. Обновите страницу.", true);
+        } else if (receivedSource && receivedAfter) {
+          setStatus(status, "Исходник и правка перенесены со страницы проверки стиля. Нажмите «Сверить».");
+          checkButton.focus();
+        } else if (receivedAfter) {
+          setStatus(status, "Правка перенесена со страницы проверки стиля. Вставьте исходник и нажмите «Сверить».");
+          if (!before.value.trim()) before.focus();
+        } else if (receivedSource) {
+          setStatus(status, "Исходный текст перенесён со страницы проверки стиля. Вставьте правку и нажмите «Сверить».");
+          if (!after.value.trim()) after.focus();
+        } else {
+          setStatus(status, "Можно сверять.");
+        }
         loadPrompt();
       }, { once: true });
     })();

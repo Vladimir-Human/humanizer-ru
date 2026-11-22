@@ -61,7 +61,14 @@ and others):
 npx skills add Vladimir-Human/humanizer-ru
 ```
 
-Claude Code plugin (receives updates through `/plugin`):
+Claude Code plugin — run `/plugin` commands inside Claude Code itself (not in a system shell);
+updates then arrive via `/plugin`:
+
+```text
+/plugin install humanizer-ru --marketplace Vladimir-Human/humanizer-ru
+```
+
+Or in two steps (older Claude Code versions):
 
 ```text
 /plugin marketplace add Vladimir-Human/humanizer-ru
@@ -71,23 +78,34 @@ Claude Code plugin (receives updates through `/plugin`):
 For Claude's plugin directory the package is built under `humanizer-russian`; the skill itself is
 named `humanizer-ru` everywhere.
 
-Gemini CLI extension:
+Cursor (recommended, installs only the skill without `eval/`):
+
+```bash
+npx skills add Vladimir-Human/humanizer-ru -a cursor
+```
+
+Or clone as a local plugin via `.cursor-plugin/plugin.json` using `--depth 1`:
+
+```bash
+git clone --depth 1 https://github.com/Vladimir-Human/humanizer-ru ~/.cursor/plugins/local/humanizer-ru
+```
+
+On Windows, replace `~` with `$HOME/.cursor/plugins/local/humanizer-ru` in PowerShell or
+`%USERPROFILE%\.cursor\plugins\local\humanizer-ru` in `cmd.exe`.
+
+Gemini CLI: install only the skill via `npx skills add Vladimir-Human/humanizer-ru -a gemini-cli`,
+or as an extension:
 
 ```bash
 gemini extensions install https://github.com/Vladimir-Human/humanizer-ru
-```
-
-Cursor also loads the repository directly from its local plugin folder via `.cursor-plugin/plugin.json`:
-
-```bash
-git clone https://github.com/Vladimir-Human/humanizer-ru ~/.cursor/plugins/local/humanizer-ru
 ```
 
 Claude.ai: download `humanizer-ru-skill.zip` from the
 [latest release](https://github.com/Vladimir-Human/humanizer-ru/releases/latest) and upload it
 in Settings → Capabilities → Skills.
 
-Manual: copy `skills/humanizer-ru` into `~/.claude/skills/` or `~/.agents/skills/`.
+Manual: copy `skills/humanizer-ru` (preserving `humanizer-ru/SKILL.md`) into `~/.claude/skills/`
+(Claude Code) or `~/.agents/skills/` (Codex; `$HOME` in PowerShell / `%USERPROFILE%` in `cmd.exe`).
 
 ## Comparison with other skills
 
@@ -97,7 +115,56 @@ would you send with the least editing" while listing meaning errors. Each judge 
 meaning error counts when a majority of judges flag it. Acceptance gates are fixed before generating
 the evaluation texts.
 
-### 4.3.0 benchmark (November 2026)
+### 4.4.0 benchmark (November 2026)
+
+After upgrading the scripts, browser studio, references and eval pipeline — and after diagnostic runs
+`holdout6`–`holdout8` caught over-cautiousness from accumulated `SKILL.md` rewrites — the skill prose
+was reset onto the proven `4.3.0` baseline with four targeted additions and evaluated blind on a fresh
+18-text set (`holdout9`: 16 AI texts + 2 traps, Russian Civil Code Art. 309–310 and footnoted Turgenev
+prose). Eight isolated `Gemini 4 Neon XHigh` executors ran with a terminal, and a **single-family
+4-model Gemini 4 blind judge panel** (`argon`, `carbon`, `hydrogen`, `neon` × 2 independent shuffles =
+144 passes at `$0.00` spend; post-`---` notes and `Сверка скриптом:` receipts were stripped before
+judging with `0/18` leaks). Alongside it, 72 deterministic probes across 17 rules (`MiniMax M3.1 Flash
+--bare`, two passes = 144 checks), 45 human/trap controls and `lint_style.py` calibration were rerun.
+Raw mean AI style score was `7.70`; lower is better for mean rank, errors and style score.
+
+| Participant | Rank | 1st places | Introduced errors | AI style score | Probes (72×2) |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **humanizer-ru 4.4.0** | **2.14** | 30 / 128 | **0** (1* src) | **0.00** (16/16) | **96.5%** (139/144) |
+| humanizer-ru 4.3.0 | 1.86 | 54 / 128 | 0 | 0.00 (16/16) | 91.0% (131/144) |
+| one-line prompt | 2.27 | 44 / 128 | 6 | 6.28 | 63.9% (92/144) |
+| [ilyautov/humanizer-ru](https://github.com/ilyautov/humanizer-ru) | 3.73 | 0 / 128 | 0 | 1.57 | — |
+
+- Blind `holdout9` ranking (single-family 4-model Gemini 4 panel). On prose quality `4.4.0` sits at
+  statistical parity with `4.3.0` (`42%`, 95% CI `23–62%`, agreed `4:6`, `p = 0.828`, body
+  `text_similarity 0.596` vs `0.602`), beats `ilyautov` in **`89%`** of comparisons (CI `80–97%`,
+  unanimous `11:0`, `p = 0.000`) and leads the one-line prompt in **`55%`** (`5:4`, while the one-line
+  prompt made majority meaning errors in `6` of `16` texts, triggered `30` script flags and rewrote
+  Civil Code Art. 309–310). Mean AI `lint_style.py` dropped from `7.70` to **`0.00` across all 16 AI
+  texts**, `R-RECEIPT` matched verbatim in **`17` of `18`** answers, real `check_facts.py` losses were
+  **`0`**, and introduced meaning errors were **`0`**. The single majority judge flag `h9_02` (`*`) was
+  a built-in contradiction in the MiniMax source itself that the skill intentionally preserved and
+  flagged in its post-`---` author note (which blind judges did not see). Both traps survived verbatim
+  (`text_similarity 1.000` on both `4.4.0` and `4.3.0`, send-as-is `10.0/10`, `0` errors; raw file
+  `similarity 0.915` vs `0.936` reflects only a slightly longer author note after `---`). Reports:
+  [summary.md](eval/results/holdout9-2026-11-21/summary.md),
+  [frontier.md](eval/results/holdout9-2026-11-21/frontier.md) and
+  [receipt.md](eval/results/holdout9-2026-11-21/receipt.md) (in Russian).
+- Decisive deterministic gains in 4.4.0 (probes, human controls, linter calibration). Across 72 rule
+  probes ([probes.md](eval/results/probes-440-2026-11-21/probes.md)), `humanizer-ru 4.4.0` scored
+  **`139` of `144`** (`+8` over `4.3.0`: `8/8` on `embedded_quote` vs `3/8`, `16/16` on prompt-injection
+  vs `14/16`, `0` consistent 2/2 failures), and [prompt/chat.md](prompt/chat.md) (`3,995` chars) climbed
+  to **`135` of `144`** (`+10` on the baseline `pr01–64` set). On 45 human and trap controls
+  ([m2-human-440/summary.md](eval/results/m2-human-440-2026-11-21/summary.md)), similarity rose from
+  `0.873` to **`0.878`** (traps `0.93` → **`0.97`**) while script errors dropped from `5` to **`4`**
+  (`0/6` trap errors, `0/45` fabricated receipts). In `lint_style.py` calibration
+  ([calibration.md](eval/results/style-lint/calibration.md)), human-control `G2` clean rate rose from
+  `73%` to **`76%`**, `high` false alarms dropped from `2%` to **`0%`**, and `nom_to_verb` fell from
+  `13%` to `7%` while AI recall rose across `G3` (`60% → 64%`), `G5` (`17% → 33%`) and `G6`
+  (`16% → 23%`). Diagnostic runs `holdout6`–`holdout8` are published alongside `holdout9` in
+  `eval/results/`.
+
+### 4.3.0 benchmark (November 2026, 3 labs)
 
 Blind terminal comparison on 12 fresh AI texts and 2 human/legal traps (a contract clause and
 footnoted classic prose that should not be rewritten). Executor: Claude Sonnet 4.6; three flagship
@@ -202,28 +269,35 @@ Three zero-dependency Python 3.8+ standard-library scripts ship inside the skill
 agents invoke them automatically; you can also run them directly:
 
 ```bash
-python skills/humanizer-ru/scripts/check_facts.py before.txt after.txt
-python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place
-python skills/humanizer-ru/scripts/lint_style.py text.txt
+python skills/humanizer-ru/scripts/check_facts.py before.txt after.txt --json
+python skills/humanizer-ru/scripts/clean_paste.py text.txt --in-place --exit-zero
+python skills/humanizer-ru/scripts/lint_style.py text.txt --max-score 5.0
 ```
+
+All three scripts read from `stdin` when `-` is passed instead of a file path (e.g.
+`cat text.txt | python skills/humanizer-ru/scripts/lint_style.py - --json`).
 
 - `check_facts.py` compares source and edit to flag missing or added numbers, currencies, dates,
   names, `[14, с. 52]` literature citations and URLs, flipped negations, amounts swapped across
   people, products or tariffs, shifted hedges and dropped HTML tags. It ends with the
-  «Сверка скриптом: …» summary line copied verbatim into the skill's notes. Values removed with
-  chatbot wrapper lines around the text are listed separately rather than counted as errors.
+  «Сверка скриптом: …» summary line copied verbatim into the skill's notes; `--json` emits structured
+  output and exit code `1` signals fact errors. Values removed with chatbot wrapper lines around the
+  text are listed separately rather than counted as errors.
 - `clean_paste.py` strips chat-paste leftovers (`contentReference`, `citeturn…`, `[cite: N]`,
   `[citation:N]`, `[span_N]`, `[^N^]`, `【N†source】`), assistant `utm_source` tails, invisible
   characters and non-emoji variation selectors, turns space spoofers like Braille Blank `U+2800` into
   plain spaces without gluing words, and repairs Latin and Greek lookalike letters inside Russian
   words (homoglyphs). Code, URLs, emails, author `utm_campaign` tags, `U+0301` stress marks and
-  pre-1918 Cyrillic (`ѣ`, `і`) stay untouched. With `--in-place`, it saves a `.bak` backup before
-  writing.
+  pre-1918 Cyrillic (`ѣ`, `і`) stay untouched. With `--in-place`, it atomically rewrites the file and
+  saves a `.bak` backup (`--no-backup` disables `.bak`; `--check` dry-runs; `--json` outputs a JSON
+  summary). Exit code `1` indicates cleaned/found artifacts — pass `--exit-zero` (or separate commands
+  with `;`) when chaining with `&&`.
 - `lint_style.py` detects stock phrases and measures dash, bold, emoji and heading density, sentence
   and paragraph length variation, verbal-noun and genitive-chain density, invisible characters and
   mixed-script words. Quotes and code blocks are skipped; `--json` outputs structured data with the
   fields `sentence_cv`, `paragraph_cv`, `nom_to_verb`, `nominal_chain`, `invisible` and
-  `mixed_script`. Rules are shared with `/check/` via `scripts/rules.json`.
+  `mixed_script`, and `--max-score N` exits `1` when the score exceeds `N`. Rules are shared with
+  `/check/` via `scripts/rules.json`.
 
 All three scripts read only the files passed to them, make no network calls and spawn no subprocesses.
 
@@ -251,7 +325,7 @@ Russian academic and enterprise platforms such as «Антиплагиат.ВУ�
 exact word-sequence overlap (shingles), semantic paraphrase matching, probabilistic AI detection
 («Сгенерированный текст» on DOCX and PDF files from 2 pages without scan OCR; since 2026-09-25
 reports print the detector model version —
-[announcement](https://antiplagiat.ru/news/kakya-model-ii-detectora-poteryala-tekst/)) and
+[announcement](https://antiplagiat.ru/blog/kakaja-model-ii-detektora-proverjala-tekst-teper-eto-vidno-v-otchete/)) and
 technical tamper detection («Подозрительный документ»).
 
 ### Why technical "bypassers" backfire
@@ -278,7 +352,8 @@ skill unpacks nominalization cascades into active verbs, varies sentence and par
 cuts framing filler in introductions and conclusions. Already natural human paragraphs are left alone
 to avoid a uniform auto-paraphraser fingerprint ([DAMAGE, arXiv 2501.03437](https://arxiv.org/abs/2501.03437);
 [NeurIPS 2026, arXiv 2606.25152](https://arxiv.org/abs/2606.25152)). Verbatim quotes, `[14, с. 52]`
-citations and author AI-disclosure notes (GOST R 70949-2023, GOST R 71657-2024) stay untouched.
+citations and author AI-disclosure notes (required by university, journal, ANRI or platform policies,
+within the framework of GOST R 70949-2023 and GOST R 71657-2024) stay untouched.
 
 ### Honest boundary, no guarantees
 

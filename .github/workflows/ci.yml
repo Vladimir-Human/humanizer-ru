@@ -13,9 +13,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "22"
       - name: Проверка репозитория
         run: python3 scripts/check_repo.py
-      - name: Тесты скриптов
-        run: python3 -m unittest discover -s tests -v
-      - name: Сборка архива для Claude.ai
-        run: python3 scripts/build_zip.py
+      - name: Проверка синтаксиса JS (site/)
+        run: |
+          shopt -s globstar
+          for f in site/**/*.js; do
+            node --check "$f"
+          done
+      - name: Модульные тесты (с обязательной проверкой JS-паритета)
+        env:
+          REQUIRE_NODE: "1"
+        run: python3 -m unittest discover -s tests -t tests -v
+      - name: Полный паритет Python ↔ JS (check_site_facts.py)
+        run: python3 scripts/check_site_facts.py
+      - name: Сухая сборка ZIP и дерева каталога во временную папку
+        run: |
+          TMP=$(mktemp -d)
+          python3 scripts/build_zip.py "$TMP/humanizer-ru-skill.zip"
+          python3 scripts/build_directory.py "$TMP/directory"
+          rm -rf "$TMP"
+
+  properties:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Свойства скриптов навыка на текстах eval/
+        run: python3 scripts/check_scripts.py
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "22"
+      - name: Проверка репозитория (Windows)
+        run: python scripts/check_repo.py
+      - name: Модульные тесты (Windows)
+        env:
+          REQUIRE_NODE: "1"
+        run: python -m unittest discover -s tests -t tests -v

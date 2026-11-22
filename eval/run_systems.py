@@ -107,7 +107,9 @@ def run_one(model: str, system: str, files: dict, text: str):
                 path = json.loads(call["function"].get("arguments") or "{}").get("path", "")
             except json.JSONDecodeError:
                 path = ""
-            path = path.replace("\\", "/").lstrip("./").removeprefix("skill/")
+            path = path.replace("\\", "/").lstrip("./")
+            if path.startswith("skill/"):
+                path = path[len("skill/"):]
             meta["files_read"].append(path)
             body = files.get(path, "Файл не найден. Доступны: " + ", ".join(sorted(files)))
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": body})
@@ -116,17 +118,42 @@ def run_one(model: str, system: str, files: dict, text: str):
 
 def select_ids(index: list, sets: str, texts: str = "") -> list:
     """Text ids of a comma list of sets ("all" for every text), filtered by a comma list of ids.
-    Traps (human and legal texts) join any holdout set: they belong to every public comparison."""
+    Shared baseline traps (non-holdout sets) join a holdout set that has no traps of its own,
+    without leaking traps that belong to another holdout set."""
     wanted = sets.split(",")
     known = {t["set"] for t in index}
     if sets != "all" and not set(wanted) <= known:
         raise SystemExit("unknown set %s" % ",".join(sorted(set(wanted) - known)))
     holdout = any(w.startswith("holdout") for w in wanted)
-    ids = [t["id"] for t in index if sets == "all" or t["set"] in wanted or (holdout and t["kind"] == "trap")]
+    has_own_traps = any(t["set"] in wanted and t["kind"] == "trap" for t in index)
+    join_shared_traps = holdout and not has_own_traps
+    ids = [
+        t["id"] for t in index
+        if sets == "all"
+        or t["set"] in wanted
+        or (join_shared_traps and t["kind"] == "trap" and not t["set"].startswith("holdout"))
+    ]
     return [i for i in ids if i in texts.split(",")] if texts else ids
 
 
-def main() -> int:
+def merge_config(old: dict, executor: str, sets: str, ids: list, systems: list) -> dict:
+    """Keep earlier systems and texts in config.json when resuming with --systems or --texts."""
+    merged_systems = list(old.get("systems") or [])
+    for s in systems:
+        if s not in merged_systems:
+            merged_systems.append(s)
+    merged_texts = list(old.get("texts") or [])
+    for tid in ids:
+        if tid not in merged_texts:
+            merged_texts.append(tid)
+    by_sys = dict(old.get("by_system") or {})
+    for s in systems:
+        by_sys[s] = {"executor": executor, "set": sets, "texts": list(ids)}
+    return {"executor": executor, "set": sets, "texts": merged_texts,
+            "systems": merged_systems, "request": REQUEST, "by_system": by_sys}
+
+
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
     ap.add_argument("--set", default="test", help="a set or a comma list of sets (dev, test, holdout4, human ...) or all")
@@ -134,16 +161,22 @@ def main() -> int:
     ap.add_argument("--texts", default="")
     ap.add_argument("--executor", default="anthropic/claude-sonnet-5.5")
     ap.add_argument("--workers", type=int, default=6)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
     ids = select_ids(index, args.set, args.texts)
     systems = lib.read_json(lib.EVAL_DIR / "systems.json")
     if args.systems:
-        systems = [s for s in systems if s["name"] in args.systems.split(",")]
+        wanted = [x.strip() for x in args.systems.split(",") if x.strip()]
+        known = {s["name"] for s in systems}
+        unknown = [n for n in wanted if n not in known]
+        if unknown:
+            raise SystemExit("unknown systems: %s" % ", ".join(unknown))
+        systems = [s for s in systems if s["name"] in wanted]
     run_dir = lib.EVAL_DIR / "results" / args.run
-    lib.write_json(run_dir / "config.json", {"executor": args.executor, "set": args.set, "texts": ids,
-                                             "systems": [s["name"] for s in systems], "request": REQUEST})
+    cfg_path = run_dir / "config.json"
+    old_cfg = lib.read_json(cfg_path) if cfg_path.exists() else {}
+    lib.write_json(cfg_path, merge_config(old_cfg, args.executor, args.set, ids, [s["name"] for s in systems]))
     log = run_dir / "runs.jsonl"
 
     for sysdef in systems:

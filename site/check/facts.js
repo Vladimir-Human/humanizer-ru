@@ -40,7 +40,11 @@
     const PY_WORD = r`\p{L}\p{N}_`;
     const BOUNDARY = `(?:(?<=[${PY_WORD}])(?![${PY_WORD}])|(?<![${PY_WORD}])(?=[${PY_WORD}]))`;
     const NON_BOUNDARY = r`(?:(?<=[${PY_WORD}])(?=[${PY_WORD}])|(?<![${PY_WORD}])(?![${PY_WORD}])(?:(?<=[\s\S])|(?=[\s\S])))`;
-    const STRIP_RX = new RegExp(`^[${PY_SPACE}]+|[${PY_SPACE}]+$`, "gu");
+    const PY_SPACE_SET = new Set([
+        "\u0009", "\u000a", "\u000b", "\u000c", "\u000d", "\u001c", "\u001d", "\u001e", "\u001f", " ",
+        "\u0085", "\u00a0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
+        "\u2006", "\u2007", "\u2008", "\u2009", "\u200a", "\u2028", "\u2029", "\u202f", "\u205f", "\u3000"
+    ]);
     const SPACE_RX = new RegExp(`[${PY_SPACE}]`, "u");
     const SPLIT_SPACE_RX = new RegExp(`[${PY_SPACE}]+`, "u");
     const ASTRAL_RX = /[\u{10000}-\u{10ffff}]/u;
@@ -48,6 +52,7 @@
     const ALNUM_RX = /[\p{L}\p{N}]/u;
     const CASED_RX = /\p{Cased}/u;
     const UPPER_RX = /\p{Uppercase}/u;
+    const LOWER_NEED_RX = /[\p{Uppercase}\p{Lt}]/u;
     const DECIMAL_RX = /\p{Nd}/u;
     const DIGIT_RX = /[\p{Nd}\u00b2\u00b3\u00b9\u1369-\u1371\u19da\u2070\u2074-\u2079\u2080-\u2089\u2460-\u2468\u2474-\u247c\u2488-\u2490\u24ea\u24f5-\u24fd\u24ff\u2776-\u277e\u2780-\u2788\u278a-\u2792\u{10a40}-\u{10a43}\u{10e60}-\u{10e68}\u{11052}-\u{1105a}\u{1f100}-\u{1f10a}]/u;
     const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -156,27 +161,40 @@
         return at < 0 ? -1 : start + from_utf16(part, at);
     }
     function strip(text, chars = undefined) {
-        if (chars === undefined) return text.replace(STRIP_RX, "");
+        if (chars === undefined) {
+            let start = 0, end = text.length;
+            while (start < end && PY_SPACE_SET.has(text[start])) start += 1;
+            while (end > start && PY_SPACE_SET.has(text[end - 1])) end -= 1;
+            return start === 0 && end === text.length ? text : text.slice(start, end);
+        }
         return rstrip(lstrip(text, chars), chars);
     }
     function lstrip(text, chars = undefined) {
+        if (chars === undefined) {
+            let start = 0;
+            while (start < text.length && PY_SPACE_SET.has(text[start])) start += 1;
+            return start === 0 ? text : text.slice(start);
+        }
         let start = 0;
         const size = len(text);
-        const matches = ch => chars === undefined ? SPACE_RX.test(ch) : chars.includes(ch);
-        while (start < size && matches(char(text, start))) start += 1;
+        while (start < size && chars.includes(char(text, start))) start += 1;
         return slice(text, start);
     }
     function rstrip(text, chars = undefined) {
+        if (chars === undefined) {
+            let end = text.length;
+            while (end > 0 && PY_SPACE_SET.has(text[end - 1])) end -= 1;
+            return end === text.length ? text : text.slice(0, end);
+        }
         let end = len(text);
-        const matches = ch => chars === undefined ? SPACE_RX.test(ch) : chars.includes(ch);
-        while (end > 0 && matches(char(text, end - 1))) end -= 1;
+        while (end > 0 && chars.includes(char(text, end - 1))) end -= 1;
         return slice(text, 0, end);
     }
     function split_space(text) {
         const clean = strip(text);
         return clean ? clean.split(SPLIT_SPACE_RX) : [];
     }
-    const lower = text => (text.length >= 256 && !UPPER_RX.test(text)) ? text : text.toLowerCase();
+    const lower = text => (text.length >= 256 && !LOWER_NEED_RX.test(text)) ? text : text.toLowerCase();
     const isalpha = text => Boolean(text) && Array.from(text).every(ch => ALPHA_RX.test(ch));
     const isalnum = text => Boolean(text) && Array.from(text).every(ch => ALNUM_RX.test(ch));
     const isdigit = text => Boolean(text) && Array.from(text).every(ch => DIGIT_RX.test(ch));
@@ -445,14 +463,54 @@
         [["cny", "юань", "юаня", "юаней", "юаню", "юанем", "юанями", "юанях"], "CNY"],
         [["кг", "килограмм", "килограмма", "килограммов"], "кг"],
         [["г", "грамм", "грамма", "граммов"], "г"],
+        [["мг", "миллиграмм", "миллиграмма", "миллиграммов"], "мг"],
+        [["мкг", "микрограмм", "микрограмма", "микрограммов"], "мкг"],
+        [["тонна", "тонны", "тонн", "тонне", "тонну", "тонной", "тоннами", "тоннах"], "т"],
+        [["км/ч", "километров в час", "километра в час", "километр в час"], "км/ч"],
+        [["км/с", "километров в секунду", "километра в секунду", "километр в секунду"], "км/с"],
+        [["м/с", "м/сек", "метров в секунду", "метра в секунду", "метр в секунду"], "м/с"],
+        [["м/мин", "метров в минуту", "метра в минуту", "метр в минуту"], "м/мин"],
+        [["об/мин", "оборотов в минуту", "оборота в минуту", "оборот в минуту", "rpm"], "об/мин"],
+        [["км²", "кв. км", "кв.км", "квадратных километров", "квадратных километра"], "км²"],
         [["км", "километр", "километра", "километров"], "км"],
+        [["м²", "кв. м", "кв.м", "кв. м.", "кв.м.", "квадратных метров", "квадратных метра", "квадратный метр"], "м²"],
+        [["м³", "куб. м", "куб.м", "кубометр", "кубометра", "кубометров", "кубических метров", "кубических метра", "кубический метр"], "м³"],
+        [["см²", "кв. см", "кв.см", "квадратных сантиметров", "квадратных сантиметра"], "см²"],
+        [["см³", "куб. см", "куб.см", "кубических сантиметров", "кубических сантиметра"], "см³"],
+        [["мм²", "кв. мм", "кв.мм"], "мм²"],
         [["м", "метр", "метра", "метров"], "м"],
-        [["кв. м", "кв.м", "м²", "квадратных метров", "квадратных метра"], "м²"],
         [["см", "сантиметр", "сантиметра", "сантиметров"], "см"],
         [["мм", "миллиметр", "миллиметра", "миллиметров"], "мм"],
+        [["га", "гектар", "гектара", "гектаров", "гектарах"], "га"],
         [["л", "литр", "литра", "литров"], "л"],
         [["мл", "миллилитр", "миллилитра", "миллилитров"], "мл"],
         [["шт", "штука", "штуки", "штук"], "шт"],
+        [["квт·ч", "квтч", "квт*ч", "квт-ч", "квт/ч", "квт ч", "киловатт-час", "киловатт-часа", "киловатт-часов"], "кВт·ч"],
+        [["вт·ч", "втч", "вт*ч", "вт-ч", "вт/ч", "ватт-час", "ватт-часа", "ватт-часов"], "Вт·ч"],
+        [["мвт·ч", "мвтч", "мвт*ч", "мвт-ч", "мвт/ч", "мегаватт-час", "мегаватт-часа", "мегаватт-часов"], "МВт·ч"],
+        [["гвт", "гигаватт", "гигаватта", "гигаваттов"], "ГВт"],
+        [["мвт", "мегаватт", "мегаватта", "мегаваттов"], "МВт"],
+        [["квт", "киловатт", "киловатта", "киловаттов"], "кВт"],
+        [["вт", "ватт", "ватта", "ваттов", "ваттам", "ваттами", "ваттах"], "Вт"],
+        [["л.с.", "л. с.", "лошадиных сил", "лошадиные силы", "лошадиная сила", "лошадиной силы"], "л.с."],
+        [["ггц", "гигагерц", "гигагерца", "гигагерцев"], "ГГц"],
+        [["мгц", "мегагерц", "мегагерца", "мегагерцев"], "МГц"],
+        [["кгц", "килогерц", "килогерца", "килогерцев"], "кГц"],
+        [["гц", "герц", "герца", "герцев"], "Гц"],
+        [["ккал", "килокалорий", "килокалории", "килокалория", "килокалорию"], "ккал"],
+        [["гбит/с", "гбит/сек", "гигабит в секунду", "гигабита в секунду", "гигабитов в секунду", "gbps"], "Гбит/с"],
+        [["мбит/с", "мбит/сек", "мегабит в секунду", "мегабита в секунду", "мегабитов в секунду", "mbps"], "Мбит/с"],
+        [["кбит/с", "кбит/сек", "килобит в секунду", "килобита в секунду", "килобитов в секунду", "kbps"], "Кбит/с"],
+        [["гбит", "гигабит", "гигабита", "гигабитов"], "Гбит"],
+        [["мбит", "мегабит", "мегабита", "мегабитов"], "Мбит"],
+        [["кбит", "килобит", "килобита", "килобитов"], "Кбит"],
+        [["гб/с", "гб/сек", "гигабайт в секунду", "гигабайта в секунду", "гигабайтов в секунду"], "ГБ/с"],
+        [["мб/с", "мб/сек", "мегабайт в секунду", "мегабайта в секунду", "мегабайтов в секунду"], "МБ/с"],
+        [["кб/с", "кб/сек", "килобайт в секунду", "килобайта в секунду", "килобайтов в секунду"], "КБ/с"],
+        [["тб", "терабайт", "терабайта", "терабайтов", "tb"], "ТБ"],
+        [["гб", "гигабайт", "гигабайта", "гигабайтов", "gb"], "ГБ"],
+        [["мб", "мегабайт", "мегабайта", "мегабайтов", "mb"], "МБ"],
+        [["кб", "килобайт", "килобайта", "килобайтов", "kb"], "КБ"],
         [["ч", "час", "часа", "часов"], "ч"],
         [["мин", "минута", "минуты", "минут"], "мин"],
         [["мс", "миллисекунда", "миллисекунды", "миллисекунд"], "мс"],
@@ -460,36 +518,36 @@
         [["день", "дня", "дней", "дн", "сутки", "суток", "суткам", "сутками", "сутках"], "дн"],
         [["неделя", "недели", "недель", "нед"], "нед"],
         [["месяц", "месяца", "месяцев", "мес"], "мес"],
-        [["год", "года", "лет"], "год"],
+        [["год", "года", "лет", "году", "годом", "годе", "годам", "годами", "годах"], "год"],
         [["человек", "человека", "чел"], "чел"],
-        [["ГБ", "гигабайт", "гигабайта", "гигабайтов"], "ГБ"],
-        [["МБ", "мегабайт", "мегабайта"], "МБ"],
         [["°C", "°С", "градус", "градуса", "градусов"], "°C"]
     ];
     const UNIT_CANON = Object.fromEntries(UNIT_SYNONYMS.flatMap(([syns, canonical]) => syns.map(s => [lower(s), canonical])));
-    const UNIT_RX = compile(r`[ \u00a0\u202f]?(${sorted(Object.keys(UNIT_CANON).map(re_escape), len, true).join("|")})(?![0-9A-Za-zА-Яа-яЁё])`, "i");
-    // A unit written right after the digits ("500мл", "990р.", "2019г.", "20USD"): only the lower-case
-    // spellings of the table and 3-letter ISO currency codes, with a non-letter after them, so "3D"
-    // and "1С" are not numbers with a unit. The scale "к" ("30к" = "30 тыс.") and the dimension "х"
-    // ("160х200" = "160 × 200") are read apart.
+    const UNIT_RX = compile(r`(?:[ \u00a0\u202f]|&nbsp;)?(${sorted(Object.keys(UNIT_CANON), u => len(re_escape(u)), true).map(u => re_escape(u).replace(/\\ /g, r`[ \u00a0\u202f]`)).join("|")})(?![0-9A-Za-zА-Яа-яЁё²³])`, "i");
+    const _canon_unit = raw => UNIT_CANON[lower(raw.replace(/[\u00a0\u202f]/g, " "))] || "";
+    const BARE_S_ALLOW = new Set(["до", "по", "после", "на", "при", "через", "и", "или", "назад", "спустя"]);
+    const BARE_S_NEXT_WORD_RX = compile(r`[ \t\u00a0]+([а-яё]{2,})`, "i");
+    const BARE_S_DOT_LOWER_RX = compile(r`\.[ \t\u00a0]+([а-яё]{2,})`);
     const GLUED_UNITS = ["%", "₽", "р.", "руб.", "руб", "$", "€", "£", "¥", "долл.", "долл", "евро",
         "фунт", "фунта", "фунтов", "иен", "йен", "юаней",
         "USD", "EUR", "GBP", "RUB", "RUR", "JPY", "CNY",
-        "кг", "г", "км", "м²", "м", "см", "мм", "л",
+        "ТБ", "ГБ", "МБ", "КБ", "TB", "GB", "MB", "KB",
+        "Гбит/с", "Мбит/с", "Кбит/с", "Гбит", "Мбит", "Кбит", "ГБ/с", "МБ/с", "КБ/с",
+        "ГГц", "МГц", "кГц", "Гц", "ГВт", "МВт", "кВт", "Вт",
+        "кВт·ч", "кВтч", "Вт·ч", "Втч", "МВт·ч", "МВтч", "ккал", "л.с.",
+        "км/ч", "км/с", "м/с", "м/мин", "об/мин",
+        "км²", "м²", "м³", "см²", "см³", "мм²", "кв.м", "куб.м", "кв.см", "кв.км", "га",
+        "кг", "г", "мг", "мкг", "км", "м", "см", "мм", "л",
         "мл", "шт", "ч", "мин", "мс", "сек", "с", "день", "дня", "дней", "дн", "сутки",
         "неделя", "недели", "недель", "нед", "месяц", "месяца", "месяцев", "мес", "год",
-        "года", "лет", "человек", "человека", "чел"];
+        "года", "лет", "году", "человек", "человека", "чел", "°C", "°С"];
     const GLUED_UNIT_RX = compile(r`(${sorted(GLUED_UNITS.map(re_escape), len, true).join("|")})(?![0-9A-Za-zА-Яа-яЁё²³])`);
     const PREFIX_CURR_RX = compile(r`(?:(?<![\w.,])([+\-−]))?([$€£¥₽])[ \u00a0\u202f]*$`);
     const PREFIX_TIME_CURR_RX = compile(r`[$€£¥₽][ \u00a0\u202f]*[+\-−]?$`);
-    const DIM_RX = compile(r`[хx](\d+(?:[${SEP}]\d{3})*(?:[.,]\d+)?)`);
-    // A capitalised word of the text: the shape the names are read with.
+    const DIM_RX = compile(r`[хx]((?:\d{1,3}(?:[${SEP}]\d{3})+|\d+)(?:[.,]\d+)?)`);
     const NAME_RX = compile(r`(?<![\w-])([A-ZА-ЯЁ][\w-]*[a-zа-яё][\w-]*|[A-Z]{2,}[\w-]*|[А-ЯЁ]{2,4}(?![\w-]))`);
     const WORD_NUM = {
-        // One alone is deliberately not a number: "одна из причин".
         "ноль": 0, "два": 2, "две": 2, "двух": 2, "трое": 3, "двое": 2, "три": 3, "трех": 3,
-        // The other cases of "два": "нужны двоим из семи" is the same fact as "касались двух
-        // человек из семи".
         "двоим": 2, "двоих": 2,
         "четыре": 4, "четырех": 4, "четверо": 4, "пять": 5, "пяти": 5, "пятеро": 5, "шесть": 6,
         "шести": 6, "семь": 7, "семи": 7, "восемь": 8, "восьми": 8, "девять": 9, "девяти": 9,
@@ -504,11 +562,14 @@
         "семидесяти": 70, "восемьдесят": 80, "восьмидесяти": 80, "девяносто": 90, "девяноста": 90,
         "четыреста": 400, "пятьсот": 500, "шестьсот": 600, "семьсот": 700, "восемьсот": 800,
         "девятьсот": 900,
-        // «вдвое дешевле» is «в 2 раза дешевле».
         "вдвое": 2, "втрое": 3, "вчетверо": 4, "впятеро": 5, "вдесятеро": 10
     };
     const ONE_FORMS = ["один", "одна", "одно", "одну", "одного", "одной", "одному", "одним", "одном"];
-    // Compound number-unit adjectives; "одно-" is left out for the same reason as "один".
+    const WORD_NO_CONT = new Set(["вдвое", "втрое", "вчетверо", "впятеро", "вдесятеро",
+        "двое", "двоим", "двоих", "трое", "четверо", "пятеро"]);
+    const WORD_RX = compile(r`(?<![а-яё])(${sorted(Object.keys(WORD_NUM), len, true).join("|")})(?![а-яё])`, "i");
+    const WORD_CONT_RX = compile(
+        r`[ \u00a0]+(${sorted(Object.keys(WORD_NUM).filter(k => !WORD_NO_CONT.has(k)).concat(ONE_FORMS), len, true).join("|")})(?![а-яё])`, "i");
     const COMPOUND_NUM = Object.fromEntries(Object.entries(WORD_NUM).filter(([key]) => ["х", "и", "а"].some(tail => key.endsWith(tail))));
     Object.assign(COMPOUND_NUM, {
         "девяносто": 90, "сто": 100, "ста": 100, "двухсот": 200, "трехсот": 300, "четырехсот": 400,
@@ -519,16 +580,24 @@
         "часов": "ч", "минутн": "мин", "секундн": "с", "процентн": "%", "метров": "м", "километров": "км",
         "литров": "л", "килограммов": "кг"
     };
-    const HYPHEN_UNIT_RX = compile(r`-(${sorted(Object.keys(COMPOUND_UNIT), len, true).join("|")})[а-яё]+`, "i");
+    const HYPHEN_UNIT_RX = compile(r`[-–—](${sorted(Object.keys(COMPOUND_UNIT), len, true).join("|")})[а-яё]+`, "i");
     const COMPOUND_NUM_RX = compile(r`(?<![а-яё])(${sorted(Object.keys(COMPOUND_NUM), len, true).join("|")})-?(${sorted(Object.keys(COMPOUND_UNIT), len, true).join("|")})[а-яё]+`, "i");
     const SCALE = {
         "тыс": 1000, "тыс.": 1000, "тысяча": 1000, "тысячи": 1000, "тысяч": 1000,
         "млн": 10 ** 6, "млн.": 10 ** 6, "миллион": 10 ** 6, "миллиона": 10 ** 6,
-        "миллионов": 10 ** 6, "млрд": 10 ** 9, "миллиард": 10 ** 9, "миллиарда": 10 ** 9,
-        "миллиардов": 10 ** 9
+        "миллионов": 10 ** 6, "млрд": 10 ** 9, "млрд.": 10 ** 9, "миллиард": 10 ** 9,
+        "миллиарда": 10 ** 9, "миллиардов": 10 ** 9
     };
-    // Longest first: "тыс." before "тыс", or the dot hides the unit after it.
     const SCALE_ALT = sorted(Object.keys(SCALE), len, true).map(re_escape).join("|");
+    const SCALE_RX = compile(r`[${SEP}]+(${SCALE_ALT})(?![а-я])`, "i");
+    const GLUED_SCALE_RX = compile(r`(${SCALE_ALT})(?![а-яёa-z])`);
+    const SEP_STRIP_RX = compile(r`[${SEP}]|&nbsp;`, "i");
+    const SIGN_RX = compile(r`^[+\-−]`);
+    const ACCT_RX = compile(r`\d{16,}`);
+    const NUM_RX = compile(r`(?:(?<![\w.,%₽$€£¥°])[+\-−]|(?<![\w.,]))(?:\d{1,3}(?:(?:[${SEP}]|&nbsp;)\d{3})+|\d+)(?:[.,]\d+)?`, "i");
+    const HTML_ENTITY_RX = compile(r`&(?:[A-Za-z]{2,8}|#x[0-9a-fA-F]{1,6}|#[0-9]{1,7});`);
+    const HTML_TAG_RX = compile(r`<([a-z][a-z0-9]*)(?:\s[^<>]*)?/?>`, "i");
+    const HTML_ANY_TAG_RX = compile(r`</?[a-z][a-z0-9]*(?:\s[^<>]*)?/?>`, "i");
     const MONTH_ANY_RX = compile(r`(?<![а-яё])(?:(январ|феврал|апрел|июн|июл|сентябр|октябр|ноябр|декабр)(?:ь|я|ю|ем|ём|е)|(март|август)(?:а|у|ом|е)?|(ма)(?:й|я|ю|ем|е))(?![а-яё])`, "i");
     const MONTH_ANY_NUM = {"январ": 1, "феврал": 2, "март": 3, "апрел": 4, "ма": 5, "июн": 6, "июл": 7, "август": 8,
         "сентябр": 9, "октябр": 10, "ноябр": 11, "декабр": 12};
@@ -538,86 +607,145 @@
     const MONTH_STEM = Object.fromEntries(split_space("янв фев мар апр мая июн июл авг сен окт ноя дек").map((m, i) => [slice(m, 0, 3), i + 1]));
     MONTH_STEM["май"] = 5;
     MONTH_STEM["мае"] = 5;
-    // Links stop at invisibles and external closing parentheses, but keep balanced parentheses.
+    const DATE_NAMED_RX = compile(
+        r`(?<![.:,/])\b(\d{1,2})(?:[ \t\u00a0]*(?:[–—-]|,|или|и|по|до)[ \t\u00a0]*(\d{1,2}))?[ \t\u00a0]+(${MONTHS})(?:[ \t\u00a0]+(\d{4}))?`, "i");
+    const DATE_DOT_RX = compile(r`\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b`);
+    const TIME_RX = compile(r`(?<!\d:)\b([01]?\d|2[0-3])[:.]([0-5]\d)\b(?![.,:]\d)`);
+    const TIME_PREP_RX = compile(r`(?<![а-яё])(?:в|к|до|после)[ \t\u00a0]+$`);
+    const RATIO_CUE_RX = compile(
+        r`(?<![а-яё])(?:масштаб|пропорц|соотношен|отношен|формат|разрешен|сторон|экран|счет|разбав|развед|концентрац|шанс|вероятност|коэффициент|рейтинг|баланс)`, "i");
+    const RATIO_COLON_RX = compile(
+        r`(?<![:\w])(?:(\d+(?:[.,]\d+)?):(\d+(?:[.,]\d+)?)|(\d+(?:[.,]\d+)?)[ \t\u00a0]+:[ \t\u00a0]+(\d+(?:[.,]\d+)?))(?![:\w])`);
+    const RATIO_K_RX = compile(r`(?<![\w.,])(\d+(?:[.,]\d+)?)[ \t\u00a0]+к[ \t\u00a0]+(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)`, "i");
+    const RATIO_NA_RX = compile(r`(?<![\w.,])(\d+(?:[.,]\d+)?)[ \t\u00a0]+на[ \t\u00a0]+(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)`, "i");
     const _ZW = r`\u200b\u2060\ufeff\u00ad\u200e\u200f\u202a-\u202e\u2066-\u2069\u180e\u200c\u200d`
         + r`\u034f\u061c\u2800\u3164\uffa0\u115f\u1160`
-        + r`\u2061-\u2064\ufff9-\ufffb\ue200-\ue204\uea01\uea02\ufe00-\ufe0f\u{e0000}-\u{e007f}\u{e0100}-\u{e01ef}`;
+        + r`\u2061-\u2064\u206a-\u206f\ufff9-\ufffc\ue200-\ue204\uea01\uea02\ufe00-\ufe0f\u{e0000}-\u{e007f}\u{e0100}-\u{e01ef}`;
     const URL_RX = r`(?:[Hh][Tt][Tt][Pp][Ss]?://|[Ww][Ww][Ww]\.)(?:\([^\s<>«»"'()\]\x60${_ZW}]*\)|[^\s<>«»"')\]\x60${_ZW}])+`;
     const EMAIL_SKIP_RX = r`(?<![A-Za-zА-Яа-яЁё0-9._%+-])[A-Za-zА-Яа-яЁё0-9._%+-]+@[A-Za-zА-Яа-яЁё0-9.-]+\.[A-Za-zА-Яа-яЁё]{2,}`;
     const HOMOGLYPHS = {
         "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х", "y": "у",
         "A": "А", "B": "В", "C": "С", "E": "Е", "H": "Н", "K": "К", "M": "М",
         "O": "О", "P": "Р", "T": "Т", "X": "Х", "Y": "У",
+        "á": "а\u0301", "é": "е\u0301", "ó": "о\u0301", "ý": "у\u0301",
+        "Á": "А\u0301", "É": "Е\u0301", "Ó": "О\u0301", "Ý": "У\u0301", "ë": "ё", "Ë": "Ё",
         "α": "а", "ε": "е", "ο": "о", "ρ": "р", "χ": "х", "κ": "к",
         "Α": "А", "Β": "В", "Γ": "Г", "Ε": "Е", "Η": "Н", "Κ": "К", "Μ": "М",
         "Ο": "О", "Π": "П", "Ρ": "Р", "Τ": "Т", "Υ": "У", "Φ": "Ф", "Χ": "Х"
     };
     const _HOMO_LOOK = Object.keys(HOMOGLYPHS).join("");
     const _HOMO_ALL = "А-Яа-яЁё\u0301\u0306\u0308" + _HOMO_LOOK;
-    const _WORD_CHARS = r`A-Za-z\u0370-\u03ffА-Яа-яЁё\u0301\u0306\u0308`;
+    const LAT_EXT = r`\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f\u1e00-\u1eff\ua7dc`;
+    const _WORD_CHARS = r`A-Za-z${LAT_EXT}\u0370-\u03ffА-Яа-яЁё\u0301\u0306\u0308`;
     const HOMO_WORD_RX = r`(?<![${_WORD_CHARS}])(?=[${_HOMO_ALL}]*[А-Яа-яЁё])(?=[${_HOMO_ALL}]*[${_HOMO_LOOK}])[${_HOMO_ALL}]+(?![${_WORD_CHARS}])`;
     const MD_TARGET_RX = r`(?<=\])\([ \t]*(?:<[^>\n]+>|(?:\([^\s()]*\)|[^\s()])+)`;
-    const PROSE_HOMO_RX = compile(r`\x60[^\x60\n]+\x60|${URL_RX}|${EMAIL_SKIP_RX}|${MD_TARGET_RX}|(${HOMO_WORD_RX})`);
+    const PROSE_HOMO_RX = compile(r`${URL_RX}|${EMAIL_SKIP_RX}|${MD_TARGET_RX}|(${HOMO_WORD_RX})`);
     const _REGEX_PREV = new Set(Array.from("=(,:;!&|?+-~*{[\n\r"));
     const _REGEX_KW = new Set(["return", "typeof", "void", "delete", "throw", "case", "in", "of", "yield", "await"]);
     const _REGEX_FLAGS = new Set(Array.from("dgimsuvy"));
     const CYR_STRESS_RX = compile(r`(?<=[А-Яа-яЁё])\u0301`);
     const PROSE_STRESS_RX = compile(r`${URL_RX}|((?<=[А-Яа-яЁё])\u0301)`);
-    const _CITETURN_STEP = r`turn\d+(?:search|fetch|file|image|news|video|ref|view)\d+`;
+    const _CITETURN_STEP = r`turn\d+(?:search|fetch|file|image|news|video|ref|view|product|finance|map|sports|weather|local|code|calc|browser)\d+`;
     const CITATION_RX = compile(
-        r`:?contentReference\[oaicite:\d+\]\{index=\d+\}|\[oaicite:\d+\]`
-        + r`|\ue200[^\ue201\n]{0,120}\ue201|\uea01[^\uea02\n]{0,40}\uea02`
-        + r`|(?<![A-Za-z0-9/_.\-=?:&#@])cite${_CITETURN_STEP}(?:${_CITETURN_STEP})*`
-        + r`|\u3010\d+(?::\d+)?(?:\u2020[^\u3011\n]{0,80})?\u3011|\[cite_start\]|\[cite(?:_end)?(?::\s*[\d,\s]+)?\]`
-        + r`|\[(?:citation|attached_file|web):\d+\]|\[span_\d+\][\[(](?:start_span|end_span)[\])]`
-        + r`|\[\^\d+\^\]`, "i");
+        r`[ \t]?:{0,2}contentReference\[oaicite:\d+\](?:\{index=\d+\})?|[ \t]?\[oaicite:\d+\](?:\{index=\d+\})?`
+        + r`|[ \t]?\ue200[^\ue201\n]{0,400}\ue201|[ \t]?\uea01[^\uea02\n]{0,40}\uea02`
+        + r`|[ \t]?(?<![A-Za-z0-9/_.\-=?:&#@])cite${_CITETURN_STEP}(?:${_CITETURN_STEP})*`
+        + r`|[ \t]?\u3010\d+(?:(?:[:,\-–][ \t]*|[ \t]+)\d+)*(?:\u2020[^\u3011\n]{0,80})?\u3011|\[cite_start\]`
+        + r`|[ \t]?\[cite(?:_end)?(?::[ \t]*[0-9]+(?:[ \t]*[\-–,][ \t]*[0-9]+)*[ \t]*)?\]`
+        + r`|[ \t]?\[(?:citation|attached_file|web):[ \t]*[0-9]+(?:[ \t]*[\-–,][ \t]*[0-9]+)*[ \t]*\]`
+        + r`|[ \t]?\[span_\d+\][\[(](?:start_span|end_span)[\])]`
+        + r`|[ \t]?\[\^\d+\^\]|</?antml:cite(?:[ \t]+[^>\n]{0,200})?>`, "i");
+    const CITE_XML_PAIR_RX = compile(
+        r`<cite[ \t]+index=(?:"[^"\n]{0,120}"|'[^'\n]{0,120}')[ \t]*>((?:(?!</?cite[ \t\r\n>/]).){0,4000})</cite>`, "is");
+    const CITE_XML_OPEN_RX = compile(r`<cite[ \t]+index=(?:"[^"\n]{0,120}"|'[^'\n]{0,120}')[ \t]*>`, "i");
     const INVISIBLE_CPS = new Set([
         0x200B, 0x2060, 0xFEFF, 0x00AD, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
         0x2066, 0x2067, 0x2068, 0x2069, 0x180E, 0x200C, 0x034F, 0x061C,
-        0x2061, 0x2062, 0x2063, 0x2064, 0xFFF9, 0xFFFA, 0xFFFB,
+        0x2061, 0x2062, 0x2063, 0x2064, 0x206A, 0x206B, 0x206C, 0x206D, 0x206E, 0x206F,
+        0xFFF9, 0xFFFA, 0xFFFB, 0xFFFC,
         0xE200, 0xE201, 0xE202, 0xE203, 0xE204, 0xEA01, 0xEA02
     ]);
     const SPACE_SPOOFERS = new Set([0x2800, 0x3164, 0xFFA0, 0x115F, 0x1160]);
     const _WS = new Set(Array.from(" \t\n\r\v\f\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000"));
-    const URL_TAIL = ".,;:!?…*_";
+    const URL_TAIL = ".,;:!?…*_~";
 
     function _url_key(url) {
         const m = match(r`((?:https?://)?[^/?#]*)(.*)`, url, "si");
         return lower(m.group(1)) + (m.group(2) === "/" ? "" : m.group(2));
     }
-    const WEEKDAY_RX = compile(r`(?<![а-яё])(понедельник|вторник|четверг|пятниц|суббот|воскресень|сред(?=у|ам)|сред(?=а[ \t]*[,:]))[а-яё]*`, "i");
+    const WEEKDAY_RX = compile(r`(?<![а-яё])(понедельник|вторник|четверг|пятниц|суббот|воскресень)[а-яё]*`, "i");
+    const WEEKDAY_WED_RX = compile(
+        r`(?<![а-яё])(?:в|на)[ \t\u00a0]+(?:(?:эту|прошлую|следующую|ближайшую|каждую|ту)[ \t\u00a0]+)?(среду)(?![а-яё])`
+        + r`|(?<![а-яё])по[ \t\u00a0]+(средам)(?![а-яё])`
+        + r`|(?<![а-яё])(среда)(?=[ \t\u00a0]*(?:,[ \t\u00a0]*\d{1,2}|:[ \t\u00a0]*\d{1,2}[:.]\d{2}))`
+        + r`|^[ \t\u00a0]*(?:[*_#>-][ \t\u00a0]*)*(среда)(?=[ \t\u00a0]*:)`, "im");
     const WEEKDAY_NUM = {"понедельник": 1, "вторник": 2, "сред": 3, "четверг": 4, "пятниц": 5, "суббот": 6, "воскресень": 7};
-    // A schedule range of two-letter forms («пн–пт», «Сб-Вс»), as WEEKDAY_RANGE_RX in check_facts.py.
     const WEEKDAY_ABBR = {"пн": 1, "вт": 2, "ср": 3, "чт": 4, "пт": 5, "сб": 6, "вс": 7};
     const WEEKDAY_RANGE_RX = compile(r`(?<![а-яё])(пн|вт|ср|чт|пт|сб|вс)\.?[ \t\u00a0]*[-–—][ \t\u00a0]*(пн|вт|ср|чт|пт|сб|вс)\.?(?![а-яё])`, "i");
-    // A single 2-letter weekday before ", <date>" or ": <time>" ("пн, 2 ноября", "Пн: 9:00") or in
-    // lower case after a schedule preposition ("с пн", "в пт"), so "1500 Вт", "ВС" and "Ср." stay out.
     const WEEKDAY_DATE_RX = compile(
         r`(?<![А-Яа-яЁёA-Za-z0-9])(пн|вт|ср|чт|пт|сб|вс)\.?(?=[ \t\u00a0]*(?:,[ \t\u00a0]*\d{1,2}`
         + r`(?:[ \t\u00a0]+(?:${MONTHS})|\.\d{1,2}\b)|:[ \t\u00a0]*\d{1,2}[:.]\d{2}))`, "i");
     const WEEKDAY_PREP_RX = compile(
         r`(?<![А-Яа-яЁёA-Za-z])(?:[Вв]|[Вв]о|[Сс]|[Сс]о|[Дд]о|[Кк]|[Пп]о)[ \t\u00a0]+`
         + r`(пн|вт|чт|сб|вс|(?:ср|пт)(?!\.))(?![А-Яа-яЁёA-Za-z]|[ \t\u00a0]*[-–—])`);
-    const HEDGES = ["около", "примерно", "приблизительно", "почти", "порядка", "до", "не более",
-        "не менее", "не свыше", "более", "свыше", "менее", "больше", "меньше", "минимум", "максимум",
-        "от", "не больше", "не меньше", "не позже", "не позднее", "не раньше", "после",
-        "только", "лишь", "кроме", "без", "не старше"];
+    const HEDGE_G1 = ["не более", "не менее", "не свыше", "не больше", "не меньше", "не позже", "не позднее",
+        "не раньше", "не старше", "не короче", "не дешевле", "не моложе", "не дольше", "не дороже",
+        "минимум", "максимум", "около", "примерно", "приблизительно", "почти", "порядка", "только", "лишь"];
+    const HEDGE_G2 = ["более", "свыше", "менее", "больше", "меньше", "короче", "дольше", "дешевле", "дороже", "старше", "моложе"];
+    const HEDGE_G3 = ["до", "от", "после", "кроме", "без"];
+    const HEDGES = HEDGE_G1.concat(HEDGE_G2, HEDGE_G3);
     const HEDGE_SAME = {"около": "≈", "примерно": "≈", "приблизительно": "≈", "порядка": "≈",
-        "не менее": "≥", "не меньше": "≥", "минимум": "≥",
+        "не менее": "≥", "не меньше": "≥", "минимум": "≥", "не короче": "≥", "не дешевле": "≥", "не моложе": "≥",
+        "не позже за": "≥", "не позднее за": "≥",
         "не более": "≤", "не больше": "≤", "максимум": "≤", "не старше": "≤", "не свыше": "≤",
-        "более": ">", "свыше": ">", "больше": ">", "менее": "<", "меньше": "<",
+        "не дольше": "≤", "не дороже": "≤", "не раньше за": "≤",
+        "более": ">", "свыше": ">", "больше": ">", "дольше": ">", "дороже": ">", "старше": ">",
+        "менее": "<", "меньше": "<", "короче": "<", "дешевле": "<", "моложе": "<",
         "не позже": "≤д", "не позднее": "≤д"};
+    const _HGAP = r`[ \u00a0\u202f*_]`;
+    const _HPREP = r`(?:за|на|в|во|через|к|ко|по|с|со|у|из)`;
+    const _h_alt = hs => sorted(hs, len, true).map(h => h.replace(/ё/g, "е").split(" ").map(re_escape).join(_HGAP + "+")).join("|");
+    const HEDGE_BEFORE_RX = compile(
+        r`(?:^|[^а-яa-z])(?:(${_h_alt(HEDGE_G1)})(?:${_HGAP}+чем)?(?:${_HGAP}+(${_HPREP}))?|(${_h_alt(HEDGE_G2)})(?:${_HGAP}+чем(?:${_HGAP}+${_HPREP})?)?|(${_h_alt(HEDGE_G3)}))${_HGAP}*$`);
+    const HEDGE_CLEAN_RX = compile(r`[ \u00a0\u202f*_]+`);
+    const CYR_ANY_RX = compile(r`[а-яё]`);
+    const HEDGE_TOK_PARTS = sorted(HEDGES, len, true).filter(h => h !== "без" && h !== "кроме").map(h => h.replace(/ё/g, "е").split(" "));
+    const QUOTE_RX = compile(
+        r`«((?:[^«»\n]|«[^«»\n]{0,500}»){1,500})»|„([^“”\n]{1,500})[“”]|“([^”\n]{1,500})”|(?<!\w)"(?!\s)([^"\n]{1,80})(?<!\s)"`);
+    const DASH_AFTER_RX = compile(r`[*_]*(,?)[ \t\u00a0]+[—–-][ \t\u00a0]`);
+    const LINE_EM_RX = compile(r`[ \t\u00a0>*_]*[—–][ \t\u00a0]*`);
+    const LINE_HY_RX = compile(r`[ \t\u00a0>*_]*-[ \t\u00a0]*`);
+    const COLON_BEFORE_QUOTE_RX = compile(r`:(?:[ \t\u00a0]*\r?\n[ \t\u00a0]*>)?[ \t\u00a0*_]*$`);
+    const NEG_RX = compile(
+        r`(?<![а-яё])(не|ни|без)[ \t\u00a0\u202f]+(?:(?:на|в|во|к|ко|с|со|по|за|до|от|из|у|о|об)[ \t\u00a0\u202f]+)?([а-яё]{3,})|(?<![а-яё])(нет|нельзя)(?![а-яё])`);
+    const NEG_WORDS_SCAN_RX = compile(
+        r`(?<![а-яё])(не|ни|без|нет|нельзя)[ \t\u00a0\u202f]+(?:[а-яё]+[ \t\u00a0\u202f]+){0,2}([а-яё]{3,})`);
+    const COMP_DELTA_WORDS = r`(?:больше|меньше|выше|ниже|дороже|дешевле|старше|моложе|раньше|позже|позднее|дольше|короче|быстрее|медленнее|крупнее|мельче|шире|уже|тяжелее|легче|лучше|хуже|чаще|реже)`;
+    const COMP_DELTA_BEFORE_NA_RX = compile(r`(?<![а-яё])на[ \t\u00a0*_]+$`, "i");
+    const COMP_DELTA_AFTER_RX = compile(
+        r`^(?:[ \t\u00a0*_]+(?:[а-яёa-z%₽$€£¥°²³]+(?:\.[ \t\u00a0]*[а-яё]+)?\.?)){0,2}[ \t\u00a0*_]+${COMP_DELTA_WORDS}(?![а-яё])(?![ \t\u00a0]+не(?![а-яё]))`, "i");
+    const COMP_DELTA_BEFORE_REV_RX = compile(
+        r`(?<![а-яё])${COMP_DELTA_WORDS}(?![а-яё])(?![ \t\u00a0]+не(?![а-яё]))[^.!?;:\n]{0,48}(?<![а-яё])на[ \t\u00a0*_]+$`, "i");
+    const COMP_TARGET_LEFT_RX = compile(
+        r`(?<![а-яё])(?:на[ \t\u00a0*_]+(?:[+\-−]?[$€£¥₽]?[ \t\u00a0*_]*\d[\d \u00a0\u202f.,]*|`
+        + r`два|две|три|четыре|пять|шесть|семь|восемь|девять|десять|двадцать|тридцать|сорок|пятьдесят|сто|полтора|полторы|половину)`
+        + r`(?:[ \t\u00a0*_]+[а-яёa-z%₽$€£¥°²³.]+){0,2}`
+        + r`|в[ \t\u00a0*_]+(?:\d[\d \u00a0\u202f.,]*|два|две|три|четыре|пять|шесть|семь|восемь|девять|десять|полтора|полторы)[ \t\u00a0]+раз[ао]?`
+        + r`|вдвое|втрое|вчетверо|впятеро|вдесятеро)`
+        + r`[ \t\u00a0*_]+${COMP_DELTA_WORDS}(?![а-яё])(?:,?[ \t\u00a0]+чем)?(?:[ \t\u00a0]+(?:у|в|во|на|от|для|по|с|со))?[ \t\u00a0*_]+$`);
+    const APPOS_STOP_RX = compile(
+        r`^(?:и|а|но|однако|зато|или|либо|да|потом|затем|потому|поскольку|так\s+как|если|хотя|чтобы|когда|пока|где|куда|откуда|сколько|почему|зачем|чем)(?![а-яё])`, "i");
+    const ABBREV_CAP_RX = compile(
+        r`(?:(?:^|[\s(«"—–-])(?:ул|пр|пер|пл|бул|наб|пос|им|обл|р-н|т\.?[ \t\u00a0]*н)|(?:^|[,;\n(«"—–-][ \t\u00a0]*|(?:в|во|из|к|ко|от|до|по|о|об|на|у|при|около|для|близ|через)[ \t\u00a0]+)[гсд])\.$`, "i");
+    const ABBREV_DIGIT_RX = compile(
+        r`(?:^|[\s,;(\[«"—–-])(?:с|стр|т|ч|гл|п|ст|рис|табл|вып|кн|д|кв|корп|пп|п\.п|ст\.ст)\.$`, "i");
+    const TABLE_SEP_LINE_RX = compile(r`^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(?:\|[ \t]*:?-{2,}:?[ \t]*)+\|?[ \t]*\r?$`);
     const hedge_class = hedge => has(HEDGE_SAME, hedge) ? HEDGE_SAME[hedge] : hedge;
-    // The direction of a hedge: a lower bound ("не менее 5", "от 30%", "после 20 мая") or an upper
-    // one ("не более 5", "до 30%", "не позднее 15 марта"). A hedge turned the other way changes the
-    // meaning of the number.
     const HEDGE_DIR = {"≥": "lower", ">": "lower", "≤": "upper", "<": "upper", "≤д": "upper",
         "от": "lower", "после": "lower", "не раньше": "lower", "до": "upper"};
     const HEDGE_OPPOSITE = {"lower": "upper", "upper": "lower"};
     const hedge_direction = hedge => HEDGE_DIR[hedge_class(hedge)] || "";
-    // The chat assistant's own lines around the text: the head ("Готово, вот текст:") and the tail
-    // ("Если нужно, могу переделать текст…"). Their values are not facts of the text.
-    const SERVICE_SEP_RX = compile(r`^[ \t]*(?:-{3,}|\*{3,}|_{3,}|\x60\x60\x60[^\n]*)[ \t]*$`, "m");
+    const SERVICE_SEP_RX = compile(r`^[ \t]*(?:-{3,}|\*{3,}|_{3,}|\x60\x60\x60[^\n]*)[ \t]*\r?$`, "m");
     const SERVICE_HEAD_RX = compile(r`(?i)^\W*(?:вот\b|готов(?:о|ый|ая|ое|ые)\b)`);
     const SERVICE_HEAD_STRICT_RX = compile(r`(?i)^\W*(?:готово\b|вот\s+(?:готов|ваш|текст|вариант|пост|письмо))`);
     const SERVICE_TAIL_RX = compile(r`(?i)^\W*(?:пара (?:замечаний|уточнений)|несколько (?:замечаний|пояснений|уточнений|слов)|`
@@ -727,49 +855,48 @@
         "Здравствуйте", "Привет", "Добрый", "Уважаемый", "Уважаемая", "Спасибо", "С уважением"]);
     const POLITE_PRONOUN = compile(r`Вы|Вас|Вам|Вами|Ваш(?:а|е|и|его|ему|ем|ей|у|ую|их|им|ими)?|Ты|Тебе|Тебя|Тобой|Твой|Тво(?:я|е|ё|и|его|ему|ем|ём|ей|ю|их|им|ими)`);
     const FIRST_NAMES = new Set(split_space(`Александр Александра Алексей Алина Алиса Алла Анастасия Анатолий Андрей Анна
-Антон Арина Аркадий Арсений Артём Артем Борис Вадим Валентин Валентина Валерий Валерия Варвара
-Василий Вера Вероника Виктор Виктория Виталий Владимир Владислав Вячеслав Галина Георгий Глеб
-Григорий Дарья Денис Диана Дмитрий Евгений Евгения Егор Екатерина Елена Елизавета Иван Игорь
-Илья Инна Ирина Карина Кирилл Константин Кристина Ксения Лариса Леонид Лидия Любовь Людмила
-Максим Маргарита Марина Мария Марк Матвей Михаил Надежда Наталья Наталия Никита Николай Нина
-Олег Ольга Павел Пётр Петр Полина Роман Руслан Светлана Семён Семен Сергей Софья Станислав
-Степан Тамара Татьяна Тимофей Тимур Фёдор Федор Эдуард Юлия Юрий Яна Ярослав`));
+Антон Арина Аркадий Арсений Артём Артем Богдан Борис Вадим Валентин Валентина Валерий Валерия Варвара
+Василий Вера Вероника Виктор Виктория Виталий Владимир Владислав Вячеслав Галина Геннадий Георгий Глеб
+Григорий Даниил Дарья Денис Диана Дмитрий Евгений Евгения Егор Екатерина Елена Елизавета Жанна Захар
+Зинаида Зоя Иван Игорь Илья Инна Ирина Карина Кирилл Клавдия Константин Кристина Ксения Лариса Лев Леонид
+Лидия Любовь Людмила Максим Маргарита Марина Мария Марк Матвей Михаил Надежда Наталья Наталия Никита
+Николай Нина Оксана Олег Олеся Ольга Павел Пётр Петр Полина Раиса Роман Руслан Светлана Семён Семен
+Сергей Софья Станислав Степан Тамара Татьяна Тимофей Тимур Ульяна Фёдор Федор Филипп Эдуард Юлия Юрий
+Яков Яна Ярослав`));
     // END_BLOCK_LEXICON
 
     // START_BLOCK_FACT_MODEL
     const _norm = text => /[ёЁ]/u.test(text) ? text.replace(/ё/gu, "е").replace(/Ё/gu, "Е") : text;
     const CASE_ENDINGS = new Set(["", "а", "я", "о", "е", "и", "ы", "у", "ю", "ой", "ей", "ою", "ею", "ом", "ем",
-        "ам", "ям", "ами", "ями", "ах", "ях", "ов", "ев", "ий", "ия", "ие", "ья", "ье", "ью", "ая", "ое", "ые",
+        "ам", "ям", "ами", "ями", "ах", "ях", "ов", "ев", "ий", "ия", "ие", "ии", "ию",
+        "ием", "ией", "иею", "ья", "ье", "ью", "ьи", "ьей", "ьею", "ая", "ое", "ые",
         "ый", "ого", "его", "ому", "ему", "ым", "им", "ую", "ых", "их", "ыми", "ими"]);
-    function _case_tail(tail) {
-        // The rest of a word after its stem: a case ending, or a soft sign ("Гриша" → "Гришу").
-        return CASE_ENDINGS.has(tail) || tail === "ь" || tail === "й";
+    const _BAD_EMPTY_TAILS = new Set(["ия", "ии", "ию", "ием", "ией", "иею", "ья", "ьи", "ьей", "ьею", "ая", "ое", "ые", "ый"]);
+    const _FEM_IYA_TAILS = new Set(["ия", "ии", "ию", "ием", "ией", "иею", "ья", "ьи", "ьей", "ьею"]);
+    const _MASC_CASE_TAILS = new Set(["а", "у", "ом", "е"]);
+    const _FLEET_L_RX = compile(r`л[ео]([вдн])$`);
+    const _FLEET_CONS_RX = compile(r`[бвгджзклмнпрстфхцчшщ][ео]([лкц])$`);
+    const _FLEET_VOW_C_RX = compile(r`[аеиоуыэюя][ея]ц$`);
+    const _FLEET_SOFT_RX = compile(r`[ео](?:нь|вь)$`);
+    const _FLEET_EY_RX = compile(r`(?:соловей|воробей|муравей|ручей|улей)$`);
+    const _ADJ_SK_RX = compile(r`^[ьй]?ск(?:ий|ая|ое|ие|ого|ой|ому|им|ом|их|ими|ую)$`);
+    const _ADJ_SK_END_RX = compile(r`[ьй]?ск(?:ий|ая|ое|ие|ого|ой|ому|им|ом|их|ими|ую)$`);
+    function _fleeting_stems(w) {
+        if (!w || !"вднлкцьй".includes(char(w, -1))) return [w];
+        const out = [w];
+        const lw = len(w);
+        if (_FLEET_L_RX.search(w)) out.push(slice(w, 0, -3) + "ль" + char(w, -1));
+        if (w.endsWith("елец")) out.push(slice(w, 0, -4) + "ельц");
+        if (lw >= 4) {
+            if (_FLEET_CONS_RX.search(w)) out.push(slice(w, 0, -2) + char(w, -1));
+            if (_FLEET_VOW_C_RX.search(w)) out.push(slice(w, 0, -2) + "йц");
+            if (_FLEET_SOFT_RX.search(w)) out.push(slice(w, 0, -3) + char(w, -2));
+        }
+        if (_FLEET_EY_RX.search(w)) out.push(slice(w, 0, -2) + "ь");
+        return Array.from(new Set(out));
     }
-    function _first_name_case(word, name) {
-        // A singular case of a first name of the list (or its -ов/-ев surname), also with a fleeting
-        // vowel ("Павел" → "Павлу"). Sentence-initial verbs and common nouns ("Дарим" vs "Дарья",
-        // "Верим" vs "Вера", "Лид" vs "Лидия") stay out.
-        const w = _norm(lower(word)), n = _norm(lower(name));
-        if (n.endsWith("ья") || n.endsWith("ия")) {
-            return w.startsWith(slice(n, 0, -1)) && ["я", "и", "е", "ю", "ей", "ею"].includes(slice(w, len(n) - 1));
-        }
-        if (n.endsWith("а")) {
-            return w.startsWith(slice(n, 0, -1)) && ["а", "ы", "и", "е", "у", "ой", "ою", "ей", "ею"].includes(slice(w, len(n) - 1));
-        }
-        if (n.endsWith("й")) {
-            return w.startsWith(slice(n, 0, -1)) && ["й", "я", "ю", "ем", "е", "и", "ев", "ева", "еву", "евым", "евой"].includes(slice(w, len(n) - 1));
-        }
-        if (n.endsWith("ь")) {
-            if (n === "любовь") return ["любовь", "любви", "любовью"].includes(w);
-            return w.startsWith(slice(n, 0, -1)) && ["ь", "я", "ю", "ем", "е", "ев", "ева", "еву", "евым", "евой"].includes(slice(w, len(n) - 1));
-        }
-        const masc_tails = ["", "а", "у", "ом", "ем", "е", "ов", "ова", "ову", "овым", "овой", "ев", "ева", "еву", "евым", "евой"];
-        if (w.startsWith(n) && masc_tails.includes(slice(w, len(n)))) return true;
-        if (search(r`[бвгджзклмнпрстфхцчшщ][ео][лнр]$`, n) !== null) {
-            const stem = slice(n, 0, -2) + slice(n, -1);
-            return w.startsWith(stem) && masc_tails.slice(1).includes(slice(w, len(stem)));
-        }
-        return false;
+    function _case_tail(tail) {
+        return CASE_ENDINGS.has(tail) || tail === "ь" || tail === "й";
     }
     function _build_first_name_forms() {
         const forms = new Set();
@@ -778,7 +905,7 @@
             const n = _norm(lower(raw_n));
             const max_len = len(raw_n) + 3;
             let cands;
-            if (n.endsWith("ья") || n.endsWith("ия")) {
+            if (n.endsWith("я")) {
                 cands = ["я", "и", "е", "ю", "ей", "ею"].map(t => slice(n, 0, -1) + t);
             } else if (n.endsWith("а")) {
                 cands = ["а", "ы", "и", "е", "у", "ой", "ою", "ей", "ею"].map(t => slice(n, 0, -1) + t);
@@ -789,8 +916,7 @@
                     : ["ь", "я", "ю", "ем", "е", "ев", "ева", "еву", "евым", "евой"].map(t => slice(n, 0, -1) + t);
             } else {
                 cands = masc_tails.map(t => n + t);
-                if (search(r`[бвгджзклмнпрстфхцчшщ][ео][лнр]$`, n) !== null) {
-                    const stem = slice(n, 0, -2) + slice(n, -1);
+                for (const stem of _fleeting_stems(n).slice(1)) {
                     for (const t of masc_tails.slice(1)) cands.push(stem + t);
                 }
             }
@@ -801,31 +927,159 @@
         return forms;
     }
     const FIRST_NAME_FORMS = _build_first_name_forms();
-    function _same_name_case(a, b) {
-        // Two spellings of one name ("Сбер" … "Сбера", "Соколовы" … "Соколовых"): they share a
-        // stem and the rest of each word is a case ending. "То" and "Томске" share no stem: not
-        // one name.
-        a = _norm(lower(a)); b = _norm(lower(b));
-        const n = common_prefix(a, b);
-        for (let k = n; k > 2; k -= 1) {
-            // The stem is the longest common prefix that leaves a case ending in both words.
-            if (_case_tail(slice(a, k)) && _case_tail(slice(b, k))) {
-                return k >= Math.min(len(a), len(b)) - 2;
-            }
-        }
-        return false;
-    }
     function common_prefix(a, b) {
         const aa = Array.from(a), bb = Array.from(b);
         let n = 0;
         while (n < aa.length && n < bb.length && aa[n] === bb[n]) n += 1;
         return n;
     }
+    const _ASCII_LATIN_RX = /^[a-z]+$/;
+    function _same_stem_core(x, y, allow_short = true) {
+        if (x === y) return true;
+        const n = common_prefix(x, y);
+        const min_len = Math.min(len(x), len(y));
+        const min_k = (allow_short && min_len <= 4) ? 2 : 3;
+        for (let k = n; k >= min_k; k -= 1) {
+            const tx = slice(x, k), ty = slice(y, k);
+            const ok = k === 2 ? (CASE_ENDINGS.has(tx) && CASE_ENDINGS.has(ty)) : (_case_tail(tx) && _case_tail(ty));
+            if (ok && k >= min_len - 2) {
+                if ((tx === "" && _BAD_EMPTY_TAILS.has(ty)) || (ty === "" && _BAD_EMPTY_TAILS.has(tx))) continue;
+                if ((_FEM_IYA_TAILS.has(tx) && _MASC_CASE_TAILS.has(ty)) || (_FEM_IYA_TAILS.has(ty) && _MASC_CASE_TAILS.has(tx))) continue;
+                return true;
+            }
+        }
+        return false;
+    }
+    function _same_name_stem(x, y, allow_short = true) {
+        if (_same_stem_core(x, y, allow_short)) return true;
+        if (len(x) >= 5 && len(y) >= 5 && (x.includes("э") || y.includes("э"))) {
+            if (_same_stem_core(x.replace(/э/gu, "а"), y.replace(/э/gu, "а"), allow_short)
+                || _same_stem_core(x.replace(/э/gu, "е"), y.replace(/э/gu, "е"), allow_short)) return true;
+        }
+        if (_ASCII_LATIN_RX.test(x) && _ASCII_LATIN_RX.test(y)) {
+            if ((x.length >= 3 && (y === x + "s" || y === x + "es"))
+                || (y.length >= 3 && (x === y + "s" || x === y + "es"))) return true;
+            if (x.length === y.length && x.length >= 6 && x.slice(0, 4) === y.slice(0, 4)) {
+                let diffs = 0;
+                for (let i = 4; i < x.length; i += 1) if (x[i] !== y[i]) diffs += 1;
+                if (diffs === 1) return true;
+            }
+        }
+        return false;
+    }
+    function _same_name_case_fleeting(a, b, allow_short = true) {
+        const an = _norm(lower(a)), bn = _norm(lower(b));
+        if (an === bn) return true;
+        if (an.includes("-") && bn.includes("-")) {
+            const pa = an.split("-"), pb = bn.split("-");
+            if (pa.length === pb.length && pa.every((x, i) => {
+                const y = pb[i];
+                if (x === y) return true;
+                for (const sx of _fleeting_stems(x)) {
+                    for (const sy of _fleeting_stems(y)) {
+                        if (_same_name_stem(sx, sy, allow_short)) return true;
+                    }
+                }
+                return false;
+            })) return true;
+        }
+        for (const sa of _fleeting_stems(an)) {
+            for (const sb of _fleeting_stems(bn)) {
+                if (_same_name_stem(sa, sb, allow_short)) return true;
+            }
+        }
+        return false;
+    }
+    function _part_base_keys(part) {
+        const out = [];
+        const stems = _fleeting_stems(part).slice();
+        if (part.includes("э") && len(part) >= 5) {
+            for (const st of stems.slice()) {
+                if (st.includes("э") && len(st) >= 5) {
+                    for (const rep of ["а", "е"]) {
+                        const alt = st.replace(/э/gu, rep);
+                        if (!stems.includes(alt)) stems.push(alt);
+                    }
+                }
+            }
+        }
+        for (const st of stems) {
+            if (!out.includes(st)) out.push(st);
+            const L_st = len(st);
+            if (L_st >= 3 && "аяоеиыуюйьмхв".includes(char(st, -1))) {
+                const max_cut = Math.min(3, L_st - 2);
+                for (let cut = 1; cut <= max_cut; cut += 1) {
+                    if (_case_tail(slice(st, L_st - cut))) {
+                        const base = slice(st, 0, L_st - cut);
+                        if (!out.includes(base)) out.push(base);
+                    }
+                }
+            }
+        }
+        if (_ASCII_LATIN_RX.test(part)) {
+            if (part.length >= 4 && part.endsWith("s")) {
+                const b1 = part.slice(0, -1);
+                if (!out.includes(b1)) out.push(b1);
+                if (part.length >= 5 && part.endsWith("es")) {
+                    const b2 = part.slice(0, -2);
+                    if (!out.includes(b2)) out.push(b2);
+                }
+            }
+            if (part.length >= 6) {
+                const p4 = part.slice(0, 4);
+                if (!out.includes(p4)) out.push(p4);
+            }
+        } else if (len(part) >= 6 && "йяеомху".includes(char(part, -1))) {
+            const am = _ADJ_SK_END_RX.search(part);
+            if (am && am.start() >= 4) {
+                const base = slice(part, 0, am.start());
+                if (!out.includes(base)) out.push(base);
+            }
+        }
+        return out;
+    }
+    function _name_keys(wn) {
+        if (wn.includes("-")) {
+            const parts = wn.split("-");
+            const first_k = _part_base_keys(parts[0]);
+            const last_k = _part_base_keys(parts[parts.length - 1]);
+            const out = [];
+            for (const a of first_k) for (const b of last_k) out.push(a + "-" + b);
+            if (parts.slice(1).every(p => !p || isalpha(char(p, 0)))) {
+                for (const fk of first_k) if (!out.includes(fk)) out.push(fk);
+            }
+            if (!out.includes(wn)) out.push(wn);
+            return out;
+        }
+        return _part_base_keys(wn);
+    }
+    function _adj_name_match(a, b) {
+        const an = _norm(lower(a)), bn = _norm(lower(b));
+        for (const [base_w, adj_w] of [[an, bn], [bn, an]]) {
+            if (len(base_w) < 4 || len(adj_w) < 6) continue;
+            const n = common_prefix(base_w, adj_w);
+            const lb = len(base_w);
+            for (let k = Math.min(n, lb); k >= 4; k -= 1) {
+                if (k >= lb - 2 && _case_tail(slice(base_w, k)) && _ADJ_SK_RX.fullmatch(slice(adj_w, k))) return true;
+            }
+        }
+        return false;
+    }
+    function _same_name_case(a, b) {
+        return _same_name_case_fleeting(a, b, false);
+    }
     function name_match(a, b) {
-        if (stem_match(a, b)) return true;
-        a = _norm(lower(a)); b = _norm(lower(b));
-        const n = common_prefix(a, b);
-        return n >= 2 && CASE_ENDINGS.has(slice(a, n)) && CASE_ENDINGS.has(slice(b, n));
+        if (_same_name_case_fleeting(a, b, true)) return true;
+        for (const [comp, plain] of [[a, b], [b, a]]) {
+            if (comp.includes("-") && !plain.includes("-")) {
+                const parts = comp.split("-");
+                if (len(parts[0]) >= 2 && isupper(char(parts[0], 0))
+                    && parts.slice(1).every(p => !p || (CASED_RX.test(char(p, 0)) && !UPPER_RX.test(char(p, 0))))) {
+                    if (_same_name_case_fleeting(parts[0], plain, true)) return true;
+                }
+            }
+        }
+        return _adj_name_match(a, b);
     }
     function stem_match(a, b, strict = false) {
         a = _norm(lower(a)); b = _norm(lower(b));
@@ -857,6 +1111,8 @@
     const ITEM_PAD_RX = compile(r`[*_]*`);
     const AND_SPLIT_RX = compile(r`\s+и\s+`);
     const SRC_PREP_TAIL_RX = compile(r`(?<![а-яё])(?:от|через)\s+[A-ZА-ЯЁ][\w.\s-]*$`, "i");
+    const _CAP_WORD_RX = compile(r`[A-ZА-ЯЁ][\w-]*`);
+    const _LOWER_CYR_RX = compile(r`[а-яё]{2,}`);
     function _bisect_left_num(arr, val) {
         let lo = 0, hi = arr.length;
         while (lo < hi) {
@@ -878,6 +1134,81 @@
         if (ITEM_HEAD_RX.match(part)) return true;
         const pad = len(ITEM_PAD_RX.match(part).group(0));
         return num_set instanceof Set ? num_set.has(start + pad) : num_set.includes(start + pad);
+    }
+    function _clean_appos_head(sentence, a, b) {
+        const seg = slice(sentence, a, b);
+        let last_end = -1;
+        for (const m of _CAP_WORD_RX.finditer(seg)) last_end = m.end();
+        return last_end >= 0 && _LOWER_CYR_RX.search(slice(seg, last_end)) === null;
+    }
+    function _merge_appositives(sentence, spans, numbers, who) {
+        if (spans.length < 3 || !numbers.length) return spans;
+        const nums_sorted = numbers.slice().sort((x, y) => x - y);
+        const num_set = new Set(nums_sorted);
+        const has_num = (a, b) => _bisect_left_num(nums_sorted, b) > _bisect_left_num(nums_sorted, a);
+        const slen = len(sentence);
+        const _valid_mid = (a, b) => !has_num(a, b) && !who(a, b).length
+            && !APPOS_STOP_RX.match(_norm(lower(lstrip(slice(sentence, a, b)))));
+        const expanded = [];
+        for (let idx = 0; idx < spans.length; idx += 1) {
+            const [a, b] = spans[idx];
+            let did_split = false;
+            if (idx + 2 < spans.length && b < slen && char(sentence, b) === "," && has_num(a, b)) {
+                const m1 = spans[idx + 1], m2 = spans[idx + 2];
+                if (m1[1] < slen && char(sentence, m1[1]) === "," && _valid_mid(m1[0], m1[1])
+                    && (has_num(m2[0], m2[1]) || (idx + 3 < spans.length && m2[1] < slen && char(sentence, m2[1]) === ","
+                        && _valid_mid(m2[0], m2[1]) && has_num(spans[idx + 3][0], spans[idx + 3][1])))) {
+                    const ams = AND_SPLIT_RX.finditer(slice(sentence, a, b));
+                    if (ams.length) {
+                        const last_and = ams[ams.length - 1];
+                        const and_s = a + last_and.start(), and_e = a + last_and.end();
+                        if (has_num(a, and_s) && !has_num(and_e, b) && _item_head(sentence, and_e, b, num_set)
+                            && who(and_e, b).length === 1 && _clean_appos_head(sentence, and_e, b)) {
+                            expanded.push([a, and_s], [and_e, b]);
+                            did_split = true;
+                        }
+                    }
+                }
+            }
+            if (!did_split) expanded.push([a, b]);
+        }
+        const out = [];
+        let i = 0;
+        const n = expanded.length;
+        while (i < n) {
+            let merged = false;
+            if (i + 2 < n) {
+                const [a_i, b_i] = expanded[i];
+                if (!has_num(a_i, b_i) && b_i < slen && char(sentence, b_i) === ","
+                    && who(a_i, b_i).length === 1 && _clean_appos_head(sentence, a_i, b_i)) {
+                    for (const j of [i + 2, i + 3]) {
+                        if (j >= n) break;
+                        let all_comma = true;
+                        for (let k = i; k < j; k += 1) {
+                            if (!(expanded[k][1] < slen && char(sentence, expanded[k][1]) === ",")) { all_comma = false; break; }
+                        }
+                        if (!all_comma) break;
+                        let mids_ok = true;
+                        for (let k = i + 1; k < j; k += 1) {
+                            if (!_valid_mid(expanded[k][0], expanded[k][1])) { mids_ok = false; break; }
+                        }
+                        if (!mids_ok) continue;
+                        const [a_j, b_j] = expanded[j];
+                        if (!has_num(a_j, b_j) || APPOS_STOP_RX.match(_norm(lower(lstrip(slice(sentence, a_j, b_j)))))) continue;
+                        const am = AND_SPLIT_RX.search(slice(sentence, a_j, b_j));
+                        const tail_head_end = am ? a_j + am.start() : b_j;
+                        if (!who(a_j, tail_head_end).length) {
+                            out.push([a_i, b_j]);
+                            i = j + 1;
+                            merged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!merged) { out.push(expanded[i]); i += 1; }
+        }
+        return out;
     }
     function _split_and(sentence, a, b, numbers, who, memo = null) {
         const key = a + "," + b;
@@ -916,17 +1247,23 @@
             const lo_num = _bisect_left_num(nums_sorted, a_i);
             if (lo_num >= nums_sorted.length || nums_sorted[lo_num] >= b) continue;
             const first_num = nums_sorted[lo_num];
-            for (let vk = valid_js_rev.length - 1; vk >= 0; vk -= 1) {
-                const j = valid_js_rev[vk];
+            const max_j = valid_js_rev[0];
+            if (ands[max_j][0] > first_num && who(a_i, ands[max_j][0]).length) {
+                let lo_v = 0, hi_v = valid_js_rev.length - 1;
+                while (lo_v < hi_v) {
+                    const mid_v = (lo_v + hi_v + 1) >> 1;
+                    const mj = valid_js_rev[mid_v];
+                    if (ands[mj][0] > first_num && who(a_i, ands[mj][0]).length) lo_v = mid_v;
+                    else hi_v = mid_v - 1;
+                }
+                const j = valid_js_rev[lo_v];
                 const mid_end = ands[j][0];
-                if (mid_end <= first_num) continue;
                 const left_who = who(a_i, mid_end);
-                if (!left_who.length) continue;
-                if (left_who.length > 1) break;
-                const right_who = split_choice[j + 1] !== null ? null : get_tail_who(j + 1);
-                if (split_choice[j + 1] !== null || (right_who.length === 1 && !set_equal(right_who[0], left_who[0]))) {
-                    split_choice[i] = [mid_end, j + 1];
-                    break;
+                if (left_who.length === 1) {
+                    const right_who = split_choice[j + 1] !== null ? null : get_tail_who(j + 1);
+                    if (split_choice[j + 1] !== null || (right_who.length === 1 && !set_equal(right_who[0], left_who[0]))) {
+                        split_choice[i] = [mid_end, j + 1];
+                    }
                 }
             }
             if (split_choice[i] === null) get_tail_who(i);
@@ -943,8 +1280,9 @@
         return res;
     }
     function list_clauses(sentence, numbers, who) {
+        const spans = _merge_appositives(sentence, clause_spans(sentence), numbers, who);
         const out = [];
-        for (const [a, b] of clause_spans(sentence)) out.push(..._split_and(sentence, a, b, numbers, who));
+        for (const [a, b] of spans) out.push(..._split_and(sentence, a, b, numbers, who));
         return out;
     }
     function clause_span(sentence, offset, clauses = null) {
@@ -976,6 +1314,11 @@
         const out = [];
         let start = 0;
         for (const m of finditer(r`(?<=[.!?…])\s+(?=[«"(A-ZА-ЯЁ0-9])|\n+`, text)) {
+            if (!m.group().includes("\n") && m.start() > 0 && char(text, m.start() - 1) === ".") {
+                const left = _norm(lower(slice(text, Math.max(0, m.start() - 24), m.start())));
+                const nxt_ch = char(text, m.end());
+                if ((isdigit(nxt_ch) && ABBREV_DIGIT_RX.search(left)) || (!isdigit(nxt_ch) && ABBREV_CAP_RX.search(left))) continue;
+            }
             out.push([start, slice(text, start, m.start())]);
             start = m.end();
         }
@@ -983,14 +1326,14 @@
         return out.filter(([, sentence]) => strip(sentence));
     }
     function _canon_num(raw) {
-        let s = sub(`[${SEP}]`, "", raw).replace(/,/gu, ".");
+        let s = SEP_STRIP_RX.sub("", raw).replace(/,/gu, ".");
         s = lstrip(s, "+").replace(/−/gu, "-");
         s = decimal_ascii(s);
         const value = s ? Number(s) : NaN;
         return Number.isNaN(value) ? null : value;
     }
     function _big_num_str(raw, scale_zeros = 0) {
-        let s = sub(`[${SEP}]`, "", raw).replace(/,/gu, ".");
+        let s = SEP_STRIP_RX.sub("", raw).replace(/,/gu, ".");
         s = lstrip(s, "+").replace(/−/gu, "-");
         s = decimal_ascii(s);
         const neg = s.startsWith("-");
@@ -1013,6 +1356,134 @@
         if (!Number.isFinite(value)) return value < 0 ? "-inf" : (Number.isNaN(value) ? "nan" : "inf");
         return Number.isInteger(value) ? BigInt(value).toString() : format_general(value, 12);
     }
+    function _match_unit(text, pos) {
+        const um = UNIT_RX.match(text, pos);
+        if (!um) return null;
+        const raw_u = um.group(1);
+        if (lower(raw_u) === "с") {
+            if (raw_u !== "с") return null;
+            const tail = slice(text, um.end(), um.end() + 24);
+            if (tail.startsWith(".")) {
+                const dm = BARE_S_DOT_LOWER_RX.match(_norm(tail));
+                if (dm && !BARE_S_ALLOW.has(dm.group(1))) return null;
+            } else {
+                const wm = BARE_S_NEXT_WORD_RX.match(_norm(tail));
+                if (wm && !BARE_S_ALLOW.has(lower(wm.group(1)))) return null;
+            }
+        }
+        return um;
+    }
+    function _mask_spans(text, spans) {
+        if (!spans.length) return text;
+        const out = [];
+        let pos = 0;
+        for (let [a, b] of spans) {
+            if (a < pos) a = pos;
+            if (a < b) {
+                out.push(slice(text, pos, a), " ".repeat(b - a));
+                pos = b;
+            }
+        }
+        out.push(slice(text, pos));
+        return out.join("");
+    }
+    const _PROSE_FENCE_TAGS = new Set(["", "markdown", "md", "text", "txt", "plain", "plaintext"]);
+    function _is_code_fence(info, fbody) {
+        const letters = findall(r`[A-Za-zА-Яа-яЁё]`, fbody);
+        if (letters.filter(x => py_compare(x, "z") > 0).length < 0.3 * Math.max(1, letters.length)) return true;
+        const parts = split_space(info);
+        const tag = parts.length ? lower(parts[0]) : "";
+        if (_PROSE_FENCE_TAGS.has(tag)) return false;
+        const lits = _code_literal_spans(fbody, false);
+        if (!lits.length) return false;
+        const outside = [];
+        let p = 0;
+        for (const [ls, le] of lits) { outside.push(fbody.slice(p, ls)); p = le; }
+        outside.push(fbody.slice(p));
+        const out_letters = findall(r`[A-Za-zА-Яа-яЁё]`, outside.join(""));
+        return out_letters.length > 0 && out_letters.filter(x => py_compare(x, "z") > 0).length < 0.3 * out_letters.length;
+    }
+    function _code_fence_spans(text) {
+        if (!text.includes("```") && !text.includes("~~~")) return [];
+        const out = [];
+        const n = text.length;
+        let pos = 0, in_fence = false, f_char = "", f_len = 0, open_s = 0, body_s = 0, f_info = "";
+        while (pos < n) {
+            const nl = text.indexOf("\n", pos);
+            const line_end = nl < 0 ? n : nl;
+            const next_pos = nl < 0 ? n : nl + 1;
+            const eff_end = (line_end > pos && text[line_end - 1] === "\r") ? line_end - 1 : line_end;
+            let i = pos, sp = 0;
+            while (i < eff_end && text[i] === " " && sp < 4) { i += 1; sp += 1; }
+            if (sp <= 3 && i < eff_end && (text[i] === "`" || text[i] === "~")) {
+                const ch = text[i];
+                let j = i;
+                while (j < eff_end && text[j] === ch) j += 1;
+                const run = j - i;
+                if (run >= 3) {
+                    const rest = text.slice(j, eff_end);
+                    if (!in_fence) {
+                        if (nl >= 0 && (ch === "~" || !rest.includes("`"))) {
+                            in_fence = true; f_char = ch; f_len = run; open_s = pos; body_s = next_pos; f_info = rest;
+                            pos = next_pos;
+                            continue;
+                        }
+                    } else if (ch === f_char && run >= f_len && !strip(rest, " \t")) {
+                        const is_code = _is_code_fence(f_info, text.slice(body_s, pos));
+                        out.push([from_utf16(text, open_s), from_utf16(text, line_end), from_utf16(text, body_s), from_utf16(text, pos), is_code]);
+                        in_fence = false;
+                        pos = next_pos;
+                        continue;
+                    }
+                }
+            }
+            pos = next_pos;
+        }
+        return out;
+    }
+    function _inline_code_spans(s, skip_spans) {
+        if (!s.includes("`")) return [];
+        const skip16 = skip_spans.map(([a, b]) => [to_utf16(s, a), to_utf16(s, b)]);
+        const out = [];
+        const n = s.length, n_skip = skip16.length;
+        let fi = 0, i = 0;
+        while (i < n) {
+            while (fi < n_skip && skip16[fi][1] <= i) fi += 1;
+            if (fi < n_skip && skip16[fi][0] <= i && i < skip16[fi][1]) { i = skip16[fi][1]; continue; }
+            const bt = s.indexOf("`", i);
+            if (bt < 0) break;
+            while (fi < n_skip && skip16[fi][1] <= bt) fi += 1;
+            if (fi < n_skip && skip16[fi][0] <= bt && bt < skip16[fi][1]) { i = skip16[fi][1]; continue; }
+            let bs = 0, k = bt - 1;
+            while (k >= 0 && s[k] === "\\") { bs += 1; k -= 1; }
+            let run_end = bt;
+            while (run_end < n && s[run_end] === "`") run_end += 1;
+            const run_len = run_end - bt;
+            if (bs & 1) { i = run_end; continue; }
+            const nl = s.indexOf("\n", run_end);
+            let limit = nl < 0 ? n : nl;
+            if (fi < n_skip && skip16[fi][0] < limit) limit = skip16[fi][0];
+            let cur = run_end, matched = false;
+            while (cur < limit) {
+                const cpos = s.indexOf("`", cur);
+                if (cpos < 0 || cpos >= limit) break;
+                let cend = cpos;
+                while (cend < limit && s[cend] === "`") cend += 1;
+                if (cend - cpos === run_len && cpos > run_end) {
+                    out.push([from_utf16(s, bt), from_utf16(s, cend), from_utf16(s, run_end), from_utf16(s, cpos)]);
+                    i = cend;
+                    matched = true;
+                    break;
+                }
+                cur = cend;
+            }
+            if (!matched) i = run_end;
+        }
+        return out;
+    }
+    function _mask_code_fences(text) {
+        return _mask_spans(text, _code_fence_spans(text).filter(f => f[4]).map(([a, b]) => [a, b]));
+    }
     // END_BLOCK_FACT_MODEL
 
     // START_BLOCK_EXTRACT
@@ -1028,6 +1499,9 @@
         const sents = split_sentences(text);
         facts.sentences = sents.map(([, sentence]) => sentence);
         facts.starts = sents.map(([start]) => start);
+        const all_fences = _code_fence_spans(text);
+        const code_fence_ranges = all_fences.filter(f => f[4]).map(([a, b]) => [a, b]);
+        const prose_text = _mask_spans(text, code_fence_ranges);
         let prior_taken = [];
         let prior_starts = [];
         const pass_taken = [];
@@ -1075,23 +1549,23 @@
             }
             return true;
         }
+        const has_cyr = /[А-Яа-яЁё]/u.test(text);
+        const has_curr_sym = /[$€£¥₽]/u.test(text);
+        const _unit_lead = SEP + "&%₽$€£¥°";
         function upgrade_pound(unit, num_pos) {
             if (unit === "фунт" && POUND_MONEY_RX.search(_norm(slice(text, Math.max(0, num_pos - 36), num_pos)))) return "£";
             return unit;
         }
-        // Bold and italic marks may stand between a hedge and its number in both source and edit.
-        const gap = r`[ \u00a0\u202f*_]`;
-        const hedge_rxs = sorted(HEDGES, len, true).map(h => [
-            h, compile(r`(?:^|[^а-яa-z])${_norm(h).split(" ").map(re_escape).join(gap + "+")}(?:${gap}+чем)?${gap}*$`)
-        ]);
-        const cyr_any_rx = compile(r`[а-яё]`);
         function hedge_before(pos) {
-            const left = _norm(lower(slice(text, Math.max(0, pos - 32), pos)));
-            if (!cyr_any_rx.search(left)) return "";
-            for (const [h, hrx] of hedge_rxs) {
-                if (hrx.search(left)) return h;
-            }
-            return "";
+            if (!has_cyr || pos === 0) return "";
+            const left = _norm(lower(slice(text, Math.max(0, pos - 40), pos)));
+            if (!CYR_ANY_RX.search(left)) return "";
+            const hm = HEDGE_BEFORE_RX.search(left);
+            if (!hm) return "";
+            const raw_h = hm.group(1) || hm.group(3) || hm.group(4);
+            let h = strip(HEDGE_CLEAN_RX.sub(" ", raw_h));
+            if (hm.group(2) === "за" && (h === "не позже" || h === "не позднее" || h === "не раньше")) h += " за";
+            return h;
         }
 
         // START_BLOCK_URLS
@@ -1118,10 +1592,18 @@
             }
         }
         flush_taken();
+        const nbsp_spans = [];
+        if (text.includes("&")) {
+            for (const m of HTML_ENTITY_RX.finditer(text)) {
+                if (!free(m.start(), m.end())) continue;
+                if (lower(m.group()) === "&nbsp;") nbsp_spans.push([m.start(), m.end()]);
+                else take(m.start(), m.end());
+            }
+            flush_taken();
+        }
         // END_BLOCK_URLS
 
         // START_BLOCK_DATES_TIMES
-        // Versions and IP addresses are one token, unless a three-part token looks like a date.
         for (const m of finditer(r`(?<![\w.])(?:v(?=\d))?(\d+(?:\.\d+){2,})(?![\w]|\.\d)`, text, "i")) {
             const parts = m.group(1).split(".");
             const cue = "vV".includes(char(m.group(), 0)) || search(r`(?:верси\w*|релиз\w*|сборк\w*|version|release|build)\s*$`, slice(text, Math.max(0, m.start() - 20), m.start()), "i");
@@ -1133,33 +1615,43 @@
             }
         }
         flush_taken();
-        const date_rx = compile(r`\b(\d{1,2})(?:[ \t\u00a0]*(?:[–—-]|,|или|и|по|до)[ \t\u00a0]*(\d{1,2}))?[ \t\u00a0]+(${MONTHS})(?:[ \t\u00a0]+(\d{4}))?`, "i");
-        for (const m of date_rx.finditer(text)) {
+        for (const m of DATE_NAMED_RX.finditer(text)) {
+            const days = [m.group(1), m.group(2)].filter(Boolean).map(int);
+            if (!days.every(d => 1 <= d && d <= 31) || !free(m.start(), m.end())) continue;
             const month = MONTH_STEM[slice(lower(m.group(3)), 0, 3)] || 0;
-            for (const day of [m.group(1), m.group(2)].filter(Boolean)) {
-                facts.items.push(new Fact("date", pad2(int(day)) + "." + pad2(month), m.group(), sent_of(m.start()), m.start(), hedge_before(m.start())));
+            for (const day of days) {
+                facts.items.push(new Fact("date", pad2(day) + "." + pad2(month), m.group(), sent_of(m.start()), m.start(), hedge_before(m.start())));
             }
             if (m.group(4)) facts.items.push(new Fact("number", m.group(4), m.group(4), sent_of(m.start()), m.start()));
             take(m.start(), m.end());
         }
         flush_taken();
-        for (const m of finditer(r`\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b`, text)) {
+        for (const m of DATE_DOT_RX.finditer(text)) {
             if (free(m.start(), m.end())) {
-                facts.items.push(new Fact("date", pad2(int(m.group(1))) + "." + pad2(int(m.group(2))), m.group(), sent_of(m.start()), m.start()));
-                const year = len(m.group(3)) === 4 ? m.group(3) : "20" + m.group(3);
-                facts.items.push(new Fact("number", year, m.group(3), sent_of(m.start()), m.start()));
-                take(m.start(), m.end());
+                const d_num = int(m.group(1)), m_num = int(m.group(2));
+                if (1 <= d_num && d_num <= 31 && 1 <= m_num && m_num <= 12) {
+                    facts.items.push(new Fact("date", pad2(d_num) + "." + pad2(m_num), m.group(), sent_of(m.start()), m.start(), hedge_before(m.start())));
+                    const year = len(m.group(3)) === 4 ? m.group(3) : "20" + m.group(3);
+                    facts.items.push(new Fact("number", year, m.group(3), sent_of(m.start()), m.start()));
+                    take(m.start(), m.end());
+                }
             }
         }
         flush_taken();
         const norm_text = _norm(text);
-        for (const m of finditer(r`\b([01]?\d|2[0-3])[:.]([0-5]\d)\b(?![.,]\d)`, text)) {
-            // "1.50 ₽", "$1.50", "$1.50–2.50", "-1.50" and "1.50 млн" are numbers, not clock times.
-            if (char(text, m.end(1)) === "." && (UNIT_RX.match(text, m.end()) || ("-–—".includes(char(text, m.end())) && HYPHEN_UNIT_RX.match(norm_text, m.end())) ||
+        function _ratio_cue_before(pos) {
+            const s_idx = sent_of(pos);
+            const s0 = s_idx < facts.starts.length ? facts.starts[s_idx] : 0;
+            const win = _norm(lower(slice(text, Math.max(s0, pos - 36), pos)));
+            return Boolean(RATIO_CUE_RX.search(win) && !TIME_PREP_RX.search(win));
+        }
+        for (const m of TIME_RX.finditer(text)) {
+            if (char(text, m.end(1)) === "." && (_match_unit(text, m.end()) || ("-–—".includes(char(text, m.end())) && HYPHEN_UNIT_RX.match(norm_text, m.end())) ||
                 PREFIX_TIME_CURR_RX.search(slice(text, Math.max(0, m.start() - 6), m.start())) ||
                 search(r`(?<![\w.,])[+\-−]$`, slice(text, Math.max(0, m.start() - 2), m.start())) ||
                 search(r`[$€£¥₽][ \u00a0\u202f]*[+\-−]?\d+(?:[.,]\d+)?[ \t\u00a0]*[–—-][ \t\u00a0]*$`, slice(text, Math.max(0, m.start() - 24), m.start())) ||
-                match(r`[ \u00a0\u202f]+(${SCALE_ALT})(?![а-я])`, slice(text, m.end(), m.end() + 12), "i"))) continue;
+                SCALE_RX.match(text, m.end()))) continue;
+            if (char(text, m.end(1)) === ":" && _ratio_cue_before(m.start())) continue;
             if (free(m.start(), m.end())) {
                 const hh = int(m.group(1)), mm = m.group(2);
                 const value = mm === "00" ? String(hh) : hh + ":" + mm;
@@ -1168,30 +1660,66 @@
             }
         }
         flush_taken();
-        for (const m of WEEKDAY_RX.finditer(text)) {
-            const day = WEEKDAY_NUM[_norm(lower(m.group(1)))];
-            facts.items.push(new Fact("date", "день недели " + day, m.group(), sent_of(m.start()), m.start()));
+        function _add_ratio(a_raw, b_raw, raw, pos) {
+            const va_n = _canon_num(a_raw), vb_n = _canon_num(b_raw);
+            if (va_n !== null && vb_n !== null && Number.isFinite(va_n) && Number.isFinite(vb_n)) {
+                const va = _fmt(va_n), vb = _fmt(vb_n);
+                if (va !== vb) facts.items.push(new Fact("ratio", va + ":" + vb, raw, sent_of(pos), pos));
+            }
+        }
+        for (const m of RATIO_COLON_RX.finditer(prose_text)) {
+            if (free(m.start(), m.end())) {
+                const a_raw = m.group(1) !== null ? m.group(1) : m.group(3);
+                const b_raw = m.group(1) !== null ? m.group(2) : m.group(4);
+                _add_ratio(a_raw, b_raw, m.group(), m.start());
+            }
+        }
+        for (const m of RATIO_K_RX.finditer(prose_text)) {
+            if (free(m.start(), m.end())) _add_ratio(m.group(1), m.group(2), m.group(), m.start());
+        }
+        for (const m of RATIO_NA_RX.finditer(prose_text)) {
+            if (free(m.start(), m.end()) && _ratio_cue_before(m.start())) _add_ratio(m.group(1), m.group(2), m.group(), m.start());
         }
         const seen_wk_pos = new Set();
-        for (const m of WEEKDAY_RANGE_RX.finditer(text)) {
+        for (const m of WEEKDAY_RX.finditer(prose_text)) {
+            if (free(m.start(), m.end())) {
+                const day = WEEKDAY_NUM[_norm(lower(m.group(1)))];
+                facts.items.push(new Fact("date", "день недели " + day, m.group(), sent_of(m.start()), m.start()));
+                seen_wk_pos.add(m.start());
+            }
+        }
+        for (const m of WEEKDAY_WED_RX.finditer(prose_text)) {
+            const g = [1, 2, 3, 4].find(k => m.group(k) !== null);
+            const ws = m.start(g), we = m.end(g);
+            if (!seen_wk_pos.has(ws) && free(ws, we)) {
+                seen_wk_pos.add(ws);
+                facts.items.push(new Fact("date", "день недели 3", m.group(g), sent_of(ws), ws));
+            }
+        }
+        for (const m of WEEKDAY_RANGE_RX.finditer(prose_text)) {
             for (const g of [1, 2]) {
-                seen_wk_pos.add(m.start(g));
-                facts.items.push(new Fact("date", "день недели " + WEEKDAY_ABBR[lower(m.group(g))], m.group(g),
-                                          sent_of(m.start(g)), m.start(g)));
+                const ws = m.start(g), we = m.end(g);
+                if (!seen_wk_pos.has(ws) && free(ws, we)) {
+                    seen_wk_pos.add(ws);
+                    facts.items.push(new Fact("date", "день недели " + WEEKDAY_ABBR[lower(m.group(g))], m.group(g), sent_of(ws), ws));
+                }
             }
         }
         for (const rx of [WEEKDAY_DATE_RX, WEEKDAY_PREP_RX]) {
-            for (const m of rx.finditer(text)) {
-                if (!seen_wk_pos.has(m.start(1))) {
-                    seen_wk_pos.add(m.start(1));
-                    facts.items.push(new Fact("date", "день недели " + WEEKDAY_ABBR[lower(m.group(1))], m.group(1),
-                                              sent_of(m.start(1)), m.start(1)));
+            for (const m of rx.finditer(prose_text)) {
+                const ws = m.start(1), we = m.end(1);
+                if (!seen_wk_pos.has(ws) && free(ws, we)) {
+                    seen_wk_pos.add(ws);
+                    facts.items.push(new Fact("date", "день недели " + WEEKDAY_ABBR[lower(m.group(1))], m.group(1), sent_of(ws), ws));
                 }
             }
         }
         for (const m of MONTH_ANY_RX.finditer(text)) {
-            const before = rstrip(slice(text, 0, m.start()), " \t\u00a0");
-            if (isupper(char(m.group(), 0)) && before && !".!?…\n:—–-«\"(*#>|".includes(char(before, -1))) continue;
+            if (isupper(char(m.group(), 0))) {
+                let k = m.start() - 1;
+                while (k >= 0 && " \t\xa0".includes(char(text, k))) k -= 1;
+                if (k >= 0 && !".!?…\n:—–-«\"(*#>|".includes(char(text, k))) continue;
+            }
             if (free(m.start(), m.end())) {
                 const month = MONTH_ANY_NUM[lower(m.groups().find(Boolean))];
                 facts.items.push(new Fact("month", String(month), m.group(), sent_of(m.start()), m.start()));
@@ -1200,90 +1728,98 @@
         // END_BLOCK_DATES_TIMES
 
         // START_BLOCK_NUMBERS
-        // Heading counters and list markers are structure, not facts.
         for (const m of finditer(r`(?:вариант|шаг|этап|пункт|раздел|часть|глава|блок)\s+(\d+)`, text, "i")) take(m.start(1), m.end(1));
         const sp = r`[ \t\u00a0\u202f]`;
         for (const m of finditer(r`^[ \t\u00a0\u202f\ufeff]*(?:>${sp}*)*(?:#{1,6}${sp}+)?(?:[-*+]${sp}+)?(?:\*\*|__|\*|_)?(\d{1,2})[.)](?=[ \t\u00a0\u202f*_])`, text, "m")) take(m.start(1), m.end(1));
         for (const m of finditer(r`(\d)\ufe0f?\u20e3`, text)) take(m.start(1), m.end(1));
         flush_taken();
-        const sep_rx = compile(`[${SEP}]`);
-        const sign_rx = compile(r`^[+\-−]`);
-        const acct_rx = compile(r`\d{16,}`);
-        const scale_rx = compile(r`[${SEP}]+(${SCALE_ALT})(?![а-я])`, "i");
         function _units_compat(u1, u2) {
             return u1 === u2 || (u1 === "¥" && (u2 === "JPY" || u2 === "CNY")) || (u2 === "¥" && (u1 === "JPY" || u1 === "CNY"));
         }
+        function _apply_scale(value, plain, is_acct, is_big, scale) {
+            const scale_zeros = String(scale).length - 1;
+            if (is_acct) return value + "0".repeat(scale_zeros);
+            if (is_big) return _big_num_str(plain, scale_zeros);
+            value *= scale;
+            return Number.isFinite(value) ? value : _big_num_str(plain, scale_zeros);
+        }
         function read_number(start, digits, glued = true, prefix_unit = "") {
-            // The value, the unit and the end of a number that starts at `start`.
-            // null when the digits are not a number at all ("3D", "1С", "Pro2").
             let value;
-            const plain = sep_rx.sub("", digits);
-            const int_digits = sign_rx.sub("", plain).split(".", 1)[0].split(",", 1)[0];
-            const is_acct = Boolean(acct_rx.fullmatch(plain));
+            const plain = SEP_STRIP_RX.sub("", digits);
+            const int_digits = SIGN_RX.sub("", plain).split(".", 1)[0].split(",", 1)[0];
+            const is_acct = Boolean(ACCT_RX.fullmatch(plain));
             let is_big = !is_acct && len(int_digits) >= 16;
             if (is_acct) {
-                value = plain;             // a bank account: its digits as written, groups aside
+                value = plain;
             } else if (is_big) {
                 value = _big_num_str(plain);
             } else {
                 value = _canon_num(digits);
                 if (value === null) return null;
-                if (!Number.isFinite(value)) {
-                    is_big = true;
-                    value = _big_num_str(plain);
-                }
+                if (!Number.isFinite(value)) { is_big = true; value = _big_num_str(plain); }
             }
             let end = start + len(digits);
             let sc = null, unit = "";
             if (glued && isalpha(char(text, end))) {
-                // The unit is glued to the digits ("500мл", "990р."): the same value and unit as
-                // the spaced form. A capital letter is not a unit ("3D", "1С").
                 const gm = GLUED_UNIT_RX.match(text, end);
                 if (gm) {
-                    const u_gm = UNIT_CANON[lower(gm.group(1))] || "";
+                    const u_gm = _canon_unit(gm.group(1));
                     if (!prefix_unit || (u_gm && _units_compat(u_gm, prefix_unit))) {
                         unit = (prefix_unit && u_gm === "¥") ? prefix_unit : u_gm;
                         end = gm.end();
                     } else {
                         unit = prefix_unit;
                     }
-                } else if ("кk".includes(char(text, end)) && !isalpha(char(text, end + 1))) {
-                    if (is_acct) value += "000";
-                    else if (is_big) value = _big_num_str(plain, 3);
-                    else {
-                        value *= 1000;      // "30к" is "30 тыс."
-                        if (!Number.isFinite(value)) value = _big_num_str(plain, 3);
-                    }
-                    end += 1;
-                    const um = UNIT_RX.match(text, end);
-                    if (um) {                  // "30к рублей" is "30 тыс. рублей"
-                        const u_um = UNIT_CANON[lower(um.group(1))] || "";
-                        if (!prefix_unit || (u_um && _units_compat(u_um, prefix_unit))) {
-                            unit = (prefix_unit && u_um === "¥") ? prefix_unit : u_um;
-                            end = um.end();
-                        }
-                    }
-                    if (!unit && prefix_unit) unit = prefix_unit;
                 } else {
-                    return null;
+                    const gsm = GLUED_SCALE_RX.match(text, end);
+                    if (gsm) {
+                        sc = gsm;
+                        value = _apply_scale(value, plain, is_acct, is_big, SCALE[gsm.group(1)]);
+                        end = gsm.end();
+                        const um = _match_unit(text, end);
+                        if (um) {
+                            const u_um = _canon_unit(um.group(1));
+                            if (!prefix_unit || (u_um && _units_compat(u_um, prefix_unit))) {
+                                unit = (prefix_unit && u_um === "¥") ? prefix_unit : u_um;
+                                end = um.end();
+                            }
+                        }
+                        if (!unit && prefix_unit) unit = prefix_unit;
+                    } else if ("кk".includes(char(text, end)) && !isalpha(char(text, end + 1))) {
+                        sc = true;
+                        value = _apply_scale(value, plain, is_acct, is_big, 1000);
+                        end += 1;
+                        const um = _match_unit(text, end);
+                        if (um) {
+                            const u_um = _canon_unit(um.group(1));
+                            if (!prefix_unit || (u_um && _units_compat(u_um, prefix_unit))) {
+                                unit = (prefix_unit && u_um === "¥") ? prefix_unit : u_um;
+                                end = um.end();
+                            }
+                        }
+                        if (!unit && prefix_unit) unit = prefix_unit;
+                    } else {
+                        return null;
+                    }
                 }
             } else {
-                sc = scale_rx.match(slice(text, end, end + 12));
-                if (sc) {
-                    const scale = SCALE[lower(sc.group(1))];
-                    const scale_zeros = String(scale).length - 1;
-                    // exact: "10…0 тыс." is three zeros more
-                    if (is_acct) value += "0".repeat(scale_zeros);
-                    else if (is_big) value = _big_num_str(plain, scale_zeros);
-                    else {
-                        value *= scale;
-                        if (!Number.isFinite(value)) value = _big_num_str(plain, scale_zeros);
+                let em_end = end;
+                const two_em = slice(text, end, end + 2);
+                if (two_em === "**" || two_em === "__") em_end = end + 2;
+                else if (char(text, end) === "*" || char(text, end) === "_") em_end = end + 1;
+                let ch_em = char(text, em_end);
+                if (ch_em && SEP.includes(ch_em)) {
+                    sc = SCALE_RX.match(text, em_end);
+                    if (sc) {
+                        value = _apply_scale(value, plain, is_acct, is_big, SCALE[lower(sc.group(1))]);
+                        end = sc.end();
+                        em_end = end;
+                        ch_em = char(text, em_end);
                     }
-                    end += sc.end();
                 }
-                const um = UNIT_RX.match(text, end);
+                const um = (ch_em && (_unit_lead.includes(ch_em) || isalpha(ch_em))) ? _match_unit(text, em_end) : null;
                 if (um) {
-                    const u_um = UNIT_CANON[lower(um.group(1))] || "";
+                    const u_um = _canon_unit(um.group(1));
                     if (!prefix_unit || (u_um && _units_compat(u_um, prefix_unit))) {
                         unit = (prefix_unit && u_um === "¥") ? prefix_unit : u_um;
                         end = um.end();
@@ -1303,18 +1839,17 @@
             unit = upgrade_pound(unit, start);
             if (unit === "г" && !sc && typeof value === "number" && value === int(value)
                 && 1800 <= value && value <= 2100) {
-                unit = "год";  // "2020 г." is a year, not grams
+                unit = "год";
             }
             return [typeof value === "string" ? value : _fmt(value), unit, end];
         }
-        const num_rx = compile(r`(?<![\w.,])[+\-−]?\d+(?:[${SEP}]\d{3})*(?:[.,]\d+)?`);
-        for (const m of num_rx.finditer(text)) {
+        for (const m of NUM_RX.finditer(text)) {
             const digits = m.group();
             let num_start = m.start();
             let prefix_unit = "";
             let neg_prefix = false;
-            const pm = PREFIX_CURR_RX.search(slice(text, Math.max(0, m.start() - 6), m.start()));
-            if (pm) {
+            const pm = has_curr_sym ? PREFIX_CURR_RX.search(slice(text, Math.max(0, m.start() - 6), m.start())) : null;
+            if (pm && free(m.start() - len(pm.group(0)), m.start())) {
                 num_start = m.start() - len(pm.group(0));
                 prefix_unit = UNIT_CANON[lower(pm.group(2))] || pm.group(2);
                 if (["-", "−"].includes(pm.group(1)) && !["-", "−", "+"].some(s => digits.startsWith(s))) {
@@ -1327,7 +1862,6 @@
             if (!prefix_unit && (glue === "х" || glue === "x")) {
                 const dm = DIM_RX.match(text, end);
                 if (dm) {
-                    // "160х200" is two numbers: "160 × 200". The unit belongs to the second one.
                     const first = read_number(m.start(), digits, false);
                     if (first === null) continue;
                     const [value, unit, end1] = first;
@@ -1363,29 +1897,35 @@
             }
         }
         flush_taken();
-        const word_rx = compile(r`(?<![а-яё])(${sorted(Object.keys(WORD_NUM), len, true).join("|")})(?![а-яё])`, "i");
-        for (const m of word_rx.finditer(norm_text)) {
+        for (const m of WORD_RX.finditer(norm_text)) {
             if (!free(m.start(), m.end())) continue;
-            let v = Number(WORD_NUM[lower(m.group(1))]);
+            const w0 = lower(m.group(1));
+            let v = Number(WORD_NUM[w0]);
             let end = m.end();
-            while (true) {
-                const nxt = match(r`[ \u00a0]+(${sorted(Object.keys(WORD_NUM).concat(ONE_FORMS), len, true).join("|")})(?![а-яё])`, slice(norm_text, end, end + 20), "i");
-                if (!nxt) break;
-                const w = Number(has(WORD_NUM, lower(nxt.group(1))) ? WORD_NUM[lower(nxt.group(1))] : 1);
-                const last_order = v % 100 === 0 && v >= 100 ? 100 : (v % 10 === 0 && v >= 20 ? 10 : 1);
-                if (last_order === 1 || w >= last_order || w !== int(w)) break;
-                v += w;
-                end += nxt.end();
+            if (!WORD_NO_CONT.has(w0)) {
+                while (true) {
+                    const nxt = WORD_CONT_RX.match(norm_text, end);
+                    if (!nxt) break;
+                    const w = Number(has(WORD_NUM, lower(nxt.group(1))) ? WORD_NUM[lower(nxt.group(1))] : 1);
+                    const last_order = v % 100 === 0 && v >= 100 ? 100 : (v % 10 === 0 && v >= 20 ? 10 : 1);
+                    if (last_order === 1 || w >= last_order || w !== int(w)) break;
+                    v += w;
+                    end = nxt.end();
+                }
             }
-            const sc = match(r`[ \u00a0\u202f]+(${SCALE_ALT})(?![а-я])`, slice(text, end, end + 12), "i");
-            if (sc) { v *= SCALE[lower(sc.group(1))]; end += sc.end(); }
+            const sc = SCALE_RX.match(text, end);
+            if (sc) { v *= SCALE[lower(sc.group(1))]; end = sc.end(); }
             let unit = "";
-            const um = UNIT_RX.match(text, end);
-            if (um) { unit = upgrade_pound(UNIT_CANON[lower(um.group(1))] || "", m.start()); end = um.end(); }
+            const um = _match_unit(text, end);
+            if (um) { unit = upgrade_pound(_canon_unit(um.group(1)), m.start()); end = um.end(); }
             facts.items.push(new Fact("number", _fmt(v), slice(text, m.start(), end), sent_of(m.start()), m.start(), hedge_before(m.start()), unit));
             take(m.start(), end);
         }
         flush_taken();
+        if (nbsp_spans.length) {
+            for (const [a, b] of nbsp_spans) take(a, b);
+            flush_taken();
+        }
         const num_idxs = [];
         facts.items.forEach((f, idx_f) => { if (f.kind === "number" && f.unit !== "время") num_idxs.push(idx_f); });
         num_idxs.sort((a, b) => facts.items[a].pos - facts.items[b].pos);
@@ -1397,47 +1937,63 @@
             if (fullmatch(r`[–—-]`, between)) {
                 if (f1.unit && !f2.unit) f2.unit = f1.unit;
                 else if (f2.unit && !f1.unit) f1.unit = f2.unit;
-            } else if (f2.unit && !f1.unit && ["от", "с"].includes(f1.hedge) && fullmatch(r`[ \t\u00a0]+(?:до|по)[ \t\u00a0]+`, between, "i")) {
+            } else if (f2.unit && !f1.unit && f1.hedge === "от" && fullmatch(r`[ \t\u00a0]+(?:до|по)[ \t\u00a0]+`, between, "i")) {
                 f1.unit = f2.unit;
             }
         }
         // END_BLOCK_NUMBERS
 
         // START_BLOCK_NAMES_QUOTES
-        const quote_rx = r`«([^»\n]{1,500})»|„([^“”\n]{1,500})[“”]|“([^”\n]{1,500})”|(?<!\w)"(?!\s)([^"\n]{1,80})(?<!\s)"`;
-        const dash_after_rx = compile(r`[*_]*(,?)[ \t]+[—–-][ \t]`);
-        const line_em_rx = compile(r`[ \t>*_]*[—–][ \t]*`);
-        const line_hy_rx = compile(r`[ \t>*_]*-[ \t]*`);
-        const text_len = len(text);
-        for (const m of finditer(quote_rx, text)) {
+        const tag_spans = prose_text.includes("<") ? HTML_ANY_TAG_RX.finditer(prose_text).map(m => [m.start(), m.end()]) : [];
+        const quote_text = _mask_spans(prose_text, tag_spans);
+        const qtext_len = len(quote_text);
+        for (const m of QUOTE_RX.finditer(quote_text)) {
             const q = strip(m.groups().find(Boolean));
-            const dash = dash_after_rx.match(slice(text, m.end(), m.end() + 8));
-            let speech = Boolean(rstrip(slice(text, Math.max(0, m.start() - 8), m.start()), " \t*_").endsWith(":") ||
+            const dash = DASH_AFTER_RX.match(slice(quote_text, m.end(), m.end() + 8));
+            let speech = Boolean(COLON_BEFORE_QUOTE_RX.search(slice(quote_text, Math.max(0, m.start() - 24), m.start())) ||
                 (dash && (dash.group(1) || ["?", "!", "…"].some(tail => q.endsWith(tail)))));
             if (!speech) {
                 let k_left = m.start() - 1;
-                while (k_left >= 0 && " \t>*_—–-".includes(char(text, k_left))) k_left -= 1;
-                if (k_left < 0 || char(text, k_left) === "\n") {
-                    const line_start = slice(text, k_left + 1, m.start());
-                    if (line_em_rx.fullmatch(line_start)) {
+                while (k_left >= 0 && " \t\u00a0>*_—–-".includes(char(quote_text, k_left))) k_left -= 1;
+                if (k_left < 0 || char(quote_text, k_left) === "\n") {
+                    const line_start = slice(quote_text, k_left + 1, m.start());
+                    if (LINE_EM_RX.fullmatch(line_start)) {
                         speech = true;
-                    } else if (line_hy_rx.fullmatch(line_start)) {
+                    } else if (LINE_HY_RX.fullmatch(line_start)) {
                         let k_right = m.end();
-                        while (k_right < text_len && ".!?…*_ \t".includes(char(text, k_right))) k_right += 1;
-                        speech = k_right === text_len || char(text, k_right) === "\n";
+                        while (k_right < qtext_len && ".!?…*_ \t\u00a0".includes(char(quote_text, k_right))) k_right += 1;
+                        speech = k_right === qtext_len || "\r\n".includes(char(quote_text, k_right));
                     }
                 }
             }
             facts.items.push(new Fact("quote", lower(q), q, sent_of(m.start()), m.start(), "", "", speech));
         }
+        let cap_buckets = null;
+        function _cap_elsewhere(word, pos) {
+            if (cap_buckets === null) {
+                cap_buckets = new Map();
+                for (const cm of NAME_RX.finditer(quote_text)) {
+                    const cpos = cm.start(), cword = cm.group(1);
+                    if (!free(cpos, cpos + len(cword)) || _is_initial(quote_text, cpos)) continue;
+                    for (const bk of _name_keys(_norm(lower(cword)))) append_to(cap_buckets, bk, [cpos, cword]);
+                }
+            }
+            for (const bk of _name_keys(_norm(lower(word)))) {
+                for (const [start_c, other] of (cap_buckets.get(bk) || [])) {
+                    if (start_c !== pos && _same_name_case(word, other)) return true;
+                }
+            }
+            return false;
+        }
         for (const [s_start, sent] of sents) {
-            for (const m of NAME_RX.finditer(sent)) {
+            const sent_clean = slice(quote_text, s_start, s_start + len(sent));
+            for (const m of NAME_RX.finditer(sent_clean)) {
                 const word = m.group(1);
                 const pos = s_start + m.start();
-                if (has(UNIT_CANON, lower(word)) && !free(pos, pos + len(word))) continue;
-                const first = _is_initial(text, pos);
+                if (!free(pos, pos + len(word))) continue;
+                const first = _is_initial(quote_text, pos);
                 if (SENT_START_STOP.has(word) || POLITE_PRONOUN.fullmatch(word)) continue;
-                if (first && !(_capitalized_elsewhere(word, text, pos) || FIRST_NAME_FORMS.has(_norm(lower(word))))) {
+                if (first && !(_cap_elsewhere(word, pos) || FIRST_NAME_FORMS.has(_norm(lower(word))))) {
                     facts.items.push(new Fact("subject", word, word, sent_of(pos), pos));
                     continue;
                 }
@@ -1447,16 +2003,16 @@
         // END_BLOCK_NAMES_QUOTES
 
         // START_BLOCK_NEGATIONS
-        const neg_rx = r`(?<![а-яё])(не|ни|без)\s+(?:(?:на|в|во|к|ко|с|со|по|за|до|от|из|у|о|об)\s+)?([а-яё]{3,})|(?<![а-яё])(нет|нельзя)(?![а-яё])`;
         const low = _norm(lower(text));
         const low_stops = finditer(r`[.!?\n]`, low).map(sm => sm.start());
-        for (const m of finditer(neg_rx, low)) {
+        for (const m of NEG_RX.finditer(low)) {
             if (m.group(1)) {
                 const si = bisect_left(low_stops, m.end());
                 const s_end = si < low_stops.length ? low_stops[si] : len(low);
-                const contrast = Boolean(search(r`(?:^|[^а-яё])а\s+$`, slice(low, Math.max(0, m.start() - 4), m.start())) ||
-                    search(r`,\s*а\s`, slice(low, m.end(), Math.min(s_end, m.end() + 240))));
-                const polar_li = Boolean(!contrast && m.group(1) === "не" && match(r`\s+ли(?![а-яё])`, slice(low, m.end(), m.end() + 8)));
+                const contrast = Boolean(
+                    search(r`(?:^|[^а-яё])а[ \t\u00a0\u202f]+$`, slice(low, Math.max(0, m.start() - 4), m.start())) ||
+                    search(r`,[ \t\u00a0\u202f]*а[ \t\u00a0\u202f]+(?!(?:еще|также|потом|затем)(?![а-яё]))`, slice(low, m.end(), Math.min(s_end, m.end() + 240))));
+                const polar_li = Boolean(!contrast && m.group(1) === "не" && match(r`[ \t\u00a0\u202f]+ли(?![а-яё])`, slice(low, m.end(), m.end() + 8)));
                 const neg_kind = contrast ? "contrast" : (polar_li ? "polar_li" : "");
                 facts.items.push(new Fact("negation", m.group(2), m.group(), sent_of(m.start()), m.start(), m.group(1), neg_kind));
             } else {
@@ -1467,21 +2023,19 @@
 
         // START_BLOCK_CODE
         const _code = s => split_space(s).join(" ");
-        const masked_parts = [];
-        let m_pos = 0;
-        for (const m of finditer(r`^\x60\x60\x60[^\n]*\n(.*?)^\x60\x60\x60[ \t]*\r?$`, text, "sm")) {
-            const letters = findall(r`[A-Za-zА-Яа-яЁё]`, m.group(1));
-            const cyr = letters.filter(x => py_compare(x, "z") > 0).length;
-            if (_code(m.group(1)) && cyr < 0.3 * Math.max(1, letters.length)) {
-                facts.items.push(new Fact("code_block", _code(m.group(1)), strip(m.group(1)), sent_of(m.start()), m.start()));
+        const skip_inline = [];
+        for (const [open_s, close_e, body_s, body_e, is_code] of all_fences) {
+            if (is_code) {
+                const body = slice(text, body_s, body_e);
+                if (_code(body)) facts.items.push(new Fact("code_block", _code(body), strip(body), sent_of(open_s), open_s));
+                skip_inline.push([open_s, close_e]);
+            } else {
+                skip_inline.push([open_s, body_s], [body_e, close_e]);
             }
-            masked_parts.push(slice(text, m_pos, m.start()), " ".repeat(m.end() - m.start()));
-            m_pos = m.end();
         }
-        masked_parts.push(slice(text, m_pos));
-        const masked = masked_parts.join("");
-        for (const m of finditer(r`\x60([^\x60\n]+)\x60`, masked)) {
-            if (_code(m.group(1))) facts.items.push(new Fact("code", _code(m.group(1)), m.group(1), sent_of(m.start()), m.start()));
+        for (const [full_s, , body_s, body_e] of _inline_code_spans(text, skip_inline)) {
+            const raw_c = slice(text, body_s, body_e);
+            if (_code(raw_c)) facts.items.push(new Fact("code", _code(raw_c), raw_c, sent_of(full_s), full_s));
         }
         // END_BLOCK_CODE
         return facts;
@@ -1566,7 +2120,7 @@
         negation_words() {
             if (!this._neg_words) {
                 const buckets = new Map();
-                for (const m of finditer(r`(?<![а-яё])(не|ни|без|нет|нельзя)\s+(?:[а-яё]+\s+){0,2}([а-яё]{3,})`, this.text)) {
+                for (const m of NEG_WORDS_SCAN_RX.finditer(this.text)) {
                     const key = slice(m.group(2), 0, 3);
                     if (!buckets.has(key)) buckets.set(key, []);
                     buckets.get(key).push(m.group(2));
@@ -1607,56 +2161,97 @@
             const s_to = j < this.stops.length ? this.stops[j] : len(this.text);
             return [s_from, s_to];
         }
-        // A negation within 3 words before or 4 words after, inside the same sentence.
         negated_at(start, end) {
             const [s_from, s_to] = this.sentence(start, end);
             const txt = this.text;
             let i = start;
+            let prev_conj = false;
             for (let step = 0; step < 3; step += 1) {
                 while (i > s_from && SPACE_RX.test(char(txt, i - 1))) i -= 1;
                 if (i <= s_from) break;
                 const w_end = i;
                 while (i > s_from && !SPACE_RX.test(char(txt, i - 1))) i -= 1;
-                if (w_end - i <= 24 && NEG_WORDS.has(sub(r`[^а-яё]`, "", slice(txt, i, w_end)))) return true;
+                const tok = slice(txt, i, w_end);
+                const stripped_tok = rstrip(tok, "»\"'*_)");
+                if (stripped_tok.endsWith(";")) break;
+                if (prev_conj && ([",", "—", "–"].some(e => stripped_tok.endsWith(e)) || tok === "—" || tok === "–")) break;
+                const letters = w_end - i <= 24 ? sub(r`[^а-яё]`, "", tok) : "";
+                if (letters === "нет" && stripped_tok.endsWith(",")) break;
+                if (NEG_WORDS.has(letters)) return true;
+                prev_conj = _CLAUSE_CONJ_WORDS.has(letters);
             }
             let j = end;
+            const after_head = lstrip(slice(txt, end, Math.min(s_to, end + 2)), "»\"'*_)");
+            let saw_sep = [",", ";", "—", "–"].some(e => after_head.startsWith(e));
             for (let step = 0; step < 4; step += 1) {
                 while (j < s_to && SPACE_RX.test(char(txt, j))) j += 1;
                 if (j >= s_to) break;
                 const w_start = j;
                 while (j < s_to && !SPACE_RX.test(char(txt, j))) j += 1;
-                if (j - w_start <= 24 && NEG_WORDS.has(sub(r`[^а-яё]`, "", slice(txt, w_start, j)))) return true;
+                const tok = slice(txt, w_start, j);
+                const letters = j - w_start <= 24 ? sub(r`[^а-яё]`, "", tok) : "";
+                if (saw_sep && _CLAUSE_CONJ_WORDS.has(letters)) break;
+                if (NEG_WORDS.has(letters)) return true;
+                const stripped_tok = rstrip(tok, "»\"'*_)");
+                if (stripped_tok.endsWith(";")) break;
+                saw_sep = [",", "—", "–"].some(e => stripped_tok.endsWith(e)) || tok === "—" || tok === "–";
             }
             return false;
         }
-        // "Вместо того чтобы" in the left window: the negation was reworded, not lost.
         instead_at(start, end) {
-            // "Вместо того чтобы" right before the word; "Вместо писем отправляйте" is not one.
             const [s_from] = this.sentence(start, end);
             return Boolean(search(r`(?<![а-яё])вместо\s+того,?\s+чтобы\s+$`, slice(this.text, Math.max(s_from, start - 48), start)));
         }
     }
-    // The indexes of the texts of the last comparison; they are dropped when it ends.
-    const indexes = new Map();
-    function _index(text) {
-        if (!indexes.has(text)) indexes.set(text, new TextIndex(text));
-        return indexes.get(text);
-    }
+    const _CLAUSE_CONJ_WORDS = new Set(["но", "а", "и", "однако", "зато", "или"]);
     const FOOTNOTE_MARK_RX = compile(
-        r`\[(?:\d{1,4}(?:[ \t\u00a0]*[,;–—-][ \t\u00a0]*(?:(?:с|стр|т|ч|вып|кн)\.?[ \t\u00a0]*)?\d{1,4})*)\]$|\(\d{1,3}\)$`, "i");
+        r`\[(?:\d{1,4}(?:[ \t\u00a0]*[,;–—-][ \t\u00a0]*(?:(?:с|стр|т|ч|гл|п|ст|разд|прим|вып|кн|pp?|s)\.?[ \t\u00a0]*)?\d{1,4})*)\]$`
+        + r`|\[\^[A-Za-zА-Яа-яЁё0-9_-]{1,20}\]$`
+        + r`|\[[А-ЯЁA-Z][^\]\n]{1,40}\d{4}[^\]]*\]$`
+        + r`|\(\d{1,3}\)$`, "i");
     const LIST_NUM_RX = compile(r`\d+[.)]`);
+    function _is_table_header_pipe(text, pipe_pos) {
+        const line_s = rfind(text, "\n", 0, pipe_pos) + 1;
+        if (!strip(slice(text, line_s, pipe_pos), " \t")) return false;
+        let line_e = find(text, "\n", pipe_pos);
+        if (line_e < 0) line_e = len(text);
+        const line = slice(text, line_s, line_e);
+        if (Array.from(line).some(c => isdigit(c))) return false;
+        if (line_s > 0) {
+            const prev_s = rfind(text, "\n", 0, line_s - 1) + 1;
+            const prev_line = strip(slice(text, prev_s, line_s - 1));
+            if (prev_line.startsWith("|") || (prev_line.split("|").length - 1) >= 2) return false;
+        }
+        if (line_e < len(text)) {
+            const next_e = find(text, "\n", line_e + 1);
+            const next_line = slice(text, line_e + 1, next_e < 0 ? len(text) : next_e);
+            if (TABLE_SEP_LINE_RX.match(next_line)) return true;
+            if (next_line.includes("|") && Array.from(next_line).some(c => isdigit(c))) return true;
+        }
+        const cells = strip(strip(line), "|").split("|").filter(c => strip(c));
+        return cells.length >= 3;
+    }
+    const _CELL_PHRASE_RX = compile(r`[\w-]+[ \t\u00a0*_]+[а-яё]{2,}`);
     function _is_initial(text, pos) {
-        // True when only markup, list markers, emoji or spaces stand between the word and the
-        // start of a line or the end of the previous sentence. A footnote mark ("болота.[1] Там")
-        // stands between the sentences, not inside one.
         let i = pos - 1;
         while (i >= 0) {
             const ch = char(text, i);
-            if (ch === "\n" || ".!?…:".includes(ch)) return true;
+            if (ch === "," || ch === ";") return false;
+            if (ch === "|") {
+                const line_s = rfind(text, "\n", 0, i) + 1;
+                if (!strip(slice(text, line_s, i), " \t")) return true;
+                if (_is_table_header_pipe(text, i)) return true;
+                return Boolean(_CELL_PHRASE_RX.match(slice(text, pos, pos + 40)));
+            }
+            if (ch === "\n" || "!?…:".includes(ch)) return true;
+            if (ch === ".") {
+                if (ABBREV_CAP_RX.search(_norm(lower(slice(text, Math.max(0, i - 24), i + 1))))) return false;
+                return true;
+            }
             if ("])".includes(ch)) {
-                const mark = FOOTNOTE_MARK_RX.search(slice(text, Math.max(0, i - 32), i + 1));
+                const mark = FOOTNOTE_MARK_RX.search(slice(text, Math.max(0, i - 64), i + 1));
                 if (mark) {
-                    i -= len(mark.group());  // step back over the whole mark and keep looking
+                    i -= len(mark.group());
                     continue;
                 }
             }
@@ -1665,32 +2260,6 @@
             i -= 1;
         }
         return true;
-    }
-    // The capitalised words of a text that stand not at the start of a sentence, by their first
-    // three letters: a sentence-initial word is a name when the same name stands elsewhere.
-    const capWords = new Map();
-    function _cap_words(text) {
-        if (capWords.has(text)) return capWords.get(text);
-        const buckets = new Map();
-        for (const m of NAME_RX.finditer(text)) {
-            if (_is_initial(text, m.start())) continue;
-            const key = slice(_norm(lower(m.group(1))), 0, 3);
-            if (!buckets.has(key)) buckets.set(key, []);
-            buckets.get(key).push([m.start(), m.group(1)]);
-        }
-        capWords.set(text, buckets);
-        return buckets;
-    }
-    function _capitalized_elsewhere(word, text, pos) {
-        // The same name stands elsewhere in another case ("Сбер" … "Сбера"). A shared prefix is
-        // not enough: "То" is not "Томске" and "Там" is not "Тамара".
-        const bucket = _cap_words(text).get(slice(_norm(lower(word)), 0, 3));
-        if (!bucket) return false;
-        for (const [start, other] of bucket) {
-            if (start === pos) continue;
-            if (_same_name_case(word, other)) return true;
-        }
-        return false;
     }
     // END_BLOCK_CONTEXT_HELPERS
 
@@ -1782,7 +2351,9 @@
             || (0x2B00 <= cp && cp <= 0x2BFF) || (0x2190 <= cp && cp <= 0x21FF) || (0x25A0 <= cp && cp <= 0x25FF)
             || EMOJI_EXTRA.has(cp) || (0x1F3FB <= cp && cp <= 0x1F3FF);
     }
+    const _ANY_INV_SCAN_RX = /[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\u2800\u3164\ufe00-\ufe0f\ufeff\uffa0\ufffc\u{e0000}-\u{e007f}\u{e0100}-\u{e01ef}]/u;
     function _strip_invisibles(chunk, prev_ch = "", next_ch = "") {
+        if (!_ANY_INV_SCAN_RX.test(chunk)) return [chunk, 0];
         function _ignorable_ahead(cp) {
             return INVISIBLE_CPS.has(cp) || SPACE_SPOOFERS.has(cp) || cp === 0x200D || cp === 0x200C
                 || (0xFE00 <= cp && cp <= 0xFE0F) || (0xE0000 <= cp && cp <= 0xE007F) || (0xE0100 <= cp && cp <= 0xE01EF);
@@ -1806,10 +2377,14 @@
                 if (cp === 0xE007F) in_flag = false;
                 continue;
             }
-            in_flag = cp === 0x1F3F4 || cp === 0x1F3F3;
+            const left_c = out.length ? out[out.length - 1] : prev_ch;
+            if (cp === 0x1F3F4 || cp === 0x1F3F3) {
+                in_flag = true;
+            } else if (!(in_flag && cp === 0xFE0F && left_c && (left_c.codePointAt(0) === 0x1F3F4 || left_c.codePointAt(0) === 0x1F3F3))) {
+                in_flag = false;
+            }
             if (SPACE_SPOOFERS.has(cp)) {
                 removed += 1;
-                const left_c = out.length ? out[out.length - 1] : prev_ch;
                 if (left_c && !_WS.has(left_c)) {
                     const right_c = _next_kept(i + 1);
                     if (right_c && !_WS.has(right_c)) out.push(" ");
@@ -1822,10 +2397,9 @@
                 continue;
             }
             if (cp === 0xFE0F) {
-                const left_c = out.length ? out[out.length - 1] : prev_ch;
                 const right_c = _next_kept(i + 1);
                 if ((left_c && _is_emoji(left_c))
-                    || ("0123456789#*".includes(left_c) && right_c === "\u20e3")) {
+                    || (Boolean(left_c) && "0123456789#*".includes(left_c) && right_c === "\u20e3")) {
                     out.push(ch);
                     continue;
                 }
@@ -1977,31 +2551,24 @@
         return spans;
     }
     function _code_spans(s) {
-        function bisect_right_local(arr, value) {
-            let lo = 0, hi = arr.length;
-            while (lo < hi) {
-                const mid = (lo + hi) >> 1;
-                if (value < arr[mid]) hi = mid; else lo = mid + 1;
+        const all_fences = _code_fence_spans(s);
+        const spans = [], skip_inline = [];
+        for (const [open_s, close_e, body_s, body_e, is_code] of all_fences) {
+            if (is_code) {
+                spans.push([open_s, close_e]);
+                skip_inline.push([open_s, close_e]);
+            } else {
+                skip_inline.push([open_s, body_s], [body_e, close_e]);
             }
-            return lo;
         }
-        const fences = [];
-        for (const m of finditer(r`^\x60\x60\x60[^\n]*\n.*?^\x60\x60\x60[ \t]*\r?$`, s, "ms")) {
-            const letters = findall(r`[A-Za-zА-Яа-яЁё]`, m.group());
-            if (letters.filter(x => py_compare(x, "z") > 0).length < 0.3 * Math.max(1, letters.length)) fences.push([m.start(), m.end()]);
-        }
-        const fence_starts = fences.map(([fs]) => fs);
-        const spans = fences.slice();
-        for (const m of finditer(r`\x60[^\x60\n]+\x60`, s)) {
-            const idx = bisect_right_local(fence_starts, m.start()) - 1;
-            if (idx < 0 || m.start() >= fences[idx][1]) spans.push([m.start(), m.end()]);
-        }
+        for (const [full_s, full_e] of _inline_code_spans(s, skip_inline)) spans.push([full_s, full_e]);
         spans.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
         return spans;
     }
     function _strip_code_invisibles(code) {
         let head = "", body = code, tail = "", allow_bt = false;
-        if (code.startsWith("```")) {
+        const lead = lstrip(code, " ");
+        if (lead.startsWith("```") || lead.startsWith("~~~")) {
             const nl = code.indexOf("\n"), last_nl = code.lastIndexOf("\n");
             if (nl >= 0 && nl < last_nl) {
                 head = code.slice(0, nl + 1);
@@ -2009,10 +2576,15 @@
                 tail = code.slice(last_nl);
                 allow_bt = true;
             }
-        } else if (code.length >= 2 && code[0] === "`" && code[code.length - 1] === "`") {
-            head = "`";
-            body = code.slice(1, -1);
-            tail = "`";
+        } else if (code.startsWith("`")) {
+            let k = 0;
+            while (k < code.length && code[k] === "`") k += 1;
+            if (code.length >= 2 * k && code.endsWith("`".repeat(k))) {
+                head = code.slice(0, k);
+                body = code.slice(k, -k);
+                tail = code.slice(-k);
+                allow_bt = k >= 2;
+            }
         }
         const sub_parts = [];
         let c_pos = 0;
@@ -2080,15 +2652,25 @@
                 const next_ch = i + 1 < parts.length && parts[i + 1] ? char(parts[i + 1], 0) : "";
                 for (let pass = 0; pass < 4; pass += 1) {
                     let step = 0;
-                    while (true) {
-                        const next_chunk = CITATION_RX.sub("", chunk);
-                        if (next_chunk === chunk) break;
+                    for (let c_pass = 0; c_pass < 8; c_pass += 1) {
+                        const c1 = CITATION_RX.sub("", chunk);
+                        const c2 = c1.includes("<") ? CITE_XML_PAIR_RX.sub(m => m.group(1), c1) : c1;
+                        if (c2 === chunk) break;
                         step += 1;
-                        chunk = next_chunk;
+                        chunk = c2;
                     }
-                    const before_url = chunk;
-                    chunk = sub(URL_RX, fix_url, chunk);
-                    if (chunk !== before_url) step += 1;
+                    if (chunk.includes("<")) {
+                        const c_open = CITE_XML_OPEN_RX.sub("", chunk);
+                        if (c_open !== chunk) {
+                            step += 1;
+                            chunk = c_open;
+                        }
+                    }
+                    if (chunk.includes("://") || chunk.includes("w.") || chunk.includes("W.")) {
+                        const before_url = chunk;
+                        chunk = sub(URL_RX, fix_url, chunk);
+                        if (chunk !== before_url) step += 1;
+                    }
                     const [cleaned_chunk, inv_n] = _strip_invisibles(chunk, prev_ch, next_ch);
                     chunk = cleaned_chunk;
                     if (step || inv_n) changed = true;
@@ -2100,7 +2682,7 @@
                 parts[i] = out_chunk;
             }
             text = parts.join("");
-            if (!changed || !text.includes("`")) break;
+            if (!changed || (!text.includes("`") && !text.includes("~"))) break;
         }
         return text;
     }
@@ -2126,7 +2708,7 @@
             parts.push([prev, len(before)]);
             head_rx = SERVICE_HEAD_RX;
         } else {
-            for (const m of finditer(r`\n[ \t]*\n`, before)) {
+            for (const m of finditer(r`\r?\n[ \t]*\r?\n`, before)) {
                 parts.push([prev, m.start()]);
                 prev = m.end();
             }
@@ -2135,13 +2717,11 @@
         }
         const spans = [];
         const tails = [];
-        // The head: the first part, when it is one short line that opens like a chat answer.
         if (parts.length > 1) {
             const body = strip(slice(before, parts[0][0], parts[0][1]));
             const about = SERVICE_SIZE_RX.search(body) || rstrip(body, "*_ ").endsWith(":");
             if (len(body) <= 300 && !body.includes("\n") && head_rx.match(body) && about) spans.push(parts[0]);
         }
-        // The tail: walk back from the last part while it talks like the assistant.
         let i = parts.length - 1;
         while (i >= 0) {
             const body = strip(slice(before, parts[i][0], parts[i][1]));
@@ -2151,15 +2731,13 @@
             tails.push(parts[i]);
             i -= 1;
         }
-        // G1: the edit kept the beginning of the span: the values there are still facts.
+        const after_lf = after_norm.replace(/\r\n/g, "\n");
         const kept = [];
         for (const [a, b] of spans) {
-            const key = slice(_norm(lower(slice(before, a, b))), 0, 20);
-            if (key && !after_norm.includes(key)) kept.push([a, b]);
+            const key = slice(_norm(lower(strip(slice(before, a, b)).replace(/\r\n/g, "\n"))), 0, 20);
+            if (key && !after_lf.includes(key)) kept.push([a, b]);
         }
         const kept_tails = tails.filter(([ta, tb]) => kept.some(([ka, kb]) => ka === ta && kb === tb));
-        // Parenthetical length notes in the first or last part ("**Инструкция** (~241 знак):",
-        // "(≈253 знака с пробелами…)"): even when the heading itself stays, the dropped size note is service.
         if (parts.length > 1) {
             for (const [pa, pb] of [parts[0], parts[parts.length - 1]]) {
                 const part_str = slice(before, pa, pb);
@@ -2172,12 +2750,12 @@
                     const is_standalone = Boolean(fullmatch(r`[*_ \t]*\([^)\n]+\)\.?[*_ \t]*`, line));
                     const is_heading_note = len(line) <= 160
                         && (line.startsWith("#") || line.startsWith("**") || line.startsWith("__") || rstrip(line, "*_ \t").endsWith(":"))
-                        && strip(slice(part_str, pm.end(), line_e), "*_ \t:") === "";
+                        && strip(slice(part_str, pm.end(), line_e), "*_ \t:\r") === "";
                     if (!(is_standalone || is_heading_note)) continue;
                     const sa = pa + pm.start(), sb = pa + pm.end();
                     if (kept.some(([a, b]) => a <= sa && sb <= b)) continue;
-                    const key = slice(_norm(lower(slice(before, sa, sb))), 0, 20);
-                    if (key && !after_norm.includes(key)) kept.push([sa, sb]);
+                    const key = slice(_norm(lower(strip(slice(before, sa, sb)).replace(/\r\n/g, "\n"))), 0, 20);
+                    if (key && !after_lf.includes(key)) kept.push([sa, sb]);
                 }
             }
         }
@@ -2328,8 +2906,15 @@
         "зато", "однако", "еще", "уже", "только", "лишь", "даже", "например",
         "хотя", "если", "ведь"
     ]);
+    const ITEM_HEDGE_PREPS = new Set([...ITEM_VAL_PREPS, "через", "к", "ко", "до", "с", "со"]);
+    const _ITEM_LEFT_CLEAN_RX = compile(
+        r`^[ \t\u00a0\u202f]*(?:>[ \t\u00a0\u202f]*)*(?:#{1,6}[ \t\u00a0\u202f]+)?(?:[-•*+—–|][ \t\u00a0\u202f]*)*(?:\*\*|__|\*|_)?(?:\d{1,2}[.)][ \t\u00a0\u202f]+)?`);
+    const _ITEM_TOK_RX = compile(r`[A-Za-zА-Яа-яЁё0-9]+(?:-[A-Za-zА-Яа-яЁё0-9]+)*`);
+    const _ITEM_SEP_RX = compile(r`[:—–(|]`);
+    const _ITEM_LIST_MARKER_RX = compile(r`^[ \t>*_]*(?:[-•*+—–|]|\d{1,2}[.)])`);
     function _extract_item_label(left, right, is_first_clause) {
-        const rw = findall(r`[\w-]+`, right);
+        const r_check = right.includes("|") ? right.split("|", 1)[0] : right;
+        const rw = findall(r`[\w-]+`, r_check);
         if (rw.length > 3) return null;
         for (const w of rw) {
             const wn = _norm(lower(w));
@@ -2341,28 +2926,30 @@
             const sub_res = _extract_item_label(slice(left, colon_pos + 1), right, false);
             if (sub_res !== null) return sub_res;
         }
-        const left_clean = sub(
-            r`^[ \t\u00a0\u202f]*(?:>[ \t\u00a0\u202f]*)*(?:#{1,6}[ \t\u00a0\u202f]+)?(?:[-•*+—–|][ \t\u00a0\u202f]*)*(?:\*\*|__|\*|_)?(?:\d{1,2}[.)][ \t\u00a0\u202f]+)?`,
-            "", left);
-        let toks = finditer(r`[A-Za-zА-Яа-яЁё0-9]+(?:-[A-Za-zА-Яа-яЁё0-9]+)*`, left_clean)
+        const left_clean = _ITEM_LEFT_CLEAN_RX.sub("", left);
+        let toks = _ITEM_TOK_RX.finditer(left_clean)
             .filter(m => !/^\d+$/u.test(m.group()))
             .map(m => [m.group(), _norm(lower(m.group())), m.start(), m.end()]);
         if (!toks.length) return null;
+        if (toks.length > 2 && ITEM_HEDGE_PREPS.has(toks[toks.length - 1][1]) && !_ITEM_SEP_RX.search(slice(left_clean, toks[toks.length - 1][3]))) {
+            const pre_toks = toks.slice(0, -1);
+            if (pre_toks[pre_toks.length - 1][1] === "чем" || HEDGE_TOK_PARTS.some(hp =>
+                pre_toks.length > hp.length && pre_toks.slice(-hp.length).every((t, k) => t[1] === hp[k])
+            )) toks = pre_toks;
+        }
         if (toks.length > 1 && toks[toks.length - 1][1] === "чем") toks = toks.slice(0, -1);
-        for (const h of sorted(HEDGES, len, true)) {
-            if (h === "без" || h === "кроме") continue;
-            const hp = _norm(h).split(" ");
+        for (const hp of HEDGE_TOK_PARTS) {
             if (toks.length > hp.length && toks.slice(-hp.length).every((t, k) => t[1] === hp[k])) {
                 toks = toks.slice(0, -hp.length);
                 break;
             }
         }
         const [last_raw, last_norm, last_s, last_e] = toks[toks.length - 1];
-        const has_sep = Boolean(search(r`[:—–(|]`, slice(left_clean, last_e)));
+        const has_sep = Boolean(_ITEM_SEP_RX.search(slice(left_clean, last_e)));
         const is_quoted = last_s > 0 && "«„“\"'`".includes(char(left_clean, last_s - 1));
         const after_cls = toks.length >= 2 && ITEM_CLASSIFIERS.some(c => toks[toks.length - 2][1].startsWith(c));
         if (ITEM_BAD_NUM_PREPS.has(last_norm) && !(has_sep || is_quoted || isupper(char(last_raw, 0)) || after_cls)) return null;
-        if (toks.length > 1 && ITEM_VAL_PREPS.has(toks[toks.length - 1][1]) && !search(r`[:—–(|]`, slice(left_clean, toks[toks.length - 1][3]))) {
+        if (toks.length > 1 && ITEM_VAL_PREPS.has(toks[toks.length - 1][1]) && !_ITEM_SEP_RX.search(slice(left_clean, toks[toks.length - 1][3]))) {
             toks = toks.slice(0, -1);
         }
         if (toks.length > 1 && ITEM_COPULA_RX.match(toks[toks.length - 1][1])) toks = toks.slice(0, -1);
@@ -2550,7 +3137,6 @@
         const groups = [];
         const all_items = [];
         let single_run = [];
-        const list_marker_rx = compile(r`^[ \t>*_]*(?:[-•*+—–|]|\d{1,2}[.)])`);
         function flush_run() {
             if (single_run.length >= 2) {
                 const grp = make_group(single_run.map(([, it]) => it));
@@ -2590,8 +3176,8 @@
                     const prev_idx = single_run[single_run.length - 1][0];
                     const prev_end = facts.starts[prev_idx] + len(facts.sentences[prev_idx]);
                     const gap_txt = slice(full_text, prev_end, s0);
-                    const both_markers = Boolean(list_marker_rx.match(facts.sentences[prev_idx]) && list_marker_rx.match(sent));
-                    if (search(r`\n[ \t]*\n`, gap_txt) && !both_markers) flush_run();
+                    const both_markers = Boolean(_ITEM_LIST_MARKER_RX.match(facts.sentences[prev_idx]) && _ITEM_LIST_MARKER_RX.match(sent));
+                    if (search(r`\r?\n[ \t]*\r?\n`, gap_txt) && !both_markers) flush_run();
                 }
                 single_run.push([s_idx, sent_items[0]]);
             } else {
@@ -2801,14 +3387,14 @@
     function compare(before, after) {
         clear_text_views();
         hasAstral = ASTRAL_RX.test(before) || ASTRAL_RX.test(after);
-        indexes.clear();
-        capWords.clear();
         const before_st = _strip_tracking(before, true);
+        const after_st = _strip_tracking(after, true);
         before = _strip_prose_stress(before_st);
+        after = _strip_prose_stress(after_st);
+        const prose_before = _mask_code_fences(before);
+        const prose_after = _mask_code_fences(after);
         const fb = extract(before, false, true);
         flush_view_cache();
-        const after_st = _strip_tracking(after, true);
-        after = _strip_prose_stress(after_st);
         const fa = extract(after, true, true);
         flush_view_cache();
         const errors = [];
@@ -2821,9 +3407,29 @@
         let [service_spans, tail_spans] = _service_regions(before, _norm(lower(after)));
         const service_groups = new Map();
         const service_items = {};
+        const svc_exact = new Map();
+        const svc_spelt = new Map();
+
+        function _svc_name_key(word) {
+            const key = _norm(lower(word));
+            const hit = svc_exact.get(key);
+            if (hit !== undefined) return hit;
+            const bks = _name_keys(key);
+            for (const bk of bks) {
+                for (const k of (svc_spelt.get(bk) || [])) {
+                    if (_same_name_case_fleeting(k, key)) {
+                        svc_exact.set(key, k);
+                        return k;
+                    }
+                }
+            }
+            svc_exact.set(key, key);
+            for (const bk of bks) append_to(svc_spelt, bk, key);
+            return key;
+        }
 
         function group_key(kind, f) {
-            if (kind === "name") return slice(_norm(lower(f.value)), 0, 5);
+            if (kind === "name") return _svc_name_key(f.value);
             return f.value;
         }
         for (const kind of ["number", "date", "month", "name", "quote"]) {
@@ -2932,12 +3538,12 @@
                         checks.push({kind: "unit", what: "единица", detail: `${items[0].raw} → ${ba.get(value)[0].raw} без единицы`});
                     }
                 }
-                // Equivalent hedges count by mention; other hedges must remain somewhere.
+                // Count every hedge class mention by mention, including singletons («после», «до», «от»).
                 const was = new Counter(items.filter(f => f.hedge).map(f => f.hedge));
                 const now = new Counter(ba.get(value).filter(f => f.hedge).map(f => f.hedge));
                 const gone = Math.max(0, items.length - ba.get(value).length);
-                const lost = new Set(Array.from(was.keys()).filter(h => !has(HEDGE_SAME, h) && !now.has(h)));
-                const classes = new Set(Array.from(was.keys()).filter(h => has(HEDGE_SAME, h)).map(hedge_class));
+                const lost = new Set();
+                const classes = new Set(Array.from(was.keys()).map(hedge_class));
                 for (const cls of classes) {
                     const need = Array.from(was).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
                     const have = Array.from(now).filter(([h]) => hedge_class(h) === cls).reduce((total, [, n]) => total + n, 0);
@@ -2956,6 +3562,20 @@
                     const dst = ba.get(value).find(f => hedge_direction(f.hedge) === HEDGE_OPPOSITE[d]);
                     errors.push({kind: "inverted", what: "оговорка", detail: `«${src.hedge} ${src.raw}» → «${dst.hedge} ${dst.raw}»`});
                 }
+            }
+        }
+        // Reversed ordered ratio («3:4» → «4:3», «7:2» → «2:7»): numbers survive, order flipped.
+        const ratios_b = new Set(fb.of("ratio").map(f => f.value));
+        const ratios_a = new Set(fa.of("ratio").map(f => f.value));
+        const seen_r = new Set();
+        for (const f of fb.of("ratio")) {
+            if (seen_r.has(f.value)) continue;
+            seen_r.add(f.value);
+            const colon_i = f.value.indexOf(":");
+            const a_r = f.value.slice(0, colon_i), b_r = f.value.slice(colon_i + 1);
+            const rev = `${b_r}:${a_r}`;
+            if (!ratios_a.has(f.value) && ratios_a.has(rev) && !ratios_b.has(rev)) {
+                errors.push({kind: "lost", what: "число", detail: f.raw});
             }
         }
         // END_BLOCK_NUMBERS_DIFF
@@ -2982,35 +3602,61 @@
 
         // START_BLOCK_NAMES_DIFF
         function _build_name_lookup(word_list) {
-            const exact_set = new Set(), by2 = new Map();
+            const exact_set = new Set(), by_key = new Map();
             for (const w of word_list) {
                 const wn = _norm(lower(w));
                 if (!exact_set.has(wn)) {
                     exact_set.add(wn);
-                    if (len(wn) >= 2) append_to(by2, slice(wn, 0, 2), w);
-                }
-            }
-            return [exact_set, by2];
-        }
-        const after_words = findall(r`[\w-]+`, after);
-        const [after_exact, after_by2] = _build_name_lookup(after_words);
-        let seen = new Set();
-        for (const f of fb.of("name")) {
-            const fn = _norm(lower(f.value));
-            const key = slice(fn, 0, 5);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            if (after_exact.has(fn) || (after_by2.get(slice(fn, 0, 2)) || []).some(w => name_match(f.value, w))) continue;
-            let spelled_out = false;
-            if (isupper(f.value) && 2 <= len(f.value) && len(f.value) <= 4) {
-                for (let i = 0; i <= after_words.length - len(f.value); i += 1) {
-                    if (lower(after_words.slice(i, i + len(f.value)).map(w => char(w, 0)).join("")) === lower(f.value)) {
-                        spelled_out = true;
-                        break;
+                    if (len(wn) >= 2) {
+                        for (const bk of _name_keys(wn)) append_to(by_key, bk, w);
                     }
                 }
             }
-            if (spelled_out) continue;
+            return [exact_set, by_key];
+        }
+        function _has_name_match(val, fn, exact_set, by_key) {
+            if (exact_set.has(fn)) return true;
+            for (const bk of _name_keys(fn)) {
+                if ((by_key.get(bk) || []).some(w => name_match(val, w))) return true;
+            }
+            return false;
+        }
+        function _mark_seen_name(seen_exact, seen_by_key, fn) {
+            if (seen_exact.has(fn)) return true;
+            const bks = _name_keys(fn);
+            for (const bk of bks) {
+                for (const prev of (seen_by_key.get(bk) || [])) {
+                    if (_same_name_case_fleeting(prev, fn)) {
+                        seen_exact.add(fn);
+                        return true;
+                    }
+                }
+            }
+            seen_exact.add(fn);
+            for (const bk of bks) append_to(seen_by_key, bk, fn);
+            return false;
+        }
+        const after_words = findall(r`[\w-]+`, after);
+        const [after_exact, after_by2] = _build_name_lookup(after_words);
+        let after_init_ngrams = null;
+        let seen_exact_n = new Set();
+        let seen_names = new Map();
+        for (const f of fb.of("name")) {
+            const fn = _norm(lower(f.value));
+            if (_mark_seen_name(seen_exact_n, seen_names, fn)) continue;
+            if (_has_name_match(f.value, fn, after_exact, after_by2)) continue;
+            if (isupper(f.value) && 2 <= len(f.value) && len(f.value) <= 4) {
+                if (after_init_ngrams === null) {
+                    const init_chars = after_words.filter(Boolean).map(w => lower(char(w, 0)));
+                    after_init_ngrams = new Set();
+                    for (const k of [2, 3, 4]) {
+                        for (let i = 0; i <= init_chars.length - k; i += 1) {
+                            after_init_ngrams.add(init_chars.slice(i, i + k).join(""));
+                        }
+                    }
+                }
+                if (after_init_ngrams.has(lower(f.value))) continue;
+            }
             if (in_service("name", f)) {
                 service.push({kind: "lost", what: "имя или название", detail: f.raw});
                 continue;
@@ -3019,13 +3665,12 @@
         }
         const before_words = findall(r`[\w-]+`, before);
         const [before_exact, before_by2] = _build_name_lookup(before_words);
-        seen = new Set();
+        seen_exact_n = new Set();
+        seen_names = new Map();
         for (const f of fa.of("name")) {
             const fn = _norm(lower(f.value));
-            const key = slice(fn, 0, 5);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            if (!before_exact.has(fn) && !(before_by2.get(slice(fn, 0, 2)) || []).some(w => name_match(f.value, w))) {
+            if (_mark_seen_name(seen_exact_n, seen_names, fn)) continue;
+            if (!_has_name_match(f.value, fn, before_exact, before_by2)) {
                 checks.push({kind: "added", what: "имя или название", detail: f.raw});
             }
         }
@@ -3076,15 +3721,18 @@
             return false;
         }
         const both_stressed = before_st.includes("\u0301") && after_st.includes("\u0301");
-        const quote_scan_rx = r`«([^»\n]{1,500})»|„([^“”\n]{1,500})[“”]|“([^”\n]{1,500})”|(?<!\w)"(?!\s)([^"\n]{1,80})(?<!\s)"`;
         const st_b_map = new Map();
         let quotes_a, after_q_words;
         if (both_stressed) {
-            for (const m of finditer(quote_scan_rx, before_st)) {
+            function _mask_quote_st(s) {
+                const p = _mask_code_fences(s);
+                return p.includes("<") ? _mask_spans(p, HTML_ANY_TAG_RX.finditer(p).map(m => [m.start(), m.end()])) : p;
+            }
+            for (const m of QUOTE_RX.finditer(_mask_quote_st(before_st))) {
                 const q_st = strip(m.groups().find(Boolean));
                 append_to(st_b_map, lower(CYR_STRESS_RX.sub("", q_st)), q_st);
             }
-            quotes_a = finditer(quote_scan_rx, after_st).map(m => words(strip(m.groups().find(Boolean))));
+            quotes_a = QUOTE_RX.finditer(_mask_quote_st(after_st)).map(m => words(strip(m.groups().find(Boolean))));
             after_q_words = words(after_st);
         } else {
             quotes_a = fa.of("quote").map(f => words(f.raw));
@@ -3104,7 +3752,7 @@
             }
             return false;
         }
-        seen = new Set();
+        let seen = new Set();
         const st_b_idx = new Map();
         for (const f of fb.of("quote")) {
             const k_q = CYR_STRESS_RX.sub("", f.value);
@@ -3117,8 +3765,9 @@
             }
             const w = words(raw_q);
             const key = JSON.stringify(w.map(x => _norm(lower(x))));
-            if (!w.length || seen.has(key)) continue;
-            seen.add(key);
+            const skey = key + "|" + (f.speech ? 1 : 0);
+            if (!w.length || seen.has(skey)) continue;
+            seen.add(skey);
             if (quotes_a_exact.has(key) || in_quotes_a(w, f.speech)) continue;
             if (contains_indexed(after_q_words, after_q_idx, w, f.speech)) checks.push({kind: "unquoted", what: "цитата", detail: `«${raw_q}» без кавычек`});
             else if (!f.speech && in_service("quote", f)) service.push({kind: "lost", what: "цитата", detail: raw_q});
@@ -3156,7 +3805,7 @@
         // START_BLOCK_NEGATIONS_DIFF
         const after_norm = _norm(lower(after)), before_norm = _norm(lower(before));
         const NEG_SKIP = new Set(["только", "менее", "более", "свыше", "раньше", "позже", "позднее", "просто", "всегда", "совсем"]);
-        const idx_a = _index(after_norm), idx_b = _index(before_norm);
+        const idx_a = new TextIndex(after_norm), idx_b = new TextIndex(before_norm);
         const gone_cache = new Map();
         let can_more_opt = null;
         const polar_li_ok = new Map();
@@ -3223,33 +3872,52 @@
         // END_BLOCK_NEGATIONS_DIFF
 
         // START_BLOCK_MODALITY_DIFF
+        const prose_before_norm = prose_before === before ? before_norm : _norm(lower(prose_before));
+        const prose_after_norm = prose_after === after ? after_norm : _norm(lower(prose_after));
         for (const [label, rx] of MODALITY) {
             const pat = r`(?<![а-яё])(?:${rx})(?![а-яё])`;
-            const nb = findall(pat, before_norm).length, na = findall(pat, after_norm).length;
+            const nb = findall(pat, prose_before_norm).length, na = findall(pat, prose_after_norm).length;
             if (nb > na) checks.push({kind: "modality", what: "уверенность и охват", detail: `«${label}» встречается реже (${nb} → ${na}): не стало ли утверждение сильнее?`});
             else if (na > nb && nb === 0) checks.push({kind: "modality", what: "уверенность и охват", detail: `появилось «${label}», которого не было`});
         }
         const pat = r`(?<![а-яё])(?:${INTENSIFIERS})(?![а-яё])`;
-        const nb = findall(pat, before_norm).length, na = findall(pat, after_norm).length;
+        const nb = findall(pat, prose_before_norm).length, na = findall(pat, prose_after_norm).length;
         if (na > nb) checks.push({kind: "modality", what: "уверенность и охват", detail: `слов вроде «самый», «главный», «лучший» стало больше (${nb} → ${na}): не усилено ли утверждение?`});
         // END_BLOCK_MODALITY_DIFF
 
         // START_BLOCK_MARKUP_DIFF
-        const tag_rx = compile(r`<([a-z][a-z0-9]*)(?:\s[^<>]*)?/?>`, "i");
         const emphasis = new Set(["b", "strong", "i", "em", "mark", "u"]);
-        const tags_b = tag_rx.findall(before).map(lower);
-        if (tags_b.length >= 2) {
-            const tags_a = tag_rx.findall(after).map(lower);
-            for (const tag of sorted(new Set(tags_b))) {
-                const nb = tags_b.filter(t => t === tag).length, na = tags_a.filter(t => t === tag).length;
-                if (na < nb) (emphasis.has(tag) ? checks : errors).push({kind: "lost", what: "разметка", detail: `<${tag}> ${nb} → ${na}`});
+        const tags_b = new Counter(HTML_TAG_RX.findall(prose_before).map(lower));
+        let total_tags_b = 0;
+        for (const cnt of tags_b.values()) total_tags_b += cnt;
+        if (total_tags_b >= 2) {
+            const tags_a = new Counter(HTML_TAG_RX.findall(prose_after).map(lower));
+            for (const tag of sorted(tags_b.keys())) {
+                const nb_t = tags_b.get(tag), na_t = tags_a.get(tag);
+                if (na_t < nb_t) (emphasis.has(tag) ? checks : errors).push({kind: "lost", what: "разметка", detail: `<${tag}> ${nb_t} → ${na_t}`});
             }
-            for (const tag of sorted(difference(new Set(tags_a), new Set(tags_b)))) checks.push({kind: "added", what: "разметка", detail: `появился тег <${tag}>`});
+            for (const tag of sorted(difference(new Set(tags_a.keys()), new Set(tags_b.keys())))) checks.push({kind: "added", what: "разметка", detail: `появился тег <${tag}>`});
         }
         // END_BLOCK_MARKUP_DIFF
 
         // START_BLOCK_BINDINGS
         const pairs = new Map();
+        const _WS_MERGE_RX = compile(r`[ \t\u00a0]+`);
+        const _TOK_RX = compile(r`[\w-]+`);
+        const _GAP_DOT_RX = compile(r`[\s.]*`);
+        const _GAP_WS_RX = compile(r`\s+`);
+        const _COORD_VERB_RX = compile(r`\s*(?:[—–:]|[а-яё]+л[аио]?(?![а-яё]))`);
+
+        function _is_comparison_delta(facts, n) {
+            if (!facts.starts.length || n.sent >= facts.sentences.length) return false;
+            const sent = facts.sentences[n.sent];
+            const rel = n.pos - facts.starts[n.sent];
+            const left = _norm(slice(sent, Math.max(0, rel - 80), rel));
+            const right = _norm(slice(sent, rel + len(n.raw), rel + len(n.raw) + 64));
+            return Boolean((COMP_DELTA_BEFORE_NA_RX.search(left) && COMP_DELTA_AFTER_RX.match(right))
+                || COMP_DELTA_BEFORE_REV_RX.search(left));
+        }
+
         function after_source(f) {
             if (f.sent >= fb.starts.length) return false;
             const sent = fb.sentences[f.sent], end = f.pos - fb.starts[f.sent];
@@ -3259,16 +3927,32 @@
             while (start > 0 && (isalnum(char(sent, start - 1)) || char(sent, start - 1) === "-")) start -= 1;
             return gap < end && SOURCE_PREPOSITIONS.has(lower(slice(sent, start, gap)));
         }
+
+        function _after_comp_target_b(f) {
+            if (f.sent >= fb.starts.length) return false;
+            const sent = fb.sentences[f.sent], rel = f.pos - fb.starts[f.sent];
+            return Boolean(COMP_TARGET_LEFT_RX.search(_norm(lower(slice(sent, Math.max(0, rel - 96), rel)))));
+        }
+
         let people = [];
+        const spelt_exact = new Map();
         const spelt = new Map();
         function stem_key(word) {
-            const key = slice(_norm(lower(word)), 0, 5);
-            const first = slice(key, 0, 3);
-            if (!spelt.has(first)) spelt.set(first, []);
-            const same = spelt.get(first);
-            const known = same.find(k => stem_match(k, key));
-            if (known === undefined) same.push(key);
-            return known || key;
+            const key = _norm(lower(word));
+            const hit = spelt_exact.get(key);
+            if (hit !== undefined) return hit;
+            const bks = _name_keys(key);
+            for (const bk of bks) {
+                for (const k of (spelt.get(bk) || [])) {
+                    if (_same_name_case_fleeting(k, key)) {
+                        spelt_exact.set(key, k);
+                        return k;
+                    }
+                }
+            }
+            spelt_exact.set(key, key);
+            for (const bk of bks) append_to(spelt, bk, key);
+            return key;
         }
         const number_at = new Map();
         function numbers_at(facts, sent) {
@@ -3296,34 +3980,77 @@
                 end_rel += nxt_cap.end();
             }
             if (s_nums.some(p => ca <= p && p < prev_rel) && s_nums.some(p => end_rel <= p && p < cb)) return false;
-            if (match(r`\s*(?:[—–:]|[а-яё]+л[аио]?(?![а-яё]))`, _norm(slice(sent, end_rel, cb)))) return false;
+            if (_COORD_VERB_RX.match(_norm(slice(sent, end_rel, Math.min(cb, end_rel + 32))))) return false;
             return true;
         }
         for (const f of sorted(fb.of("name"), x => x.pos)) {
             const key = stem_key(f.value);
-            if (people.length && people[people.length - 1][0] === f.sent && people[people.length - 1][2] + 1 === f.pos) {
+            if (people.length && people[people.length - 1][0] === f.sent && people[people.length - 1][2] < f.pos
+                && _WS_MERGE_RX.fullmatch(slice(before, people[people.length - 1][2], f.pos))) {
                 people[people.length - 1][1].add(key);
             } else {
-                const is_src = after_source(f) || _coord_sender_b(f);
+                const is_src = after_source(f) || _coord_sender_b(f) || _after_comp_target_b(f);
                 people.push([f.sent, new Set([key]), 0, f.pos, is_src]);
             }
             people[people.length - 1][2] = f.pos + len(f.raw);
         }
-        let persons = [];
+        const persons_map = new Map();
+        const key_to_pids = new Map();
+        let next_pid = 0;
         for (const p of people) {
             if (p[1].size > 1) {
-                const same = persons.filter(g => subset(g, p[1]) || subset(p[1], g));
-                persons = persons.filter(g => !contains_set(same, g)).concat([union(p[1], ...same)]);
+                const cands = new Set();
+                for (const k of p[1]) {
+                    const pids = key_to_pids.get(k);
+                    if (pids) for (const pid of pids) cands.add(pid);
+                }
+                const same_ids = [];
+                for (const pid of cands) {
+                    const g = persons_map.get(pid);
+                    if (subset(g, p[1]) || subset(p[1], g)) same_ids.push(pid);
+                }
+                const merged = new Set(p[1]);
+                for (const pid of same_ids) {
+                    const g = persons_map.get(pid);
+                    persons_map.delete(pid);
+                    for (const k of g) {
+                        merged.add(k);
+                        key_to_pids.get(k).delete(pid);
+                    }
+                }
+                const pid_new = next_pid;
+                next_pid += 1;
+                persons_map.set(pid_new, merged);
+                for (const k of merged) {
+                    if (!key_to_pids.has(k)) key_to_pids.set(k, new Set());
+                    key_to_pids.get(k).add(pid_new);
+                }
             }
         }
-        const unclear = new Set(Array.from(new Counter(persons.flatMap(g => Array.from(g)))).filter(([, n]) => n > 1).map(([k]) => k));
+        const unclear = new Set();
+        for (const [k, pids] of key_to_pids) if (pids.size > 1) unclear.add(k);
         for (const p of people) {
-            const have = persons.filter(g => p[1].size > 1 ? subset(p[1], g) : intersection(p[1], g).size);
-            p[1] = have.length === 1 ? difference(have[0], unclear) : (have.length ? new Set() : new Set(p[1]));
+            let have_ids;
+            if (p[1].size > 1) {
+                const first_k = p[1].values().next().value;
+                const cand_ids = key_to_pids.get(first_k);
+                have_ids = cand_ids ? Array.from(cand_ids).filter(pid => subset(p[1], persons_map.get(pid))) : [];
+            } else {
+                const only_k = p[1].values().next().value;
+                have_ids = Array.from(key_to_pids.get(only_k) || []);
+            }
+            p[1] = have_ids.length === 1 ? difference(persons_map.get(have_ids[0]), unclear) : (have_ids.length ? new Set() : new Set(p[1]));
         }
         people = people.filter(p => p[1].size);
         const groups = [];
-        for (const p of people) if (!contains_set(groups, p[1])) groups.push(p[1]);
+        const seen_groups = new Set();
+        for (const p of people) {
+            const fg = sorted(p[1]).join("\0");
+            if (!seen_groups.has(fg)) {
+                seen_groups.add(fg);
+                groups.push(p[1]);
+            }
+        }
         const people_by_sent = new Map();
         const pstarts_by_sent = new Map();
         const pnext_by_sent = new Map();
@@ -3361,83 +4088,217 @@
         }
         const sent_owners_b = new Map();
         const clauses_b = new Map();
-        for (const n of fb.of("number")) {
-            if (!sent_owners_b.has(n.sent)) sent_owners_b.set(n.sent, owners_in(n.sent, 0, 2 ** 62, false, 2));
-            let owners = sent_owners_b.get(n.sent).slice();
-            if (owners.length > 1 && fb.starts.length) {
-                const s0 = fb.starts[n.sent];
-                if (!clauses_b.has(n.sent)) {
-                    const who_b = (a, b) => owners_in(n.sent, s0 + a, s0 + b, true, 2);
-                    const spans_b = list_clauses(fb.sentences[n.sent], numbers_at(fb, n.sent), who_b);
-                    clauses_b.set(n.sent, is_list(fb.sentences[n.sent], numbers_at(fb, n.sent), who_b, spans_b) ? spans_b : null);
-                }
-                if (clauses_b.get(n.sent)) {
-                    const [a, b] = clause_span(fb.sentences[n.sent], n.pos - s0, clauses_b.get(n.sent));
-                    owners = owners_in(n.sent, s0 + a, s0 + b, true, 2);
-                }
-            } else if (owners.length === 1 && fb.starts.length) {
-                const s0 = fb.starts[n.sent];
-                const sent_b = fb.sentences[n.sent];
-                const cspans = clause_spans(sent_b);
-                if (cspans.length > 1) {
-                    const [ca, cb] = clause_span(sent_b, n.pos - s0, cspans);
-                    if (!owners_in(n.sent, s0 + ca, s0 + cb).length) {
-                        const s_nums = numbers_at(fb, n.sent);
-                        const other_with_owner = cspans.filter(([oa, ob]) => owners_in(n.sent, s0 + oa, s0 + ob).length);
-                        if (other_with_owner.length && other_with_owner.every(([oa, ob]) =>
-                            s_nums.some(p => oa <= p && p < ob)
-                            || match(r`^(?:а|но|однако|зато|тогда\s+как|при\s+этом)(?![а-яё])`, _norm(lower(lstrip(slice(sent_b, oa, ob)))))
-                            || (oa >= 2 && char(sent_b, oa - 2) === ";")
-                        )) owners = [];
+        const cspans_b_cache = new Map();
+        if (people_by_sent.size) {
+            for (const n of fb.of("number")) {
+                if (!sent_owners_b.has(n.sent)) sent_owners_b.set(n.sent, owners_in(n.sent, 0, 2 ** 62, false, 2));
+                const raw_owners = sent_owners_b.get(n.sent);
+                if (!raw_owners.length || _is_comparison_delta(fb, n)) continue;
+                let owners = raw_owners.slice();
+                if (owners.length > 1 && fb.starts.length) {
+                    const s0 = fb.starts[n.sent];
+                    if (!clauses_b.has(n.sent)) {
+                        const who_b = (a, b) => owners_in(n.sent, s0 + a, s0 + b, true, 2);
+                        const spans_b = list_clauses(fb.sentences[n.sent], numbers_at(fb, n.sent), who_b);
+                        clauses_b.set(n.sent, is_list(fb.sentences[n.sent], numbers_at(fb, n.sent), who_b, spans_b) ? spans_b : null);
+                    }
+                    if (clauses_b.get(n.sent)) {
+                        const [a, b] = clause_span(fb.sentences[n.sent], n.pos - s0, clauses_b.get(n.sent));
+                        owners = owners_in(n.sent, s0 + a, s0 + b, true, 2);
+                    } else {
+                        const receivers = owners_in(n.sent, 0, 2 ** 62, true, 2);
+                        if (receivers.length === 1) owners = receivers;
+                    }
+                } else if (owners.length === 1 && fb.starts.length) {
+                    const s0 = fb.starts[n.sent];
+                    const sent_b = fb.sentences[n.sent];
+                    let cached_cs = cspans_b_cache.get(n.sent);
+                    if (cached_cs === undefined) {
+                        const cspans = clause_spans(sent_b);
+                        let other_ok = false;
+                        if (cspans.length > 1) {
+                            const s_nums = numbers_at(fb, n.sent).slice().sort((x, y) => x - y);
+                            const other_with_owner = cspans.filter(([oa, ob]) => owners_in(n.sent, s0 + oa, s0 + ob, false, 1).length);
+                            other_ok = other_with_owner.length > 0 && other_with_owner.every(([oa, ob]) =>
+                                (_bisect_left_num(s_nums, ob) > _bisect_left_num(s_nums, oa))
+                                || match(r`^(?:а|но|однако|зато|тогда\s+как|при\s+этом)(?![а-яё])`, _norm(lower(lstrip(slice(sent_b, oa, ob)))))
+                                || (oa >= 2 && char(sent_b, oa - 2) === ";")
+                            );
+                        }
+                        cached_cs = [cspans, other_ok];
+                        cspans_b_cache.set(n.sent, cached_cs);
+                    }
+                    const [cspans, other_ok] = cached_cs;
+                    if (cspans.length > 1 && other_ok) {
+                        const [ca, cb] = clause_span(sent_b, n.pos - s0, cspans);
+                        if (!owners_in(n.sent, s0 + ca, s0 + cb, false, 1).length) owners = [];
                     }
                 }
-            }
-            if (owners.length === 1) {
-                if (!pairs.has(n.value)) pairs.set(n.value, new Set());
-                for (const owner of owners[0]) pairs.get(n.value).add(owner);
+                if (owners.length === 1) {
+                    if (!pairs.has(n.value)) pairs.set(n.value, new Set());
+                    for (const owner of owners[0]) pairs.get(n.value).add(owner);
+                }
             }
         }
         const all_owners = union(...pairs.values());
-        const someone = "?";
-        function _owner_word_match(owner_key, word) {
-            if (!stem_match(owner_key, word)) return false;
-            if (len(owner_key) >= 5) return true;
-            const wn = _norm(lower(word));
-            return owner_key === wn || _same_name_case(owner_key, word);
+        const owners_by2 = new Map();
+        for (const o of all_owners) {
+            for (const bk of _name_keys(o)) append_to(owners_by2, bk, o);
         }
-        function named(part, receivers_only = false) {
-            const found = finditer(r`[\w-]+`, part);
-            const words = [];
+        const unclear_by2 = new Map();
+        for (const k of unclear) {
+            for (const bk of _name_keys(k)) append_to(unclear_by2, bk, k);
+        }
+        const key_to_gidxs = new Map();
+        groups.forEach((g, gidx) => {
+            for (const k of g) append_to(key_to_gidxs, k, gidx);
+        });
+        const someone = "?";
+        function _match_owner_set(word, by2) {
+            const out = new Set();
+            if (!by2.size) return out;
+            const wn = _norm(lower(word));
+            for (const bk of _name_keys(wn)) {
+                for (const cand of (by2.get(bk) || [])) {
+                    if (_same_name_case_fleeting(cand, word)) out.add(cand);
+                }
+            }
+            return out;
+        }
+        function _scan_sent_tokens(sent) {
+            const found = _TOK_RX.finditer(sent).map(m => [m.start(), m.end(), m.group()]);
+            const n_tok = found.length;
+            if (!n_tok || (!owners_by2.size && !unclear_by2.size)) return [[], [], []];
+            const sent_low = _norm(lower(sent));
+            const src_starts = new Int32Array(n_tok).fill(-1);
+            const comp_flags = new Uint8Array(n_tok);
             let sender = false;
+            let sender_src = -1;
             let prev_sender = false;
-            found.forEach((m, i) => {
-                const gap_prev = i > 0 ? slice(part, found[i - 1].end(), m.start()) : "";
-                if (receivers_only && i > 0 && SOURCE_PREPOSITIONS.has(lower(found[i - 1].group())) && isupper(slice(m.group(), 0, 1))) {
+            let prev_src = -1;
+            let ct = false;
+            for (let i = 0; i < n_tok; i += 1) {
+                const [s_i, e_i, tok_i] = found[i];
+                const gap_prev = i > 0 ? slice(sent, found[i - 1][1], s_i) : "";
+                const is_up = isupper(slice(tok_i, 0, 1));
+                if (is_up && COMP_TARGET_LEFT_RX.search(slice(sent_low, Math.max(0, s_i - 96), s_i))) {
+                    ct = true;
+                } else if (ct && is_up && _GAP_DOT_RX.fullmatch(gap_prev)) {
+                    ct = true;
+                } else {
+                    ct = false;
+                }
+                comp_flags[i] = ct ? 1 : 0;
+                if (i > 0 && SOURCE_PREPOSITIONS.has(lower(found[i - 1][2])) && is_up) {
                     sender = true;
-                } else if (receivers_only && sender && isupper(slice(m.group(), 0, 1)) && fullmatch(r`[\s.]*`, gap_prev)) {
+                    sender_src = found[i - 1][0];
+                } else if (sender && is_up && _GAP_DOT_RX.fullmatch(gap_prev)) {
                     sender = true;
-                } else if (receivers_only && prev_sender && i >= 2 && lower(found[i - 1].group()) === "и" &&
-                    isupper(slice(m.group(), 0, 1)) && fullmatch(r`\s+`, slice(part, found[i - 2].end(), found[i - 1].start())) &&
-                    fullmatch(r`\s+`, gap_prev)) {
-                    let k_end = m.end(), j_k = i + 1;
-                    while (j_k < found.length && isupper(slice(found[j_k].group(), 0, 1)) && fullmatch(r`[\s.]*`, slice(part, k_end, found[j_k].start()))) {
-                        k_end = found[j_k].end();
+                } else if (prev_sender && i >= 2 && lower(found[i - 1][2]) === "и" && is_up
+                    && _GAP_WS_RX.fullmatch(slice(sent, found[i - 2][1], found[i - 1][0]))
+                    && _GAP_WS_RX.fullmatch(gap_prev)) {
+                    let k_end = e_i, j_k = i + 1;
+                    while (j_k < n_tok && isupper(slice(found[j_k][2], 0, 1)) && _GAP_DOT_RX.fullmatch(slice(sent, k_end, found[j_k][0]))) {
+                        k_end = found[j_k][1];
                         j_k += 1;
                     }
-                    sender = !match(r`\s*(?:[—–:]|[а-яё]+л[аио]?(?![а-яё]))`, _norm(slice(part, k_end)));
+                    sender = !_COORD_VERB_RX.match(slice(sent_low, k_end, k_end + 32));
+                    sender_src = sender ? prev_src : -1;
                 } else {
                     sender = false;
+                    sender_src = -1;
                 }
-                prev_sender = sender || Boolean(receivers_only && prev_sender && lower(m.group()) === "и" && i > 0 && fullmatch(r`\s+`, gap_prev));
-                if (!sender) words.push(m);
-            });
-            const hit = words.map(m => new Set(Array.from(all_owners).filter(o => _owner_word_match(o, m.group()))));
-            const owners = union(...hit);
-            words.forEach((m, i) => {
-                if (!hit[i].size && Array.from(unclear).some(k => _owner_word_match(k, m.group())) && ![i - 1, i + 1]
-                    .filter(j => 0 <= j && j < words.length).some(j => hit[j].size && fullmatch(r`[\s.]*`, slice(part, words[Math.min(i, j)].end(), words[Math.max(i, j)].start())))) owners.add(someone);
-            });
+                if (sender) {
+                    src_starts[i] = sender_src;
+                    prev_sender = true;
+                    prev_src = sender_src;
+                } else if (prev_sender && lower(tok_i) === "и" && i > 0 && _GAP_WS_RX.fullmatch(gap_prev)) {
+                    prev_sender = true;
+                } else {
+                    prev_sender = false;
+                    prev_src = -1;
+                }
+            }
+            const hits = found.map(([, , tok_i]) => _match_owner_set(tok_i, owners_by2));
+            const uncs = found.map(([, , tok_i], i) => !hits[i].size && unclear_by2.size > 0 && _match_owner_set(tok_i, unclear_by2).size > 0);
+            const active = [];
+            const active_starts = [];
+            for (let i = 0; i < n_tok; i += 1) {
+                if (!hits[i].size && !uncs[i]) continue;
+                const [s_i, e_i] = found[i];
+                const gset = new Set();
+                for (const o of hits[i]) for (const gidx of (key_to_gidxs.get(o) || [])) gset.add(gidx);
+                const gidxs = Array.from(gset).sort((x, y) => x - y);
+                const gkey = gidxs.join(",");
+                const sup_all = [];
+                const sup_recv = [];
+                if (uncs[i]) {
+                    for (const step of [-1, 1]) {
+                        let j = i + step;
+                        while (0 <= j && j < n_tok && comp_flags[j]) j += step;
+                        if (0 <= j && j < n_tok && hits[j].size) {
+                            const gap = j > i ? slice(sent, e_i, found[j][0]) : slice(sent, found[j][1], s_i);
+                            if (_GAP_DOT_RX.fullmatch(gap)) sup_all.push([found[j][0], found[j][1]]);
+                        }
+                        j = i + step;
+                        while (0 <= j && j < n_tok && (comp_flags[j] || src_starts[j] >= 0)) j += step;
+                        if (0 <= j && j < n_tok && hits[j].size) {
+                            const gap = j > i ? slice(sent, e_i, found[j][0]) : slice(sent, found[j][1], s_i);
+                            if (_GAP_DOT_RX.fullmatch(gap)) sup_recv.push([found[j][0], found[j][1]]);
+                        }
+                    }
+                }
+                active.push([s_i, e_i, hits[i], uncs[i], src_starts[i], Boolean(comp_flags[i]), gidxs, sup_all, sup_recv, gkey]);
+                active_starts.push(s_i);
+            }
+            const m_act = active.length;
+            const next_diff = new Int32Array(m_act).fill(m_act);
+            for (let k_a = m_act - 2; k_a >= 0; k_a -= 1) {
+                const cur = active[k_a], nxt = active[k_a + 1];
+                if (cur[4] < 0 && !cur[5] && nxt[4] < 0 && !nxt[5] && cur[9] === nxt[9]) {
+                    next_diff[k_a] = next_diff[k_a + 1];
+                } else {
+                    next_diff[k_a] = k_a + 1;
+                }
+            }
+            return [active, active_starts, next_diff];
+        }
+        function _query_named(scan, a, b, receivers_only = false) {
+            const [active, active_starts] = scan;
+            const owners = new Set();
+            if (!active.length) return owners;
+            let idx_a = bisect_left(active_starts, a);
+            while (idx_a < active.length && active[idx_a][0] < b) {
+                const [, e_i, hit_i, is_unc, src_s, comp_f, , sup_all, sup_recv] = active[idx_a];
+                idx_a += 1;
+                if (e_i > b || comp_f || (receivers_only && src_s >= a)) continue;
+                if (hit_i.size) {
+                    for (const o of hit_i) owners.add(o);
+                } else if (is_unc) {
+                    const sups = receivers_only ? sup_recv : sup_all;
+                    if (!sups.some(([ja, jb]) => a <= ja && jb <= b)) owners.add(someone);
+                }
+            }
             return owners;
+        }
+        function _query_who(scan, a, b) {
+            const [active, active_starts, next_diff] = scan;
+            if (!active.length) return [];
+            const found_g = [];
+            let idx_a = bisect_left(active_starts, a);
+            while (idx_a < active.length && active[idx_a][0] < b) {
+                const [, e_i, , , src_s, comp_f, gidxs] = active[idx_a];
+                if (e_i <= b && !comp_f && !(src_s >= a) && gidxs.length) {
+                    for (const gidx of gidxs) {
+                        if (!found_g.includes(gidx)) {
+                            found_g.push(gidx);
+                            if (found_g.length >= 2) return [groups[found_g[0]], groups[found_g[1]]];
+                        }
+                    }
+                }
+                idx_a = (src_s < 0 && !comp_f) ? next_diff[idx_a] : idx_a + 1;
+            }
+            return found_g.map(gidx => groups[gidx]);
         }
         const seen_near = new Map();
         function near(facts, n) {
@@ -3445,19 +4306,16 @@
             const by_sent = seen_near.get(facts);
             if (!by_sent.has(n.sent)) {
                 const sent = n.sent < facts.sentences.length ? facts.sentences[n.sent] : "";
-                const here = named(sent);
+                const scan = _scan_sent_tokens(sent);
+                const here = _query_named(scan, 0, len(sent), false);
                 let clauses = null;
-                if (facts.starts.length && groups.filter(g => intersection(g, here).size).length > 1) {
-                    const part_cache = new Map();
-                    function part_named(a, b) {
-                        const k = a + "," + b;
-                        if (!part_cache.has(k)) part_cache.set(k, named(slice(sent, a, b), true));
-                        return part_cache.get(k);
-                    }
-                    const who_s = (a, b) => groups.filter(g => intersection(g, part_named(a, b)).size);
+                const here_gidxs = new Set();
+                for (const o of here) for (const gidx of (key_to_gidxs.get(o) || [])) here_gidxs.add(gidx);
+                if (facts.starts.length && here_gidxs.size > 1) {
+                    const who_s = (a, b) => _query_who(scan, a, b);
                     const spans = list_clauses(sent, numbers_at(facts, n.sent), who_s);
                     if (is_list(sent, numbers_at(facts, n.sent), who_s, spans)) {
-                        clauses = [spans.map(([a]) => a), spans.map(([a, b]) => [a, b, part_named(a, b)])];
+                        clauses = [spans.map(([a]) => a), spans.map(([a, b]) => [a, b, _query_named(scan, a, b, true)])];
                     }
                 }
                 by_sent.set(n.sent, [here, clauses]);
@@ -3480,15 +4338,19 @@
                 if (!near_b.has(n.value)) near_b.set(n.value, new Set());
                 const nb = near_b.get(n.value);
                 for (const owner of near(fb, n)) nb.add(owner);
-                for (const g of groups) {
-                    if (intersection(nb, g).size) {
-                        for (const k of g) nb.add(k);
+            }
+            for (const nb of near_b.values()) {
+                const extra = new Set();
+                for (const k of nb) {
+                    for (const gidx of (key_to_gidxs.get(k) || [])) {
+                        for (const gk of groups[gidx]) extra.add(gk);
                     }
                 }
+                for (const gk of extra) nb.add(gk);
             }
             for (const n of fa.of("number")) {
                 const want = pairs.get(n.value);
-                if (!want || !want.size) continue;
+                if (!want || !want.size || _is_comparison_delta(fa, n)) continue;
                 const here = near(fa, n);
                 if (here.has(someone)) continue;
                 if (difference(here, near_b.get(n.value) || new Set()).size && !intersection(here, want).size) {
@@ -3514,8 +4376,6 @@
         }
         const result = {errors: _dedupe(errors), checks: _dedupe(checks), service: _dedupe(service), counts};
         clear_text_views();
-        indexes.clear();
-        capWords.clear();
         return result;
     }
     function _dedupe(items) {

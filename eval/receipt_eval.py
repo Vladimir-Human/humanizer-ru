@@ -34,15 +34,20 @@ sys.modules["check_facts"] = check_facts
 _spec.loader.exec_module(check_facts)
 
 LINE_RX = re.compile(r"^\W*Сверка скриптом:.*$", re.M)  # the form check_facts.py prints; «не проводилась» is not one
+MISSING_SEG_RX = re.compile(r"в\s+правке\s+нет\b[:\s]*(.+)$", re.I)
 COUNT_RX = {
     "number": re.compile(r"(\d+)\s+чис", re.I),
     "date": re.compile(r"(\d+)\s+дат", re.I),
     "name": re.compile(r"(\d+)\s+(?:им[еяё]|назван)", re.I),  # имя, имени, имён, названий
+    "url": re.compile(r"(\d+)\s+ссыл", re.I),
+    "phone": re.compile(r"(\d+)\s+телефон", re.I),
+    "quote": re.compile(r"(\d+)\s+цитат", re.I),
+    "negation": re.compile(r"(\d+)\s+отрицан", re.I),
 }
 
 
 def receipt_line(answer: str) -> str:
-    found = LINE_RX.findall(answer)
+    found = LINE_RX.findall(answer or "")
     return found[-1].strip() if found else ""
 
 
@@ -56,7 +61,11 @@ def stated_counts(line: str) -> dict:
 
 
 def _plain(line: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"^\W+|[.\s]+$", "", line.replace("ё", "е"))).lower()
+    s = line.replace("ё", "е").replace("Ё", "Е")
+    s = re.sub(r"[—–−-]", "-", s)
+    s = re.sub(r'[«»"„“”]', '"', s)
+    s = re.sub(r"^\W+|[.\s]+$", "", s)
+    return re.sub(r"\s+", " ", s).lower()
 
 
 def same_line(line: str, expected: str) -> bool:
@@ -64,16 +73,22 @@ def same_line(line: str, expected: str) -> bool:
 
 
 def score_one(source: str, answer: str) -> dict:
-    edit = lib.split_notes(answer, source)[0]
+    edit, notes = lib.split_notes(answer, source)
     res = check_facts.compare(source, edit)
-    line = receipt_line(answer)
+    line = receipt_line(notes)
+    in_body = bool(receipt_line(edit)) and not line
     stated = stated_counts(line)
     wrong = {k: (v, res["counts"][k]) for k, v in stated.items() if res["counts"][k] != v}
     expected = check_facts.receipt(res)
     missing = [e["detail"] for e in res["errors"]]
-    facts_ok = bool(line) and not wrong and all(d in line for d in missing)
-    return {"line": line, "expected": expected, "same_line": same_line(line, expected), "facts_ok": facts_ok,
-            "stated": stated,
+    if missing:
+        seg_m = MISSING_SEG_RX.search(line)
+        missing_ok = bool(seg_m) and all(d in seg_m.group(1) for d in missing)
+    else:
+        missing_ok = True
+    facts_ok = bool(line) and not wrong and missing_ok
+    return {"line": line, "in_body": in_body, "expected": expected, "same_line": same_line(line, expected),
+            "facts_ok": facts_ok, "stated": stated,
             "counts_match": bool(line) and not wrong, "wrong_counts": wrong,
             "script_errors": [e["detail"] for e in res["errors"]]}
 
@@ -85,16 +100,26 @@ def main(argv=None) -> int:
     ap.add_argument("--expect", choices=("present", "absent"), default="present")
     args = ap.parse_args(argv)
     run_dir = lib.EVAL_DIR / "results" / args.run
+    sys_dir = run_dir / "outputs" / args.system
+    if not sys_dir.is_dir():
+        print("Нет папки с ответами: %s" % sys_dir, file=sys.stderr)
+        return 1
+    files = sorted(sys_dir.glob("*.txt"))
+    if not files:
+        print("Нет .txt ответов в %s" % sys_dir, file=sys.stderr)
+        return 1
     rows = {}
-    for f in sorted((run_dir / "outputs" / args.system).glob("*.txt")):
+    for f in files:
         src = lib.read_text(lib.EVAL_DIR / "corpus" / "texts" / (f.stem + ".txt"))
         rows[f.stem] = score_one(src, lib.read_text(f))
     n = len(rows)
     present = sum(1 for r in rows.values() if r["line"])
+    any_receipt = sum(1 for r in rows.values() if r["line"] or r.get("in_body"))
     match = sum(1 for r in rows.values() if r["counts_match"])
     same = sum(1 for r in rows.values() if r["same_line"])
     facts = sum(1 for r in rows.values() if r["facts_ok"])
     with_errors = sorted(t for t, r in rows.items() if r["script_errors"])
+    need = max(1, (n * 10 + 11) // 12)
     md = ["# Строка сверки: %s / %s" % (args.run, args.system), "",
           "Ответов: %d. Строка «Сверка скриптом» есть в %d; дословно совпадает со строкой скрипта для "
           "этого исходника и этой правки в %d; названные в ней числа совпадают со сверкой в %d; "
@@ -107,11 +132,13 @@ def main(argv=None) -> int:
                                              "да" if r["same_line"] else ("нет: %s" % (r["expected"] or "строки нет") if r["line"] else "—"),
                                              "; ".join(r["script_errors"]) or "—"))
     if args.expect == "present":
-        md += ["", "Порог 4 (R-RECEIPT): строка хотя бы в 10 из 12: %s; факты в строке как у скрипта хотя бы в 10 из 12: %s; "
-               "дословно как у скрипта хотя бы в 10 из 12: %s." % (
-            "пройден" if present >= 10 else "не пройден", "да" if facts >= 10 else "нет", "да" if same >= 10 else "нет")]
+        md += ["", "Порог 4 (R-RECEIPT): строка хотя бы в %d из %d: %s; факты в строке как у скрипта хотя бы в %d из %d: %s; "
+               "дословно как у скрипта хотя бы в %d из %d: %s." % (
+            need, n, "пройден" if present >= need else "не пройден",
+            need, n, "да" if facts >= need else "нет",
+            need, n, "да" if same >= need else "нет")]
     else:
-        md += ["", "Без терминала строки быть не должно: %s." % ("ни одной" if present == 0 else "есть в %d" % present)]
+        md += ["", "Без терминала строки быть не должно: %s." % ("ни одной" if any_receipt == 0 else "есть в %d" % any_receipt)]
     lib.write_text(run_dir / "receipt.md", "\n".join(md) + "\n")
     lib.write_json(run_dir / "receipt.json", rows)
     print("\n".join(md))

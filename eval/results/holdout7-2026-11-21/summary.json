@@ -1,0 +1,545 @@
+{
+  "run": "holdout7-2026-11-21",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "h7_01",
+        "h7_02",
+        "h7_03",
+        "h7_04",
+        "h7_05",
+        "h7_06",
+        "h7_07",
+        "h7_08",
+        "h7_09",
+        "h7_10",
+        "h7_11",
+        "h7_12"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 4.0,
+          "first_places": 0,
+          "passes": 96,
+          "send_as_is": 3.75,
+          "texts_with_fact_errors": [
+            "h7_08"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h7_08"
+          ],
+          "script_errors": {
+            "h7_01": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "две"
+              }
+            ],
+            "h7_02": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "250"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Wildberries"
+              }
+            ],
+            "h7_03": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Stories"
+              }
+            ],
+            "h7_05": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "190 000"
+              }
+            ],
+            "h7_09": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "15 920 ₽"
+              }
+            ]
+          },
+          "similarity": 0.651,
+          "text_similarity": 0.651
+        },
+        "ours": {
+          "mean_position": 1.96,
+          "first_places": 32,
+          "passes": 96,
+          "send_as_is": 8.1,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h7_02",
+            "h7_03"
+          ],
+          "script_errors": {
+            "h7_02": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "250"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Wildberries"
+              }
+            ],
+            "h7_03": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Stories"
+              }
+            ],
+            "h7_05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "000"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "190 000"
+              }
+            ],
+            "h7_09": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "15 920 ₽"
+              }
+            ]
+          },
+          "similarity": 0.598,
+          "text_similarity": 0.677
+        },
+        "ours430": {
+          "mean_position": 1.65,
+          "first_places": 44,
+          "passes": 96,
+          "send_as_is": 8.44,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h7_03"
+          ],
+          "script_errors": {
+            "h7_02": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "250"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Wildberries"
+              }
+            ],
+            "h7_03": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Stories"
+              }
+            ],
+            "h7_05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "000"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "190 000"
+              }
+            ],
+            "h7_09": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "15 920 ₽"
+              }
+            ]
+          },
+          "similarity": 0.511,
+          "text_similarity": 0.679
+        },
+        "prompt": {
+          "mean_position": 2.4,
+          "first_places": 20,
+          "passes": 96,
+          "send_as_is": 7.6,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h7_01",
+            "h7_02",
+            "h7_03",
+            "h7_06",
+            "h7_08",
+            "h7_09"
+          ],
+          "script_errors": {
+            "h7_01": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "два"
+              }
+            ],
+            "h7_02": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "250"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Wildberries"
+              }
+            ],
+            "h7_03": [
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "Stories"
+              }
+            ],
+            "h7_05": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "000"
+              },
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "190 000"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "B2B-платёжный"
+              },
+              {
+                "kind": "lost",
+                "what": "имя или название",
+                "detail": "БД"
+              }
+            ],
+            "h7_09": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "15 920 ₽"
+              }
+            ],
+            "h7_10": [
+              {
+                "kind": "inverted",
+                "what": "отрицание",
+                "detail": "«не равно» в правке стоит без отрицания"
+              }
+            ]
+          },
+          "similarity": 0.566,
+          "text_similarity": 0.566
+        }
+      },
+      "pairwise": {
+        "ours430>ours": 0.604,
+        "ours>ours430": 0.396,
+        "ours430>prompt": 0.75,
+        "prompt>ours430": 0.25,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "ours>prompt": 0.646,
+        "prompt>ours": 0.354,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0,
+        "prompt>ilyautov": 1.0,
+        "ilyautov>prompt": 0.0
+      },
+      "fact_notes": {
+        "prompt|h7_02": [
+          "gemini-4-argon: добавлено «на каждый день»",
+          "gemini-4-argon: добавлено «на каждый день»"
+        ],
+        "ours|h7_02": [
+          "gemini-4-argon: в первом заголовке пропущена марка стали AISI 304",
+          "gemini-4-argon: в первом заголовке пропущена марка стали AISI 304"
+        ],
+        "ours|h7_03": [
+          "gemini-4-argon: пропущено уточнение «быстрые успеют»",
+          "gemini-4-argon: пропущено уточнение «быстрые успеют»"
+        ],
+        "ours430|h7_03": [
+          "gemini-4-argon: пропущено уточнение «быстрые успеют»",
+          "gemini-4-argon: пропущено уточнение «быстрые успеют»"
+        ],
+        "prompt|h7_06": [
+          "gemini-4-argon: изменена последовательность событий с передачей курьерам и доставкой",
+          "gemini-4-argon: изменена последовательность событий с передачей курьерам и доставкой",
+          "gemini-4-carbon: изменено: все 312 посылок уже доставлены вместо продолжающейся доставки",
+          "gemini-4-carbon: изменено: все 312 посылок уже доставлены вместо продолжающейся доставки"
+        ],
+        "ilyautov|h7_08": [
+          "gemini-4-argon: опущена ссылка «по оценкам специалистов»",
+          "gemini-4-argon: опущена ссылка «по оценкам специалистов»",
+          "gemini-4-hydrogen: убрана ссылка «по оценкам специалистов»",
+          "gemini-4-hydrogen: убрана ссылка «по оценкам специалистов»",
+          "gemini-4-neon: убрана атрибуция «по оценкам специалистов»",
+          "gemini-4-neon: убрана атрибуция «по оценкам специалистов»",
+          "gemini-4-carbon: убран источник оценки «по оценкам специалистов»",
+          "gemini-4-carbon: убран источник оценки «по оценкам специалистов»"
+        ],
+        "prompt|h7_08": [
+          "gemini-4-argon: убрано утверждение о вводе депо в эксплуатацию в первом абзаце; прямая цитата частично переведена в косвенную речь",
+          "gemini-4-argon: убрано утверждение о вводе депо в эксплуатацию в первом абзаце; прямая цитата частично переведена в косвенную речь",
+          "gemini-4-carbon: в заголовке и лиде убрано утверждение об открытии и вводе депо",
+          "gemini-4-carbon: в заголовке и лиде убрано утверждение об открытии и вводе депо"
+        ],
+        "prompt|h7_03": [
+          "gemini-4-neon: добавлено обещание «пробежка состоится при любой» погоде",
+          "gemini-4-neon: добавлено обещание «пробежка состоится при любой» погоде",
+          "gemini-4-carbon: добавлено обещание «состоится при любой погоде»",
+          "gemini-4-carbon: добавлено обещание «состоится при любой погоде»"
+        ],
+        "prompt|h7_01": [
+          "gemini-4-carbon: «теперь» вместо «с 15 января» у тиража",
+          "gemini-4-carbon: «теперь» вместо «с 15 января» у минимального тиража"
+        ],
+        "prompt|h7_09": [
+          "gemini-4-carbon: сужено «связи» до «связи между ними» в пункте об ОПиУ",
+          "gemini-4-carbon: сужено «связи» до «связи между ними» в пункте об ОПиУ"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.20833333333333331,
+          0.6041666666666666
+        ],
+        "ours>prompt": [
+          0.45833333333333337,
+          0.8125
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 12,
+          "losses": 0,
+          "ties": 0,
+          "texts": 12,
+          "p": 0.0002
+        },
+        "ours>ours430": {
+          "wins": 2,
+          "losses": 4,
+          "ties": 6,
+          "texts": 12,
+          "p": 0.8906
+        },
+        "ours>prompt": {
+          "wins": 3,
+          "losses": 1,
+          "ties": 8,
+          "texts": 12,
+          "p": 0.3125
+        }
+      }
+    },
+    "trap": {
+      "ids": [
+        "h7_13",
+        "h7_14"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 4.0,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 3.88,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h7_13": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "396"
+              }
+            ]
+          },
+          "similarity": 0.935,
+          "text_similarity": 0.935
+        },
+        "ours": {
+          "mean_position": 1.56,
+          "first_places": 7,
+          "passes": 16,
+          "send_as_is": 10.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.943,
+          "text_similarity": 1.0
+        },
+        "ours430": {
+          "mean_position": 1.44,
+          "first_places": 9,
+          "passes": 16,
+          "send_as_is": 10.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.934,
+          "text_similarity": 1.0
+        },
+        "prompt": {
+          "mean_position": 3.0,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 5.12,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h7_13"
+          ],
+          "script_errors": {
+            "h7_13": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "два"
+              },
+              {
+                "kind": "swap",
+                "what": "привязка",
+                "detail": "5.2 в исходнике относится к «договора», в правке стоит рядом с «исполнителя»"
+              }
+            ]
+          },
+          "similarity": 0.853,
+          "text_similarity": 0.853
+        }
+      },
+      "pairwise": {
+        "ours>ours430": 0.438,
+        "ours430>ours": 0.562,
+        "ours>prompt": 1.0,
+        "prompt>ours": 0.0,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0,
+        "ours430>prompt": 1.0,
+        "prompt>ours430": 0.0,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "prompt>ilyautov": 1.0,
+        "ilyautov>prompt": 0.0
+      },
+      "fact_notes": {
+        "prompt|h7_13": [
+          "gemini-4-argon: удалена расшифровка сроков прописью в скобках",
+          "gemini-4-argon: удалена расшифровка сроков прописью в скобках",
+          "gemini-4-carbon: убрана расшифровка сроков прописью в скобках",
+          "gemini-4-carbon: убрана расшифровка сроков прописью в скобках"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.375,
+          0.5
+        ],
+        "ours>prompt": [
+          1.0,
+          1.0
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        },
+        "ours>ours430": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 2,
+          "texts": 2,
+          "p": 1.0
+        },
+        "ours>prompt": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        }
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 1 на 12 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (prompt: 0)",
+      "ok": true,
+      "value": "0"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": true,
+      "value": "65% (95%: 46–81%, не отличить от 50%)"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov): не меньше 50%",
+      "ok": true,
+      "value": "100% (95%: 100–100%, выше 50%)"
+    },
+    {
+      "name": "Не хуже прошлой версии (ours430): не меньше 50% и ошибок смысла не больше (0)",
+      "ok": false,
+      "value": "40% (95%: 21–60%, не отличить от 50%), 0"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 2 из 2",
+      "ok": true,
+      "value": "2 из 2"
+    }
+  ],
+  "release_gates": [
+    {
+      "name": "2. ИИ-тексты: согласных побед над ours430 не меньше поражений, ошибок смысла не больше",
+      "ok": false,
+      "value": "2:4 (ничьих 6); ошибок 0 против 0"
+    },
+    {
+      "name": "3. Человеческие тексты: сходство не ниже, чем у ours430, минус 0,02; ошибок сверки не больше",
+      "ok": true,
+      "value": "сходство 0.943 против 0.934; ошибок сверки 0 против 0 (текстов 2)"
+    }
+  ]
+}

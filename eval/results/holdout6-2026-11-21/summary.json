@@ -1,0 +1,386 @@
+{
+  "run": "holdout6-2026-11-21",
+  "judge_errors": 0,
+  "groups": {
+    "ai": {
+      "ids": [
+        "h6_01",
+        "h6_02",
+        "h6_03",
+        "h6_04",
+        "h6_05",
+        "h6_06",
+        "h6_07",
+        "h6_08",
+        "h6_09",
+        "h6_10",
+        "h6_11",
+        "h6_12"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 4.0,
+          "first_places": 0,
+          "passes": 96,
+          "send_as_is": 4.29,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h6_05"
+          ],
+          "script_errors": {
+            "h6_01": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1250"
+              }
+            ],
+            "h6_05": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "два"
+              }
+            ],
+            "h6_11": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "три"
+              }
+            ]
+          },
+          "similarity": 0.632,
+          "text_similarity": 0.632
+        },
+        "ours": {
+          "mean_position": 1.92,
+          "first_places": 30,
+          "passes": 96,
+          "send_as_is": 6.98,
+          "texts_with_fact_errors": [
+            "h6_10"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h6_03",
+            "h6_10"
+          ],
+          "script_errors": {
+            "h6_01": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1250"
+              }
+            ]
+          },
+          "similarity": 0.451,
+          "text_similarity": 0.581
+        },
+        "ours430": {
+          "mean_position": 2.06,
+          "first_places": 26,
+          "passes": 96,
+          "send_as_is": 6.94,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {
+            "h6_01": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1250"
+              }
+            ]
+          },
+          "similarity": 0.542,
+          "text_similarity": 0.71
+        },
+        "prompt": {
+          "mean_position": 2.02,
+          "first_places": 40,
+          "passes": 96,
+          "send_as_is": 7.46,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [
+            "h6_03",
+            "h6_04",
+            "h6_06",
+            "h6_07",
+            "h6_09"
+          ],
+          "script_errors": {
+            "h6_01": [
+              {
+                "kind": "lost",
+                "what": "число",
+                "detail": "1250"
+              }
+            ],
+            "h6_05": [
+              {
+                "kind": "added",
+                "what": "число",
+                "detail": "два"
+              }
+            ]
+          },
+          "similarity": 0.554,
+          "text_similarity": 0.549
+        }
+      },
+      "pairwise": {
+        "prompt>ours430": 0.479,
+        "ours430>prompt": 0.521,
+        "prompt>ours": 0.5,
+        "ours>prompt": 0.5,
+        "prompt>ilyautov": 1.0,
+        "ilyautov>prompt": 0.0,
+        "ours430>ours": 0.417,
+        "ours>ours430": 0.583,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0
+      },
+      "fact_notes": {
+        "ilyautov|h6_05": [
+          "gemini-4-hydrogen: название изменено с оптимизации на обновление",
+          "gemini-4-hydrogen: название изменено с оптимизации на обновление"
+        ],
+        "prompt|h6_09": [
+          "gemini-4-hydrogen: мощность достигает вместо фиксированной проектной",
+          "gemini-4-hydrogen: мощность достигает вместо фиксированной проектной"
+        ],
+        "ours|h6_10": [
+          "gemini-4-hydrogen: не зависит от погоды искажает оговорку про скорость",
+          "gemini-4-hydrogen: не зависит от погоды искажает оговорку про скорость",
+          "gemini-4-argon: упрощено «не зависит от заряда и погоды» (потеряно уточнение, что речь именно про запас хода)",
+          "gemini-4-argon: упрощено «не зависит от заряда и погоды» (потеряно уточнение, что речь именно про запас хода)",
+          "gemini-4-neon: упущена оговорка «в плане энергетики» («не зависит от погоды»)",
+          "gemini-4-neon: упущена оговорка «в плане энергетики» («не зависит от погоды»)",
+          "gemini-4-carbon: упрощение «не зависит от погоды» спорит с соседней фразой",
+          "gemini-4-carbon: упрощение «не зависит от погоды» спорит с соседней фразой"
+        ],
+        "prompt|h6_03": [
+          "gemini-4-argon: упущена деталь, что кофе обжарен вчера/накануне",
+          "gemini-4-argon: упущена деталь, что кофе обжарен вчера/накануне",
+          "gemini-4-neon: упущена деталь, что кофе обжарили вчера",
+          "gemini-4-neon: упущена деталь про вчерашнюю обжарку"
+        ],
+        "ours|h6_03": [
+          "gemini-4-carbon: образ «будто обжарили вчера» превращён в прямое обещание «обжарили накануне»",
+          "gemini-4-carbon: образ «будто обжарили вчера» превращён в прямое обещание «обжарили накануне»"
+        ],
+        "prompt|h6_04": [
+          "gemini-4-carbon: добавлена динамика «пока p99 не дошёл… события начали приходить»",
+          "gemini-4-carbon: добавлена динамика «пока p99 не дошёл… события начали приходить»"
+        ],
+        "prompt|h6_06": [
+          "gemini-4-carbon: сужен способ связи до «звоните» для внутреннего номера",
+          "gemini-4-carbon: сужен способ связи до «звоните» для внутреннего номера"
+        ],
+        "prompt|h6_07": [
+          "gemini-4-carbon: добавлено отсутствующее в исходнике «срочно… работа встаёт»; изменена цитата «успею после дедлайна» на «доделаю»",
+          "gemini-4-carbon: добавлено отсутствующее в исходнике «срочно… работа встаёт»; изменена цитата «успею после дедлайна» на «доделаю»"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.35416666666666663,
+          0.7916666666666667
+        ],
+        "ours>prompt": [
+          0.3541666666666667,
+          0.625
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 12,
+          "losses": 0,
+          "ties": 0,
+          "texts": 12,
+          "p": 0.0002
+        },
+        "ours>ours430": {
+          "wins": 4,
+          "losses": 3,
+          "ties": 5,
+          "texts": 12,
+          "p": 0.5
+        },
+        "ours>prompt": {
+          "wins": 0,
+          "losses": 1,
+          "ties": 11,
+          "texts": 12,
+          "p": 1.0
+        }
+      }
+    },
+    "trap": {
+      "ids": [
+        "h6_13",
+        "h6_14"
+      ],
+      "table": {
+        "ilyautov": {
+          "mean_position": 3.5,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 5.62,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.898,
+          "text_similarity": 0.898
+        },
+        "ours": {
+          "mean_position": 2.0,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 7.75,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.928,
+          "text_similarity": 1.0
+        },
+        "ours430": {
+          "mean_position": 1.0,
+          "first_places": 16,
+          "passes": 16,
+          "send_as_is": 8.0,
+          "texts_with_fact_errors": [],
+          "texts_flagged_by_any_judge": [],
+          "script_errors": {},
+          "similarity": 0.924,
+          "text_similarity": 1.0
+        },
+        "prompt": {
+          "mean_position": 3.5,
+          "first_places": 0,
+          "passes": 16,
+          "send_as_is": 4.38,
+          "texts_with_fact_errors": [
+            "h6_13"
+          ],
+          "texts_flagged_by_any_judge": [
+            "h6_13"
+          ],
+          "script_errors": {},
+          "similarity": 0.685,
+          "text_similarity": 0.673
+        }
+      },
+      "pairwise": {
+        "ours430>ours": 1.0,
+        "ours>ours430": 0.0,
+        "ours430>ilyautov": 1.0,
+        "ilyautov>ours430": 0.0,
+        "ours430>prompt": 1.0,
+        "prompt>ours430": 0.0,
+        "ours>ilyautov": 1.0,
+        "ilyautov>ours": 0.0,
+        "ours>prompt": 1.0,
+        "prompt>ours": 0.0,
+        "ilyautov>prompt": 0.5,
+        "prompt>ilyautov": 0.5
+      },
+      "fact_notes": {
+        "prompt|h6_13": [
+          "gemini-4-hydrogen: пересказ искажает точные юридические формулировки закона",
+          "gemini-4-hydrogen: пересказ искажает точные юридические формулировки закона",
+          "gemini-4-argon: произвольный пересказ статьи 450.1 ГК РФ с заменой строгих юридических терминов («не допускается» -> «уже нельзя», «прекращается» -> «прекращает действовать»)",
+          "gemini-4-argon: произвольный пересказ статьи 450.1 ГК РФ с заменой строгих юридических терминов («не допускается» -> «уже нельзя», «прекращается» -> «прекращает действовать»)",
+          "gemini-4-neon: в п. 2 искажено условие: договор считается расторгнутым, если отказ допускается, а не в случае отказа; убраны юридические формулы «управомоченной стороной» и «предложенного последней»",
+          "gemini-4-neon: в п. 2 искажено условие: договор считается расторгнутым, если отказ допускается, а не при самом отказе; убраны юридические формулы «управомоченной стороной» и «предложенного последней»",
+          "gemini-4-carbon: искажены точные правовые формулы статьи 450.1 ГК РФ; потеряно уточнение «управомоченной стороной» в п. 1",
+          "gemini-4-carbon: искажены точные правовые формулы статьи 450.1 ГК РФ; потеряно уточнение «управомоченной стороной» в п. 1"
+        ]
+      },
+      "pairwise_ci": {
+        "ours>ilyautov": [
+          1.0,
+          1.0
+        ],
+        "ours>ours430": [
+          0.0,
+          0.0
+        ],
+        "ours>prompt": [
+          1.0,
+          1.0
+        ]
+      },
+      "agreed": {
+        "ours>ilyautov": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        },
+        "ours>ours430": {
+          "wins": 0,
+          "losses": 2,
+          "ties": 0,
+          "texts": 2,
+          "p": 1.0
+        },
+        "ours>prompt": {
+          "wins": 2,
+          "losses": 0,
+          "ties": 0,
+          "texts": 2,
+          "p": 0.25
+        }
+      }
+    }
+  },
+  "coverage_gaps": [],
+  "thresholds": [
+    {
+      "name": "Тексты с ошибкой смысла (большинство судей): не больше 1 на 12 ИИ-текстов, и не больше, чем у самого аккуратного из остальных (ilyautov: 0)",
+      "ok": false,
+      "value": "1"
+    },
+    {
+      "name": "Выше простой просьбы хотя бы в 60% сравнений",
+      "ok": false,
+      "value": "50% (95%: 35–62%, не отличить от 50%)"
+    },
+    {
+      "name": "Не хуже лучшего конкурента (ilyautov): не меньше 50%",
+      "ok": true,
+      "value": "100% (95%: 100–100%, выше 50%)"
+    },
+    {
+      "name": "Не хуже прошлой версии (ours430): не меньше 50% и ошибок смысла не больше (0)",
+      "ok": false,
+      "value": "58% (95%: 35–79%, не отличить от 50%), 1"
+    },
+    {
+      "name": "Ловушки: без ошибок смысла хотя бы 5 из 6",
+      "ok": false,
+      "value": "2 из 2"
+    }
+  ],
+  "release_gates": [
+    {
+      "name": "2. ИИ-тексты: согласных побед над ours430 не меньше поражений, ошибок смысла не больше",
+      "ok": false,
+      "value": "4:3 (ничьих 5); ошибок 1 против 0"
+    },
+    {
+      "name": "3. Человеческие тексты: сходство не ниже, чем у ours430, минус 0,02; ошибок сверки не больше",
+      "ok": true,
+      "value": "сходство 0.928 против 0.924; ошибок сверки 0 против 0 (текстов 2)"
+    }
+  ]
+}

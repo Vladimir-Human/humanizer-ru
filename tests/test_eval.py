@@ -719,5 +719,440 @@ class EvalNewMeasuresTest(unittest.TestCase):
         self.assertEqual(ve._body("Текст правки.\n\n---\n- заметка"), "Текст правки.")
 
 
+class EvalOfflineFixesTest(unittest.TestCase):
+    """G-EVAL-UNIT: deterministic offline tests for evallib, fetch_human, report, receipt_eval,
+    interview_eval, probes, batches, patterns, frontier_eval, lint_calibrate, run_systems, judge,
+    style_freq, and build_corpus."""
+
+    def test_evallib_bom_crlf_ledger_and_openrouter_chat(self):
+        import concurrent.futures
+        import io as _io
+        import urllib.error
+
+        # CRLF split_notes keeps no \r in text or notes.
+        text, notes = lib.split_notes("Текст правки.\r\n\r\n---\r\n- Убрал штамп.\r\n", "Исходник.")
+        self.assertEqual((text, notes), ("Текст правки.", "- Убрал штамп."))
+        self.assertNotIn("\r", text + notes)
+
+        # UTF-8 BOM handled transparently by read_text and read_json.
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "bom.json"
+            p.write_bytes(b"\xef\xbb\xbf" + '{"k": "привет"}'.encode("utf-8"))
+            self.assertEqual(lib.read_json(p), {"k": "привет"})
+
+            # Thread-safe Ledger with unique temp files and cap enforcement.
+            led_path = Path(d) / "spend.json"
+            with mock.patch.object(lib, "CACHE_DIR", Path(d)), mock.patch.object(lib, "LEDGER", led_path):
+                led = lib.Ledger(cap=0.5)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+                    list(pool.map(lambda _: led.add("t", 0.05), range(6)))
+                self.assertAlmostEqual(lib.read_json(led_path)["total"], 0.3, places=4)
+                led.add("t", 0.25)
+                with self.assertRaises(lib.BudgetExceeded):
+                    led.check()
+
+            # Mocked OpenRouter chat: retries 500, fails immediately on 401, books usage.cost.
+            ok_body = json.dumps({"choices": [{"message": {"content": "ответ"}}], "usage": {"cost": 0.02}}).encode("utf-8")
+
+            class _Resp:
+                def __enter__(self):
+                    return _io.BytesIO(ok_body)
+
+                def __exit__(self, *a):
+                    return False
+
+            err500 = urllib.error.HTTPError("https://x", 500, "err", {}, _io.BytesIO(b"boom"))
+            err401 = urllib.error.HTTPError("https://x", 401, "auth", {}, _io.BytesIO(b"bad key"))
+            led_path2 = Path(d) / "spend2.json"
+            with mock.patch.dict("os.environ", {"FAL_KEY": "test-key"}), \
+                    mock.patch.object(lib, "CACHE_DIR", Path(d)), mock.patch.object(lib, "LEDGER", led_path2), \
+                    mock.patch.object(lib, "_LEDGER", None), mock.patch.object(lib.time, "sleep"), \
+                    mock.patch.object(lib.urllib.request, "urlopen", side_effect=[err500, _Resp()]) as uo:
+                msg, usage = lib.chat("openai/test", [{"role": "user", "content": "hi"}], tag="unit")
+                self.assertEqual((msg["content"], usage["cost"]), ("ответ", 0.02))
+                self.assertEqual(uo.call_count, 2)
+                self.assertAlmostEqual(lib.read_json(led_path2)["total"], 0.02, places=4)
+            with mock.patch.dict("os.environ", {"FAL_KEY": "test-key"}), \
+                    mock.patch.object(lib, "CACHE_DIR", Path(d)), mock.patch.object(lib, "LEDGER", led_path2), \
+                    mock.patch.object(lib, "_LEDGER", None), mock.patch.object(lib.time, "sleep"), \
+                    mock.patch.object(lib.urllib.request, "urlopen", side_effect=[err401]) as uo:
+                with self.assertRaises(RuntimeError):
+                    lib.chat("openai/test", [{"role": "user", "content": "hi"}], tag="unit")
+                self.assertEqual(uo.call_count, 1)  # 401 stops immediately
+
+        with mock.patch.dict("os.environ", {"DSH_TASK": "/custom/dsh-task.mjs"}):
+            self.assertEqual(lib._default_dsh_task(), Path("/custom/dsh-task.mjs"))
+
+    def test_fetch_human_paragraphs_handles_thumbcaption_div_depth(self):
+        import fetch_human as fh
+        html_doc = (
+            "<p>Первый абзац<sup>[1]</sup> текста.</p>"
+            '<div class="thumbcaption">Подпись к фото <div class="inner">вложенный блок</div> хвост</div>'
+            "<p>Второй абзац после картинки.</p>"
+            "<table><tr><td><p>Таблица пропущена</p></td></tr></table>"
+            "<p>Третий абзац.</p>"
+        )
+        p = fh._Paragraphs()
+        p.feed(html_doc)
+        self.assertEqual(p.paras, ["Первый абзац текста.", "Второй абзац после картинки.", "Третий абзац."])
+        self.assertEqual(p.skip, 0)
+
+    def test_build_corpus_helpers(self):
+        import build_corpus as bc
+        self.assertEqual(bc.strip_header("\ufeffВопрос: x\nОтвет модели:\nСтрока.\n"), "Строка.\n")
+        self.assertEqual(bc.strip_header("\ufeffПросто текст.\n"), "Просто текст.\n")
+        self.assertIn("?utm_source=chatgpt.com", bc.inject("См. https://example.ru/a тут.", "utm"))
+        self.assertIn(":contentReference[oaicite:0]{index=0}", bc.inject("Раз. Два. Три. Четыре.", "contentref"))
+        self.assertIn("\u200b", bc.inject(" ".join(["слово"] * 10), "zwsp"))
+        rows = [{"id": "wn%d" % i, "revision": i} for i in range(40)]
+        self.assertEqual(len(bc.human_wikinews(rows)), 20)
+        self.assertEqual(bc.human_wikinews(rows), bc.human_wikinews(list(reversed(rows))))
+
+    def test_report_edge_cases_and_main_end_to_end(self):
+        # String/None/bool fact_errors, None candidate, bool send_as_is, text_similarity alongside similarity.
+        rows = [
+            {"id": "t1", "judge": "j1", "round": 0, "ranking": ["ours", "rival"],
+             "candidates": {
+                 "ours": {"fact_errors": "нет", "send_as_is": True},
+                 "rival": {"fact_errors": "потеряна дата", "send_as_is": 7},
+                 "ghost": None,
+             }},
+            {"id": "t1", "judge": "j2", "round": 0, "ranking": ["ours", "rival"],
+             "candidates": {
+                 "ours": {"fact_errors": [None, False, "—"], "send_as_is": 8},
+                 "rival": {"fact_errors": ["потеряна дата"], "send_as_is": 6},
+             }},
+        ]
+        src = "Цена 500 рублей."
+        outputs = {
+            ("ours", "t1"): "Цена 500 рублей.\n\n---\n- Убрал повтор и штамп.",
+            ("rival", "t1"): "Цена 500 рублей.",
+        }
+        table, _, _ = report.aggregate(rows, {"t1"}, outputs, {"t1": src})
+        self.assertEqual(table["ours"]["texts_with_fact_errors"], [])
+        self.assertEqual(table["rival"]["texts_with_fact_errors"], ["t1"])
+        self.assertEqual(table["ours"]["send_as_is"], 8.0)  # bool True ignored
+        self.assertLess(table["ours"]["similarity"], 1.0)  # raw similarity preserved
+        self.assertEqual(table["ours"]["text_similarity"], 1.0)  # note-stripped similarity added alongside
+
+        # Windows-safe slug for --judges without slash.
+        self.assertEqual(report._out_slug("dsh:minimax"), "summary-dsh-minimax")
+        self.assertNotIn(":", report._out_slug("dsh:a:b"))
+
+        # main() end-to-end: errors-only coverage gap, non-dir inside outputs/, BOM judgments, mean_position=None, $0 label.
+        with tempfile.TemporaryDirectory() as d:
+            ed = Path(d)
+            lib.write_json(ed / "corpus" / "index.json", [{"id": "t1", "kind": "generated", "set": "dev"}])
+            lib.write_text(ed / "corpus" / "texts" / "t1.txt", "Цена 500 рублей.\n")
+            run_dir = ed / "results" / "r1"
+            lib.write_text(run_dir / "outputs" / "ours" / "t1.txt", "Цена 500 рублей.\n")
+            lib.write_text(run_dir / "outputs" / "rival" / "t1.txt", "Цена 500 рублей.\n")
+            lib.write_text(run_dir / "outputs" / "README.txt", "stray file\n")
+            lib.write_json(run_dir / "config.json", {"executor": "dsh:minimax", "texts": ["t1"], "systems": ["ours", "rival"]})
+            # All judge rows failed -> gaps must be ["t1"], not [].
+            (run_dir / "judgments.jsonl").write_bytes(
+                b"\xef\xbb\xbf" + (json.dumps({"id": "t1", "judge": "j1", "error": "unparsed", "cost": 0.0}) + "\n").encode("utf-8"))
+            with mock.patch.object(lib, "EVAL_DIR", ed), mock.patch.object(lib, "CACHE_DIR", ed / ".cache"), \
+                    mock.patch.object(lib, "LEDGER", ed / ".cache" / "spend.json"), mock.patch.object(lib, "_LEDGER", None):
+                rc = report.main(["--run", "r1"])
+            self.assertEqual(rc, 0)
+            summary = lib.read_json(run_dir / "summary.json")
+            self.assertEqual(summary["coverage_gaps"], ["t1"])
+            md = lib.read_text(run_dir / "summary.md")
+            self.assertIn("$0.00", md)
+
+    def test_receipt_eval_all_seven_forms_strict_missing_and_main(self):
+        import receipt_eval as re_
+        line = "Сверка скриптом: 2 числа, 1 дата, 3 имени, 1 ссылка, 1 телефон, 2 цитаты, 1 отрицание на месте."
+        self.assertEqual(re_.stated_counts(line), {
+            "number": 2, "date": 1, "name": 3, "url": 1, "phone": 1, "quote": 2, "negation": 1,
+        })
+        # Dash & quote normalization in same_line().
+        self.assertTrue(re_.same_line('Сверка скриптом: «А» — 1 число', 'Сверка скриптом: "А" - 1 число.'))
+        # Strict 'в правке нет:' guard: missing "1" must NOT match "1 число" in counts prefix!
+        src = "В списке 1."
+        lie = "В списке.\n\n---\nСверка скриптом: 1 число на месте."
+        self.assertFalse(re_.score_one(src, lie)["facts_ok"])
+        honest = "В списке.\n\n---\nСверка скриптом: в исходнике 1 число; в правке нет: 1"
+        self.assertTrue(re_.score_one(src, honest)["facts_ok"])
+        # Receipt leaked in body (no ---) is flagged in_body and not counted as notes receipt.
+        body_leak = "В списке 1.\nСверка скриптом: 1 число на месте."
+        res_leak = re_.score_one(src, body_leak)
+        self.assertEqual(res_leak["line"], "")
+        self.assertTrue(res_leak["in_body"])
+        # Missing outputs dir returns exit code 1.
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "EVAL_DIR", Path(d)):
+            self.assertEqual(re_.main(["--run", "missing", "--system", "ours"]), 1)
+
+    def test_interview_eval_source_aware_cta_guard_and_score(self):
+        import interview_eval as iv
+        # Ad CTA without '---' is NOT an interview question to the author.
+        self.assertEqual(iv.questions("Ищете хороший кофе?\nУкажите промокод COFFEE при заказе."), [])
+        # Source with its own '---' section containing '?' is NOT stripped as notes!
+        src = "Акция.\n---\nУкажите промокод или остались вопросы?"
+        self.assertEqual(iv.questions(src, src), [])
+        # merge_config preserves previous systems.
+        cfg = iv.merge_config({"executor": "e1", "author": "a1", "systems": ["ours"]}, ["ours417"], "e2", "a2")
+        self.assertEqual(set(cfg["by_system"]), {"ours", "ours417"})
+        # Missing interview dir returns 1; valid run scores cleanly.
+        with tempfile.TemporaryDirectory() as d:
+            ed = Path(d)
+            with mock.patch.object(lib, "EVAL_DIR", ed):
+                self.assertEqual(iv.score("nope"), 1)
+            cases_path = ed / "interview.json"
+            lib.write_json(cases_path, [{"id": "iv01", "text": "Уютная кофейня.", "sheet": ["Адрес: Ленина, 5"]}])
+            rec = {"id": "iv01", "turn1": "Кофейня.\n\n---\n- На какой улице вы находитесь?",
+                   "answers": "На Ленина, 5.", "turn3": "Кофейня на Ленина, 5.\n\n---\n- Добавил адрес."}
+            lib.write_json(ed / "results" / "r1" / "interview" / "ours" / "iv01.json", rec)
+            with mock.patch.object(lib, "EVAL_DIR", ed), mock.patch.object(iv, "CASES", cases_path):
+                self.assertEqual(iv.score("r1"), 0)
+            scored = lib.read_json(ed / "results" / "r1" / "interview" / "interview.json")
+            self.assertEqual(scored["table"]["ours"], {"cases": 1, "asked": 1, "invented": 0})
+
+    def test_probes_yo_asks_bold_list_natural_sort_and_disjoint_rules(self):
+        import probes as pb
+        # всё -> все homograph is not a false failure; inflected тёплый -> теплым IS caught.
+        self.assertTrue(pb.score_one({"text": "Скидка на всё до среды.", "yo": True}, "Скидка на все товары до среды.")["yo"])
+        self.assertFalse(pb.score_one({"text": "Тёплый салат.", "yo": True}, "Подают с теплым салатом.")["yo"])
+        # asks: body '?' without notes fails; source '?' removed + notes '?' passes; ASK_RX after --- passes.
+        self.assertFalse(pb.score_one({"text": "Кофейня.", "asks": True}, "Ищете кофе?")["asks"])
+        self.assertTrue(pb.score_one({"text": "Кофейня?", "asks": True}, "Кофейня.\n\n---\n- Какой адрес?")["asks"])
+        self.assertTrue(pb.score_one({"text": "Кофейня.", "asks": True}, "Кофейня.\n\n---\n- Назовите адрес.")["asks"])
+        # LIST_RX handles bolded **1.** items.
+        self.assertTrue(pb.score_one({"text": "x", "list_items": 2}, "**1.** Раз.\n**2.** Два.")["list_items"])
+        # render() unions rules across systems with disjoint rules; natural sort orders r2 before r10.
+        summary = {
+            "table": {
+                "sysA": {"rule1": {"passed": 1, "total": 1, "per_run": [1], "spread": 0},
+                         "_all": {"passed": 1, "total": 1, "per_run": [1], "spread": 0}},
+                "sysB": {"rule2": {"passed": 1, "total": 1, "per_run": [1], "spread": 0},
+                         "_all": {"passed": 1, "total": 1, "per_run": [1], "spread": 0}},
+            },
+            "fails": {},
+        }
+        md = pb.render(summary, "test")
+        self.assertIn("| rule1 |", md)
+        self.assertIn("| rule2 |", md)
+        bank = {p["id"]: p for p in lib.read_json(pb.PROBES)}
+        good_pr20 = bank["pr20"]["text"]
+        with tempfile.TemporaryDirectory() as d:
+            run_dir = Path(d)
+            for rnd, txt in (("r0", good_pr20),
+                             ("r2", good_pr20),
+                             ("r10", "Мы отключаем API.")):
+                lib.write_text(run_dir / "probes" / "ours" / rnd / "pr20.txt", txt)
+            s = pb.summarize(run_dir)
+            self.assertEqual(s["table"]["ours"]["false_contrast"]["per_run"], [1, 1, 0])
+        # New embedded_quote and strengthened injection probes exist in probes.json.
+        self.assertEqual(sum(1 for p in bank.values() if p["rule"] == "embedded_quote"), 4)
+        self.assertGreaterEqual(sum(1 for p in bank.values() if p["rule"] == "injection"), 8)
+
+    def test_batches_blank_lines_and_patterns_note_stripping(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            jdir = d / "batch" / "judge-j1"
+            lib.write_json(d / "batch" / "judge-j1-keys.json", {"t1": {"A": "ours"}})
+            lib.write_text(jdir / "answers" / "t1.json", '{"candidates": {"A": {"fact_errors": []}}, "ranking": ["A"]}')
+            # Existing judgments.jsonl with BOM and blank lines must not crash collect_judge.
+            (d / "run").mkdir(parents=True)
+            (d / "run" / "judgments.jsonl").write_bytes(b"\xef\xbb\xbf\n\n")
+            res = batches.collect_judge(d / "run", d / "batch", "j1")
+            self.assertEqual(res["added"], 1)
+
+            # patterns.main() strips notes before counting patterns (R-NOTES-NOT-TEXT).
+            ed = d / "eval"
+            lib.write_text(ed / "corpus" / "texts" / "t1.txt", "Это не просто кофе, а ритуал.\n")
+            lib.write_text(ed / "results" / "r1" / "outputs" / "ours" / "t1.txt",
+                           "Хороший кофе.\n\n---\n- Убрал «не просто кофе, а ритуал».\n")
+            with mock.patch.object(lib, "EVAL_DIR", ed):
+                self.assertEqual(patterns.main(["--run", "r1"]), 0)
+            md = lib.read_text(ed / "results" / "r1" / "patterns.md")
+            self.assertIn("| ne_prosto | #2 | 1 | 0/1 (+0) |", md)
+
+    def test_frontier_single_compare_and_missing_dir(self):
+        import frontier_eval as fe
+        import receipt_eval as re_
+        with mock.patch.object(re_.check_facts, "compare", wraps=re_.check_facts.compare) as spy:
+            fe.score_text("Скидка 20%.", "Скидка 20%.")
+            self.assertEqual(spy.call_count, 1)  # no duplicate compare when text_part == source
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(lib, "EVAL_DIR", Path(d)):
+            self.assertEqual(fe.main(["--run", "r1", "--systems", "ours"]), 1)
+
+    def test_lint_calibrate_holdout_isolation_and_dry_run(self):
+        import lint_calibrate as lc
+        with tempfile.TemporaryDirectory() as d:
+            corpus = Path(d)
+            human_rows = [{"id": "wn%02d" % i, "revision": i} for i in range(25)]
+            lib.write_json(corpus / "human" / "index.json", human_rows)
+            for r in human_rows:
+                lib.write_text(corpus / "human" / (r["id"] + ".txt"), "Обычная новость без штампов.\n")
+            lib.write_json(corpus / "index.json", [
+                {"id": "d1", "kind": "generated", "set": "dev"},
+                {"id": "f1", "kind": "generated", "set": "holdout4"},
+                {"id": "h5_01", "kind": "generated", "set": "holdout5"},
+                {"id": "h01", "kind": "trap", "set": "test"},
+                {"id": "h6_13", "kind": "trap", "set": "holdout6"},
+            ])
+            for tid, txt in (("d1", "DEV_TEXT"), ("f1", "H4_TEXT"), ("h5_01", "H5_SECRET"),
+                             ("h01", "TRAP_TEXT"), ("h6_13", "H6_TRAP")):
+                lib.write_text(corpus / "texts" / (tid + ".txt"), txt)
+            with mock.patch.object(lc, "CORPUS", corpus):
+                g = lc.groups()
+            dev_group = g["Модели: исходники прошлых наборов (dev–holdout3)"]
+            self.assertEqual(dev_group, ["DEV_TEXT"])
+            self.assertNotIn("H5_SECRET", dev_group)
+            ctrl_group = g["Люди: контроль (набор human и ловушки)"]
+            self.assertEqual(ctrl_group, ["TRAP_TEXT"])
+            self.assertNotIn("H6_TRAP", ctrl_group)
+            m = lc.measure(["Обычная новость.", "Важно отметить, что это уникальный шанс."], lc.lint_style.load_rules())
+            self.assertEqual(m["texts"], 2)
+            out_dir = Path(d) / "out"
+            with mock.patch.object(lc, "CORPUS", corpus):
+                self.assertEqual(lc.main(["--dry-run", "--out", str(out_dir)]), 0)
+            self.assertFalse(out_dir.exists())
+
+    def test_run_systems_tool_loop_merge_config_and_judge_multi_brace(self):
+        # run_one handles read_file with skill/ prefix and returns final answer.
+        replies = [
+            ({"content": "", "tool_calls": [{"id": "c1", "function": {"arguments": '{"path": "skill/references/a.md"}'}}]},
+             {"cost": 0.01, "prompt_tokens": 10, "completion_tokens": 5}),
+            ({"content": "Готовый текст правки."}, {"cost": 0.02, "prompt_tokens": 20, "completion_tokens": 10}),
+        ]
+        with mock.patch.object(lib, "chat", side_effect=replies):
+            text, meta = rs.run_one("m", "sys", {"references/a.md": "Правило."}, "Исходник.")
+        self.assertEqual(text, "Готовый текст правки.\n")
+        self.assertEqual(meta["files_read"], ["references/a.md"])
+        merged = rs.merge_config({"systems": ["ours"], "texts": ["t1"]}, "exec", "dev", ["t2"], ["chat"])
+        self.assertEqual(merged["systems"], ["ours", "chat"])
+        self.assertEqual(merged["texts"], ["t1", "t2"])
+
+        # judge.parse does not greedily merge separate {...} blocks.
+        multi = 'Заметка: {проверь формат}\n{"candidates": {"A": {"fact_errors": []}}, "ranking": ["A"]}\nКонец {ок}.'
+        parsed = judge.parse(multi)
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["ranking"], ["A"])
+
+    def test_style_freq_reraises_budget_and_supports_dry_run(self):
+        import style_freq as sf
+        with tempfile.TemporaryDirectory() as d:
+            pairs = Path(d) / "pairs"
+            rows = [{"id": "wn01", "revision": 1, "title": "T"}]
+            with mock.patch.object(sf, "PAIRS", pairs), mock.patch.object(sf, "pool_rows", return_value=rows), \
+                    mock.patch.object(sf, "_one", side_effect=lib.QuotaExhausted("quota ended")):
+                with self.assertRaises(lib.BudgetExceeded):
+                    sf.gen(1)
+            human = Path(d) / "human"
+            lib.write_text(pairs / "wn01.txt", "Важно отметить, что снег пошёл.\n")
+            lib.write_text(human / "wn01.txt", "Снег пошёл утром.\n")
+            lib.write_json(pairs / "index.json", {"wn01": sf.MODELS[0]})
+            out = Path(d) / "out"
+            with mock.patch.object(sf, "PAIRS", pairs), mock.patch.object(sf, "HUMAN", human):
+                self.assertEqual(sf.rank(1, 0.0, 10, out_dir=out, dry_run=True), 0)
+                self.assertFalse(out.exists())
+                self.assertEqual(sf.rank(1, 0.0, 10, out_dir=out, dry_run=False), 0)
+                self.assertTrue((out / "candidates.json").exists())
+
+    def test_judge_build_strips_notes_preserves_source_sections_and_keeps_body_receipt(self):
+        # R-NOTES-NOT-TEXT: blind judge bundles strip post-'---' editor notes & receipt lines
+        # while keeping source '---' sections and leaving body-leaked lines without '---' visible.
+        src_sections = "Часть 1.\n---\nВ 2025 году открыли 3 филиала."
+        outputs = {
+            "ours": "Часть 1.\n---\nВ 2025 году открыли 3 филиала.\n\n---\n- Убрал штамп.\nСверка скриптом: 2 числа на месте.",
+            "kept_src": "Часть 1.\n---\nЗа 2025 год открыли 3 филиала.",
+            "body_leak": "Часть 1. В 2025 году открыли 3 филиала.\nСверка скриптом: 2 числа на месте.",
+        }
+        block, key = judge.build("t1", outputs, "j1", 0, source=src_sections)
+        by_sys = {}
+        for lab, sys_name in key.items():
+            marker = '<вариант id="%s">\n' % lab
+            chunk = block.split(marker, 1)[1].split("\n</вариант>", 1)[0]
+            by_sys[sys_name] = chunk
+        # Post-'---' editor notes and receipt are stripped while the source's own '---' section stays.
+        self.assertEqual(by_sys["ours"], "Часть 1.\n---\nВ 2025 году открыли 3 филиала.")
+        self.assertNotIn("Убрал штамп", by_sys["ours"])
+        self.assertNotIn("Сверка скриптом:", by_sys["ours"])
+        # Source's own '---' section without editor notes is preserved intact.
+        self.assertEqual(by_sys["kept_src"], "Часть 1.\n---\nЗа 2025 год открыли 3 филиала.")
+        # Body-leaked receipt without '---' is NOT stripped.
+        self.assertIn("Сверка скриптом: 2 числа на месте.", by_sys["body_leak"])
+
+        # batches.prepare_judge passes source through to judge.build so bundles match.
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            lib.write_text(d / "texts" / "t1.txt", src_sections + "\n")
+            for s, txt in outputs.items():
+                lib.write_text(d / "run" / "outputs" / s / "t1.txt", txt + "\n")
+            batches.prepare_judge(d / "run", d / "texts", d / "batch", "j1", ["t1"], 6)
+            bundle = lib.read_text(d / "batch" / "judge-j1" / "bundles" / "t1.md")
+            self.assertNotIn("Убрал штамп", bundle)
+            self.assertEqual(bundle.count("Сверка скриптом:"), 1)  # only body_leak keeps it
+            self.assertIn("За 2025 год открыли 3 филиала.", bundle)
+
+    def test_report_trap_threshold_scales_for_2_and_6_traps(self):
+        def run_case(n_traps: int, bad_count: int):
+            with tempfile.TemporaryDirectory() as d:
+                ed = Path(d)
+                trap_ids = ["tr%02d" % i for i in range(n_traps)]
+                index = [{"id": "a1", "kind": "generated", "set": "dev"}] + [
+                    {"id": tid, "kind": "trap", "set": "dev"} for tid in trap_ids
+                ]
+                lib.write_json(ed / "corpus" / "index.json", index)
+                for row in index:
+                    lib.write_text(ed / "corpus" / "texts" / (row["id"] + ".txt"), "Текст %s 100 рублей.\n" % row["id"])
+                run_dir = ed / "results" / "r1"
+                for s in ("ours", "prompt"):
+                    for row in index:
+                        lib.write_text(run_dir / "outputs" / s / (row["id"] + ".txt"), "Текст %s 100 рублей.\n" % row["id"])
+                lib.write_json(run_dir / "config.json", {"executor": "dsh:minimax", "texts": [r["id"] for r in index],
+                                                         "systems": ["ours", "prompt"]})
+                jrows = []
+                for row in index:
+                    tid = row["id"]
+                    is_bad = tid in trap_ids[:bad_count]
+                    for j in ("j1", "j2"):
+                        jrows.append({
+                            "id": tid, "judge": j, "round": 0, "ranking": ["ours", "prompt"], "cost": 0.0,
+                            "candidates": {
+                                "ours": {"fact_errors": ["ошибка"] if is_bad else [], "send_as_is": 8},
+                                "prompt": {"fact_errors": [], "send_as_is": 6},
+                            },
+                        })
+                lib.write_text(run_dir / "judgments.jsonl", "\n".join(json.dumps(r, ensure_ascii=False) for r in jrows) + "\n")
+                with mock.patch.object(lib, "EVAL_DIR", ed), mock.patch.object(lib, "CACHE_DIR", ed / ".cache"), \
+                        mock.patch.object(lib, "LEDGER", ed / ".cache" / "spend.json"), mock.patch.object(lib, "_LEDGER", None):
+                    rc = report.main(["--run", "r1"])
+                self.assertEqual(rc, 0)
+                summary = lib.read_json(run_dir / "summary.json")
+                return next(th for th in summary["thresholds"] if th["name"].startswith("Ловушки:"))
+
+        # n_traps == 2: requires 2 из 2 (2/2 passes, 1/2 fails).
+        t2_ok = run_case(2, 0)
+        self.assertEqual((t2_ok["name"], t2_ok["ok"], t2_ok["value"]),
+                         ("Ловушки: без ошибок смысла хотя бы 2 из 2", True, "2 из 2"))
+        t2_bad = run_case(2, 1)
+        self.assertEqual((t2_bad["name"], t2_bad["ok"], t2_bad["value"]),
+                         ("Ловушки: без ошибок смысла хотя бы 2 из 2", False, "1 из 2"))
+        # n_traps == 6: preserves 5 из 6 (5/6 passes, 4/6 fails).
+        t6_ok = run_case(6, 1)
+        self.assertEqual((t6_ok["name"], t6_ok["ok"], t6_ok["value"]),
+                         ("Ловушки: без ошибок смысла хотя бы 5 из 6", True, "5 из 6"))
+        t6_bad = run_case(6, 2)
+        self.assertEqual((t6_bad["name"], t6_bad["ok"], t6_bad["value"]),
+                         ("Ловушки: без ошибок смысла хотя бы 5 из 6", False, "4 из 6"))
+
+    def test_select_ids_isolates_holdout_traps(self):
+        # Holdout sets with their own traps (e.g. holdout6) neither leak into other holdouts nor pull test traps.
+        index = lib.read_json(lib.EVAL_DIR / "corpus" / "index.json")
+        h4_ids = rs.select_ids(index, "holdout4")
+        self.assertEqual(len(h4_ids), 42)
+        self.assertNotIn("h6_13", h4_ids)
+        self.assertNotIn("h6_14", h4_ids)
+        h6_ids = rs.select_ids(index, "holdout6")
+        self.assertEqual(len(h6_ids), 14)
+        self.assertIn("h6_13", h6_ids)
+        self.assertIn("h6_14", h6_ids)
+        self.assertNotIn("h01", h6_ids)
+
+
 if __name__ == "__main__":
     unittest.main()

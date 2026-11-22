@@ -18,10 +18,12 @@
 # END_MODULE_MAP
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import statistics
 import sys
 from collections import Counter
+from pathlib import Path
 
 import evallib as lib
 from build_corpus import human_wikinews
@@ -33,6 +35,8 @@ sys.modules["lint_style"] = lint_style
 _spec.loader.exec_module(lint_style)
 CORPUS = lib.EVAL_DIR / "corpus"
 OUT = lib.EVAL_DIR / "results" / "style-lint"
+# Explicit allowlist so future holdout sets (holdout5+) never leak into dev-holdout3 (R-HOLDOUT).
+DEV_SETS = frozenset({"dev", "test", "holdout", "holdout2", "holdout3"})
 
 
 def groups() -> dict:
@@ -43,10 +47,11 @@ def groups() -> dict:
     g = {
         "Люди: Викиновости до 2022, настройка (150)": [lib.read_text(CORPUS / "human" / (r["id"] + ".txt"))
                                                       for r in wiki if r["id"] not in controls],
-        "Люди: контроль (набор human и ловушки)": [text(r["id"]) for r in index if r["kind"] in ("human", "trap")],
+        "Люди: контроль (набор human и ловушки)": [text(r["id"]) for r in index
+                                                  if r["kind"] in ("human", "trap") and r.get("set") in (DEV_SETS | {"human"})],
         "Модели: исходники прошлых наборов (dev–holdout3)": [text(r["id"]) for r in index
-                                                             if r["kind"] == "generated" and r["set"] != "holdout4"],
-        "Модели: holdout4": [text(r["id"]) for r in index if r["set"] == "holdout4"],
+                                                             if r["kind"] == "generated" and r.get("set") in DEV_SETS],
+        "Модели: holdout4": [text(r["id"]) for r in index if r.get("set") == "holdout4"],
         "Чат-боты: сохранённые ответы r01–r06": [text(r["id"]) for r in index if r["kind"] == "real"],
     }
     pairs = CORPUS / "pairs" / "index.json"
@@ -77,7 +82,11 @@ def measure(texts: list, rules: dict) -> dict:
     }
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=str(OUT), help="Output directory for calibration.md and calibration.json")
+    ap.add_argument("--dry-run", action="store_true", help="Print report without writing files")
+    args = ap.parse_args(argv)
     rules = lint_style.load_rules()
     res = {name: measure(texts, rules) for name, texts in groups().items() if texts}
     names = list(res)
@@ -97,9 +106,11 @@ def main() -> int:
     for k, cfg in rules["metrics"].items():
         md.append("| %s, предел %s | " % (k, cfg.get("max", cfg.get("min"))) + " | ".join(
             "%.0f%% (%s; %s)" % (100 * res[n]["metrics_over"][k], res[n]["metric_median"][k], res[n]["metric_p90"][k]) for n in names) + " |")
-    OUT.mkdir(parents=True, exist_ok=True)
-    lib.write_text(OUT / "calibration.md", "\n".join(md) + "\n")
-    lib.write_json(OUT / "calibration.json", res)
+    if not args.dry_run:
+        out_dir = Path(args.out)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        lib.write_text(out_dir / "calibration.md", "\n".join(md) + "\n")
+        lib.write_json(out_dir / "calibration.json", res)
     print("\n".join(md))
     return 0
 

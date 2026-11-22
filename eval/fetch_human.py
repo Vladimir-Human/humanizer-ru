@@ -8,7 +8,7 @@
 # SCOPE: network reads of the public MediaWiki API only; writes eval/corpus/human/<id>.txt and
 #        eval/corpus/human/index.json (title, permanent link to the revision, date, licence).
 # DEPENDS: Python 3.9+ stdlib (urllib, html.parser).
-# LINKS: M-EVAL-HUMAN; R-HUMAN-CONTROLS; V-M-EVAL-HUMAN.
+# LINKS: M-EVAL-HUMAN; R-HUMAN-CONTROLS.
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # api: one GET to the API with a descriptive User-Agent, JSON in, retries on network errors.
@@ -23,11 +23,17 @@ import argparse
 import html
 import json
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 API = "https://ru.wikinews.org/w/api.php"
 UA = "humanizer-ru-eval/1.0 (https://github.com/Vladimir-Human/humanizer-ru)"
@@ -60,29 +66,50 @@ def old_revision(title: str, cut: str):
 
 
 class _Paragraphs(HTMLParser):
-    """Text of top-level <p> elements; <sup> (references) and tables are skipped."""
+    """Text of top-level <p> elements; <sup> (references), tables and thumbcaptions are skipped."""
+
+    _SKIP_TAGS = ("sup", "table", "style", "script")
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.paras, self.buf, self.in_p, self.skip = [], [], False, 0
+        self.paras, self.buf, self.in_p = [], [], False
+        self._skip_stack: list = []
+
+    @property
+    def skip(self) -> int:
+        return len(self._skip_stack)
 
     def handle_starttag(self, tag, attrs):
-        if tag in ("sup", "table", "style", "script") or (tag == "div" and ("class", "thumbcaption") in attrs):
-            self.skip += 1
-        elif tag == "p" and not self.skip:
+        tag = tag.lower()
+        if self._skip_stack:
+            if tag in self._SKIP_TAGS or tag == "div":
+                self._skip_stack.append(tag)
+            return
+        ad = {k.lower(): (v or "") for k, v in attrs}
+        if tag in self._SKIP_TAGS or (tag == "div" and "thumbcaption" in ad.get("class", "").split()):
+            self._skip_stack.append(tag)
+        elif tag == "p":
             self.in_p, self.buf = True, []
 
     def handle_endtag(self, tag):
-        if tag in ("sup", "table", "style", "script") and self.skip:
-            self.skip -= 1
-        elif tag == "p" and self.in_p:
+        tag = tag.lower()
+        if self._skip_stack:
+            if tag == self._skip_stack[-1]:
+                self._skip_stack.pop()
+            elif tag in self._skip_stack:
+                while self._skip_stack and self._skip_stack[-1] != tag:
+                    self._skip_stack.pop()
+                if self._skip_stack:
+                    self._skip_stack.pop()
+            return
+        if tag == "p" and self.in_p:
             self.in_p = False
             text = re.sub(r"\s+", " ", "".join(self.buf)).strip()
             if text:
                 self.paras.append(text)
 
     def handle_data(self, data):
-        if self.in_p and not self.skip:
+        if self.in_p and not self._skip_stack:
             self.buf.append(data)
 
 

@@ -1,0 +1,48 @@
+{
+  "executor": "google/gemini-4-neon-xhigh (Antigravity subagent with terminal)",
+  "set": "holdout7",
+  "texts": [
+    "h7_01",
+    "h7_02",
+    "h7_03",
+    "h7_04",
+    "h7_05",
+    "h7_06",
+    "h7_07",
+    "h7_08",
+    "h7_09",
+    "h7_10",
+    "h7_11",
+    "h7_12",
+    "h7_13",
+    "h7_14"
+  ],
+  "systems": [
+    "ours",
+    "ours430",
+    "ilyautov",
+    "prompt"
+  ],
+  "request": "Очеловечь этот текст.\n\n",
+  "batches": [
+    [
+      "h7_01",
+      "h7_02",
+      "h7_03",
+      "h7_04",
+      "h7_05",
+      "h7_06",
+      "h7_07"
+    ],
+    [
+      "h7_08",
+      "h7_09",
+      "h7_10",
+      "h7_11",
+      "h7_12",
+      "h7_13",
+      "h7_14"
+    ]
+  ],
+  "scripts": true
+}
