@@ -526,6 +526,48 @@ class DirectoryTest(unittest.TestCase):
         with self.assertRaises(SystemExit):  # and so is one that climbs out of the repository
             fix("[a](../repo/README.md)")
 
+    def test_inline_backtick_code_spans_are_skipped_by_link_checks(self):
+        # Cross-platform POSIX regression (SKILL.md:104 `![](...)`): inline code spans must never
+        # be parsed as markdown/HTML links, while links outside inline code on the same line must be.
+        seen = []
+        sample = (
+            "Пример `![](...)` и ``[x](nope.md)`` и `<img src=\"missing.png\">` и `<a href=\"missing\">x</a>`.\n"
+            "Смешанная строка `![](...)` [broken](no-such-file.md) и ``[y](skip.md)`` <a href=\"real-bad.html\">x</a>.\n"
+            "Одиночный ` не закрыт: [unmatched](still-checked.md).\n"
+            "Ссылка с кодом в подписи: [`code-label`](ok-label.md).\n"
+        )
+        build_directory.map_links(sample, lambda t: (seen.append(("md", t)), t)[1])
+        build_directory._scan_extra_md_links(sample, lambda t: seen.append(("extra", t)))
+        self.assertEqual(seen, [
+            ("md", "no-such-file.md"),
+            ("md", "still-checked.md"),
+            ("md", "ok-label.md"),
+            ("extra", "real-bad.html"),
+        ])
+
+        # Verify end-to-end through build + verify: inline code examples pass, mixed broken links fail.
+        root_ok = self._repo("repo_code_ok", {
+            "skills/humanizer-ru/SKILL.md": (
+                "Не вставляй `![](...)`, ``[x](nope.md)``, `<img src=\"missing.png\">` и `<a href=\"missing\">x</a>`.\n"
+            ),
+        })
+        out_ok = self.tmp / "tree_code_ok"
+        build_directory.build(out_ok, root_ok)
+        self.assertEqual(build_directory.verify(out_ok, root_ok), [])
+
+        root_bad = self._repo("repo_code_bad", {
+            "skills/humanizer-ru/SKILL.md": (
+                "Ок `![](...)`, а это [broken](no-such-file.md) и ``[x](nope.md)`` <a href=\"bad.html\">x</a>.\n"
+            ),
+        })
+        out_bad = self.tmp / "tree_code_bad"
+        build_directory.build(out_bad, root_bad)
+        probs = "\n".join(build_directory.verify(out_bad, root_bad))
+        self.assertIn("no-such-file.md", probs)
+        self.assertIn("bad.html", probs)
+        self.assertNotIn("nope.md", probs)
+        self.assertNotIn("...", probs)
+
     def test_directory_name_replaces_only_the_two_name_fields(self):
         sample = ('{\n  "name": "humanizer-ru",\n  "displayName": "humanizer-ru",\n'
                   '  "author": {"name": "Vladimir-Human", "url": "https://github.com/Vladimir-Human"},\n'

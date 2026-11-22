@@ -17,7 +17,7 @@
 # END_MODULE_CONTRACT
 # START_MODULE_MAP
 # listing: the files of the plugin tree (relative paths with /) for a repository root.
-# map_links: apply a function to the target of every inline markdown link outside code fences.
+# map_links: apply a function to the target of every inline markdown link outside code fences and inline code spans.
 # rewrite_links: a relative link that leaves the tree becomes an absolute link to main on GitHub.
 # rename_plugin: plugin.json text with name and displayName set to DIRECTORY_NAME, every other byte kept.
 # build: write the tree into an empty folder (refusing symlinks/out-of-tree paths), return the file list.
@@ -62,19 +62,71 @@ FORBIDDEN_STRINGS = re.compile(r"\b(?:FAL_KEY|API_KEY|os\.environ|urllib\.reques
 # START_BLOCK_LINKS
 # Inline links `[text](target "title")` and images are rewritten by map_links; verify() additionally
 # scans HTML `<a>`/`<img>` and reference-style `[label]: target` links so no broken link slips past.
+# Both helpers skip fenced code blocks and CommonMark inline backtick code spans in O(N) linear time.
+def _split_inline_code(line: str) -> list:
+    """Split a non-fenced Markdown line into (is_code, text) segments in O(N) time."""
+    if "`" not in line:
+        return [(False, line)]
+    runs = []
+    i = 0
+    n = len(line)
+    while i < n:
+        if line[i] == "`":
+            j = i + 1
+            while j < n and line[j] == "`":
+                j += 1
+            runs.append((i, j, j - i))
+            i = j
+        else:
+            i += 1
+    by_len: dict = {}
+    for idx, (_s, _e, rlen) in enumerate(runs):
+        by_len.setdefault(rlen, []).append(idx)
+    heads = {rlen: 0 for rlen in by_len}
+
+    parts = []
+    pos = 0
+    r_idx = 0
+    r_cnt = len(runs)
+    while r_idx < r_cnt:
+        s, _e, rlen = runs[r_idx]
+        idx_list = by_len[rlen]
+        h = heads[rlen]
+        while h < len(idx_list) and idx_list[h] <= r_idx:
+            h += 1
+        heads[rlen] = h
+        if h < len(idx_list):
+            close_idx = idx_list[h]
+            _cs, ce, _clen = runs[close_idx]
+            if s > pos:
+                parts.append((False, line[pos:s]))
+            parts.append((True, line[s:ce]))
+            pos = ce
+            r_idx = close_idx + 1
+        else:
+            r_idx += 1
+    if pos < n:
+        parts.append((False, line[pos:]))
+    return parts
+
+
 def map_links(text: str, fn) -> str:
     out, fenced = [], False
     for line in text.split("\n"):
         if re.match(r"\s{0,3}(```|~~~)", line):
             fenced = not fenced
         elif not fenced:
-            line = LINK.sub(lambda m: m.group(1) + fn(m.group(2)) + m.group(3), line)
+            segs = _split_inline_code(line)
+            line = "".join(
+                seg if is_code else LINK.sub(lambda m: m.group(1) + fn(m.group(2)) + m.group(3), seg)
+                for is_code, seg in segs
+            )
         out.append(line)
     return "\n".join(out)
 
 
 def _scan_extra_md_links(text: str, fn) -> None:
-    """Scan HTML <a href>/<img> and reference-style [label]: target links outside code fences."""
+    """Scan HTML <a href>/<img> and reference-style [label]: target links outside code fences and inline code."""
     fenced = False
     for line in text.split("\n"):
         if re.match(r"\s{0,3}(```|~~~)", line):
@@ -82,9 +134,10 @@ def _scan_extra_md_links(text: str, fn) -> None:
             continue
         if fenced:
             continue
-        for m in HTML_LINK.finditer(line):
+        prose = "".join(" " if is_code else seg for is_code, seg in _split_inline_code(line))
+        for m in HTML_LINK.finditer(prose):
             fn(m.group(1))
-        rm = REF_LINK.match(line)
+        rm = REF_LINK.match(prose)
         if rm:
             fn(rm.group(1))
 
